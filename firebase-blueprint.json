@@ -1,0 +1,170 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Application user profile",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["Administrator", "Manager", "Employee"] },
+        "companyName": { "type": "string" },
+        "crNumber": { "type": "string" },
+        "city": { "type": "string" },
+        "avatar": { "type": "string" },
+        "dashboardConfig": { "type": "string" },
+        "notificationSettings": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "HR Employee record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "position": { "type": "string" },
+        "department": { "type": "string" },
+        "nationality": { "type": "string" },
+        "iqamaExpiry": { "type": "string" },
+        "wpsStatus": { "type": "string" },
+        "baseSalaryHalalas": { "type": "integer" },
+        "housingAllowanceHalalas": { "type": "integer" },
+        "transportAllowanceHalalas": { "type": "integer" },
+        "otherDeductionsHalalas": { "type": "integer" },
+        "bank": { "type": "string" },
+        "iban": { "type": "string" },
+        "status": { "type": "string" },
+        "joinedDate": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Invoice": {
+      "title": "Invoice",
+      "description": "Billing invoice",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "number": { "type": "string" },
+        "clientName": { "type": "string" },
+        "clientEmail": { "type": "string" },
+        "issueDate": { "type": "string", "format": "date-time" },
+        "totalAmountHalalas": { "type": "integer" },
+        "status": { "type": "string" },
+        "lineItems": { "type": "string" }
+      }
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "System audit trail",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "module": { "type": "string" },
+        "action": { "type": "string" },
+        "payload": { "type": "string" },
+        "result": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User notification",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string" },
+        "isRead": { "type": "boolean" },
+        "relatedId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Lead": {
+      "title": "Lead",
+      "description": "CRM Lead",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "company": { "type": "string" },
+        "value": { "type": "number" },
+        "status": { "type": "string" },
+        "expectedCloseDate": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Shipment": {
+      "title": "Shipment",
+      "description": "Logistics shipment",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "supplierName": { "type": "string" },
+        "productDescription": { "type": "string" },
+        "countryOfOrigin": { "type": "string" },
+        "status": { "type": "string" },
+        "carrier": { "type": "string" },
+        "trackingNumber": { "type": "string" }
+      }
+    },
+    "Broker": {
+      "title": "Broker",
+      "description": "Customs Broker",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" }
+      }
+    },
+    "ShipmentDocument": {
+      "title": "ShipmentDocument",
+      "description": "Shipment document record",
+      "type": "object",
+      "properties": {
+        "documentType": { "type": "string" },
+        "fileUrl": { "type": "string" },
+        "validationStatus": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ShipmentComment": {
+      "title": "ShipmentComment",
+      "description": "Shipment comment",
+      "type": "object",
+      "properties": {
+        "authorName": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ShipmentEvent": {
+      "title": "ShipmentEvent",
+      "description": "Shipment lifecycle event",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "description": { "type": "string" },
+        "metadata": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "users": { "schema": "User", "description": "User profiles" },
+    "employees": { "schema": "Employee", "description": "HR Employees" },
+    "invoices": { "schema": "Invoice", "description": "Invoices" },
+    "audit_logs": { "schema": "AuditLog", "description": "Audit trail" },
+    "notifications": { "schema": "Notification", "description": "Notifications" },
+    "leads": { "schema": "Lead", "description": "CRM Leads" },
+    "shipments": { "schema": "Shipment", "description": "Logistics shipments" },
+    "brokers": { "schema": "Broker", "description": "Brokers" },
+    "shipments/{shipmentId}/documents": { "schema": "ShipmentDocument", "description": "Shipment documents" },
+    "shipments/{shipmentId}/comments": { "schema": "ShipmentComment", "description": "Shipment comments" },
+    "shipments/{shipmentId}/events": { "schema": "ShipmentEvent", "description": "Shipment events" }
+  }
+}

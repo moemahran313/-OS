@@ -1,0 +1,84 @@
+import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+import cookieParser from "cookie-parser";
+import rateLimit from "express-rate-limit";
+import { createServer as createViteServer } from "vite";
+
+// Routes
+import authRoutes from "./routes/auth.js";
+import shipmentRoutes from "./routes/shipments.js";
+import leadRoutes from "./routes/leads.js";
+import invoiceRoutes from "./routes/invoices.js";
+import payrollRoutes from "./routes/payroll.js";
+import employeeRoutes from "./routes/employees.js";
+import dashboardRoutes from "./routes/dashboard.js";
+import fwcosRoutes from "./routes/fwcos.js";
+import notificationRoutes from "./routes/notifications.js";
+import settingsRoutes from "./routes/settings.js";
+import analyticsRoutes from "./routes/analytics.js";
+import hrRoutes from "./routes/hr.js";
+import isicRoutes from "./routes/isic.js";
+import publicRoutes from "./routes/public.js";
+import auditLogRoutes from "./routes/auditLogs.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+export async function createApp() {
+  const app = express();
+
+  app.set('trust proxy', 1);
+  app.use(express.json());
+  app.use(cookieParser());
+
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  // Attach routes
+  app.use("/api/auth", authRoutes);
+  app.use("/api/employees", employeeRoutes);
+  app.use("/api/shipments", shipmentRoutes);
+  app.use("/api/leads", leadRoutes);
+  app.use("/api/invoices", invoiceRoutes);
+  app.use("/api/payroll", payrollRoutes); // handles /simulate, /commit, /wps, /report
+  app.use("/api/payroll-runs", payrollRoutes); // handles GET / for runs
+  app.use("/api/dashboard", dashboardRoutes);
+  app.use("/api/fwcos", fwcosRoutes);
+  app.use("/api/stats", fwcosRoutes); // handles /simulation-baseline
+  app.use("/api/notifications", notificationRoutes);
+  app.use("/api/user", settingsRoutes);
+  app.use("/api/analytics", analyticsRoutes);
+  app.use("/api/isic4", isicRoutes);
+  app.use("/api/public", publicRoutes);
+  app.use("/api/audit-logs", auditLogRoutes);
+  
+  // HR routes like /api/nitaqat/calculate and /api/workpermit/calculate
+  app.use("/api", hrRoutes); 
+
+  // Health check
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", message: "Mudarij OS API is active" });
+  });
+
+  // Vite integration
+  if (process.env.NODE_ENV !== "production") {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), "dist");
+    app.use(express.static(distPath));
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+  }
+
+  return app;
+}

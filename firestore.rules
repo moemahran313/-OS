@@ -1,0 +1,168 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // User Rules
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.email is string && 
+               data.email.size() > 5 &&
+               data.role in ['Administrator', 'Manager', 'Employee'];
+      }
+
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && 
+                       isValidUser(incoming()) && 
+                       incoming().diff(existing()).affectedKeys().hasOnly(['name', 'companyName', 'crNumber', 'city', 'avatar', 'dashboardConfig', 'notificationSettings', 'updatedAt']);
+    }
+
+    // Employee Rules
+    match /employees/{employeeId} {
+      function isValidEmployee(data) {
+        return data.userId == request.auth.uid &&
+               data.name is string && data.name.size() > 0;
+      }
+
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidEmployee(incoming());
+      allow update: if isSignedIn() && 
+                       resource.data.userId == request.auth.uid && 
+                       isValidEmployee(incoming()) &&
+                       incoming().userId == existing().userId;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Invoice Rules
+    match /invoices/{invoiceId} {
+      function isValidInvoice(data) {
+        return data.userId == request.auth.uid &&
+               data.number is string &&
+               data.totalAmountHalalas is int;
+      }
+
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.status == 'sent'); // Allow public view if sent
+      allow create: if isSignedIn() && isValidInvoice(incoming());
+      allow update: if isSignedIn() && 
+                       resource.data.userId == request.auth.uid && 
+                       isValidInvoice(incoming()) &&
+                       incoming().userId == existing().userId;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Audit Log Rules
+    match /audit_logs/{logId} {
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Notification Rules
+    match /notifications/{notifId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && 
+                       resource.data.userId == request.auth.uid && 
+                       incoming().diff(existing()).affectedKeys().hasOnly(['isRead']);
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+    }
+
+    // Lead Rules
+    match /leads/{leadId} {
+      function isValidLead(data) {
+        return data.userId == request.auth.uid &&
+               data.name is string;
+      }
+
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidLead(incoming());
+      allow update: if isSignedIn() && 
+                       resource.data.userId == request.auth.uid && 
+                       isValidLead(incoming()) &&
+                       incoming().userId == existing().userId;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Settings Rules
+    match /settings/{userId} {
+      allow get, create: if isOwner(userId);
+      allow update: if isOwner(userId);
+    }
+
+    // Compliance Rules
+    match /compliance_rules/{ruleId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Payroll Runs Rules
+    match /payroll_runs/{runId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Shipment Rules (ImportOS)
+    match /shipments/{shipmentId} {
+      function isValidShipment(data) {
+        return data.userId == request.auth.uid &&
+               data.supplierName is string;
+      }
+
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid; 
+      allow create: if isSignedIn() && isValidShipment(incoming());
+      allow update: if isSignedIn() && 
+                       resource.data.userId == request.auth.uid && 
+                       isValidShipment(incoming()) &&
+                       incoming().userId == existing().userId;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      // Sub-collections
+      match /documents/{docId} {
+        allow read, write: if isSignedIn() && get(/databases/$(database)/documents/shipments/$(shipmentId)).data.userId == request.auth.uid;
+      }
+      match /comments/{commentId} {
+        allow read, write: if isSignedIn() && get(/databases/$(database)/documents/shipments/$(shipmentId)).data.userId == request.auth.uid;
+      }
+      match /events/{eventId} {
+        allow read, write: if isSignedIn() && get(/databases/$(database)/documents/shipments/$(shipmentId)).data.userId == request.auth.uid;
+      }
+    }
+
+    match /brokers/{brokerId} { 
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+    match /tenants/{tenantId} { allow read: if isSignedIn(); }
+  }
+}

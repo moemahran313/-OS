@@ -1,0 +1,268 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  plan      String   @default("pro")
+  createdAt DateTime @default(now())
+  users     User[]
+  shipments Shipment[]
+  rules     ComplianceRule[]
+  integrations Integration[]
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  name            String?
+  role            String   @default("user")
+  tenantId        String?
+  tenant          Tenant?  @relation(fields: [tenantId], references: [id])
+  passwordHash    String?
+  companyName     String?
+  crNumber        String?
+  city            String?
+  avatar          String?  // Logo or profile pic
+  dashboardConfig String?  // JSON string for widget layout and visibility
+  notificationSettings String? // JSON string { emailNotifications: boolean, newLeads: boolean, invoiceReminders: boolean, payrollSummaries: boolean }
+  invoices        Invoice[]
+  employees       Employee[]
+  payrollRuns     PayrollRun[]
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+  createdAt       DateTime @default(now())
+}
+
+model Employee {
+  id                      String   @id @default(cuid())
+  userId                  String
+  user                    User     @relation(fields: [userId], references: [id])
+  name                    String
+  position                String
+  department              String?
+  nationality             String?
+  role                    String?
+  iqamaExpiry             String?  // ISO Date string
+  wpsStatus               String   @default("compliant") // compliant, delayed, violation
+  country                 String   @default("KSA")
+  visaNumber              String?
+  passportNumber          String?
+  contractStartDate       String?  // ISO Date string
+  contractEndDate         String?  // ISO Date string
+  documents               String?  // JSON string (WorkerDoc[])
+  baseSalaryHalalas       Int      @default(0)
+  housingAllowanceHalalas Int      @default(0)
+  transportAllowanceHalalas Int    @default(0)
+  otherDeductionsHalalas  Int      @default(0)
+  bank                    String?
+  iban                    String?
+  status                  String   @default("active") // active, inactive, terminated
+  joinedDate              DateTime @default(now())
+  payrollEntries          PayrollEntry[]
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
+model PayrollRun {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  period          String   // e.g., "2024-04"
+  totalGross      Float
+  totalNet        Float
+  totalDeductions Float
+  status          String   @default("processed") // processed, simulated
+  processedDate   DateTime @default(now())
+  entries         PayrollEntry[]
+  createdAt       DateTime @default(now())
+}
+
+model PayrollEntry {
+  id            String     @id @default(cuid())
+  runId         String
+  payrollRun    PayrollRun @relation(fields: [runId], references: [id])
+  employeeId    String
+  employee      Employee   @relation(fields: [employeeId], references: [id])
+  employeeName  String
+  position      String
+  bank          String?
+  basic         Float
+  allowances    Float
+  deductions    Float
+  netPay        Float
+  status        String     @default("pending_approval")
+  createdAt     DateTime   @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  module      String
+  action      String
+  payload     String?  // JSON string
+  result      String?  // JSON string
+  timestamp   DateTime @default(now())
+  ip          String?
+}
+
+model Invoice {
+  id                      String   @id @default(cuid())
+  userId                  String
+  user                    User     @relation(fields: [userId], references: [id])
+  number                  String   @unique
+  clientId                String?
+  clientName              String
+  clientEmail             String
+  clientPhone             String?
+  issueDate               DateTime @default(now())
+  dueDate                 DateTime?
+  currency                String   @default("SAR")
+  lineItems               String?  // JSON string (LineItem[])
+  subtotalHalalas         Int      @default(0)
+  vatAmountHalalas        Int      @default(0)
+  totalAmountHalalas      Int      @default(0)
+  paidAmountHalalas       Int      @default(0)
+  remainingBalanceHalalas Int      @default(0)
+  status                  String   @default("draft") // draft, sent, viewed, partially paid, paid, overdue, cancelled
+  paymentLink             String?
+  paymentTerms            String?
+  notes                   String?
+  billingEmail            String?
+  lateFeeConfig           String?  // JSON string { type: 'fixed' | 'percentage', valueHalalas: number, overdueDays: number }
+  numberFormat            String?
+  sectionOrder            String?  // JSON string (string[])
+  statusConfig            String?  // JSON string
+  zatcaConfig             String?  // JSON string
+  branding                String?  // JSON string (InvoiceBranding)
+  logs                    String?  // JSON string ({ action: string, timestamp: string, note?: string }[])
+  isLocked                Boolean  @default(false)
+  version                 Int      @default(1)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  title       String
+  message     String
+  type        String   // e.g., "lead_close", "invoice_overdue"
+  isRead      Boolean  @default(false)
+  relatedId   String?  // e.g., leadId or invoiceId
+  createdAt   DateTime @default(now())
+}
+
+model Shipment {
+  id                 String   @id @default(cuid())
+  tenantId           String
+  tenant             Tenant   @relation(fields: [tenantId], references: [id])
+  supplierName       String
+  productDescription String
+  countryOfOrigin    String
+  originPort         String?
+  destinationPort    String?
+  incoterms          String?  @default("CIF")
+  carrier            String?  // Aramex, DHL, etc.
+  trackingNumber     String?
+  alias              String?
+  estimatedDeliveryDate DateTime?
+  clientId           String?
+  client             Lead?    @relation(fields: [clientId], references: [id])
+  status             String   @default("planned") // planned, documents_ready, in_transit, at_customs, cleared
+  statusHistory      String?  // JSON string array of stages reached
+  brokerId           String?
+  broker             Broker?  @relation(fields: [brokerId], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  documents          Document[]
+  comments           Comment[]
+  events             ShipmentEvent[]
+}
+
+model Lead {
+  id                String   @id @default(cuid())
+  userId            String?
+  name              String
+  company           String?
+  value             Float?
+  status            String   @default("new")
+  phone             String?
+  email             String?
+  date              DateTime @default(now())
+  order             Int      @default(0)
+  industry          String?
+  companySize       String?
+  expectedCloseDate DateTime?
+  notes             String?
+  history           String?  // JSON string for events
+  shipments         Shipment[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model ShipmentEvent {
+  id         String   @id @default(cuid())
+  shipmentId String
+  shipment   Shipment @relation(fields: [shipmentId], references: [id])
+  type       String   // shipment.created, shipment.arrived, etc.
+  description String
+  metadata   String?  // JSON string
+  createdAt  DateTime @default(now())
+}
+
+model ComplianceRule {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  keyword     String   // e.g., "electronic"
+  requiredDoc String   // e.g., "SASO Certificate"
+  approvalBody String? // e.g., "CITC"
+  riskLevel   String   @default("low")
+}
+
+model Integration {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  provider  String   // e.g., "Aramex"
+  apiKey    String?
+  apiSecret String?
+  settings  String?  // JSON string for extra config
+  isActive  Boolean  @default(true)
+}
+
+model Broker {
+  id        String     @id @default(cuid())
+  name      String
+  email     String     @unique
+  phone     String?
+  shipments Shipment[]
+}
+
+model Document {
+  id               String   @id @default(cuid())
+  shipmentId       String
+  shipment         Shipment @relation(fields: [shipmentId], references: [id])
+  documentType     String   // invoice, COO, packing list, etc.
+  fileUrl          String
+  validationStatus String   @default("pending") // pending, validated, rejected
+  createdAt        DateTime @default(now())
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  shipmentId String
+  shipment   Shipment @relation(fields: [shipmentId], references: [id])
+  authorName String
+  text       String
+  createdAt  DateTime @default(now())
+}
