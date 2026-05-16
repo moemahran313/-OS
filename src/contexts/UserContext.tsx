@@ -11,7 +11,7 @@ export interface User {
   name: string;
   email: string;
   role: "Administrator" | "Manager" | "Employee";
-  avatar?: string;
+  avatar?: string | null;
   companyName?: string;
   crNumber?: string;
   city?: string;
@@ -25,7 +25,7 @@ interface UserContextType {
   loading: boolean;
   loginWithGoogle: () => Promise<boolean>;
   loginWithEmail: (email: string, pass: string) => Promise<boolean>;
-  registerWithEmail: (email: string, pass: string) => Promise<boolean>;
+  registerWithEmail: (email: string, pass: string, name?: string, avatar?: string) => Promise<boolean>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
   hasPermission: (module: string) => boolean;
@@ -70,7 +70,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           email: firebaseUser.email || "",
           name: firebaseUser.displayName || "",
           role: "Administrator", // Default role
-          avatar: firebaseUser.photoURL || undefined
+          avatar: firebaseUser.photoURL || null
         };
         await setDoc(userDocRef, {
           ...newUser,
@@ -110,10 +110,28 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const registerWithEmail = async (email: string, pass: string) => {
+  const registerWithEmail = async (email: string, pass: string, name?: string, avatar?: string) => {
     try {
       setLoading(true);
-      await createUserWithEmailAndPassword(auth, email, pass);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+      
+      const { updateProfile: updateAuthProfile } = await import("firebase/auth");
+      
+      if (name || avatar) {
+        await updateAuthProfile(userCredential.user, {
+          displayName: name || null,
+          photoURL: avatar || null
+        });
+      }
+      
+      // Update the user document explicitly since syncUser might have written an empty name/avatar 
+      // if it fired before updateAuthProfile completed.
+      const userDocRef = doc(db, "users", userCredential.user.uid);
+      await setDoc(userDocRef, {
+        name: name || "",
+        avatar: avatar || null
+      }, { merge: true });
+
       return true;
     } catch (e) {
       console.error("Email Register failed", e);
@@ -133,10 +151,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) return;
+    
+    // Remove undefined fields
+    const cleanUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([_, v]) => v !== undefined)
+    );
+
     try {
       const userDocRef = doc(db, "users", user.id);
-      await setDoc(userDocRef, { ...updates, updatedAt: serverTimestamp() }, { merge: true });
-      setUser(prev => prev ? { ...prev, ...updates } : null);
+      await setDoc(userDocRef, { ...cleanUpdates, updatedAt: serverTimestamp() }, { merge: true });
+      setUser(prev => prev ? { ...prev, ...cleanUpdates } : null);
       toast.success("تم تحديث الملف الشخصي بنجاح");
     } catch (e) {
       console.error("Profile update failed", e);

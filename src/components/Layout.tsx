@@ -16,6 +16,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
+import { Logo } from "@/src/components/Logo";
 import { motion, AnimatePresence } from "motion/react";
 import { processBusinessCommand } from "@/src/services/aiService";
 import { useSettings } from "@/src/contexts/SettingsContext";
@@ -124,6 +125,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
     recognition.onerror = (event: any) => {
       console.error("Speech recognition error", event.error);
+      if (event.error === 'not-allowed') {
+        toast.error("يرجى السماح بالوصول إلى الميكروفون، أو فتح التطبيق في نافذة جديدة.");
+      } else {
+        toast.error("حدث خطأ في التعرف على الصوت. الرجاء المحاولة مرة أخرى.");
+      }
       setIsListening(false);
     };
 
@@ -152,17 +158,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       dir="rtl"
     >
       {/* Sidebar */}
-      <aside className="w-64 glass border-l border-zinc-200 h-full flex flex-col">
-        <Link to="/" className="p-6 flex items-center gap-3 border-b border-zinc-100 group cursor-pointer hover:bg-zinc-50/50 transition-colors outline-none">
-          <div className="w-10 h-10 bg-gradient-to-tr from-primary to-emerald-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <span className="font-black text-2xl tracking-tighter text-zinc-900 group-hover:text-primary transition-colors">
-            مدارج<span className="text-primary">OS</span>
-          </span>
-        </Link>
+      <aside className="w-64 glass border-l border-zinc-200 h-full flex flex-col z-20">
+        <div className="p-6 border-b border-zinc-100 flex justify-center">
+          <Logo />
+        </div>
 
-        <nav className="flex-1 px-4 space-y-1">
+        <nav className="flex-1 px-4 py-4 space-y-1">
           {filteredNavigation.map((item) => {
             const isActive = location.pathname === item.href;
             return (

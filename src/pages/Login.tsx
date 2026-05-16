@@ -3,9 +3,12 @@ import { useUser } from "../contexts/UserContext";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { ShieldCheck, ArrowLeft, Mail, Lock } from "lucide-react";
+import { Logo } from "@/src/components/Logo";
 
 export default function Login() {
   const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState("");
+  const [avatar, setAvatar] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -28,8 +31,8 @@ export default function Login() {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      setError("يرجى إدخال البريد الإلكتروني وكلمة المرور.");
+    if (!email || !password || (!isLogin && !name)) {
+      setError("يرجى إدخال جميع الحقول المطلوبة.");
       return;
     }
     setError("");
@@ -37,13 +40,14 @@ export default function Login() {
       if (isLogin) {
         await loginWithEmail(email, password);
       } else {
-        await registerWithEmail(email, password);
+        await registerWithEmail(email, password, name, avatar);
       }
       navigate("/app");
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') setError('البريد الإلكتروني مسجل مسبقاً.');
       else if (err.code === 'auth/wrong-password') setError('كلمة المرور غير صحيحة.');
       else if (err.code === 'auth/user-not-found') setError('لم يتم العثور على حساب بهذا البريد.');
+      else if (err.code === 'auth/operation-not-allowed') setError('التسجيل بالبريد الإلكتروني غير مفعل في Firebase. يرجى تفعيله من لوحة التحكم.');
       else setError("حدث خطأ: " + (err.message || "خطأ غير معروف"));
     }
   };
@@ -57,8 +61,8 @@ export default function Login() {
       >
         <div className="p-8 md:p-12 space-y-8">
           <div className="text-center space-y-4">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 rounded-3xl mb-2">
-              <ShieldCheck className="w-10 h-10 text-primary" />
+            <div className="flex items-center justify-center mb-6">
+               <Logo isLink={false} iconClassName="w-16 h-16" textClassName="text-4xl" />
             </div>
             <h1 className="text-3xl font-black text-zinc-900 tracking-tight leading-tight">
               {isLogin ? 'تسجيل الدخول' : 'إنشاء حساب جديد'}
@@ -85,6 +89,29 @@ export default function Login() {
 
           <form onSubmit={handleEmailAuth} className="space-y-4">
             <div className="space-y-4">
+              {!isLogin && (
+                <>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="الاسم الكامل"
+                      className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none hover:border-zinc-300 transition-colors"
+                    />
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="url"
+                      value={avatar}
+                      onChange={(e) => setAvatar(e.target.value)}
+                      placeholder="رابط الصورة الشخصية (اختياري)"
+                      className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-4 py-4 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none hover:border-zinc-300 transition-colors"
+                      dir="ltr"
+                    />
+                  </div>
+                </>
+              )}
               <div className="relative">
                 <input
                   type="email"

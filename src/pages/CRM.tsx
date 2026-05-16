@@ -332,16 +332,28 @@ export default function CRM() {
       destArr = Array.from(destClients);
       destArr.splice(destination.index, 0, clientMoved);
 
-      const newHistory = {
-        id: `h_${Date.now()}`,
-        date: new Date().toISOString(),
-        action: "تغيير حالة",
-        details: `انتقل من ${columns.find((c) => c.id === sourceStatus)?.name} إلى ${columns.find((c) => c.id === destStatus)?.name}`,
-      };
-      clientMoved.status = destStatus as any;
-      clientMoved.history = clientMoved.history
-        ? [newHistory, ...clientMoved.history]
-        : [newHistory];
+                                  const sourceArrStr = columns.find((c) => c.id === sourceStatus)?.name;
+                                  const destArrStr = columns.find((c) => c.id === destStatus)?.name;
+                                  const newHistory = {
+                                    id: `h_${Date.now()}`,
+                                    date: new Date().toISOString(),
+                                    action: "تغيير حالة",
+                                    details: `انتقل من ${sourceArrStr} إلى ${destArrStr}`,
+                                  };
+                                  clientMoved.status = destStatus as any;
+                                  clientMoved.history = clientMoved.history
+                                    ? [newHistory, ...clientMoved.history]
+                                    : [newHistory];
+                                  
+                                  import('firebase/firestore').then(({ addDoc, collection, serverTimestamp }) => {
+                                    addDoc(collection(db, "audit_logs"), {
+                                      userId: user?.uid,
+                                      module: 'CRM',
+                                      action: `تم تغيير حالة العميل ${clientMoved.name} من ${sourceArrStr} إلى ${destArrStr}`,
+                                      timestamp: new Date().toISOString(),
+                                      user: { name: user?.name || "نظام CRM" }
+                                    }).catch(console.error);
+                                  });
     }
 
     const itemsToUpdate: any[] = [];
@@ -762,23 +774,32 @@ export default function CRM() {
                                 const oldStatus = updatedClients[clientIdx].status;
                                 updatedClients[clientIdx].status = newStatus as any;
                                 
-                                const historyItem = {
-                                  id: `h_${Date.now()}`,
-                                  date: new Date().toISOString(),
-                                  action: "تغيير حالة مباشر",
-                                  details: `تغيير الحالة من ${oldStatus} إلى ${newStatus}`
-                                };
-                                
-                                updatedClients[clientIdx].history = [historyItem, ...(updatedClients[clientIdx].history || [])];
-                                setClients(updatedClients);
-                                
-                                try {
-                                  import('firebase/firestore').then(({ updateDoc, doc }) => {
-                                    updateDoc(doc(db, "leads", clientId), updatedClients[clientIdx] as any);
-                                  });
-                                } catch (e) {
-                                  console.error("Failed to update status", e);
-                                }
+                                  const newStatusName = columns.find((c) => c.id === newStatus)?.name || newStatus;
+                                  const oldStatusName = columns.find((c) => c.id === oldStatus)?.name || oldStatus;
+                                  const historyItem = {
+                                    id: `h_${Date.now()}`,
+                                    date: new Date().toISOString(),
+                                    action: "تغيير حالة مباشر",
+                                    details: `تغيير الحالة من ${oldStatusName} إلى ${newStatusName}`
+                                  };
+                                  
+                                  updatedClients[clientIdx].history = [historyItem, ...(updatedClients[clientIdx].history || [])];
+                                  setClients(updatedClients);
+                                  
+                                  try {
+                                    import('firebase/firestore').then(({ updateDoc, doc, addDoc, collection }) => {
+                                      updateDoc(doc(db, "leads", clientId), updatedClients[clientIdx] as any);
+                                      addDoc(collection(db, "audit_logs"), {
+                                        userId: user?.uid,
+                                        module: 'CRM',
+                                        action: `تم تغيير حالة العميل ${updatedClients[clientIdx].name} من ${oldStatusName} إلى ${newStatusName}`,
+                                        timestamp: new Date().toISOString(),
+                                        user: { name: user?.name || "نظام CRM" }
+                                      }).catch(console.error);
+                                    });
+                                  } catch (e) {
+                                    console.error("Failed to update status", e);
+                                  }
                               }}
                             />
                           )}

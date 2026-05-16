@@ -53,6 +53,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
+import { handleFirestoreError, OperationType } from "@/src/lib/firestore-errors";
 
 interface WidgetConfig {
   id: string;
@@ -252,9 +253,7 @@ export default function Dashboard() {
         chartData: cData,
       }));
     }, (error) => {
-      import('@/src/lib/firestore-errors').then(({ handleFirestoreError, OperationType }) => {
-        handleFirestoreError(error, OperationType.LIST, "leads");
-      });
+      handleFirestoreError(error, OperationType.LIST, "leads");
     });
 
     const payrollQuery = query(collection(db, "payroll_runs"), where("userId", "==", user.uid));
@@ -266,9 +265,7 @@ export default function Dashboard() {
         payrollCost: totalCost,
       }));
     }, (error) => {
-      import('@/src/lib/firestore-errors').then(({ handleFirestoreError, OperationType }) => {
-        handleFirestoreError(error, OperationType.LIST, "payroll_runs");
-      });
+      handleFirestoreError(error, OperationType.LIST, "payroll_runs");
     });
 
     const employeesQuery = query(collection(db, "employees"), where("userId", "==", user.uid));
@@ -281,9 +278,7 @@ export default function Dashboard() {
         saudiEmployees: saudiEmployees,
       }));
     }, (error) => {
-      import('@/src/lib/firestore-errors').then(({ handleFirestoreError, OperationType }) => {
-        handleFirestoreError(error, OperationType.LIST, "employees");
-      });
+      handleFirestoreError(error, OperationType.LIST, "employees");
     });
 
     const invoicesQuery = query(collection(db, "invoices"), where("userId", "==", user.uid));
@@ -297,9 +292,7 @@ export default function Dashboard() {
         vatExposure: vatExposure,
       }));
     }, (error) => {
-      import('@/src/lib/firestore-errors').then(({ handleFirestoreError, OperationType }) => {
-        handleFirestoreError(error, OperationType.LIST, "invoices");
-      });
+      handleFirestoreError(error, OperationType.LIST, "invoices");
     });
 
     const rulesQuery = query(collection(db, "compliance_rules"), where("userId", "==", user.uid));
@@ -312,9 +305,7 @@ export default function Dashboard() {
         complianceScore: score,
       }));
     }, (error) => {
-      import('@/src/lib/firestore-errors').then(({ handleFirestoreError, OperationType }) => {
-        handleFirestoreError(error, OperationType.LIST, "compliance_rules");
-      });
+      handleFirestoreError(error, OperationType.LIST, "compliance_rules");
     });
 
     // Listen to Audit Logs
@@ -328,9 +319,7 @@ export default function Dashboard() {
       const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setAuditLogs(logs);
     }, (error) => {
-      import('@/src/lib/firestore-errors').then(({ handleFirestoreError, OperationType }) => {
-        handleFirestoreError(error, OperationType.LIST, "audit_logs");
-      });
+      handleFirestoreError(error, OperationType.LIST, "audit_logs");
     });
 
     return () => {

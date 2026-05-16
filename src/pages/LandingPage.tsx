@@ -7,6 +7,7 @@ import {
   ShieldAlert, ShieldCheck, Globe
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
+import { Logo } from "@/src/components/Logo";
 
 // --- HERO SECTION ---
 const HeroSection = () => {
@@ -133,16 +134,11 @@ const HeroSection = () => {
               
               <div className="h-[450px] flex relative z-10 bg-zinc-950/40">
                  {/* Sidebar */}
-                 <div className="w-64 bg-zinc-50 border-l border-zinc-200 p-6 flex flex-col justify-between">
+                 <div className="w-64 bg-zinc-50 border-l border-zinc-200 p-6 flex flex-col justify-between relative z-10">
                     <div className="space-y-8">
-                       <div className="flex items-center gap-3 px-2">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-emerald-500 flex items-center justify-center shadow-lg shadow-primary/20">
-                             <Sparkles className="w-5 h-5 text-white" />
-                          </div>
-                          <div className="flex flex-col">
-                             <span className="text-zinc-900 text-xl font-black tracking-tighter">مدارجOS</span>
-                             <span className="text-emerald-500 text-[9px] uppercase tracking-wider font-bold">Premium</span>
-                          </div>
+                       <div className="flex flex-col items-center justify-center gap-1">
+                          <Logo isLink={false} iconClassName="w-12 h-12" textClassName="text-3xl" />
+                          <span className="text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-widest font-black ring-1 ring-emerald-500/20">Premium</span>
                        </div>
                        <div className="space-y-1 block">
                           {[
@@ -635,14 +631,7 @@ export default function LandingPage() {
          {/* Simple Global Nav for Landing */}
          <nav className="fixed top-0 left-0 w-full z-50 px-6 py-4 transition-all duration-300 backdrop-blur-md bg-zinc-950/50 border-b border-white/5" dir="rtl">
             <div className="container mx-auto max-w-7xl flex items-center justify-between">
-               <Link to="/" className="flex items-center gap-3 group cursor-pointer outline-none">
-                  <div className="w-8 h-8 bg-gradient-to-tr from-primary to-emerald-500 rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/30 group-hover:scale-110 transition-transform duration-300">
-                     <Sparkles className="w-4 h-4" />
-                  </div>
-                  <span className="font-black text-2xl tracking-tighter text-white group-hover:text-primary transition-colors">
-                     مدارج<span className="text-primary">OS</span>
-                  </span>
-               </Link>
+               <Logo theme="dark" />
                
                <div className="flex items-center gap-4">
                   <Link to="/app" className="text-sm font-bold text-zinc-300 hover:text-white transition-colors hidden sm:block">تسجيل الدخول</Link>

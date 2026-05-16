@@ -70,18 +70,13 @@ interface ComputedWorker extends Worker {
 }
 
 const GCC_COUNTRIES = [
-  { code: 'KSA', name: 'السعودية' },
-  { code: 'UAE', name: 'الإمارات' },
-  { code: 'Qatar', name: 'قطر' },
-  { code: 'Kuwait', name: 'الكويت' },
-  { code: 'Bahrain', name: 'البحرين' },
-  { code: 'Oman', name: 'عمان' }
+  { code: 'KSA', name: 'السعودية' }
 ];
 
 const INITIAL_RULES = [
   { id: 1, type: 'iqama', title: "انتهاء الإقامة/الهوية", description: "تنبيه عند اقتراب انتهاء بطاقة الهوية أو الإقامة", impact: "High", thresholdDays: 60, countries: GCC_COUNTRIES.map(c => ({ ...c, active: true, thresholdDays: 60 })) },
-  { id: 2, type: 'wps', title: "حماية الأجور (WPS)", description: "تأخر الرواتب يرفع نسبة الخطورة بشكل تلقائي", impact: "Critical", thresholdDays: 15, countries: GCC_COUNTRIES.map(c => ({ ...c, active: ['KSA', 'UAE', 'Qatar'].includes(c.code), thresholdDays: 15 })) },
-  { id: 3, type: 'visa', title: "صلاحية التأشيرات والجوازات", description: "يجب تجديد التأشيرات والجوازات المرفقة قبل انتهاء صلاحيتها", impact: "Medium", thresholdDays: 45, countries: GCC_COUNTRIES.map(c => ({ ...c, active: ['KSA', 'UAE', 'Qatar', 'Bahrain'].includes(c.code), thresholdDays: 45 })) },
+  { id: 2, type: 'wps', title: "حماية الأجور (WPS)", description: "تأخر الرواتب يرفع نسبة الخطورة بشكل تلقائي", impact: "Critical", thresholdDays: 15, countries: GCC_COUNTRIES.map(c => ({ ...c, active: true, thresholdDays: 15 })) },
+  { id: 3, type: 'visa', title: "صلاحية التأشيرات والجوازات", description: "يجب تجديد التأشيرات والجوازات المرفقة قبل انتهاء صلاحيتها", impact: "Medium", thresholdDays: 45, countries: GCC_COUNTRIES.map(c => ({ ...c, active: true, thresholdDays: 45 })) },
   { id: 4, type: 'contract', title: "انتهاء العقود", description: "تنبيه عند اقتراب نهاية العقد لاتخاذ قرار التجديد أو التصفية", impact: "Medium", thresholdDays: 30, countries: GCC_COUNTRIES.map(c => ({ ...c, active: true, thresholdDays: 30 })) }
 ];
 
@@ -937,8 +932,6 @@ export default function FWCOS() {
                         <label className="text-sm font-bold text-zinc-700">اللهجة العربية المفضلة</label>
                         <select value={aiSettings.dialect} onChange={e => setAiSettings({...aiSettings, dialect: e.target.value})} className="w-full px-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold outline-none cursor-pointer">
                            <option value="saudi">السعودية (Saudi)</option>
-                           <option value="egyptian">المصرية (Egyptian)</option>
-                           <option value="emirati">الإماراتية (Emirati)</option>
                         </select>
                      </div>
                      <div className="space-y-2">
@@ -1027,8 +1020,8 @@ export default function FWCOS() {
                              <div className="space-y-1.5"><label className="text-[10px] font-bold text-zinc-500">الجنسية (Nationality)</label><input required value={editingWorker.nationality} onChange={e => setEditingWorker({...editingWorker, nationality: e.target.value})} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold outline-none" /></div>
                              <div className="space-y-1.5"><label className="text-[10px] font-bold text-zinc-500">المنصب / المهنة (Role)</label><input required value={editingWorker.role} onChange={e => setEditingWorker({...editingWorker, role: e.target.value})} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold outline-none" /></div>
                              <div className="space-y-1.5">
-                               <label className="text-[10px] font-bold text-zinc-500">الدولة الخليجية التابع لها</label>
-                               <select value={editingWorker.country} onChange={e => setEditingWorker({...editingWorker, country: e.target.value})} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold outline-none">{['KSA', 'UAE', 'Qatar', 'Kuwait', 'Bahrain', 'Oman'].map(c => <option key={c} value={c}>{c}</option>)}</select>
+                               <label className="text-[10px] font-bold text-zinc-500">الدولة التابع لها</label>
+                               <select value={editingWorker.country} onChange={e => setEditingWorker({...editingWorker, country: e.target.value})} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold outline-none">{['KSA'].map(c => <option key={c} value={c}>{c}</option>)}</select>
                              </div>
                              <div className="space-y-1.5"><label className="text-[10px] font-bold text-zinc-500">رقم التأشيرة (Visa Number)</label><input value={editingWorker.visaNumber || ''} onChange={e => setEditingWorker({...editingWorker, visaNumber: e.target.value})} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold outline-none" /></div>
                              <div className="space-y-1.5"><label className="text-[10px] font-bold text-zinc-500">رقم الجواز (Passport Number)</label><input value={editingWorker.passportNumber || ''} onChange={e => setEditingWorker({...editingWorker, passportNumber: e.target.value})} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold outline-none" /></div>
