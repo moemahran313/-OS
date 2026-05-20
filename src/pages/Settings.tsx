@@ -23,6 +23,7 @@ import {
   Users,
   Copy,
   MessageSquare,
+  MessageCircle,
   Camera,
 } from "lucide-react";
 import { cn } from "../lib/utils";
@@ -46,13 +47,16 @@ export default function Settings() {
 
   // Local state for the form so we don't update on every keystroke
   const [formData, setFormData] = useState({ 
-    ...settings,
-    emailNotif_newLeads: true,
-    emailNotif_invoiceReminders: true,
-    emailNotif_payrollSummaries: false,
+    emailNotif_newLeads: "immediately",
+    emailNotif_invoiceReminders: "daily",
+    emailNotif_payrollSummaries: "weekly",
     autoReminders_email: true,
     reminderDays_before: 2,
     reminderDays_after: 3,
+    zapierWebhookNewLead: "",
+    zapierWebhookInvoicePaid: "",
+    slackWebhookUrl: "",
+    ...settings,
   });
 
   // Keep formData in sync with settings when they load from DB/Context
@@ -107,6 +111,7 @@ export default function Settings() {
     { id: "email", label: "إعدادات البريد", icon: Mail },
     { id: "reminders", label: "تذكيرات تلقائية", icon: Smartphone },
     { id: "audit", label: "سجل العمليات", icon: History },
+    { id: "payment", label: "بوابات الدفع", icon: Lock },
     { id: "referrals", label: "برنامج الإحالة", icon: Users },
   ];
 
@@ -448,19 +453,45 @@ export default function Settings() {
                       </div>
                       
                       {item.id === "emailNotifications" && formData.emailNotifications && (
-                        <div className="pl-16 pr-4 space-y-3 pb-2">
-                           <label className="flex items-center gap-3 cursor-pointer group">
-                              <input type="checkbox" checked={formData.emailNotif_newLeads} onChange={(e) => handleChange('emailNotif_newLeads', e.target.checked)} className="w-4 h-4 rounded appearance-none border-2 border-zinc-300 checked:bg-emerald-500 checked:border-emerald-500 transition-colors flex items-center justify-center after:content-[''] after:w-1.5 after:h-2.5 after:border-r-2 after:border-b-2 after:border-white after:rotate-45 after:scale-0 checked:after:scale-100 after:transition-transform after:-mt-1" />
+                        <div className="pl-16 pr-4 space-y-4 pb-2">
+                           <div className="flex items-center justify-between gap-3 group">
                               <span className="text-sm font-medium text-zinc-700 group-hover:text-zinc-900">العملاء المحتملين الجدد</span>
-                           </label>
-                           <label className="flex items-center gap-3 cursor-pointer group">
-                              <input type="checkbox" checked={formData.emailNotif_invoiceReminders} onChange={(e) => handleChange('emailNotif_invoiceReminders', e.target.checked)} className="w-4 h-4 rounded appearance-none border-2 border-zinc-300 checked:bg-emerald-500 checked:border-emerald-500 transition-colors flex items-center justify-center after:content-[''] after:w-1.5 after:h-2.5 after:border-r-2 after:border-b-2 after:border-white after:rotate-45 after:scale-0 checked:after:scale-100 after:transition-transform after:-mt-1" />
+                              <select 
+                                value={String(formData.emailNotif_newLeads || "immediately")} 
+                                onChange={(e) => handleChange('emailNotif_newLeads', e.target.value as any)}
+                                className="bg-white border border-zinc-200 rounded-lg px-3 py-1.5 text-xs font-bold focus:ring-2 focus:ring-emerald-500/20 text-zinc-700"
+                              >
+                                <option value="immediately">فوراً</option>
+                                <option value="daily">ملخص يومي</option>
+                                <option value="weekly">ملخص أسبوعي</option>
+                                <option value="disabled">إيقاف</option>
+                              </select>
+                           </div>
+                           <div className="flex items-center justify-between gap-3 group">
                               <span className="text-sm font-medium text-zinc-700 group-hover:text-zinc-900">تذكير الفواتير</span>
-                           </label>
-                           <label className="flex items-center gap-3 cursor-pointer group">
-                              <input type="checkbox" checked={formData.emailNotif_payrollSummaries} onChange={(e) => handleChange('emailNotif_payrollSummaries', e.target.checked)} className="w-4 h-4 rounded appearance-none border-2 border-zinc-300 checked:bg-emerald-500 checked:border-emerald-500 transition-colors flex items-center justify-center after:content-[''] after:w-1.5 after:h-2.5 after:border-r-2 after:border-b-2 after:border-white after:rotate-45 after:scale-0 checked:after:scale-100 after:transition-transform after:-mt-1" />
+                              <select 
+                                value={String(formData.emailNotif_invoiceReminders || "daily")} 
+                                onChange={(e) => handleChange('emailNotif_invoiceReminders', e.target.value as any)}
+                                className="bg-white border border-zinc-200 rounded-lg px-3 py-1.5 text-xs font-bold focus:ring-2 focus:ring-emerald-500/20 text-zinc-700"
+                              >
+                                <option value="immediately">فوراً</option>
+                                <option value="daily">ملخص يومي</option>
+                                <option value="weekly">ملخص أسبوعي</option>
+                                <option value="disabled">إيقاف</option>
+                              </select>
+                           </div>
+                           <div className="flex items-center justify-between gap-3 group">
                               <span className="text-sm font-medium text-zinc-700 group-hover:text-zinc-900">ملخصات الرواتب</span>
-                           </label>
+                              <select 
+                                value={String(formData.emailNotif_payrollSummaries || "weekly")} 
+                                onChange={(e) => handleChange('emailNotif_payrollSummaries', e.target.value as any)}
+                                className="bg-white border border-zinc-200 rounded-lg px-3 py-1.5 text-xs font-bold focus:ring-2 focus:ring-emerald-500/20 text-zinc-700"
+                              >
+                                <option value="weekly">أسبوعي</option>
+                                <option value="monthly">شهري</option>
+                                <option value="disabled">إيقاف</option>
+                              </select>
+                           </div>
                         </div>
                       )}
                       {item.id === "contractEndReminder" && formData.contractEndReminder && (
@@ -509,10 +540,11 @@ export default function Settings() {
                     <div className="space-y-4">
                       {[
                         { id: 'autoReminders_email', title: 'تذكيرات البريد الإلكتروني', desc: 'إرسال تنبيهات بريدية رسمية للفواتير', icon: Mail },
+                        { id: 'autoReminders_whatsapp', title: 'تذكيرات واتساب (موصى به)', desc: 'أتمتة الرسائل التذكيرية للعملاء عبر واتساب (متضمن مجاناً)', icon: MessageCircle, highlight: true },
                       ].map(item => (
-                        <div key={item.id} className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
+                        <div key={item.id} className={cn("flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border", item.highlight ? "border-emerald-200 bg-emerald-50/30" : "border-zinc-100")}>
                           <div className="flex items-center gap-3">
-                            <item.icon className="w-5 h-5 text-zinc-400" />
+                            <item.icon className={cn("w-5 h-5", item.highlight ? "text-emerald-500" : "text-zinc-400")} />
                             <div>
                               <p className="text-sm font-bold text-zinc-900">{item.title}</p>
                               <p className="text-[10px] text-zinc-500">{item.desc}</p>
@@ -540,7 +572,7 @@ export default function Settings() {
                         <div className="flex items-center gap-3">
                           <input 
                             type="number" 
-                            value={formData.reminderDays_before}
+                            value={Number.isNaN(formData.reminderDays_before) ? "" : formData.reminderDays_before}
                             onChange={(e) => handleChange('reminderDays_before', Number(e.target.value))}
                             className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2.5 font-black focus:ring-2 focus:ring-zinc-900/20 outline-none"
                           />
@@ -554,7 +586,7 @@ export default function Settings() {
                         <div className="flex items-center gap-3">
                           <input 
                             type="number" 
-                            value={formData.reminderDays_after}
+                            value={Number.isNaN(formData.reminderDays_after) ? "" : formData.reminderDays_after}
                             onChange={(e) => handleChange('reminderDays_after', Number(e.target.value))}
                             className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2.5 font-black focus:ring-2 focus:ring-zinc-900/20 outline-none"
                           />
@@ -596,19 +628,99 @@ export default function Settings() {
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <h3 className="text-lg font-black text-zinc-900">
-                        مفاتيح الربط (API Keys)
+                        الربط الخارجي (Webhooks & Integrations)
                       </h3>
                       <p className="text-xs text-zinc-500 mt-1">
-                        تستخدم للربط مع أنظمة FWC-OS وخدمات الواتساب
+                        زود أنجمتك بنقاط اتصال (Webhooks) لربط مدارج مع مئات التطبيقات عبر من خلال Zapier.
                       </p>
                     </div>
-                    <button className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">
-                      <Key className="w-3 h-3" />
-                      إنشاء مفتاح جديد
-                    </button>
                   </div>
-                  <div className="p-4 bg-zinc-50 border border-zinc-200 border-dashed text-zinc-500 rounded-2xl font-mono text-sm relative group overflow-hidden text-center">
-                    لا يوجد مفاتيح API حاليا
+                  <div className="space-y-4">
+                     <div className="bg-white p-5 rounded-2xl border border-zinc-200">
+                        <div className="flex items-start justify-between mb-4">
+                           <div className="flex items-center gap-3">
+                             <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center">
+                                <svg role="img" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M11.968 11.238l5.856-4.542c.864-.67.34-2.07-.743-2.01L5.94 5.253a.965.965 0 00-.737.493L2.174 11.24c-.464.81.164 1.83 1.096 1.77l11.144-.72a.965.965 0 01.88.54l3.02 5.922c.484.948 1.905.815 2.193-.205l1.9-6.73a.965.965 0 00-.65-1.184l-9.79-3.39zM12.032 12.762l-5.856 4.542c-.864.67-.34 2.07.743 2.01l11.14-.567a.965.965 0 00.738-.493l3.028-5.494c.465-.81-.164-1.83-1.096-1.77l-11.144.72a.965.965 0 01-.88-.54l-3.02-5.922c-.484-.948-1.905-.815-2.193.205l-1.9 6.73a.965.965 0 00.65 1.184l9.79 3.39z"/></svg>
+                             </div>
+                             <div>
+                               <h4 className="font-bold text-zinc-900">مفاتيح الدخول Webhook لـ Zapier</h4>
+                               <p className="text-xs text-zinc-500">أرسل بيانات مدارج (العملاء الجدد، الفواتير) إلى Zapier</p>
+                             </div>
+                           </div>
+                           <span className="bg-primary/10 text-primary px-2 py-1 rounded text-[10px] font-black uppercase">Premium</span>
+                        </div>
+                        <div className="space-y-3">
+                           <div>
+                              <label className="text-[10px] font-bold text-zinc-500 uppercase">عند إضافة عميل جديد (New Lead Created)</label>
+                              <div className="flex gap-2 mt-1">
+                                <input type="text" value={formData.zapierWebhookNewLead || "https://hooks.zapier.com/hooks/catch/12345/abcde"} onChange={(e) => handleChange('zapierWebhookNewLead', e.target.value)} className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 text-xs text-zinc-500 font-mono" />
+                                <button className="px-3 py-1.5 bg-zinc-100 font-bold rounded-lg text-xs hover:bg-zinc-200">نسخ</button>
+                              </div>
+                           </div>
+                           <div>
+                              <label className="text-[10px] font-bold text-zinc-500 uppercase">عند دفع الفاتورة (Invoice Paid)</label>
+                              <div className="flex gap-2 mt-1">
+                                <input type="text" value={formData.zapierWebhookInvoicePaid || ""} onChange={(e) => handleChange('zapierWebhookInvoicePaid', e.target.value)} placeholder="https://hooks.zapier.com/hooks/catch/..." className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 text-xs text-zinc-500 font-mono focus:ring-1 focus:ring-primary/20 outline-none" />
+                                <button className="px-3 py-1.5 bg-zinc-900 text-white font-bold rounded-lg text-xs">تفعيل</button>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+
+                     <div className="bg-white p-5 rounded-2xl border border-zinc-200">
+                        <div className="flex items-start justify-between mb-4">
+                           <div className="flex items-center gap-3">
+                             <div className="w-10 h-10 bg-[#4A154B] text-white rounded-xl flex items-center justify-center">
+                                <svg role="img" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.521-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.523-2.522v-2.522h2.523zM15.165 17.688a2.527 2.527 0 0 1-2.523-2.523 2.526 2.526 0 0 1 2.523-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
+                             </div>
+                             <div>
+                               <h4 className="font-bold text-zinc-900">بوت Slack لـ Mudarij</h4>
+                               <p className="text-xs text-zinc-500">تلقّ التنبيهات وإشعارات الدفع والفواتير المتأخرة في قنوات Slack</p>
+                             </div>
+                           </div>
+                           <span className="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-[10px] font-black uppercase border border-emerald-100">مجاني</span>
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                           <input type="text" value={formData.slackWebhookUrl || ""} onChange={(e) => handleChange('slackWebhookUrl', e.target.value)} placeholder="https://hooks.slack.com/services/..." className="flex-1 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-1.5 text-xs font-mono focus:ring-1 focus:ring-primary/20 outline-none" />
+                           <button className="px-4 py-1.5 bg-[#4A154B] text-white font-bold rounded-lg text-xs hover:bg-[#3E113F] transition-colors">اتصال بـ Slack</button>
+                        </div>
+                     </div>
+                  </div>
+                </section>
+              </div>
+            )}
+
+            {activeTab === "payment" && (
+              <div className="space-y-8 relative z-10">
+                <section>
+                  <h3 className="text-lg font-black text-zinc-900 mb-6">
+                    بوابات الدفع الإلكتروني
+                  </h3>
+                  <div className="bg-white p-5 rounded-2xl border border-zinc-200">
+                     <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-[#00457C] text-white rounded-xl flex items-center justify-center">
+                             <svg role="img" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zM15.426 6.81a3.633 3.633 0 0 0-2.314-.707H8.223L6.96 14.126h3.195c3.6 0 6.425-1.464 7.242-5.696.05-.26.09-.522.12-.782a2.88 2.88 0 0 0-.09-1.037z"/></svg>
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-zinc-900">PayPal</h4>
+                            <p className="text-xs text-zinc-500">تمكين الدفع عبر بطاقات الائتمان وحسابات PayPal</p>
+                          </div>
+                        </div>
+                     </div>
+                     <div className="mt-4 flex flex-col gap-2">
+                        <label className="text-[10px] font-bold text-zinc-500 uppercase">PayPal Client ID</label>
+                        <input 
+                           type="text" 
+                           value={formData.paypalClientId || ""} 
+                           onChange={(e) => handleChange('paypalClientId', e.target.value)} 
+                           placeholder="ATXXXXXXXXXXX..." 
+                           className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-primary/20 outline-none" 
+                        />
+                        <p className="text-[10px] text-zinc-400 mt-1">
+                          يمكنك الحصول على Client ID من خلال <a href="https://developer.paypal.com/dashboard/applications/sandbox" target="_blank" rel="noreferrer" className="text-primary hover:underline">موقع مطوري PayPal</a> 
+                        </p>
+                     </div>
                   </div>
                 </section>
               </div>

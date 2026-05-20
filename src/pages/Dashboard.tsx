@@ -18,7 +18,9 @@ import {
   UserPlus,
   Package,
   GripHorizontal,
-  X
+  X,
+  Zap,
+  CheckCircle2
 } from "lucide-react";
 import { 
   AreaChart, 
@@ -39,7 +41,7 @@ import {
 } from "recharts";
 import { motion, AnimatePresence, Reorder } from "motion/react";
 import { cn } from "@/src/lib/utils";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   collection, 
@@ -62,6 +64,7 @@ interface WidgetConfig {
 }
 
 const DEFAULT_CONFIG: WidgetConfig[] = [
+  { id: "intelligence", title: "توصيات مدارج الذكية للنمو", visible: true },
   { id: "quick_actions", title: "الإجراءات السريعة", visible: true },
   { id: "stats", title: "الإحصائيات السريعة", visible: true },
   { id: "payroll", title: "مسيرات الرواتب", visible: true },
@@ -85,7 +88,7 @@ const DEFAULT_QUICK_ACTIONS = [
   "payroll_report"
 ];
 
-function QuickActionsWidget({ quickActions, setQuickActions, user }: { quickActions: string[], setQuickActions: any, user: any }) {
+function QuickActionsWidget({ quickActions, setQuickActions, user, updateProfile }: { quickActions: string[], setQuickActions: any, user: any, updateProfile: any }) {
   const [isEditing, setIsEditing] = useState(false);
   const [localActions, setLocalActions] = useState(quickActions);
 
@@ -103,10 +106,7 @@ function QuickActionsWidget({ quickActions, setQuickActions, user }: { quickActi
     setIsEditing(false);
     if (user) {
       try {
-        await updateDoc(doc(db, "users", user.uid), {
-          quickActionsConfig: finalActions
-        });
-        toast.success("تم التحديث بنجاح");
+        await updateProfile({ quickActionsConfig: finalActions });
       } catch (err) {
          toast.error("حدث خطأ أثناء الحفظ");
       }
@@ -207,7 +207,9 @@ function QuickActionsWidget({ quickActions, setQuickActions, user }: { quickActi
 }
 
 export default function Dashboard() {
-  const { user } = useUser();
+  const { user, updateProfile } = useUser();
+  const location = useLocation();
+  const [showWelcomeModal, setShowWelcomeModal] = useState(location.state?.showWelcome || false);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [dashboardStats, setDashboardStats] = useState<any>(null);
   const [config, setConfig] = useState<WidgetConfig[]>(DEFAULT_CONFIG);
@@ -336,10 +338,7 @@ export default function Dashboard() {
     if (!user) return;
     setIsSaving(true);
     try {
-      await updateDoc(doc(db, "users", user.uid), {
-        dashboardConfig: config
-      });
-      toast.success("تم حفظ إعدادات الواجهة بنجاح");
+      await updateProfile({ dashboardConfig: config });
       setIsEditing(false);
     } catch (err) {
       toast.error("فشل في حفظ الإعدادات");
@@ -423,8 +422,90 @@ export default function Dashboard() {
 
   const renderWidget = (widgetId: string) => {
     switch (widgetId) {
+      case "intelligence":
+        return (
+          <section key="intelligence" className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-[2rem] border border-primary/20 shadow-sm p-6 relative overflow-hidden">
+            <div className="absolute -left-20 -top-20 w-64 h-64 bg-primary/20 rounded-full blur-[80px] pointer-events-none mix-blend-overlay" />
+            
+            <div className="flex items-center justify-between mb-8 relative z-10">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/10 border border-primary/10 rotate-3">
+                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+                </div>
+                <div>
+                  <h3 className="font-black text-2xl text-zinc-900 tracking-tight mb-1">محرك ذكاء مدارج للنمو (AI)</h3>
+                  <p className="text-xs font-black text-primary tracking-widest uppercase">توصيات مدارج الذكية المخصصة لك لتسريع المبيعات هذا الربع</p>
+                </div>
+              </div>
+              <Link to="/app/integrations" className="hidden sm:flex items-center gap-2 px-4 py-2 bg-white text-primary text-sm font-bold border border-primary/20 rounded-xl hover:bg-primary hover:text-white transition-all shadow-sm">
+                تصفح سوق التطبيقات المجاني
+                <ArrowUpRight className="w-4 h-4" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 relative z-10">
+              <Link to="/app/settings" className="bg-white p-6 rounded-3xl border border-primary/10 shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all group flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-2 bg-rose-50 text-rose-500 rounded-xl border border-rose-100">
+                      <MessageSquare className="w-5 h-5" />
+                    </div>
+                    <span className="text-[10px] font-black bg-rose-50 text-rose-600 px-2.5 py-1 rounded-full uppercase tracking-wider border border-rose-100 shadow-sm">عائد فوري</span>
+                  </div>
+                  <h4 className="font-black text-zinc-900 mb-2">أتمتة الواتساب + CRM</h4>
+                  <p className="text-xs text-zinc-500 leading-relaxed font-medium">
+                    لديك 12 عميل محتمل لم يتم متابعتهم. تفعيل ردود الواتساب التلقائية المدعومة من مدارج سيزيد نسبة الإغلاق بـ 40٪ فوراً.
+                  </p>
+                </div>
+                <div className="mt-6 flex items-center gap-2 text-xs font-black text-rose-600 group-hover:gap-3 transition-all">
+                  <span>تفعيل مجاني الآن</span>
+                  <ArrowUpRight className="w-4 h-4" />
+                </div>
+              </Link>
+              
+              <Link to="/app/integrations" className="bg-white p-6 rounded-3xl border border-primary/10 shadow-sm hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1 transition-all group flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-2 bg-blue-50 text-blue-500 rounded-xl border border-blue-100">
+                      <CheckCircle2 className="w-5 h-5" />
+                    </div>
+                    <span className="text-[10px] font-black bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full uppercase tracking-wider border border-blue-100 shadow-sm">حماية الثروة</span>
+                  </div>
+                  <h4 className="font-black text-zinc-900 mb-2">الربط المباشر بـ ZATCA</h4>
+                  <p className="text-xs text-zinc-500 leading-relaxed font-medium">
+                    تفادى الغرامات المدمّرة للمنشآت الناشئة. استخدم الربط المتكامل والمجاني مع هيئة الزكاة (المرحلة 2) من مدارج بضغطة زر.
+                  </p>
+                </div>
+                <div className="mt-6 flex items-center gap-2 text-xs font-black text-blue-600 group-hover:gap-3 transition-all">
+                  <span>بدء الربط مجاناً</span>
+                  <ArrowUpRight className="w-4 h-4" />
+                </div>
+              </Link>
+
+              <Link to="/app/settings" className="bg-gradient-to-br from-zinc-900 to-zinc-800 p-6 rounded-3xl border border-zinc-700 shadow-lg hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 transition-all group flex flex-col justify-between relative overflow-hidden text-white">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-2xl pointer-events-none" />
+                <div className="relative z-10">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-2 bg-white/10 text-white rounded-xl border border-white/5 backdrop-blur-md">
+                      <Zap className="w-5 h-5" />
+                    </div>
+                    <span className="text-[10px] font-black bg-primary text-white px-2.5 py-1 rounded-full uppercase tracking-wider shadow-[0_0_15px_rgba(16,185,129,0.5)]">برنامج الشركاء</span>
+                  </div>
+                  <h4 className="font-black text-white mb-2 text-lg">دعوة الموردين للشبكة</h4>
+                  <p className="text-xs text-zinc-400 leading-relaxed font-medium">
+                    شارك مدارج مع 3 من مورديك أو عملائك واستفد من 3 أشهر مجانية من باقة Premium + تفعيل مزامنة الفواتير المشتركة بينهم.
+                  </p>
+                </div>
+                <div className="mt-6 flex items-center gap-2 text-xs font-black text-primary group-hover:gap-3 transition-all relative z-10">
+                  <span>انسخ رابط الإحالة</span>
+                  <ArrowUpRight className="w-4 h-4" />
+                </div>
+              </Link>
+            </div>
+          </section>
+        );
       case "quick_actions":
-        return <QuickActionsWidget key="quick_actions" quickActions={quickActions} setQuickActions={setQuickActions} user={user} />;
+        return <QuickActionsWidget key="quick_actions" quickActions={quickActions} setQuickActions={setQuickActions} user={user} updateProfile={updateProfile} />;
       case "stats":
         return renderStats();
       case "payroll":
@@ -755,6 +836,50 @@ export default function Dashboard() {
           ))}
         </div>
       )}
+      
+      <AnimatePresence>
+        {showWelcomeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm"
+              onClick={() => setShowWelcomeModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-xl bg-white rounded-[2.5rem] p-8 shadow-2xl border border-zinc-100 flex flex-col items-center text-center overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 w-full h-32 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
+              <div className="w-16 h-16 bg-primary/10 text-primary rounded-3xl flex items-center justify-center mb-6 relative">
+                <CheckCircle2 className="w-8 h-8" />
+              </div>
+              <h2 className="text-2xl font-black text-zinc-900 mb-4">أهلاً بك في نظام مدارج المتكامل!</h2>
+              <p className="text-sm font-medium text-zinc-500 mb-8 leading-relaxed max-w-md">
+                لقد تم إعداد مساحة العمل الخاصة بك بنجاح. مدارج يربط مبيعاتك، فواتيرك، رواتب موظفيك والشحن في مكان واحد متصل ومؤتمت. نصيحتنا للبدء هي إضافة عملائك المحتملين أو الحاليين.
+              </p>
+              <div className="flex gap-4 w-full">
+                <Link
+                  to="/app/crm"
+                  className="flex-1 bg-primary text-white py-4 rounded-xl font-bold hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+                >
+                  <Users className="w-5 h-5" />
+                  الذهاب إلى العملاء المبيعات (CRM)
+                </Link>
+                <button
+                  onClick={() => setShowWelcomeModal(false)}
+                  className="px-6 py-4 rounded-xl font-bold text-zinc-500 bg-zinc-100 hover:bg-zinc-200 transition-colors"
+                >
+                  استكشاف اللوحة
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

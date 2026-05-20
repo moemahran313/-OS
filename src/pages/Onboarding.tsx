@@ -26,7 +26,7 @@ export default function Onboarding() {
     try {
       await updateProfile(formData);
       toast.success("تم إعداد حسابك بنجاح!");
-      navigate("/app");
+      navigate("/app", { state: { showWelcome: true } });
     } catch (error) {
       toast.error("حدث خطأ أثناء حفظ البيانات.");
     } finally {

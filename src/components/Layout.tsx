@@ -12,8 +12,10 @@ import {
   Sparkles,
   ShieldCheck,
   Calculator,
+  Blocks,
   Truck,
   CheckCircle2,
+  FileSignature,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Logo } from "@/src/components/Logo";
@@ -22,15 +24,18 @@ import { processBusinessCommand } from "@/src/services/aiService";
 import { useSettings } from "@/src/contexts/SettingsContext";
 import { useUser } from "@/src/contexts/UserContext";
 import { LogOut, ChevronDown, User as UserIcon, Bell } from "lucide-react";
+import { toast } from "sonner";
 
 const navigationData = [
   { name: "لوحة التحكم", id: "Dashboard", href: "/app", icon: LayoutDashboard },
   { name: "العملاء", id: "CRM", href: "/app/crm", icon: Users },
   { name: "الموردين", id: "Suppliers", href: "/app/suppliers", icon: Truck },
+  { name: "عقود العمل", id: "Contracts", href: "/app/contracts", icon: FileSignature },
   { name: "الموارد البشرية", id: "Compliance", href: "/app/fwcos", icon: ShieldCheck },
   { name: "محاكي السيناريوهات", id: "Simulator", href: "/app/simulator", icon: Calculator },
   { name: "الأدوات والحسابات", id: "Calculations", href: "/app/calculations", icon: Calculator },
   { name: "الفواتير", id: "Invoices", href: "/app/invoices", icon: FileText },
+  { name: "سوق التطبيقات والربط", id: "Integrations", href: "/app/integrations", icon: Blocks },
   { name: "الرواتب", id: "Payroll", href: "/app/payroll", icon: CreditCard },
   { name: "التقارير", id: "Analytics", href: "/app/analytics", icon: BarChart3 },
 ];
@@ -163,13 +168,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <Logo />
         </div>
 
-        <nav className="flex-1 px-4 py-4 space-y-1">
+        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto scroll-smooth">
           {filteredNavigation.map((item) => {
             const isActive = location.pathname === item.href;
             return (
               <Link
                 key={item.name}
                 to={item.href}
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group",
                   isActive
@@ -377,6 +383,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 )}
               </div>
               <ChevronDown className={cn("w-4 h-4 text-zinc-400 transition-transform", showProfileMenu && "rotate-180")} />
+            </button>
+            <button 
+              onClick={() => logout()}
+              className="flex items-center justify-center w-10 h-10 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
+              title="تسجيل الخروج"
+            >
+              <LogOut className="w-4 h-4" />
             </button>
 
             <AnimatePresence>

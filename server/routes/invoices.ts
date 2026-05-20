@@ -3,6 +3,7 @@ import puppeteer from "puppeteer";
 import { logAudit } from "../services/utils.js";
 import { authenticate } from "../middleware/auth.js";
 import { db } from "../services/firebase.js";
+import { executeWebhooks } from "../services/webhooks.js";
 
 const router = Router();
 
@@ -42,7 +43,7 @@ router.post("/", authenticate, async (req: any, res) => {
       currency, lineItems, subtotalHalalas, vatAmountHalalas, 
       totalAmountHalalas, status, paymentTerms, notes, 
       lateFee, branding, sectionOrder, statusConfig, zatcaConfig,
-      billingEmail, numberFormat
+      billingEmail, numberFormat, recurringConfig
     } = req.body;
 
     const invoiceId = `inv_${Date.now()}`;
@@ -73,6 +74,7 @@ router.post("/", authenticate, async (req: any, res) => {
       zatcaConfig: zatcaConfig || {},
       lateFeeConfig: lateFee || {},
       branding: branding || {},
+      recurringConfig: recurringConfig || {},
       logs: [{ action: "Created", timestamp: new Date().toISOString() }],
       isLocked: status !== "draft",
       version: 1,
@@ -105,7 +107,7 @@ router.put("/:id", authenticate, async (req: any, res) => {
 
     const { 
       lineItems, lateFee, branding, sectionOrder, statusConfig, zatcaConfig,
-      dueDate, isDraftAutoSave, ...rest 
+      dueDate, isDraftAutoSave, recurringConfig, ...rest 
     } = req.body;
 
     const currentLogs = Array.isArray(existing.logs) ? [...existing.logs] : [];
@@ -124,6 +126,7 @@ router.put("/:id", authenticate, async (req: any, res) => {
       lineItems: lineItems || existing.lineItems,
       lateFeeConfig: lateFee || existing.lateFeeConfig,
       branding: branding || existing.branding,
+      recurringConfig: recurringConfig || existing.recurringConfig,
       sectionOrder: sectionOrder || existing.sectionOrder,
       statusConfig: statusConfig || existing.statusConfig,
       zatcaConfig: zatcaConfig || existing.zatcaConfig,
@@ -168,6 +171,16 @@ router.post("/:id/payment", authenticate, async (req: any, res) => {
     });
 
     logAudit("FINANCE", { action: "Record Payment", id: req.params.id, amountHalalas }, { success: true }, req);
+    
+    if (newStatus === "paid") {
+      executeWebhooks(req.user.uid, "invoice.paid", {
+        invoiceNumber: inv.invoiceNumber,
+        clientName: inv.clientName,
+        total: (inv.totalAmountHalalas / 100).toFixed(2),
+        id: req.params.id
+      });
+    }
+    
     res.json({ success: true, status: newStatus });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

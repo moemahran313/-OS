@@ -1,4 +1,4 @@
-import html2canvas from "html2canvas";
+import { toPng } from 'html-to-image';
 import { jsPDF } from "jspdf";
 
 /**
@@ -14,15 +14,12 @@ export async function downloadElementAsPdf(elementId: string, fileName: string =
   }
 
   try {
-    // Capture the element using html2canvas
-    const canvas = await html2canvas(element, {
-      scale: 2, // Higher scale for better quality
-      useCORS: true, // Allow loading cross-origin images (like picsum)
-      logging: false,
+    // Capture the element using html-to-image to avoid oklab/oklch parser errors in html2canvas
+    const dataUrl = await toPng(element, {
+      quality: 1.0,
+      pixelRatio: 2, // Higher scale for better quality
       backgroundColor: "#ffffff",
     });
-
-    const imgData = canvas.toDataURL("image/png");
     
     // Create jsPDF instance
     // A4 size: 210mm x 297mm
@@ -32,11 +29,11 @@ export async function downloadElementAsPdf(elementId: string, fileName: string =
       format: "a4",
     });
 
-    const imgProps = pdf.getImageProperties(imgData);
+    const imgProps = pdf.getImageProperties(dataUrl);
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+    pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
     pdf.save(fileName);
   } catch (error) {
     console.error("Error generating PDF:", error);

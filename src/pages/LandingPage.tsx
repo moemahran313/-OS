@@ -50,10 +50,11 @@ const HeroSection = () => {
            initial={{ opacity: 0, y: 20, scale: 0.9 }}
            animate={{ opacity: 1, y: 0, scale: 1 }}
            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 shadow-2xl"
+           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 shadow-2xl relative overflow-hidden"
         >
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-transparent animate-pulse" />
           <Sparkles className="w-4 h-4 text-emerald-400" />
-          <span className="text-sm font-semibold text-zinc-300">مستقبل الأعمال الذكية في الخليج</span>
+          <span className="text-sm font-semibold text-zinc-300">أتمتة كاملة لشركتك بذكاء الاصطناعي</span>
         </motion.div>
 
         <motion.h1 
@@ -62,8 +63,8 @@ const HeroSection = () => {
            transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
            className="text-6xl md:text-8xl font-black tracking-tight mb-6 mt-4 leading-[1.1] max-w-5xl"
         >
-          أدِر عملك بالكامل <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-primary to-emerald-400 drop-shadow-[0_0_30px_rgba(16,185,129,0.3)]">من مكان واحد</span>
+          نظام تشغيل <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-primary to-emerald-400 drop-shadow-[0_0_30px_rgba(16,185,129,0.3)]">لا يقدر بثمن.</span>
         </motion.h1>
 
         <motion.p
@@ -72,25 +73,46 @@ const HeroSection = () => {
            transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
            className="text-lg md:text-2xl text-zinc-400 font-medium max-w-3xl mb-12 leading-relaxed"
         >
-          نظام التشغيل الذكي للأعمال في الخليج. CRM، الفواتير، الرواتب، وواتساب — كل شيء يعمل معك تلقائياً لشركتك.
+          كل ما تحتاجه للنمو السريع. CRM، فواتير ZATCA، رواتب مقيم، وتذكيرات واتساب — <span className="text-white font-bold">جميعها مدمجة ومجانية 100%</span> مع باقتك.
         </motion.p>
 
         <motion.div
            initial={{ opacity: 0, y: 20 }}
            animate={{ opacity: 1, y: 0 }}
            transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-           className="flex flex-col sm:flex-row gap-4 items-center"
+           className="flex flex-col sm:flex-row gap-4 items-center mb-16"
         >
-          <Link to="/app" className="group relative inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-zinc-950 font-black rounded-2xl text-lg hover:scale-105 active:scale-95 transition-all outline-none focus:ring-4 focus:ring-white/20">
+          <Link to="/app" className="group relative inline-flex items-center justify-center gap-3 px-10 py-5 bg-white text-zinc-950 font-black rounded-2xl text-lg hover:scale-105 active:scale-95 transition-all outline-none focus:ring-4 focus:ring-white/20">
+             <div className="absolute -top-3 -right-3 bg-red-500 text-white text-[10px] uppercase font-black tracking-widest py-1 px-3 rounded-full shadow-lg -rotate-12 animate-bounce">
+                خيار الخبراء
+             </div>
             <span>ابدأ مجاناً الآن</span>
             <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            <div className="absolute inset-0 rounded-2xl ring-1 ring-white/50 shadow-[0_0_30px_rgba(255,255,255,0.5)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute inset-0 rounded-2xl ring-1 ring-white/50 shadow-[0_0_40px_rgba(255,255,255,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           </Link>
-          <button className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-white/5 border border-white/10 text-white font-bold rounded-2xl text-lg hover:bg-white/10 transition-all outline-none focus:ring-4 focus:ring-white/10 group overflow-hidden relative">
+          <button className="inline-flex items-center justify-center gap-3 px-8 py-5 bg-white/5 border border-white/10 text-white font-bold rounded-2xl text-lg hover:bg-white/10 transition-all outline-none focus:ring-4 focus:ring-white/10 group overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
             <Play className="w-5 h-5 z-10" fill="currentColor" />
-            <span className="z-10">شاهد كيف يعمل</span>
+            <span className="z-10">شاهد كيف ينمو عملك</span>
           </button>
+        </motion.div>
+
+        {/* Free Integrations Badges */}
+        <motion.div
+           initial={{ opacity: 0, y: 20 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+           className="w-full max-w-5xl"
+        >
+          <p className="text-sm font-black text-zinc-500 mb-8 uppercase tracking-widest text-center">يربط كل هذه المنصات مجاناً للأبد</p>
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-14">
+            <img src="data:image/svg+xml;utf8,%3Csvg viewBox='0 0 60 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10,2 L15,10 L10,18 L5,10 Z' fill='%231d8c7c'/%3E%3Ctext x='20' y='14' font-family='sans-serif' font-weight='800' font-size='11' fill='%231d8c7c'%3EZATCA%3C/text%3E%3C/svg%3E" alt="ZATCA" className="h-10 md:h-12 object-contain opacity-40 hover:opacity-100 transition-all duration-500 cursor-pointer" title="هيئة الزكاة والضريبة والجمارك" />
+            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="h-8 md:h-10 object-contain brightness-0 invert opacity-40 hover:opacity-100 hover:brightness-100 hover:invert-0 transition-all duration-500 cursor-pointer" title="WhatsApp Cloud API" />
+            <img src="https://cdn.salla.network/images/logo/logo.svg" alt="Salla" className="h-8 md:h-10 object-contain brightness-0 invert opacity-40 hover:opacity-100 hover:brightness-100 hover:invert-0 transition-all duration-500 cursor-pointer" title="سلة" />
+            <img src="data:image/svg+xml;utf8,%3Csvg viewBox='0 0 60 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10,4 C14,4 16,8 10,12 C4,8 6,4 10,4 Z' fill='%237E57C2'/%3E%3Ctext x='20' y='14' font-family='sans-serif' font-weight='800' font-size='12' fill='%237E57C2'%3Ezid%3C/text%3E%3C/svg%3E" alt="Zid" className="h-8 md:h-10 object-contain opacity-40 hover:opacity-100 transition-all duration-500 cursor-pointer" title="زد" />
+            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b9/Slack_Technologies_Logo.svg" alt="Slack" className="h-8 md:h-10 object-contain brightness-0 invert opacity-40 hover:opacity-100 hover:brightness-100 hover:invert-0 transition-all duration-500 cursor-pointer" title="Slack" />
+            <img src="https://cdn.worldvectorlogo.com/logos/zapier-2.svg" alt="Zapier" className="h-8 md:h-10 object-contain brightness-0 invert opacity-40 hover:opacity-100 hover:brightness-100 hover:invert-0 transition-all duration-500 cursor-pointer" title="Zapier" />
+          </div>
         </motion.div>
 
         {/* Abstract Floating UI Hero Element */}
@@ -531,10 +553,10 @@ const PricingSection = () => {
                   <p className="text-zinc-400 text-sm font-medium mb-6 relative z-10">للشركات الصغيرة الطموحة</p>
                   <div className="text-5xl font-black mb-8 flex items-baseline gap-2 relative z-10">299 <span className="text-xl text-zinc-500 font-medium tracking-tight">ريال / شهرياً</span></div>
                   <ul className="space-y-4 mb-10 text-zinc-300 font-medium relative z-10">
-                     <li className="flex gap-3 items-center group/item"><CheckCircle2 className="w-5 h-5 text-primary group-hover/item:scale-125 transition-transform" /> عملاء لامحدود (CRM)</li>
-                     <li className="flex gap-3 items-center group/item"><CheckCircle2 className="w-5 h-5 text-primary group-hover/item:scale-125 transition-transform" /> ربط رسائل واتساب (1 رقم)</li>
-                     <li className="flex gap-3 items-center group/item"><CheckCircle2 className="w-5 h-5 text-primary group-hover/item:scale-125 transition-transform" /> جميع أدوات (FWC-OS)</li>
-                     <li className="flex gap-3 items-center group/item"><CheckCircle2 className="w-5 h-5 text-primary group-hover/item:scale-125 transition-transform" /> مساعد الذكاء الاصطناعي</li>
+                     <li className="flex gap-3 items-center group/item"><CheckCircle2 className="w-5 h-5 text-primary group-hover/item:scale-125 transition-transform shrink-0" /> <span className="font-bold text-white">ترخيص ZATCA المرحلة الثانية مدعوم</span></li>
+                     <li className="flex gap-3 items-center group/item"><CheckCircle2 className="w-5 h-5 text-primary group-hover/item:scale-125 transition-transform shrink-0" /> ربط ZATCA المرحلة 2 مباشر (مجاني)</li>
+                     <li className="flex gap-3 items-center group/item"><CheckCircle2 className="w-5 h-5 text-primary group-hover/item:scale-125 transition-transform shrink-0" /> جميع أدوات (FWC-OS و ImportOS)</li>
+                     <li className="flex gap-3 items-center group/item"><CheckCircle2 className="w-5 h-5 text-primary group-hover/item:scale-125 transition-transform shrink-0" /> برنامج الشركاء: شهرين مجاناً لكل دعوة</li>
                   </ul>
                   <button className="w-full py-4 rounded-xl bg-primary text-white font-black hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-primary/20 transition-all text-lg relative z-10 overflow-hidden group/btn">
                      <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover/btn:translate-y-[0%] transition-transform duration-300" />

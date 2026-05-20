@@ -83,6 +83,12 @@ export interface Invoice {
   corrections?: CorrectionNote[];
   version: number;
   isLocked: boolean;
+  recurringConfig?: {
+    active: boolean;
+    frequency: 'weekly' | 'monthly' | 'yearly';
+    communicationFrequency: 'invoice_only' | 'auto_reminders';
+    nextRunDate: string;
+  };
 }
 
 export interface User {

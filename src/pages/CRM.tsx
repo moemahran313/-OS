@@ -89,6 +89,12 @@ interface Client {
     primaryColor?: string;
     language?: "ar" | "en";
   };
+  defaultLineItems?: Array<{
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    taxRate: number;
+  }>;
   userId: string;
 }
 
@@ -954,6 +960,59 @@ export default function CRM() {
                         English
                       </button>
                     </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest flex items-center gap-2">
+                       <ListOrdered className="w-3 h-3" />
+                       البنود الافتراضية
+                    </label>
+                    <p className="text-[10px] text-zinc-500 pr-1 leading-relaxed">
+                       قم بتحديد البنود الافتراضية التي تتم إضافتها تلقائياً عند إنشاء فاتورة جديدة لهذا العميل.
+                    </p>
+                    <button 
+                       onClick={() => {
+                          const currentItems = editingClient.defaultLineItems || [];
+                          setEditingClient({
+                             ...editingClient,
+                             defaultLineItems: [...currentItems, { name: "خدمات تصميم", quantity: 1, unitPrice: 100, taxRate: 15 }]
+                          })
+                       }}
+                       className="w-full py-2 bg-white/10 text-white border border-white/20 rounded-xl text-xs font-bold hover:bg-white/20 transition-all flex items-center justify-center gap-2"
+                    >
+                       <Plus className="w-3 h-3" />
+                       إضافة بند افتراضي
+                    </button>
+                    {(editingClient.defaultLineItems || []).map((item: any, i: number) => (
+                       <div key={i} className="flex flex-col gap-2 p-3 bg-black/20 rounded-xl border border-white/5">
+                          <input 
+                             value={item.name} 
+                             onChange={(e) => {
+                                const newItems = [...(editingClient.defaultLineItems || [])];
+                                newItems[i].name = e.target.value;
+                                setEditingClient({...editingClient, defaultLineItems: newItems});
+                             }}
+                             className="w-full bg-transparent text-white text-xs font-bold border-b border-white/20 pb-1 focus:border-white focus:outline-none" 
+                             placeholder="وصف البند"
+                          />
+                          <div className="flex gap-2">
+                             <input type="number" value={Number.isNaN(item.quantity) ? "" : item.quantity} onChange={(e) => {
+                                const newItems = [...editingClient.defaultLineItems];
+                                newItems[i].quantity = Number(e.target.value);
+                                setEditingClient({...editingClient, defaultLineItems: newItems});
+                             }} className="w-16 bg-transparent text-center text-white text-xs border-b border-white/20 pb-1" placeholder="الكمية" />
+                             <input type="number" value={Number.isNaN(item.unitPrice) ? "" : item.unitPrice} onChange={(e) => {
+                                const newItems = [...editingClient.defaultLineItems];
+                                newItems[i].unitPrice = Number(e.target.value);
+                                setEditingClient({...editingClient, defaultLineItems: newItems});
+                             }} className="flex-1 bg-transparent text-center text-white text-xs border-b border-white/20 pb-1" placeholder="السعر" />
+                             <button onClick={() => {
+                                const newItems = editingClient.defaultLineItems.filter((_: any, idx: number) => idx !== i);
+                                setEditingClient({...editingClient, defaultLineItems: newItems});
+                             }} className="text-rose-400 p-1"><X className="w-3 h-3"/></button>
+                          </div>
+                       </div>
+                    ))}
                   </div>
                 </div>
               </div>

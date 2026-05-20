@@ -15,12 +15,14 @@ import { Invoice } from "@/src/types";
 import { downloadElementAsPdf } from "@/src/lib/pdf";
 
 import InvoicePrintTemplate from "@/src/components/InvoicePrintTemplate";
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
 export default function PublicInvoiceView() {
   const { id } = useParams();
   const isPrintMode = new URLSearchParams(window.location.search).get('print') === 'true';
 
   const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [paypalClientId, setPaypalClientId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [paid, setPaid] = useState(false);
@@ -38,8 +40,12 @@ export default function PublicInvoiceView() {
       .then(res => res.json())
       .then(data => {
         setInvoice(data);
+        if (data.paypalClientId) {
+          setPaypalClientId(data.paypalClientId);
+        }
         setLoading(false);
-        setPaymentAmount(((data.remainingBalanceHalalas || data.totalAmountHalalas) / 100).toString());
+        const balance = data.remainingBalanceHalalas ?? data.totalAmountHalalas ?? 0;
+        setPaymentAmount(Number.isNaN(balance) ? "" : (balance / 100).toString());
         
         // Track the view
         if (!isPrintMode) {
@@ -137,6 +143,38 @@ export default function PublicInvoiceView() {
                       </div>
 
                       <div className="grid grid-cols-2 gap-2">
+                        {paypalClientId ? (
+                          <div className="col-span-2 relative z-0 min-h-[45px]">
+                            <PayPalScriptProvider options={{ clientId: paypalClientId, currency: "USD", components: "buttons" }}>
+                               <PayPalButtons
+                                 style={{ layout: "vertical", height: 45, color: "gold", shape: "rect", label: "paypal" }}
+                                 createOrder={(data, actions) => {
+                                   return actions.order.create({
+                                     intent: "CAPTURE",
+                                     purchase_units: [
+                                       {
+                                         amount: {
+                                           currency_code: invoice.currency === "SAR" ? "USD" : invoice.currency,
+                                           value: (invoice.currency === "SAR" ? (Number(paymentAmount) / 3.75) : Number(paymentAmount)).toFixed(2),
+                                         },
+                                       },
+                                     ],
+                                     application_context: {
+                                       shipping_preference: "NO_SHIPPING"
+                                     }
+                                   });
+                                 }}
+                                 onApprove={async (data, actions) => {
+                                   if (!actions.order) return;
+                                   await actions.order.capture();
+                                   // Mark as paid on the backend
+                                   await handlePayment();
+                                 }}
+                               />
+                            </PayPalScriptProvider>
+                          </div>
+                        ) : null}
+
                         <button 
                           onClick={handlePayment}
                           disabled={paying}

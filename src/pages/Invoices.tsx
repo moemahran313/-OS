@@ -179,7 +179,19 @@ export default function Invoices() {
   const handleDownload = async (inv: Invoice) => {
     setDownloadingInv(inv);
     try {
-      // For now, let's use client-side generation for simplicity in this migration
+      // Wait for the hidden div to be rendered in the DOM
+      let el = null;
+      for (let i = 0; i < 20; i++) {
+        await new Promise(r => setTimeout(r, 50));
+        el = document.getElementById(`pdf-source-${inv.id}`);
+        if (el) break;
+      }
+      if (!el) {
+        console.error(`Element with ID pdf-source-${inv.id} not found.`);
+        return;
+      }
+      // Add a small extra delay for any fonts or images to load
+      await new Promise(resolve => setTimeout(resolve, 200));
       await downloadElementAsPdf(`pdf-source-${inv.id}`, `Invoice-${inv.number}.pdf`);
     } catch (e) {
       console.error(e);
@@ -392,13 +404,13 @@ export default function Invoices() {
                     <div className="flex justify-center">
                       <div className={cn(
                         "inline-flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold border whitespace-nowrap text-center transition-all",
-                        statusConfig[inv.status].bg,
-                        statusConfig[inv.status].color,
-                        statusConfig[inv.status].border
+                        (statusConfig[inv.status as keyof typeof statusConfig] || statusConfig.draft).bg,
+                        (statusConfig[inv.status as keyof typeof statusConfig] || statusConfig.draft).color,
+                        (statusConfig[inv.status as keyof typeof statusConfig] || statusConfig.draft).border
                       )}>
                         <div className="flex items-center gap-1">
-                          {React.createElement(statusConfig[inv.status].icon, { className: "w-3 h-3" })}
-                          {statusConfig[inv.status].label}
+                          {React.createElement((statusConfig[inv.status as keyof typeof statusConfig] || statusConfig.draft).icon, { className: "w-3 h-3" })}
+                          {(statusConfig[inv.status as keyof typeof statusConfig] || statusConfig.draft).label}
                         </div>
                         {inv.status === 'partially paid' && (
                           <div className="mt-1 pt-1 border-t border-blue-100/50 w-full flex flex-col gap-0.5">
@@ -670,7 +682,7 @@ export default function Invoices() {
                         <div className="relative">
                             <input 
                                 type="number"
-                                value={correctionData.amount}
+                                value={Number.isNaN(correctionData.amount) ? "" : correctionData.amount}
                                 onChange={(e) => setCorrectionData({...correctionData, amount: Number(e.target.value)})}
                                 className="w-full bg-zinc-50 border border-zinc-100 rounded-2xl px-5 py-4 font-black text-lg focus:ring-4 focus:ring-zinc-100 outline-none transition-all"
                             />
@@ -731,7 +743,7 @@ export default function Invoices() {
                        type="number" 
                        min="1"
                        max="30"
-                       value={remindersConfig.beforeDays}
+                       value={Number.isNaN(remindersConfig.beforeDays) ? "" : remindersConfig.beforeDays}
                        onChange={(e) => setRemindersConfig({ ...remindersConfig, beforeDays: Number(e.target.value) })}
                        className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-zinc-900/20 outline-none transition-all"
                      />
@@ -742,7 +754,7 @@ export default function Invoices() {
                        type="number" 
                        min="1"
                        max="30"
-                       value={remindersConfig.afterDays}
+                       value={Number.isNaN(remindersConfig.afterDays) ? "" : remindersConfig.afterDays}
                        onChange={(e) => setRemindersConfig({ ...remindersConfig, afterDays: Number(e.target.value) })}
                        className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-zinc-900/20 outline-none transition-all"
                      />

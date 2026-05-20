@@ -15,6 +15,9 @@ export interface Settings {
   language: string;
   timezone: string;
   emailNotifications: boolean;
+  emailNotif_newLeads: "immediately" | "daily" | "weekly" | "disabled";
+  emailNotif_invoiceReminders: "immediately" | "daily" | "weekly" | "disabled";
+  emailNotif_payrollSummaries: "weekly" | "monthly" | "disabled";
   pushNotifications: boolean;
   systemAlerts: boolean;
   wpsAlerts: boolean;
@@ -22,6 +25,10 @@ export interface Settings {
   contractReminderDays: number;
   theme: "light" | "dark" | "system";
   primaryColor: string;
+  zapierWebhookNewLead?: string;
+  zapierWebhookInvoicePaid?: string;
+  slackWebhookUrl?: string;
+  paypalClientId?: string;
 }
 
 const defaultSettings: Settings = {
@@ -35,6 +42,9 @@ const defaultSettings: Settings = {
   language: "ar",
   timezone: "Asia/Riyadh",
   emailNotifications: true,
+  emailNotif_newLeads: "immediately",
+  emailNotif_invoiceReminders: "daily",
+  emailNotif_payrollSummaries: "weekly",
   pushNotifications: false,
   systemAlerts: true,
   wpsAlerts: true,

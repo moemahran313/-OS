@@ -28,6 +28,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/src/lib/utils";
 import { LineItem, InvoiceBranding, Invoice } from "@/src/types";
 import { useUser } from "@/src/contexts/UserContext";
+import { Joyride, Step } from "react-joyride";
 
 interface InvoiceBuilderProps {
   onSave: (invoice: Partial<Invoice>) => void;
@@ -84,7 +85,14 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
     prevHash: "NWZlY2ViOTY5NGM1NDllMmJlZTIyOGM3MGVjYmY3YmNmZDRjMGFhNA=="
   });
 
-  const [sectionOrder, setSectionOrder] = useState<string[]>(initialData?.sectionOrder || ['branding', 'details', 'items', 'terms', 'notes']);
+  const [sectionOrder, setSectionOrder] = useState<string[]>(initialData?.sectionOrder || ['details', 'items', 'branding', 'recurring', 'terms', 'notes']);
+  
+  const [recurringConfig, setRecurringConfig] = useState(initialData?.recurringConfig || {
+    active: false,
+    frequency: 'monthly' as const,
+    communicationFrequency: 'invoice_only' as const,
+    nextRunDate: ''
+  });
 
   const [versions, setVersions] = useState<any[]>(initialData?.logs || []);
   const [versionNote, setVersionNote] = useState("");
@@ -95,6 +103,47 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
 
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null);
+  const [runTour, setRunTour] = useState(false);
+
+  useEffect(() => {
+    // Only run tour if creating a new invoice and it hasn't been shown before
+    const hasSeenTour = localStorage.getItem('invoice_builder_tour_seen');
+    if (!hasSeenTour && !initialData?.id) {
+      setTimeout(() => setRunTour(true), 1000);
+    }
+  }, [initialData?.id]);
+
+  const handleJoyrideCallback = (data: any) => {
+    const { status } = data;
+    const finishedStatuses = ['finished', 'skipped'];
+    if (finishedStatuses.includes(status)) {
+      setRunTour(false);
+      localStorage.setItem('invoice_builder_tour_seen', 'true');
+    }
+  };
+
+  const steps: Step[] = [
+    {
+      target: '.tour-step-details',
+      content: 'ابدأ باختيار عميل مسجل أو إدخال تفاصيل العميل الجديد.',
+    },
+    {
+      target: '.tour-step-items',
+      content: 'أضف المنتجات أو الخدمات هنا. يمكنك تغيير الأسعار والكميات وتحديث الضريبة.',
+    },
+    {
+      target: '.tour-step-branding',
+      content: 'قم بتخصيص فاتورتك! ارفع شعارك وقم بتغيير اللون ليتناسب مع هويتك.',
+    },
+    {
+      target: '.tour-step-zatca',
+      content: 'إذا كانت منشأتك تخضع لمتطلبات هيئة الزكاة المرحلة الثانية، أضف رقمك الضريبي هنا والبيانات الأخرى.',
+    },
+    {
+      target: '.tour-step-save',
+      content: 'حفظ المسودة أو إرسال الفاتورة عبر الإيميل أو استخراجها كملف PDF يتم كله من هنا.',
+    }
+  ];
 
   // Auto-versioning logic (debounced)
   useEffect(() => {
@@ -173,9 +222,9 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
           id: Math.random().toString(36).substr(2, 9),
           name: item.name || "",
           quantity: item.quantity || 1,
-          unitPrice: item.unitPrice || 0,
+          unitPriceHalalas: (item.unitPrice || 0) * 100,
           taxRate: item.taxRate || 15,
-          total: (item.quantity || 1) * (item.unitPrice || 0) * (1 + (item.taxRate || 15) / 100)
+          totalHalalas: Math.round(((item.quantity || 1) * ((item.unitPrice || 0) * 100)) * (1 + (item.taxRate || 15) / 100))
         }));
         setLineItems(newItems);
       }
@@ -342,6 +391,19 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
     img.src = url;
   };
 
+  const isValidZatcaVat = (vat: string | undefined) => {
+    if (!vat) return true; // Empty is considered valid here, we check required in UI
+    return /^\d{15}$/.test(vat) && vat.startsWith('3') && vat.endsWith('3');
+  };
+
+  const sellerVatError = zatcaConfig.sellerVat && !isValidZatcaVat(zatcaConfig.sellerVat) 
+    ? "الرقم الضريبي للمورد يجب أن يكون 15 رقماً ويبدأ وينتهي برقم 3" 
+    : "";
+  const buyerVatError = zatcaConfig.buyerVat && !isValidZatcaVat(zatcaConfig.buyerVat) 
+    ? "الرقم الضريبي للعميل يجب أن يكون 15 رقماً ويبدأ وينتهي برقم 3" 
+    : "";
+  const hasZatcaErrors = !!sellerVatError || !!buyerVatError;
+
   const calculateTotals = () => {
     const subtotalHalalas = lineItems.reduce((acc, item) => acc + (item.quantity * item.unitPriceHalalas), 0);
     const vatAmountHalalas = lineItems.reduce((acc, item) => acc + ((item.quantity * item.unitPriceHalalas) * (item.taxRate / 100)), 0);
@@ -375,6 +437,69 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
       totalAmountHalalas: Math.round(totalAmountHalalas),
       lateFeeAmountHalalas: Math.round(lateFeeAmountHalalas)
     };
+  };
+  
+  // Helper to generate complementary colors
+  const getComplementaryColors = (hex: string) => {
+    // Basic hex to HSL (simplified)
+    let r = parseInt(hex.substring(1,3), 16) / 255;
+    let g = parseInt(hex.substring(3,5), 16) / 255;
+    let b = parseInt(hex.substring(5,7), 16) / 255;
+    
+    if (isNaN(r) || isNaN(g) || isNaN(b)) {
+      return ["#10b981", "#3b82f6", "#6366f1", "#f43f5e", "#f59e0b"]; // fallback
+    }
+
+    let max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s, l = (max + min) / 2;
+
+    if(max === min){
+        h = s = 0; // achromatic
+    } else {
+        let d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch(max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+    }
+    
+    const hslToHex = (h: number, s: number, l: number) => {
+        let r, g, b;
+        if(s === 0){
+            r = g = b = l; 
+        } else {
+            const hue2rgb = (p: number, q: number, t: number) => {
+                if(t < 0) t += 1;
+                if(t > 1) t -= 1;
+                if(t < 1/6) return p + (q - p) * 6 * t;
+                if(t < 1/2) return q;
+                if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+            }
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = hue2rgb(p, q, h + 1/3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1/3);
+        }
+        const toHex = (x: number) => {
+            const hex = Math.round(x * 255).toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        };
+        return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+    };
+
+    // Return the base color, its complement (+180 deg), and two triadic (+120, +240) and analogous (+30)
+    return [
+      hex,
+      hslToHex((h + 0.5) % 1, s, l),       // Complementary
+      hslToHex((h + 1/3) % 1, s, l),       // Triadic 1
+      hslToHex((h + 2/3) % 1, s, l),       // Triadic 2
+      hslToHex((h + 1/12) % 1, s, l),      // Analogous 
+    ];
   };
 
   const { subtotal, vatAmount, totalAmount, lateFeeAmount, subtotalHalalas, vatAmountHalalas, totalAmountHalalas, lateFeeAmountHalalas } = calculateTotals();
@@ -411,6 +536,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
       },
       numberFormat,
       sectionOrder,
+      recurringConfig,
       statusConfig,
       zatcaConfig
     };
@@ -444,6 +570,10 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
   };
 
   const handleSaveDraft = async () => {
+    if (hasZatcaErrors) {
+      alert("الرجاء تصحيح أخطاء الرقم الضريبي (ZATCA) قبل الحفظ");
+      return;
+    }
     const currentDraft = getCurrentDraft();
     setVersions(prev => [
       { 
@@ -571,7 +701,13 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
       value: draft.lateFee?.type === 'fixed' ? (draft.lateFee.valueHalalas / 100) : (draft.lateFee?.value || 0),
       overdueDays: draft.lateFee?.overdueDays || 0
     });
-    setSectionOrder(draft.sectionOrder || ['details', 'items', 'terms', 'notes']);
+    setSectionOrder(draft.sectionOrder || ['details', 'items', 'branding', 'recurring', 'terms', 'notes']);
+    setRecurringConfig(draft.recurringConfig || {
+      active: false,
+      frequency: 'monthly',
+      communicationFrequency: 'invoice_only',
+      nextRunDate: ''
+    });
     setStatusConfig(draft.statusConfig || {
       draft: { label: "مسودة", color: "#71717a" },
       sent: { label: "مرسلة", color: "#3b82f6" },
@@ -594,7 +730,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
 
   return (
     <div className="relative bg-white rounded-3xl border border-zinc-100 shadow-xl overflow-hidden flex flex-col h-[85vh]">
-      <header className="px-8 py-6 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
+      <header className="px-4 md:px-8 py-6 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
         <div className="flex items-center gap-4">
           <button onClick={onCancel} className="p-2 hover:bg-white rounded-xl transition-all">
             <ArrowRight className="w-5 h-5 rtl:rotate-0 rotate-180" />
@@ -613,24 +749,38 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
             )}
           </div>
         </div>
-            <div className="flex gap-3">
-              <button onClick={() => setShowAdvancedSettings(!showAdvancedSettings)} className="flex items-center gap-2 bg-zinc-100 text-zinc-900 px-4 py-2 rounded-xl font-bold text-xs hover:bg-zinc-200 transition-all">
+            <div className="flex gap-2 md:gap-3 flex-wrap">
+              <button onClick={() => setShowAdvancedSettings(!showAdvancedSettings)} className="flex items-center gap-2 bg-zinc-100 text-zinc-900 px-3 md:px-4 py-2 rounded-xl font-bold text-xs hover:bg-zinc-200 transition-all">
                 <Settings className="w-4 h-4" />
-                <span>إعدادات متقدمة</span>
+                <span className="hidden md:inline">إعدادات متقدمة</span>
               </button>
               <button 
                 onClick={() => setShowHistory(true)} 
-                className="flex items-center gap-2 bg-zinc-100 text-zinc-900 px-4 py-2 rounded-xl font-bold text-xs hover:bg-zinc-200 transition-all"
+                className="flex items-center gap-2 bg-zinc-100 text-zinc-900 px-3 md:px-4 py-2 rounded-xl font-bold text-xs hover:bg-zinc-200 transition-all"
               >
                 <History className="w-4 h-4" />
-                <span>سجل النسخ ({versions.length})</span>
+                <span className="hidden md:inline">سجل النسخ ({versions.length})</span>
               </button>
             </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto flex">
+      <div className="flex-1 overflow-y-auto flex flex-col lg:flex-row">
+        <Joyride
+          {...{
+            steps,
+            run: runTour,
+            continuous: true,
+            showSkipButton: true,
+            showProgress: true,
+            callback: handleJoyrideCallback,
+            styles: {
+              options: { primaryColor: '#10b981', zIndex: 1000 }
+            },
+            locale: { back: 'السابق', close: 'إغلاق', last: 'إنهاء', next: 'التالي', skip: 'تخطي' }
+          } as any}
+        />
         {/* Form Area */}
-        <div className="flex-1 p-8 space-y-12 border-l border-zinc-100">
+        <div className="flex-1 p-4 md:p-8 space-y-12 border-b lg:border-b-0 rtl:lg:border-l ltr:lg:border-r border-zinc-100">
           <DragDropContext onDragEnd={(result) => {
             if (!result.destination) return;
             const items = Array.from(sectionOrder);
@@ -675,7 +825,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                           </div>
 
                 {sectionId === 'branding' && (
-                  <div className="p-6 bg-zinc-50 border border-zinc-100 rounded-3xl space-y-6">
+                  <div className="tour-step-branding p-6 bg-zinc-50 border border-zinc-100 rounded-3xl space-y-6">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center font-black">
                         <Palette className="w-6 h-6" />
@@ -732,12 +882,13 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                            />
                         </div>
                         <div className="flex gap-2 justify-center">
-                          {["#10b981", "#3b82f6", "#6366f1", "#f43f5e", "#f59e0b"].map(c => (
+                          {getComplementaryColors(branding.primaryColor || "#10b981").map((c, idx) => (
                             <button 
-                              key={c}
+                              key={`${c}-${idx}`}
                               onClick={() => setBranding({...branding, primaryColor: c})}
                               className={cn("w-6 h-6 rounded-lg", branding.primaryColor === c && "ring-2 ring-primary ring-offset-2 shadow-lg")}
                               style={{ backgroundColor: c }}
+                              title={idx === 0 ? "الأساسي" : idx === 1 ? "مكمل" : "مقترح"}
                             />
                           ))}
                         </div>
@@ -775,7 +926,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                 )}
 
                 {sectionId === 'details' && (
-                  <div className="grid grid-cols-2 gap-6 p-4">
+                  <div className="tour-step-details grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
                     <div className="col-span-2 space-y-2">
                       <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">اختيار عميل مسجل</label>
                       <select 
@@ -807,6 +958,17 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                         onChange={(e) => setClientEmail(e.target.value)}
                         placeholder="client@example.com"
                         className="w-full bg-zinc-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 font-bold"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">رقم جوال العميل</label>
+                      <input 
+                        type="tel" 
+                        value={clientPhone}
+                        onChange={(e) => setClientPhone(e.target.value)}
+                        placeholder="مثلاً: 0500000000"
+                        className="w-full bg-zinc-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 font-bold text-left rtl:text-right"
+                        dir="ltr"
                       />
                     </div>
                     <div className="space-y-2">
@@ -845,7 +1007,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                 )}
 
                 {sectionId === 'items' && (
-                  <div className="space-y-4 p-4">
+                  <div className="tour-step-items space-y-4 p-4">
                     <div className="flex justify-between items-center">
                       <h3 className="font-black text-sm text-zinc-900">بنود الفاتورة</h3>
                       <button 
@@ -879,14 +1041,26 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                                 className="w-full bg-zinc-50 border-none rounded-xl px-4 py-2.5 text-xs font-bold focus:ring-2 focus:ring-primary/20"
                               />
                               {item.customFields && item.customFields.length > 0 && (
-                                <div className="flex flex-wrap gap-2">
+                                <div className="flex flex-col gap-2 mt-2">
                                   {item.customFields.map((cf, cidx) => (
-                                    <div key={cidx} className="flex items-center gap-1 bg-primary/10 rounded-lg pl-1 pr-2 py-0.5 border border-primary/20 animate-in fade-in slide-in-from-left-1">
-                                      <span className="text-[8px] font-black text-primary px-1">{cf.key || 'بدون إسم'}</span>
-                                      <span className="text-primary/30 uppercase text-[8px] font-bold">|</span>
-                                      <span className="text-[9px] font-bold text-zinc-900 px-1">{cf.value || '...'}</span>
-                                      <button onClick={() => removeCustomField(item.id, cidx)} className="text-primary/40 hover:text-rose-500 transition-colors">
-                                        <Trash2 className="w-2.5 h-2.5" />
+                                    <div key={cidx} className="flex items-center gap-2 bg-primary/5 rounded-lg p-1 border border-primary/10 animate-in fade-in slide-in-from-left-1">
+                                      <input 
+                                        type="text" 
+                                        value={cf.key} 
+                                        onChange={(e) => updateCustomField(item.id, cidx, 'key', e.target.value)}
+                                        placeholder="اسم الحقل (مثلاً: Project Code)"
+                                        className="w-1/3 bg-transparent border-none text-[10px] font-bold text-primary focus:ring-0 px-2 py-1 placeholder:text-primary/40"
+                                      />
+                                      <span className="text-primary/30">|</span>
+                                      <input 
+                                        type="text" 
+                                        value={cf.value} 
+                                        onChange={(e) => updateCustomField(item.id, cidx, 'value', e.target.value)}
+                                        placeholder="القيمة"
+                                        className="flex-1 bg-transparent border-none text-[10px] font-bold text-zinc-900 focus:ring-0 px-2 py-1 placeholder:text-zinc-400"
+                                      />
+                                      <button onClick={() => removeCustomField(item.id, cidx)} className="p-1 text-primary/40 hover:text-rose-500 bg-white rounded-md transition-colors mr-1">
+                                        <Trash2 className="w-3 h-3" />
                                       </button>
                                     </div>
                                   ))}
@@ -896,7 +1070,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                             <div className="col-span-1">
                               <input 
                                 type="number" 
-                                value={item.quantity}
+                                value={Number.isNaN(item.quantity) ? "" : (item.quantity).toString()}
                                 onChange={(e) => updateLineItem(item.id, 'quantity', e.target.value)}
                                 className="w-full bg-zinc-50 border-none rounded-xl px-2 py-2.5 text-xs font-bold text-center focus:ring-2 focus:ring-primary/20"
                               />
@@ -904,7 +1078,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                             <div className="col-span-2">
                               <input 
                                 type="number" 
-                                value={item.unitPriceHalalas / 100}
+                                value={Number.isNaN(item.unitPriceHalalas / 100) ? "" : (item.unitPriceHalalas / 100).toString()}
                                 onChange={(e) => updateLineItem(item.id, 'unitPriceHalalas', e.target.value)}
                                 className="w-full bg-zinc-50 border-none rounded-xl px-2 py-2.5 text-xs font-bold text-center focus:ring-2 focus:ring-primary/20"
                               />
@@ -981,6 +1155,69 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                   </div>
                 )}
 
+                {sectionId === 'recurring' && (
+                  <div className="p-6 bg-zinc-50 border border-zinc-100 rounded-3xl space-y-6">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center font-black">
+                        <Clock className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-black text-zinc-900">إعدادات الفاتورة الدورية</h3>
+                        <p className="text-xs font-bold text-zinc-500">أتمتة إصدار هذه الفاتورة وإرسالها للعميل دورياً</p>
+                      </div>
+                      <button 
+                        onClick={() => setRecurringConfig({ ...recurringConfig, active: !recurringConfig.active })}
+                        className={cn(
+                          "w-12 h-6 rounded-full transition-all relative",
+                          recurringConfig.active ? "bg-primary" : "bg-zinc-200"
+                        )}
+                      >
+                        <div className={cn(
+                          "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
+                          recurringConfig.active ? "right-1" : "right-7"
+                        )} />
+                      </button>
+                    </div>
+
+                    {recurringConfig.active && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-4">
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">التكرار (Frequency)</label>
+                          <select 
+                            value={recurringConfig.frequency}
+                            onChange={(e) => setRecurringConfig({ ...recurringConfig, frequency: e.target.value as any })}
+                            className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 appearance-none font-bold"
+                          >
+                            <option value="weekly">أسبوعياً</option>
+                            <option value="monthly">شهرياً</option>
+                            <option value="yearly">سنوياً</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">التواصل مع العميل</label>
+                          <select 
+                            value={recurringConfig.communicationFrequency}
+                            onChange={(e) => setRecurringConfig({ ...recurringConfig, communicationFrequency: e.target.value as any })}
+                            className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 appearance-none font-bold"
+                          >
+                            <option value="invoice_only">إرسال الفاتورة فقط</option>
+                            <option value="auto_reminders">إرسال الفاتورة مع التذكيرات الآلية</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">تاريخ التنفيذ القادم</label>
+                          <input 
+                            type="date" 
+                            value={recurringConfig.nextRunDate}
+                            onChange={(e) => setRecurringConfig({ ...recurringConfig, nextRunDate: e.target.value })}
+                            className="w-full bg-white border border-zinc-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 font-bold"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {sectionId === 'terms' && (
                    <div className="p-4">
                      <div className="space-y-2">
@@ -1023,7 +1260,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
         </div>
 
         {/* Customization & Totals Area */}
-        <aside className="w-80 p-8 bg-zinc-50/50 flex flex-col gap-8 overflow-y-auto no-scrollbar">
+        <aside className="w-full lg:w-96 p-4 md:p-8 bg-zinc-50/50 flex flex-col gap-8 lg:overflow-y-auto no-scrollbar">
           <section className="space-y-4">
             <h3 className="font-bold text-sm flex items-center gap-2">
               <Palette className="w-4 h-4 text-zinc-400" /> التخصيص والسمات
@@ -1193,61 +1430,77 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                 </div>
               </div>
 
-              <div className="space-y-4 pt-4 border-t border-zinc-100">
+               <div className="tour-step-zatca space-y-4 pt-4 border-t border-zinc-100">
                 <div className="flex justify-between items-center">
-                  <span className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">المتطلبات القانونية (ZATCA)</span>
-                  <div className="w-8 h-4 bg-emerald-500 rounded-full relative">
-                    <div className="absolute right-1 top-0.5 w-3 h-3 bg-white rounded-full" />
+                  <span className="text-[11px] font-black text-zinc-400 uppercase tracking-widest">التكامل مع هيئة الزكاة المرحلة الثانية (ZATCA Phase 2)</span>
+                  <div className="w-8 h-4 bg-emerald-500 rounded-full relative shadow-inner">
+                    <div className="absolute right-1 top-0.5 w-3 h-3 bg-white rounded-full shadow-sm" />
                   </div>
                 </div>
                 <div className="space-y-3">
-                   <div className="space-y-1">
-                      <label className="text-[9px] font-black text-zinc-500 uppercase">اسم البائع الضريبي</label>
-                      <input 
-                        type="text" 
-                        value={zatcaConfig.sellerName}
-                        onChange={(e) => setZatcaConfig({ ...zatcaConfig, sellerName: e.target.value })}
-                        className="w-full bg-zinc-50 border border-zinc-100 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-500/20"
-                        placeholder="الشركة التجارية"
-                      />
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                     <div className="space-y-1">
+                        <label className={cn("text-[9px] font-black uppercase", sellerVatError ? "text-rose-500" : "text-zinc-500")}>
+                          الرقم الضريبي للمنشأة (15 رقم)
+                        </label>
+                        <input 
+                          type="text" 
+                          value={zatcaConfig.sellerVat}
+                          onChange={(e) => setZatcaConfig({ ...zatcaConfig, sellerVat: e.target.value })}
+                          className={cn(
+                            "w-full bg-zinc-50 border rounded-lg px-3 py-2 text-xs focus:ring-1",
+                            sellerVatError ? "border-rose-300 focus:ring-rose-200" : "border-zinc-100 focus:ring-primary/20"
+                          )}
+                          placeholder="310123456700003"
+                        />
+                        {sellerVatError && <p className="text-[10px] text-rose-500">{sellerVatError}</p>}
+                     </div>
+                     <div className="space-y-1">
+                        <label className={cn("text-[9px] font-black uppercase", buyerVatError ? "text-rose-500" : "text-zinc-500")}>
+                          الرقم الضريبي للعميل (Buyer VAT)
+                        </label>
+                        <input 
+                          type="text" 
+                          value={zatcaConfig.buyerVat}
+                          onChange={(e) => setZatcaConfig({ ...zatcaConfig, buyerVat: e.target.value })}
+                          className={cn(
+                            "w-full bg-zinc-50 border rounded-lg px-3 py-2 text-xs focus:ring-1",
+                            buyerVatError ? "border-rose-300 focus:ring-rose-200" : "border-zinc-100 focus:ring-primary/20"
+                          )}
+                          placeholder="اختياري B2B"
+                        />
+                        {buyerVatError && <p className="text-[10px] text-rose-500">{buyerVatError}</p>}
+                     </div>
                    </div>
-                   <div className="space-y-1">
-                      <label className="text-[9px] font-black text-zinc-500 uppercase">الرقم الضريبي للبائع (15 رقم)</label>
-                      <input 
-                        type="text" 
-                        value={zatcaConfig.sellerVat}
-                        onChange={(e) => setZatcaConfig({ ...zatcaConfig, sellerVat: e.target.value })}
-                        className="w-full bg-zinc-50 border border-zinc-100 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-500/20"
-                        placeholder="310123456700003"
-                      />
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                     <div className="space-y-1">
+                        <label className="text-[9px] font-black text-zinc-500 uppercase">الهاش السابق (Previous Hash)</label>
+                        <input 
+                          type="text" 
+                          value={zatcaConfig.prevHash || ''}
+                          onChange={(e) => setZatcaConfig({ ...zatcaConfig, prevHash: e.target.value })}
+                          className="w-full bg-zinc-50 border border-zinc-100 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-primary/20 font-mono"
+                          placeholder="NWZlY2ViNj..."
+                        />
+                     </div>
+                     <div className="space-y-1">
+                        <label className="text-[9px] font-black text-zinc-500 uppercase">الشهادة الرقمية (Certificate)</label>
+                        <input 
+                          type="text" 
+                          value={zatcaConfig.certificate || ''}
+                          onChange={(e) => setZatcaConfig({ ...zatcaConfig, certificate: e.target.value })}
+                          className="w-full bg-zinc-50 border border-zinc-100 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-primary/20 font-mono"
+                          placeholder="MIIFgzCCA2ug..."
+                        />
+                     </div>
                    </div>
-                   <div className="space-y-1">
-                      <label className="text-[9px] font-black text-zinc-500 uppercase">الرقم الضريبي للمشتري (Buyer VAT)</label>
-                      <input 
-                        type="text" 
-                        value={zatcaConfig.buyerVat}
-                        onChange={(e) => setZatcaConfig({ ...zatcaConfig, buyerVat: e.target.value })}
-                        className="w-full bg-zinc-50 border border-zinc-100 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-500/20"
-                        placeholder="310..."
-                      />
-                   </div>
-                   <div className="space-y-1">
-                      <label className="text-[9px] font-black text-zinc-500 uppercase">الشهادة الرقمية (Certificate Key)</label>
-                      <input 
-                        type="password" 
-                        value={zatcaConfig.certificate}
-                        onChange={(e) => setZatcaConfig({ ...zatcaConfig, certificate: e.target.value })}
-                        className="w-full bg-zinc-50 border border-zinc-100 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-500/20 font-mono"
-                        placeholder="-----BEGIN CERTIFICATE-----..."
-                      />
-                   </div>
-                   <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
+                   <div className="p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl">
                       <div className="flex items-center gap-2 mb-2">
                         <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                        <span className="text-[10px] font-black text-emerald-900">نظام التدقيق مفعل</span>
+                        <span className="text-[10px] font-black text-emerald-900">الربط المباشر مع بوابة "فاتورة" مفعل</span>
                       </div>
                       <p className="text-[9px] text-emerald-700 leading-relaxed font-bold">
-                        يتم الآن توليد XML UBL 2.1 وربط الهاش التسلسلي (Prev Hash: {zatcaConfig.prevHash.substring(0, 10)}...) آلياً عند الحفظ.
+                        يتم الآن توليد XML UBL 2.1 وربط الهاش التسلسلي (Prev Hash: {zatcaConfig.prevHash ? zatcaConfig.prevHash.substring(0, 10) : '...'}...) آلياً عند الحفظ لضمان الامتثال التام مع متطلبات المرحلة الثانية.
                       </p>
                    </div>
                 </div>
@@ -1274,7 +1527,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
             </div>
           </section>
 
-          <footer className="mt-auto space-y-4 border-t border-zinc-100 pt-6">
+          <footer className="tour-step-save mt-auto space-y-4 border-t border-zinc-100 pt-6">
             {paymentLink && (
               <div className="p-4 bg-zinc-900 rounded-2xl border border-white/10 space-y-3">
                 <div className="flex items-center justify-between">
@@ -1329,8 +1582,11 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
             </div>
             <div className="flex gap-2 mt-4">
               <button 
-                onClick={() => setShowSaveConfirm(true)} 
-                className="flex items-center gap-2 bg-zinc-100 text-zinc-900 px-4 py-3 rounded-xl font-bold text-xs hover:bg-zinc-200 transition-all flex-1 justify-center"
+                onClick={() => hasZatcaErrors ? alert("الرجاء تصحيح أخطاء الرقم الضريبي (ZATCA) أولاً") : setShowSaveConfirm(true)} 
+                className={cn(
+                  "flex items-center gap-2 px-4 py-3 rounded-xl font-bold text-xs transition-all flex-1 justify-center",
+                  hasZatcaErrors ? "bg-rose-50 text-rose-500 hover:bg-rose-100" : "bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+                )}
               >
                 <Save className="w-4 h-4" />
                 <span>حفظ</span>
@@ -1352,7 +1608,19 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                 <Send className="w-4 h-4" />
                 <span>إيميل</span>
               </button>
-
+              {paymentLink && (
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.origin + paymentLink);
+                    alert("تم نسخ رابط بوابة العميل للدفع");
+                  }}
+                  className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-3 rounded-xl font-bold text-xs hover:bg-emerald-100 transition-all flex-1 justify-center border border-emerald-200"
+                  title="نسخ رابط بوابة الدفع للعميل"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>بوابة الدفع</span>
+                </button>
+              )}
             </div>
           </footer>
         </aside>
@@ -1498,7 +1766,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                     <label className="text-[10px] font-bold text-zinc-500">التسلسل التالي (Next Seq)</label>
                     <input 
                       type="number" 
-                      value={nextSeq} 
+                      value={Number.isNaN(nextSeq) ? "" : nextSeq} 
                       onChange={(e) => setNextSeq(Number(e.target.value))}
                       className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none"
                     />
@@ -1549,7 +1817,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                     <label className="text-[10px] font-bold text-zinc-500">القيمة</label>
                     <input 
                       type="number" 
-                      value={lateFee.value} 
+                      value={Number.isNaN(lateFee.value) ? "" : lateFee.value} 
                       onChange={(e) => setLateFee({ ...lateFee, value: Number(e.target.value) })}
                       className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none"
                     />
@@ -1559,7 +1827,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                     <div className="flex items-center gap-3">
                       <input 
                         type="number" 
-                        value={lateFee.overdueDays} 
+                        value={Number.isNaN(lateFee.overdueDays) ? "" : lateFee.overdueDays} 
                         onChange={(e) => setLateFee({ ...lateFee, overdueDays: Number(e.target.value) })}
                         className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none"
                         placeholder="0"

@@ -186,22 +186,28 @@ export default function Payroll() {
     }
   };
 
-  const downloadReportCsv = async (runId: string) => {
-    if(!user) return;
+  const downloadReportCsv = (run: any) => {
     try {
-      const { PayrollService } = await import('@/src/services/payroll.service');
-      const { data, period } = await PayrollService.generateReport(user.uid, runId);
-      const blob = new Blob([data], { type: 'text/csv;charset=utf-8;' });
+      // English requested columns: employee name, bank, basic salary, allowances, deductions, net pay
+      let csvData = '\uFEFF' + `Employee Name,Bank,Basic Salary,Allowances,Deductions,Net Pay\n`;
+      run.entries.forEach((e: any) => {
+        // Enclose strings in quotes to handle commas
+        const name = `"${(e.employeeName || e.name || "").replace(/"/g, '""')}"`;
+        const bank = `"${(e.bank || "").replace(/"/g, '""')}"`;
+        csvData += `${name},${bank},${e.basic},${e.allowances},${e.deductions},${e.netPay}\n`;
+      });
+      
+      const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `payroll_report_${period}.csv`);
+      link.setAttribute("download", `payroll_report_${run.period}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch(e) {
       console.error(e);
-      alert("فشل تنزيل التقرير");
+      alert("Failed to download CSV");
     }
   };
 
@@ -731,9 +737,9 @@ export default function Payroll() {
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <button onClick={() => downloadWps(run.id)} className="flex items-center gap-2 bg-zinc-900 text-white px-4 py-2 text-xs font-bold rounded-xl shadow-sm hover:-translate-y-0.5 transition-transform">
-                    <Download className="w-4 h-4" /> Download WPS File
+                    <Download className="w-4 h-4" /> تصدير وتوثيق أجور (منصة مدد - WPS)
                   </button>
-                  <button onClick={() => downloadReportCsv(run.id)} className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 text-xs font-bold rounded-xl hover:bg-emerald-100 transition-colors">
+                  <button onClick={() => downloadReportCsv(run)} className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 text-xs font-bold rounded-xl hover:bg-emerald-100 transition-colors">
                     <Download className="w-4 h-4" /> تقرير المسير (CSV)
                   </button>
                   <button onClick={() => downloadReportPdf(run)} className="flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 text-xs font-bold rounded-xl hover:bg-blue-100 transition-colors">

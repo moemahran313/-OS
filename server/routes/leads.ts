@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authenticate } from "../middleware/auth.js";
 import { logAudit } from "../services/utils.js";
 import { db } from "../services/firebase.js";
+import { executeWebhooks } from "../services/webhooks.js";
 
 const router = Router();
 
@@ -55,6 +56,10 @@ router.post("/", authenticate, async (req: any, res) => {
     const docRef = await db.collection("leads").add(leadData);
 
     logAudit("CRM", { action: "Create Lead", id: docRef.id }, leadData, req);
+    
+    // Trigger webhooks
+    executeWebhooks(req.user.uid, "lead.created", { id: docRef.id, ...leadData });
+    
     res.status(201).json({ id: docRef.id, ...leadData });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

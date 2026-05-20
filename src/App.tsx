@@ -41,6 +41,7 @@ const FWCOS = lazy(() => import("./pages/FWCOS"));
 const Simulator = lazy(() => import("./pages/Simulator"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const Calculations = lazy(() => import("./pages/Calculations"));
+const Contracts = lazy(() => import("./pages/Contracts"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Suppliers = lazy(() => import("./pages/Suppliers"));
 
@@ -132,9 +133,11 @@ function AppInnerRoutes() {
             <Route path="invoices" element={<PageTransition><Invoices /></PageTransition>} />
             <Route path="payroll" element={<PageTransition><Payroll /></PageTransition>} />
             <Route path="fwcos" element={<PageTransition><FWCOS /></PageTransition>} />
+            <Route path="contracts" element={<PageTransition><Contracts /></PageTransition>} />
             <Route path="simulator" element={<PageTransition><Simulator /></PageTransition>} />
             <Route path="calculations" element={<PageTransition><Calculations /></PageTransition>} />
             <Route path="analytics" element={<PageTransition><Analytics /></PageTransition>} />
+            <Route path="integrations" element={<PageTransition><Integrations /></PageTransition>} />
             <Route path="settings" element={<PageTransition><Settings /></PageTransition>} />
             <Route path="suppliers" element={<PageTransition><Suppliers /></PageTransition>} />
             <Route path="suppliers/:id" element={<PageTransition><ShipmentDetails /></PageTransition>} />
@@ -145,6 +148,8 @@ function AppInnerRoutes() {
     </AnimatePresence>
   );
 }
+
+import Integrations from './pages/Integrations';
 
 export default function App() {
   return (

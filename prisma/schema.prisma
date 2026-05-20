@@ -32,6 +32,7 @@ model User {
   avatar          String?  // Logo or profile pic
   dashboardConfig String?  // JSON string for widget layout and visibility
   notificationSettings String? // JSON string { emailNotifications: boolean, newLeads: boolean, invoiceReminders: boolean, payrollSummaries: boolean }
+  paymentSettings      String? // JSON string { paypalClientId: string }
   invoices        Invoice[]
   employees       Employee[]
   payrollRuns     PayrollRun[]
@@ -144,6 +145,9 @@ model Invoice {
   branding                String?  // JSON string (InvoiceBranding)
   logs                    String?  // JSON string ({ action: string, timestamp: string, note?: string }[])
   isLocked                Boolean  @default(false)
+  isRecurring             Boolean  @default(false)
+  recurringFrequency      String?  // 'weekly', 'monthly', 'yearly'
+  nextGenerationDate      DateTime?
   version                 Int      @default(1)
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt

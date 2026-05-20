@@ -22,7 +22,7 @@ import {
 
 import { cn } from "@/src/lib/utils";
 
-type TabType = "nitaqat" | "certificate" | "workpermit" | "isic4" | "vatcalculator";
+type TabType = "nitaqat" | "certificate" | "workpermit" | "isic4" | "vatcalculator" | "eos";
 type Language = "ar" | "en";
 
 const translations = {
@@ -37,6 +37,7 @@ const translations = {
       workpermit: "رسوم رخص العمل",
       isic4: "مطابقة ISIC4",
       vatcalculator: "حاسبة الضريبة",
+      eos: "مكافأة نهاية الخدمة",
     },
     vatcalculator: {
       title: "حاسبة ضريبة القيمة المضافة (ZATCA)",
@@ -124,6 +125,22 @@ const translations = {
       source: "وفقاً لدليل التصنيف الوطني",
       matchScore: "تطابق",
     },
+    eos: {
+      title: "حاسبة مكافأة نهاية الخدمة",
+      desc: "حساب مكافأة نهاية الخدمة للعاملين حسب نظام العمل السعودي.",
+      salary: "الراتب الإجمالي (الأساسي + بدل السكن/أخرى)",
+      years: "سنوات الخدمة",
+      endReason: "سبب انتهاء العلاقة التعاقدية",
+      termination: "إنهاء عقد من صاحب العمل",
+      resignation: "استقالة",
+      calcBtn: "حساب المكافأة",
+      results: "تفاصيل المكافأة",
+      baseAward: "المكافأة الأساسية (قبل قواعد الاستقالة)",
+      deduction: "نِسبة الاستحقاق (حسب مدة الاستقالة)",
+      finalAward: "بناءً على 50% لأول 5 سنوات و 100% لما بعدها",
+      currency: "ر.س",
+      total: "إجمالي المكافأة المستحقة",
+    },
   },
   en: {
     pageTitle: "Compliance & Calculations Tools",
@@ -136,6 +153,7 @@ const translations = {
       workpermit: "Work Permit Fees",
       isic4: "ISIC4 Matcher",
       vatcalculator: "VAT Calculator",
+      eos: "End of Service",
     },
     vatcalculator: {
       title: "VAT Calculator (ZATCA)",
@@ -223,6 +241,22 @@ const translations = {
       source: "Based on National Classification Guide",
       matchScore: "Match",
     },
+    eos: {
+      title: "End of Service Award Calculator",
+      desc: "Calculate End of Service Award according to Saudi Labor Law.",
+      salary: "Total Salary (Basic + Allowances)",
+      years: "Years of Service",
+      endReason: "End of Contract Reason",
+      termination: "Termination / Contract End",
+      resignation: "Resignation",
+      calcBtn: "Calculate Award",
+      results: "Award Details",
+      baseAward: "Base Award (Before Resignation Rules)",
+      deduction: "Entitlement Rate (Based on duration)",
+      finalAward: "Based on 50% for first 5 years, 100% for subsequent years",
+      currency: "SAR",
+      total: "Total Final Award",
+    },
   },
 };
 
@@ -271,6 +305,7 @@ export default function Calculations() {
           { id: "vatcalculator", label: t.tabs.vatcalculator, icon: Receipt },
           { id: "workpermit", label: t.tabs.workpermit, icon: Briefcase },
           { id: "isic4", label: t.tabs.isic4, icon: Search },
+          { id: "eos", label: t.tabs.eos, icon: Activity },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -307,6 +342,7 @@ export default function Calculations() {
         )}
         {activeTab === "isic4" && <Isic4Matcher t={t.isic4} lang={lang} />}
         {activeTab === "vatcalculator" && <VatCalculator t={t.vatcalculator} lang={lang} />}
+        {activeTab === "eos" && <EosCalculator t={t.eos} lang={lang} />}
       </div>
     </div>
   );
@@ -428,7 +464,7 @@ function NitaqatCalculator({ t, lang }: { t: any; lang: Language }) {
               role="spinbutton"
               type="number"
               min="1"
-              value={totalEmployees}
+              value={Number.isNaN(totalEmployees) ? "" : totalEmployees}
               onChange={(e) => setTotalEmployees(Number(e.target.value))}
               className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             />
@@ -447,7 +483,7 @@ function NitaqatCalculator({ t, lang }: { t: any; lang: Language }) {
               type="number"
               min="0"
               max={totalEmployees}
-              value={saudiEmployees}
+              value={Number.isNaN(saudiEmployees) ? "" : saudiEmployees}
               onChange={(e) => setSaudiEmployees(Number(e.target.value))}
               className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             />
@@ -856,7 +892,7 @@ function WorkPermitCalculator({ t, lang }: { t: any; lang: Language }) {
                 id="durationYears"
                 aria-label={t.duration}
                 role="combobox"
-                value={durationYears}
+                value={Number.isNaN(durationYears) ? "" : durationYears}
                 onChange={(e) => setDurationYears(Number(e.target.value))}
                 className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-blue-100 outline-none transition-all"
               >
@@ -879,7 +915,7 @@ function WorkPermitCalculator({ t, lang }: { t: any; lang: Language }) {
               role="spinbutton"
               type="number"
               min="1"
-              value={totalEmployees}
+              value={Number.isNaN(totalEmployees) ? "" : totalEmployees}
               onChange={(e) => setTotalEmployees(Number(e.target.value))}
               className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-blue-100 outline-none transition-all"
             />
@@ -898,7 +934,7 @@ function WorkPermitCalculator({ t, lang }: { t: any; lang: Language }) {
               type="number"
               min="0"
               max={totalEmployees}
-              value={expats}
+              value={Number.isNaN(expats) ? "" : expats}
               onChange={(e) => setExpats(Number(e.target.value))}
               className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-blue-100 outline-none transition-all"
             />
@@ -1350,3 +1386,174 @@ function VatCalculator({ t, lang }: { t: any; lang: Language }) {
     </div>
   );
 }
+
+// 6. End of Service Calculator
+function EosCalculator({ t, lang }: { t: any; lang: Language }) {
+  const [salary, setSalary] = useState<string>("5000");
+  const [yearsStr, setYearsStr] = useState<string>("5");
+  const [endReason, setEndReason] = useState<"termination" | "resignation">("termination");
+
+  const [results, setResults] = useState<any>(null);
+
+  const calculate = () => {
+    const s = parseFloat(salary) || 0;
+    const y = parseFloat(yearsStr) || 0;
+
+    if (s <= 0 || y <= 0) {
+      setResults(null);
+      return;
+    }
+
+    // Base award based on years:
+    // 50% for first 5 years, 100% for subsequent years
+    const firstPeriod = Math.min(y, 5);
+    const secondPeriod = Math.max(0, y - 5);
+    const baseAward = (firstPeriod * 0.5 * s) + (secondPeriod * 1.0 * s);
+
+    let deductionPercent = 0;
+
+    if (endReason === "resignation") {
+      if (y < 2) {
+        deductionPercent = 100; // 0% entitlement
+      } else if (y >= 2 && y < 5) {
+        deductionPercent = 66.67; // 33.33% entitlement (1/3)
+      } else if (y >= 5 && y < 10) {
+        deductionPercent = 33.33; // 66.67% entitlement (2/3)
+      } else {
+        deductionPercent = 0; // 100% entitlement
+      }
+    }
+
+    const entitlementPercent = 100 - deductionPercent;
+    const finalAward = baseAward * (entitlementPercent / 100);
+
+    setResults({
+      baseAward: baseAward.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      entitlementPercent: entitlementPercent.toFixed(2),
+      finalAward: finalAward.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    });
+  };
+
+  useEffect(() => {
+    calculate();
+  }, [salary, yearsStr, endReason]);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="space-y-8 max-w-md">
+        <div className="space-y-4">
+          <label className="block text-sm font-black text-zinc-900" htmlFor="salaryInput">
+            {t.salary}
+          </label>
+          <div className="relative">
+            <span className={cn("absolute inset-y-0 flex items-center text-zinc-400 font-bold select-none text-xs", lang === "ar" ? "right-4" : "left-4")}>
+              {t.currency}
+            </span>
+            <input
+              id="salaryInput"
+              type="number"
+              min="0"
+              step="100"
+              value={salary}
+              onChange={(e) => setSalary(e.target.value)}
+              className={cn(
+                "w-full bg-zinc-50 border border-zinc-200 rounded-xl py-3 font-bold focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-lg tracking-wider",
+                lang === "ar" ? "pr-12 pl-4" : "pl-12 pr-4"
+              )}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <label className="block text-sm font-black text-zinc-900" htmlFor="yearsInput">
+            {t.years}
+          </label>
+          <input
+            id="yearsInput"
+            type="number"
+            min="0"
+            step="0.5"
+            value={yearsStr}
+            onChange={(e) => setYearsStr(e.target.value)}
+            className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-lg tracking-wider"
+          />
+        </div>
+
+        <div className="space-y-4">
+          <label className="block text-sm font-black text-zinc-900">
+            {t.endReason}
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+             <button
+                type="button"
+                onClick={() => setEndReason("termination")}
+                className={cn(
+                  "px-4 py-3 rounded-xl text-xs font-bold border transition-all text-center",
+                  endReason === "termination"
+                    ? "bg-zinc-900 text-white border-zinc-900 shadow-md"
+                    : "bg-white text-zinc-500 border-zinc-200 hover:bg-zinc-50"
+                )}
+              >
+                {t.termination}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEndReason("resignation")}
+                className={cn(
+                  "px-4 py-3 rounded-xl text-xs font-bold border transition-all text-center",
+                  endReason === "resignation"
+                    ? "bg-zinc-900 text-white border-zinc-900 shadow-md"
+                    : "bg-white text-zinc-500 border-zinc-200 hover:bg-zinc-50"
+                )}
+              >
+                {t.resignation}
+              </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-zinc-50 rounded-3xl p-8 border border-zinc-200 flex flex-col justify-center relative overflow-hidden shadow-sm">
+        <h3 className="font-black text-xl text-zinc-900 mb-6 flex items-center gap-2 border-b border-zinc-200 pb-4">
+          <Activity className="w-5 h-5 text-zinc-400" />
+          {t.results}
+        </h3>
+
+        {results ? (
+          <div className="space-y-4 relative z-10 w-full mb-8">
+            <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-zinc-100 shadow-sm">
+              <span className="text-sm font-bold text-zinc-500">{t.baseAward}</span>
+              <span className="text-xl font-black text-zinc-800 tabular-nums font-mono">
+                {results.baseAward}
+              </span>
+            </div>
+            
+            <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-zinc-100 shadow-sm">
+              <span className="text-sm font-bold text-zinc-500">{t.deduction}</span>
+              <span className="text-xl font-black text-blue-600 tabular-nums font-mono">
+                {results.entitlementPercent}%
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center bg-emerald-900 p-6 rounded-2xl border border-emerald-950 shadow-lg mt-2 text-white">
+              <span className="text-sm font-black uppercase tracking-widest opacity-80">{t.total}</span>
+              <span className="text-3xl font-black tabular-nums tracking-tight">
+                {results.finalAward}
+              </span>
+            </div>
+          </div>
+        ) : (
+           <div className="flex flex-col items-center justify-center py-12 text-zinc-400">
+             <Calculator className="w-12 h-12 mb-4 opacity-20" />
+             <p className="font-medium text-sm text-center">أدخل بيانات الراتب والمدة لعرض النتيجة</p>
+           </div>
+        )}
+
+        <div className="bg-blue-50 text-blue-800 border border-blue-200 p-4 rounded-xl flex items-start gap-3 mt-auto">
+          <Info className="w-5 h-5 shrink-0 mt-0.5 text-blue-600" />
+          <p className="text-xs font-bold leading-relaxed">{t.finalAward}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+

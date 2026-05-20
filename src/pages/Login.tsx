@@ -62,7 +62,7 @@ export default function Login() {
         <div className="p-8 md:p-12 space-y-8">
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center mb-6">
-               <Logo isLink={false} iconClassName="w-16 h-16" textClassName="text-4xl" />
+               <Logo iconClassName="w-16 h-16" textClassName="text-4xl" />
             </div>
             <h1 className="text-3xl font-black text-zinc-900 tracking-tight leading-tight">
               {isLogin ? 'تسجيل الدخول' : 'إنشاء حساب جديد'}
