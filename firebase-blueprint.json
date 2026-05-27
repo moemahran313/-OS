@@ -152,6 +152,21 @@
         "metadata": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       }
+    },
+    "FinancialTransaction": {
+      "title": "FinancialTransaction",
+      "description": "Anti-Concealment Audit Trail transaction",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "nationalId": { "type": "string" },
+        "amountHalalas": { "type": "integer" },
+        "isOwner": { "type": "boolean" },
+        "needsOwnerVerification": { "type": "boolean" },
+        "verificationStatus": { "type": "string", "enum": ["verified", "pending", "rejected"] },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "firestore": {
@@ -165,6 +180,7 @@
     "brokers": { "schema": "Broker", "description": "Brokers" },
     "shipments/{shipmentId}/documents": { "schema": "ShipmentDocument", "description": "Shipment documents" },
     "shipments/{shipmentId}/comments": { "schema": "ShipmentComment", "description": "Shipment comments" },
-    "shipments/{shipmentId}/events": { "schema": "ShipmentEvent", "description": "Shipment events" }
+    "shipments/{shipmentId}/events": { "schema": "ShipmentEvent", "description": "Shipment events" },
+    "financial_transactions": { "schema": "FinancialTransaction", "description": "Anti-Concealment Audit Trail" }
   }
 }

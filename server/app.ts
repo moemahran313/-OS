@@ -21,6 +21,7 @@ import hrRoutes from "./routes/hr.js";
 import isicRoutes from "./routes/isic.js";
 import publicRoutes from "./routes/public.js";
 import auditLogRoutes from "./routes/auditLogs.js";
+import certificateRoutes from "./routes/certificate.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -56,6 +57,7 @@ export async function createApp() {
   app.use("/api/isic4", isicRoutes);
   app.use("/api/public", publicRoutes);
   app.use("/api/audit-logs", auditLogRoutes);
+  app.use("/api/certificate", certificateRoutes);
   
   // HR routes like /api/nitaqat/calculate and /api/workpermit/calculate
   app.use("/api", hrRoutes); 

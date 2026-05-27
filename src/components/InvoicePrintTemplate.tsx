@@ -1,7 +1,7 @@
 import React from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { Invoice } from '../types';
-import { generateZatcaQR } from '../lib/zatca';
+import { generateZatcaQR } from '../lib/zatcaQr';
 import { cn } from '../lib/utils';
 
 interface InvoicePrintTemplateProps {

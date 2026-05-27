@@ -59,6 +59,8 @@ import {
 import { db, auth } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
 
+import PayrollComplianceWidget from "@/src/components/PayrollComplianceWidget";
+
 interface Client {
   id: string;
   name: string;
@@ -135,6 +137,7 @@ export default function CRM() {
   const [filters, setFilters] = useState({ industry: '', companySize: '', expectedCloseDate: '', search: '' });
   const [filterLogic, setFilterLogic] = useState<"AND" | "OR">("AND");
   const [isImporting, setIsImporting] = useState(false);
+  const [payrollRuns, setPayrollRuns] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -157,7 +160,19 @@ export default function CRM() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    const qRuns = query(
+      collection(db, "payroll_runs"),
+      where("userId", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
+    const unsubRuns = onSnapshot(qRuns, (snapshot) => {
+      setPayrollRuns(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    return () => {
+      unsubscribe();
+      unsubRuns();
+    };
   }, [user]);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -524,6 +539,7 @@ export default function CRM() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto h-[calc(100vh-10rem)] flex flex-col pb-10">
+      <PayrollComplianceWidget runs={payrollRuns} />
       <header className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-black text-zinc-900 tracking-tight">
@@ -1530,6 +1546,53 @@ export default function CRM() {
                   </div>
                 ) : (
                   <div className="flex-1 flex flex-col pt-4">
+                    <div className="mb-6 flex gap-2">
+                       <input 
+                         type="text"
+                         placeholder="إضافة ملاحظة أو تحديث..."
+                         className="flex-1 px-4 py-2 border border-zinc-200 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                         onKeyDown={(e) => {
+                           if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                             e.preventDefault();
+                             const newNote = e.currentTarget.value.trim();
+                             const newHistoryItem = {
+                               id: `h_${Date.now()}`,
+                               date: new Date().toISOString(),
+                               action: "تمت إضافة ملاحظة",
+                               details: newNote,
+                             };
+                             setEditingClient(prev => prev ? {
+                               ...prev,
+                               history: [newHistoryItem, ...(prev.history || [])]
+                             } : prev);
+                             e.currentTarget.value = '';
+                           }
+                         }}
+                       />
+                       <button 
+                         type="button"
+                         onClick={(e) => {
+                           const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                           if (input.value.trim()) {
+                             const newNote = input.value.trim();
+                             const newHistoryItem = {
+                               id: `h_${Date.now()}`,
+                               date: new Date().toISOString(),
+                               action: "تمت إضافة ملاحظة",
+                               details: newNote,
+                             };
+                             setEditingClient(prev => prev ? {
+                               ...prev,
+                               history: [newHistoryItem, ...(prev.history || [])]
+                             } : prev);
+                             input.value = '';
+                           }
+                         }}
+                         className="px-4 py-2 bg-primary text-zinc-900 font-bold text-sm rounded-xl hover:bg-primary/90"
+                       >
+                         إضافة
+                       </button>
+                    </div>
                     {!editingClient.history ||
                     editingClient.history.length === 0 ? (
                       <div className="text-center py-20 text-zinc-400">
@@ -1539,7 +1602,7 @@ export default function CRM() {
                         </p>
                       </div>
                     ) : (
-                      <div className="space-y-6 relative before:absolute before:inset-y-0 before:right-[15px] before:w-[2px] before:bg-zinc-100">
+                      <div className="space-y-6 relative before:absolute before:inset-y-0 before:right-[15px] before:w-[2px] before:bg-zinc-100 p-2">
                         {editingClient.history.map((item, idx) => (
                           <div
                             key={item.id}

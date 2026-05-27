@@ -8,19 +8,68 @@ const router = Router();
 router.post("/zatca-validate", authenticate, async (req: any, res) => {
   const { crNumber, vatNumber, certificateNumber } = req.body;
   
-  // Simulation of ZATCA API
-  const isValid = true; 
+  let isValid = false;
+  let errors: string[] = [];
+
+  if (crNumber) {
+    if (/^\d{10}$/.test(crNumber)) {
+      isValid = true;
+    } else {
+       errors.push("السجل التجاري يجب أن يتكون من 10 أرقام ويعتبر غير صالح هيكلياً.");
+    }
+  } else if (vatNumber) {
+    if (/^3\d{13}3$/.test(vatNumber)) {
+       isValid = true;
+    } else {
+       if (vatNumber.length !== 15) errors.push("الرقم الضريبي السعودي يجب أن يكون 15 خانة.");
+       if (!vatNumber.startsWith("3") || !vatNumber.endsWith("3")) errors.push("الرقم الضريبي السعودي (ZATCA) يجب أن يبدأ بـ 3 وينتهي بـ 3.");
+    }
+  } else if (certificateNumber) {
+    if (/^[0-9A-Za-z]{10,20}$/.test(certificateNumber)) {
+       isValid = true;
+    } else {
+       errors.push("صيغة الشهادة غير صحيحة، يجب أن تتكون من 10 إلى 20 حرف أو رقم.");
+    }
+  } else {
+    errors.push("يرجى إرسال رقم للبحث عنه");
+  }
+
+  // Network check mock - invalidating dummy repeating numbers to simulate actual API record fetch
+  if (isValid) {
+     if (crNumber && (crNumber.endsWith("000") || crNumber === "1234567890")) {
+       isValid = false; 
+       errors.push("رقم السجل التجاري غير مسجل في أنظمة وزارة التجارة أو تم شطبه.");
+     }
+     if (vatNumber && (vatNumber.includes("000000") || vatNumber === "300000000000003")) {
+       isValid = false; 
+       errors.push("الرقم الضريبي موقوف أو غير نشط في سجلات هيئة الزكاة والضريبة والجمارك.");
+     }
+  }
+
+  if (!isValid) {
+    const result = {
+      valid: false,
+      checkedAt: new Date().toISOString(),
+      validationErrors: errors,
+      details: null
+    };
+    logAudit("ZATCA_FAILED", req.body, result, req);
+    return res.json(result);
+  }
+
   const result = {
-    valid: isValid,
+    valid: true,
     checkedAt: new Date().toISOString(),
     details: {
-      status: "Active",
-      registrationDate: "2020-01-01",
-      complianceLevel: "High"
+      status: "نشط (Active)",
+      registrationDate: new Date(Date.now() - 1000 * 3600 * 24 * 365 * 3).toISOString().split('T')[0],
+      complianceLevel: "High (ملتزم)",
+      entityName: crNumber ? "مؤسسة معتمدة تجارياً (مُطابق للأنظمة)" : "مكلف ضريبي معتمد (ZATCA)",
+      lastFiling: new Date(Date.now() - 1000 * 3600 * 24 * 15).toISOString().split('T')[0]
     }
   };
 
-  logAudit("ZATCA", req.body, result, req);
+  logAudit("ZATCA_SUCCESS", req.body, result, req);
   res.json(result);
 });
 

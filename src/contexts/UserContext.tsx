@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-import { onIdTokenChanged, signInWithPopup, signOut, User as FirebaseUser, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { onIdTokenChanged, signInWithPopup, signOut, User as FirebaseUser, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile as updateAuthProfile } from "firebase/auth";
 import { doc, getDocFromServer, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "../lib/firebase";
 import { toast } from "sonner";
@@ -18,14 +18,16 @@ export interface User {
   dashboardConfig?: any[];
   invoiceRemindersConfig?: any;
   quickActionsConfig?: string[];
+  verifiedAt?: string;
+  nafathVerified?: boolean;
 }
 
 interface UserContextType {
   user: User | null;
   loading: boolean;
-  loginWithGoogle: () => Promise<boolean>;
+  loginWithGoogle: (referredBy?: string) => Promise<boolean>;
   loginWithEmail: (email: string, pass: string) => Promise<boolean>;
-  registerWithEmail: (email: string, pass: string, name?: string, avatar?: string) => Promise<boolean>;
+  registerWithEmail: (email: string, pass: string, name?: string, avatar?: string, referredBy?: string) => Promise<boolean>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
   hasPermission: (module: string) => boolean;
@@ -86,10 +88,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (referredBy?: string) => {
     try {
       setLoading(true);
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      
+      const userDocRef = doc(db, "users", result.user.uid);
+      const userDoc = await getDocFromServer(userDocRef);
+      if (!userDoc.exists() && referredBy) {
+         await setDoc(userDocRef, {
+           name: result.user.displayName || "",
+           avatar: result.user.photoURL || null,
+           referredBy: referredBy
+         }, { merge: true });
+      }
+
       return true;
     } catch (e) {
       console.error("Google Login failed", e);
@@ -110,12 +123,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const registerWithEmail = async (email: string, pass: string, name?: string, avatar?: string) => {
+  const registerWithEmail = async (email: string, pass: string, name?: string, avatar?: string, referredBy?: string) => {
     try {
       setLoading(true);
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-      
-      const { updateProfile: updateAuthProfile } = await import("firebase/auth");
       
       if (name || avatar) {
         await updateAuthProfile(userCredential.user, {
@@ -129,8 +140,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       const userDocRef = doc(db, "users", userCredential.user.uid);
       await setDoc(userDocRef, {
         name: name || "",
-        avatar: avatar || null
+        avatar: avatar || null,
+        referredBy: referredBy || null
       }, { merge: true });
+
+      // If referredBy is present, you could also add a document logic here or Cloud Function, 
+      // but saving it to the user doc is sufficient for the program.
 
       return true;
     } catch (e) {

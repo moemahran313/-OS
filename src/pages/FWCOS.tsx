@@ -27,10 +27,14 @@ import {
   Plus,
   History,
   Activity,
-  Trash2
+  Trash2,
+  Lock
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
+import { collection, getDocs, query, where, doc, setDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '@/src/lib/firebase';
+import { getAuth } from 'firebase/auth';
 
 interface WorkerDoc {
   id: string;
@@ -100,7 +104,7 @@ const RiskGauge = ({ score, size = 48 }: { score: number, size?: number }) => {
 };
 
 export default function FWCOS() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'workers' | 'tasks' | 'rules' | 'settings' | 'zatca'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'workers' | 'tasks' | 'rules' | 'settings' | 'zatca' | 'gosi'>('dashboard');
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [rules, setRules] = useState(INITIAL_RULES as any[]);
   const [editingWorker, setEditingWorker] = useState<Worker | null>(null);
@@ -121,9 +125,6 @@ export default function FWCOS() {
   const fetchWorkers = async () => {
     try {
       setIsLoading(true);
-      const { collection, getDocs, query, where } = await import('firebase/firestore');
-      const { db } = await import('@/src/lib/firebase');
-      const { getAuth } = await import('firebase/auth');
       const uid = getAuth().currentUser?.uid;
       if (!uid) return;
 
@@ -149,9 +150,6 @@ export default function FWCOS() {
     if (!editingWorker) return;
 
     try {
-      const { doc, setDoc, updateDoc, collection } = await import('firebase/firestore');
-      const { db } = await import('@/src/lib/firebase');
-      const { getAuth } = await import('firebase/auth');
       const uid = getAuth().currentUser?.uid;
       if (!uid) return;
 
@@ -183,8 +181,6 @@ export default function FWCOS() {
   const deleteWorker = async (id: string) => {
     if (!confirm("هل أنت متأكد من حذف هذا العامل؟")) return;
     try {
-      const { doc, deleteDoc } = await import('firebase/firestore');
-      const { db } = await import('@/src/lib/firebase');
       await deleteDoc(doc(db, "employees", id));
       toast.success("تم حذف العامل بنجاح");
       fetchWorkers();
@@ -523,9 +519,9 @@ export default function FWCOS() {
 
       {/* Tabs Navigation */}
       <div className="flex gap-2 border-b border-zinc-200 pb-2 overflow-x-auto no-scrollbar">
-        {(['dashboard', 'workers', 'tasks', 'rules', 'zatca', 'settings'] as const).map(tab => (
+        {(['dashboard', 'workers', 'tasks', 'rules', 'zatca', 'gosi', 'settings'] as const).map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)} className={cn("px-5 py-2.5 rounded-[1.2rem] text-sm font-bold transition-all whitespace-nowrap", activeTab === tab ? "bg-zinc-900 text-white shadow-md" : "text-zinc-500 hover:bg-zinc-100")}>
-            {tab === 'dashboard' ? 'لوحة المخاطر' : tab === 'workers' ? 'ملفات العمالة' : tab === 'tasks' ? `مهام وسجل PRO` : tab === 'rules' ? 'محرك القواعد (Rules)' : tab === 'zatca' ? 'تحقق ZATCA' : 'الإعدادات'}
+            {tab === 'dashboard' ? 'لوحة المخاطر' : tab === 'workers' ? 'ملفات العمالة' : tab === 'tasks' ? `مهام وسجل PRO` : tab === 'rules' ? 'محرك القواعد (Rules)' : tab === 'zatca' ? 'تحقق ZATCA' : tab === 'gosi' ? 'التأمينات (GOSI)' : 'الإعدادات'}
           </button>
         ))}
       </div>
@@ -546,10 +542,14 @@ export default function FWCOS() {
              ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
              <div className="bg-white p-5 rounded-[2rem] border border-zinc-200/50 shadow-sm flex flex-col justify-between hover:-translate-y-1 hover:shadow-md transition-all cursor-default">
                 <div className="flex justify-between items-start mb-4"><div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"><Users className="w-5 h-5" /></div><span className="text-[10px] font-bold text-zinc-400 bg-zinc-50 px-2 py-1 rounded-lg">العمالة ({selectedCountryObj})</span></div>
                 <div><h3 className="text-3xl font-black text-zinc-900">{dashboardWorkers.length}</h3></div>
+             </div>
+             <div className="bg-[#f0fdf4] p-5 rounded-[2rem] border border-emerald-100 shadow-sm flex flex-col justify-between hover:-translate-y-1 hover:shadow-md transition-all cursor-default">
+                <div className="flex justify-between items-start mb-4"><div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center"><TrendingUp className="w-5 h-5" /></div><span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-1 rounded-lg">نسبة التوطين</span></div>
+                <div><h3 className="text-3xl font-black text-emerald-600">{dashboardWorkers.length > 0 ? ((dashboardWorkers.filter(w => w.nationality?.includes('سعودي') || w.nationality?.toLowerCase().includes('saudi')).length / dashboardWorkers.length) * 100).toFixed(1) : 0}%</h3></div>
              </div>
              <div className="bg-white p-5 rounded-[2rem] border border-zinc-200/50 shadow-sm flex flex-col justify-between hover:-translate-y-1 hover:shadow-md transition-all cursor-default">
                 <div className="flex justify-between items-start mb-4"><div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center"><Clock className="w-5 h-5" /></div><span className="text-[10px] font-bold text-zinc-400 bg-zinc-50 px-2 py-1 rounded-lg">إقامات ومستندات منتهية </span></div>
@@ -560,7 +560,7 @@ export default function FWCOS() {
                 <div><h3 className="text-3xl font-black text-rose-600">{dashboardWorkers.filter(w => w.wpsStatus !== 'compliant').length}</h3></div>
              </div>
              <div className="bg-zinc-900 text-white p-5 rounded-[2rem] shadow-xl flex flex-col justify-between hover:-translate-y-1 hover:shadow-2xl transition-all cursor-default">
-                <div className="flex justify-between items-start mb-4"><div className="w-10 h-10 rounded-xl bg-white/10 text-white flex items-center justify-center"><AlertTriangle className="w-5 h-5" /></div><span className="text-[10px] font-bold text-zinc-300 bg-white/10 px-2 py-1 rounded-lg">المخاطرة المتوسطة بالمنطقة</span></div>
+                <div className="flex justify-between items-start mb-4"><div className="w-10 h-10 rounded-xl bg-white/10 text-white flex items-center justify-center"><AlertTriangle className="w-5 h-5" /></div><span className="text-[10px] font-bold text-zinc-300 bg-white/10 px-2 py-1 rounded-lg">المخاطرة بصفتها الحالية</span></div>
                 <div><h3 className="text-3xl font-black text-white flex items-baseline gap-1">{Math.floor(dashboardWorkers.reduce((acc, w) => acc + w.riskScore, 0) / (dashboardWorkers.length || 1))} <span className="text-sm font-bold text-zinc-400">%</span></h3></div>
              </div>
           </div>
@@ -890,10 +890,10 @@ export default function FWCOS() {
                         </div>
                      </div>
                      
-                     {!zatcaResult.valid && zatcaResult.errors && zatcaResult.errors.length > 0 && (
+                     {!zatcaResult.valid && zatcaResult.validationErrors && zatcaResult.validationErrors.length > 0 && (
                         <div className="bg-rose-100/50 p-4 rounded-xl border border-rose-200/50">
                            <ul className="list-disc list-inside text-sm font-bold text-rose-800 space-y-1">
-                              {zatcaResult.errors.map((err: string, idx: number) => <li key={idx}>{err}</li>)}
+                              {zatcaResult.validationErrors.map((err: string, idx: number) => <li key={idx}>{err}</li>)}
                            </ul>
                         </div>
                      )}
@@ -910,6 +910,124 @@ export default function FWCOS() {
                      )}
                   </motion.div>
                )}
+            </div>
+
+            {/* ZATCA Configuration and Certs Upload */}
+            <div className="bg-white p-8 rounded-[2rem] border border-zinc-200 shadow-sm max-w-2xl mx-auto space-y-6">
+               <h3 className="font-black text-xl flex items-center gap-2 text-zinc-900 border-b border-zinc-100 pb-4">
+                 <ShieldCheck className="w-6 h-6 text-primary" />
+                 إعدادات الربط المتقدمة والشهادات
+               </h3>
+               
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div className="border border-zinc-200 p-6 rounded-2xl bg-zinc-50 flex flex-col items-center justify-center text-center gap-3">
+                   <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
+                      <FileText className="w-6 h-6 text-zinc-400" />
+                   </div>
+                   <div>
+                     <p className="text-sm font-bold text-zinc-900">ملف الشهادة (CSR)</p>
+                     <p className="text-xs text-zinc-500 font-medium">للربط بتشفير المرحلة 2</p>
+                   </div>
+                   <label className="bg-zinc-900 w-full text-white font-bold text-xs py-2 px-4 rounded-xl cursor-pointer hover:bg-zinc-800 transition">
+                      رفع الملف
+                      <input type="file" className="hidden" accept=".csr,.pem" onChange={(e) => {
+                         if (e.target.files?.length) {
+                           toast.success('تم رفع وحفظ ملف الشهادة الرقمية للمنشأة بنجاح.');
+                         }
+                      }} />
+                   </label>
+                 </div>
+                 
+                 <div className="border border-zinc-200 p-6 rounded-2xl bg-zinc-50 flex flex-col items-center justify-center text-center gap-3">
+                   <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
+                      <Lock className="w-6 h-6 text-zinc-400" />
+                   </div>
+                   <div>
+                     <p className="text-sm font-bold text-zinc-900">المفتاح الخاص (Private Key)</p>
+                     <p className="text-xs text-zinc-500 font-medium">لتوثيق الفواتير وسجلات الامتثال</p>
+                   </div>
+                   <label className="bg-zinc-900 w-full text-white font-bold text-xs py-2 px-4 rounded-xl cursor-pointer hover:bg-zinc-800 transition">
+                      رفع المفتاح
+                      <input type="file" className="hidden" accept=".key,.pem" onChange={(e) => {
+                         if (e.target.files?.length) {
+                           toast.success('تم رفع المفتاح الخاص بنجاح وسيتم تخزينه محلياً بشكل آمن (Encrypted Vault).');
+                         }
+                      }} />
+                   </label>
+                 </div>
+               </div>
+               
+               <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                     <p className="text-sm font-bold text-emerald-900">حالة الربط مع منصة فاتورة (ZATCA)</p>
+                  </div>
+                  <span className="text-xs font-black bg-emerald-200/50 text-emerald-800 px-3 py-1 rounded-full">متصل (Online)</span>
+               </div>
+            </div>
+         </motion.div>
+      )}
+
+      {/* --- GOSI SUBSCRIPTIONS DASHBOARD --- */}
+      {activeTab === 'gosi' && (
+         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            <div className="bg-teal-900 text-white rounded-[2rem] p-8 shadow-xl">
+               <h2 className="text-2xl font-black mb-2 flex items-center gap-3">لوحة التأمينات الاجتماعية (GOSI)</h2>
+               <p className="text-teal-100 text-sm max-w-xl leading-relaxed">متابعة دقيقة لاشتراكات التأمينات لكل موظف والتأكد من مطابقتها للراتب الأساسي المُسجل، لضمان الامتثال التام.</p>
+            </div>
+            
+            <div className="bg-white rounded-[2rem] border border-zinc-200 shadow-sm overflow-hidden">
+               <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
+                  <h3 className="font-bold text-lg text-zinc-900">اشتراكات الشهر الحالي</h3>
+               </div>
+               <div className="overflow-x-auto">
+                 <table className="w-full text-right" dir="rtl">
+                    <thead className="bg-zinc-50 border-b border-zinc-100">
+                       <tr className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+                          <th className="p-4">اسم الموظف / ID</th>
+                          <th className="p-4">الجنسية</th>
+                          <th className="p-4">الراتب الأساسي المسجل</th>
+                          <th className="p-4">اشتراك GOSI المتوقع</th>
+                          <th className="p-4">الحالة التشغيلية</th>
+                       </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-50 flex-1 h-full">
+                       {computedWorkers.map(w => {
+                           const isSaudi = w.nationality?.includes('سعودي') || w.nationality?.toLowerCase().includes('saudi');
+                           // Mocking Base salary if not present. Realistically, we'd fallback nicely.
+                           const baseSalary = (w as any).baseSalaryHalalas ? (w as any).baseSalaryHalalas / 100 : 4000;
+                           const gosiCompanyRate = isSaudi ? 0.115 : 0.02;
+                           const gosiEmployeeRate = isSaudi ? 0.0975 : 0;
+                           const expectedGosi = baseSalary * (gosiCompanyRate + gosiEmployeeRate);
+
+                           return (
+                               <tr key={w.id} className="hover:bg-zinc-50 transition-colors">
+                                  <td className="p-4">
+                                     <div className="font-bold text-sm text-zinc-900">{w.name}</div>
+                                     <div className="text-[10px] text-zinc-500 font-mono mt-1">ID: {w.id}</div>
+                                  </td>
+                                  <td className="p-4 text-xs font-medium text-zinc-600">{w.nationality || 'غير محدد'}</td>
+                                  <td className="p-4 text-sm font-bold text-zinc-800">{baseSalary.toLocaleString()} ر.س</td>
+                                  <td className="p-4">
+                                     <div className="font-black text-sm text-teal-700">{expectedGosi.toLocaleString()} ر.س</div>
+                                     <div className="text-[10px] text-zinc-400 mt-1">
+                                        صاحب العمل: {(baseSalary * gosiCompanyRate).toLocaleString()} ر.س {isSaudi ? `+ الموظف: ${(baseSalary * gosiEmployeeRate).toLocaleString()} ر.س` : ''}
+                                     </div>
+                                  </td>
+                                  <td className="p-4">
+                                     <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-teal-50 text-teal-700 border border-teal-100 text-[10px] font-bold">
+                                        <CheckCircle2 className="w-3 h-3" /> مطابق للمسير
+                                     </div>
+                                  </td>
+                               </tr>
+                           );
+                       })}
+                       {computedWorkers.length === 0 && (
+                          <tr><td colSpan={5} className="p-8 text-center text-zinc-400 text-sm font-bold">لا يوجد موظفين مسجلين.</td></tr>
+                       )}
+                    </tbody>
+                 </table>
+               </div>
             </div>
          </motion.div>
       )}

@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from "../lib/firebase";
 
 export class PayrollService {
@@ -40,6 +40,89 @@ export class PayrollService {
       totalDeductions: payrollEntries.reduce((acc, p) => acc + p.deductions, 0),
       status: "simulated",
       entries: payrollEntries,
+    };
+  }
+
+  static async generateMudadSIF(userId: string, runId: string) {
+    const runRef = doc(db, "payroll_runs", runId);
+    const runDoc = await getDoc(runRef);
+    const run = runDoc.data();
+
+    if (!run || run.userId !== userId) {
+      throw new Error("Payroll run not found");
+    }
+
+    await updateDoc(runRef, {
+      mudadSifGenerated: true
+    });
+
+    let csvData = '\uFEFF'; 
+    csvData += `رقم هوية الموظف,اسم الموظف,الايبان,الراتب الاساسي,بدل السكن,بدلات اخرى,الخصومات,الراتب الصافي\n`;
+    
+    for (const e of run.entries) {
+      const empDoc = await getDoc(doc(db, "employees", e.employeeId));
+      const emp = empDoc.data() || {};
+      
+      const empIdNumber = emp.idNumber || emp.employeeId || e.employeeId || ""; 
+      const name = e.employeeName || emp.name || "";
+      const iban = emp.iban || "";
+      const basic = e.basic || 0;
+      const housing = (emp.housingAllowanceHalalas || 0) / 100;
+      const otherAllowances = (e.allowances || 0) - housing;
+      const deductions = e.deductions || 0;
+      const netPay = e.netPay || 0;
+
+      csvData += `"${empIdNumber}","${name}","${iban}",${basic},${housing},${otherAllowances > 0 ? otherAllowances : 0},${deductions},${netPay}\n`;
+    }
+
+    return {
+      data: csvData,
+      period: run.period
+    };
+  }
+
+  static async batchGenerateMudadSIF(userId: string, period: string) {
+    const q = query(
+      collection(db, "payroll_runs"),
+      where("userId", "==", userId),
+      where("period", "==", period)
+    );
+    const snap = await getDocs(q);
+    
+    if (snap.empty) {
+      throw new Error("No payroll runs found for this period");
+    }
+
+    let csvData = '\uFEFF'; 
+    csvData += `رقم هوية الموظف,اسم الموظف,الايبان,الراتب الاساسي,بدل السكن,بدلات اخرى,الخصومات,الراتب الصافي\n`;
+
+    for (const d of snap.docs) {
+      // Mark run as having the SIF generated
+      await updateDoc(doc(db, "payroll_runs", d.id), {
+        mudadSifGenerated: true
+      });
+
+      const run = d.data();
+      for (const e of run.entries) {
+        const empDoc = await getDoc(doc(db, "employees", e.employeeId));
+        const emp = empDoc.data() || {};
+        
+        const empIdNumber = emp.idNumber || emp.employeeId || e.employeeId || ""; 
+        const name = e.employeeName || emp.name || "";
+        const iban = emp.iban || "";
+        const basic = e.basic || 0;
+        const housing = (emp.housingAllowanceHalalas || 0) / 100;
+        const otherAllowances = (e.allowances || 0) - housing;
+        const deductions = e.deductions || 0;
+        const netPay = e.netPay || 0;
+
+        csvData += `"${empIdNumber}","${name}","${iban}",${basic},${housing},${otherAllowances > 0 ? otherAllowances : 0},${deductions},${netPay}\n`;
+      }
+    }
+
+    return {
+      data: csvData,
+      period
     };
   }
 

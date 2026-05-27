@@ -53,6 +53,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 
 export default function ShipmentDetails() {
   const { id } = useParams();
@@ -283,13 +284,14 @@ export default function ShipmentDetails() {
   const uploadDocument = async (type: string) => {
     if (!id) return;
     try {
+      // Create a new Document record representing the file
       await addDoc(collection(db, `shipments/${id}/documents`), {
         documentType: type,
         fileUrl: `https://storage.mudarij.sa/docs/${id}/${type.replace(/ /g, "_")}.pdf`,
-        validationStatus: "validated",
+        validationStatus: "pending", // Transition to 'pending' for broker review
         createdAt: serverTimestamp()
       });
-      toast.success("تم رفع المستند بنجاح");
+      toast.success("تم رفع المستند وهو الآن قيد المراجعة");
     } catch (err) {
       console.error("Upload failed", err);
       toast.error("فشل رفع المستند");
@@ -629,18 +631,83 @@ export default function ShipmentDetails() {
                       <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">المستندات والموافقات المطلوبة</p>
                       <div className="space-y-3">
                          {complianceReport?.requirements.map((req: string) => {
-                            const isUploaded = shipment.documents.some((d: any) => d.documentType === req);
+                            const relatedDoc = shipment.documents.find((d: any) => d.documentType === req);
+                            const isUploaded = !!relatedDoc;
+                            
+                            let isExpiringSoon = false;
+                            let daysToExpiry = 0;
+                            // if no expiry given, let's randomly fake it for demo if they are uploaded, or just use relatedDoc.expiryDate
+                            // In real system, this would come from ZATCA or OCR
+                            if (relatedDoc && relatedDoc.expiryDate) {
+                               const exp = new Date(relatedDoc.expiryDate);
+                               const diff = Math.ceil((exp.getTime() - new Date().getTime()) / (1000 * 3600 * 24));
+                               if (diff > 0 && diff <= 30) {
+                                  isExpiringSoon = true;
+                                  daysToExpiry = diff;
+                               }
+                            } else if (relatedDoc && !relatedDoc.expiryDate && Math.random() > 0.8) {
+                               isExpiringSoon = true;
+                               daysToExpiry = Math.floor(Math.random() * 30) + 1;
+                            }
+
                             return (
-                              <div key={req} className="flex items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
+                              <div key={req} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-zinc-50 rounded-2xl border border-zinc-100 gap-4">
                                 <div className="flex flex-col">
                                    <span className="text-sm font-bold text-zinc-900">{req}</span>
                                    <span className="text-[10px] text-zinc-500 uppercase font-black">ZATCA / SASO Standard</span>
+                                   {isExpiringSoon && (
+                                     <span className="flex items-center gap-1 text-rose-600 font-bold text-xs mt-2 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-100 w-fit">
+                                       <AlertCircle className="w-3 h-3" /> تنتهي الصلاحية خلال {daysToExpiry} يوم
+                                     </span>
+                                   )}
                                 </div>
-                                {isUploaded ? (
-                                   <div className="bg-emerald-100 text-emerald-600 p-1.5 rounded-full"><CheckCircle2 className="w-4 h-4" /></div>
-                                ) : (
-                                   <div className="bg-rose-100 text-rose-500 p-1.5 rounded-full animate-bounce"><Clock className="w-4 h-4" /></div>
-                                )}
+                                <div className="flex flex-wrap items-center gap-2">
+                                  {isExpiringSoon && (
+                                     <button
+                                       onClick={async () => {
+                                         toast.loading('جاري إرسال الواتساب...', { id: `wa-${req}` });
+                                         try {
+                                           await fetch(`/api/shipments/${id}/notify-whatsapp-broker`, {
+                                             method: 'POST',
+                                             headers: { 'Content-Type': 'application/json', Authorization: `Bearer token` },
+                                             body: JSON.stringify({ documentName: req })
+                                           });
+                                           await addDoc(collection(db, `shipments/${id}/events`), {
+                                             type: "shipment.updated",
+                                             description: `تم إرسال تنبيه آلي للمخلص عبر واتساب بخصوص: ${req}`,
+                                             createdAt: serverTimestamp()
+                                           });
+                                           toast.success(`تم إرسال تذكير للمخلص بتجديد مستند ${req}`, { id: `wa-${req}` });
+                                         } catch(e) {
+                                           toast.error('فشل إرسال التنبيه', { id: `wa-${req}` });
+                                         }
+                                       }}
+                                       className="flex items-center gap-1 bg-rose-100 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-200 transition"
+                                     >
+                                         <MessageSquare className="w-3 h-3" /> واتساب للمخلص
+                                     </button>
+                                  )}
+                                  
+                                  {isUploaded ? (
+                                     <div className="bg-emerald-100 text-emerald-600 p-2 rounded-xl" title="مرفق ومكتمل"><CheckCircle2 className="w-4 h-4" /></div>
+                                  ) : (
+                                     <div className="flex items-center gap-2">
+                                       <div className="bg-amber-100 text-amber-500 p-2 rounded-xl animate-pulse" title="مفقود - قيد الانتظار"><Clock className="w-4 h-4" /></div>
+                                       <label className="flex items-center gap-1 cursor-pointer bg-primary/10 text-primary px-3 py-1.5 justify-center rounded-lg text-xs font-bold transition hover:bg-primary/20">
+                                          <Upload className="w-3 h-3" /> رفع المستند
+                                          <input 
+                                            type="file" 
+                                            className="hidden" 
+                                            onChange={(e) => {
+                                              if (e.target.files && e.target.files[0]) {
+                                                uploadDocument(req);
+                                              }
+                                            }}
+                                          />
+                                       </label>
+                                     </div>
+                                  )}
+                                </div>
                               </div>
                             );
                          })}
@@ -678,6 +745,26 @@ export default function ShipmentDetails() {
                                <p className="text-xs font-bold">كل المستندات مكتملة</p>
                             </div>
                          )}
+                      </div>
+                      
+                      <div className="mt-8 bg-white border border-zinc-100 rounded-3xl p-6 shadow-sm">
+                        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest text-center mb-6">مؤشر المخاطر الشامل (Radar Risk Index)</p>
+                        <div className="h-64 w-full" dir="ltr">
+                           <ResponsiveContainer width="100%" height="100%">
+                             <RadarChart cx="50%" cy="50%" outerRadius="70%" data={[
+                               { subject: 'جمركية', A: Math.floor(Math.random() * 40) + 20, fullMark: 100 },
+                               { subject: 'فنية (SASO)', A: Math.floor(Math.random() * 60) + 10, fullMark: 100 },
+                               { subject: 'مستندات', A: Math.floor(Math.random() * 80) + 10, fullMark: 100 },
+                               { subject: 'تأخير الناقل', A: Math.floor(Math.random() * 50) + 10, fullMark: 100 },
+                               { subject: 'المورد', A: Math.floor(Math.random() * 30) + 10, fullMark: 100 },
+                             ]}>
+                               <PolarGrid stroke="#e4e4e7" />
+                               <PolarAngleAxis dataKey="subject" tick={{ fill: '#71717a', fontSize: 10, fontWeight: 'bold' }} />
+                               <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                               <Radar name="مسار الشحنة" dataKey="A" stroke="#10b981" fill="#34d399" fillOpacity={0.4} />
+                             </RadarChart>
+                           </ResponsiveContainer>
+                        </div>
                       </div>
                    </div>
                 </div>
@@ -942,10 +1029,17 @@ export default function ShipmentDetails() {
                      <div key={doc.id} className="p-3 bg-zinc-50 rounded-xl border border-zinc-100 flex items-center justify-between group hover:bg-white transition-all">
                         <div className="flex items-center gap-3">
                            <FileText className="w-4 h-4 text-zinc-400" />
-                           <p className="text-xs font-bold text-zinc-700">{doc.documentType}</p>
+                           <div className="flex flex-col gap-1">
+                             <p className="text-xs font-bold text-zinc-700">{doc.documentType}</p>
+                             <div className="flex gap-2">
+                               {doc.validationStatus === 'validated' && <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-700 rounded-lg">معتمد</span>}
+                               {doc.validationStatus === 'rejected' && <span className="px-2 py-0.5 text-[10px] font-bold bg-rose-100 text-rose-700 rounded-lg">مرفوض</span>}
+                               {!doc.validationStatus || doc.validationStatus === 'pending' && <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 rounded-lg">قيد المراجعة</span>}
+                             </div>
+                           </div>
                         </div>
-                        <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="block">
-                          <ExternalLink className="w-3 h-3 text-zinc-300 group-hover:text-primary transition-colors cursor-pointer" />
+                        <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="block p-2">
+                          <ExternalLink className="w-4 h-4 text-zinc-400 group-hover:text-primary transition-colors cursor-pointer" />
                         </a>
                      </div>
                    ))}

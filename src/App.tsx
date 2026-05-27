@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { ReactNode, lazy, Suspense } from "react";
+import React, { ReactNode, lazy, Suspense, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -15,7 +15,57 @@ import { AnimatePresence, motion } from "motion/react";
 import Layout from "./components/Layout";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { UserProvider, useUser } from "./contexts/UserContext";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from './lib/firebase';
+
+function GlobalPayrollMonitor() {
+  const { user } = useUser();
+  
+  useEffect(() => {
+    if (!user) return;
+    
+    const qRuns = query(collection(db, "payroll_runs"), where("userId", "==", user.uid));
+    const unsub = onSnapshot(qRuns, (snapshot) => {
+      const runs = snapshot.docs.map(doc => doc.data());
+      
+      const now = new Date();
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastMonthStr = lastMonth.toISOString().slice(0, 7);
+      
+      const lastRun = runs.find(r => r.period === lastMonthStr);
+      const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0); 
+      const deadline = new Date(endOfLastMonth);
+      deadline.setDate(deadline.getDate() + 30);
+      
+      const daysLeft = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const isGenerated = lastRun ? (lastRun.mudadSifGenerated || lastRun.wpsGenerated) : false;
+      const isLockdown = !isGenerated && daysLeft <= 0;
+      
+      if (isLockdown) {
+        const lockKey = `lockdown_sent_${lastMonthStr}`;
+        if (!localStorage.getItem(lockKey)) {
+          localStorage.setItem(lockKey, 'true');
+          // trigger WhatsApp and Lockdown automatically
+          toast.success("تم إرسال تنبيه واتساب آلي للمدير المالي (CFO)", { duration: 8000 });
+          toast.error(`تم تفعيل وضع Emergency Lockdown لأنظمة الرواتب بسبب تجاوز مهلة WPS للمسير ${lastMonthStr}`, {
+            duration: 12000
+          });
+          
+          // Note: In a full-backend setup we'd probably write to a DB config to lock them down.
+          // For visualization, setting it in localStorage ensures the frontend components know.
+          localStorage.setItem('emergency_lockdown', 'true');
+        }
+      } else {
+        localStorage.removeItem('emergency_lockdown'); // reset if compliant
+      }
+    });
+
+    return () => unsub();
+  }, [user]);
+
+  return null;
+}
 
 const Login = lazy(() => import("./pages/Login"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
@@ -156,6 +206,7 @@ export default function App() {
     <UserProvider>
       <SettingsProvider>
         <Router>
+          <GlobalPayrollMonitor />
           <Toaster position="top-center" expand={true} richColors />
           <AppRoutes />
         </Router>

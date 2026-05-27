@@ -279,17 +279,26 @@ const ProblemSection = () => {
                <p className="text-zinc-500 text-xl font-medium mt-4">تطبيقات كثيرة، محادثات لا تنتهي، فواتير ضائعة، وغرامات تأخير.</p>
             </motion.div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 perspective-[1500px]">
+            <motion.div 
+               initial="hidden"
+               whileInView="visible"
+               viewport={{ once: true, margin: "-50px" }}
+               variants={{
+                  visible: { transition: { staggerChildren: 0.2 } },
+                  hidden: {}
+               }}
+               className="grid grid-cols-1 md:grid-cols-3 gap-8 perspective-[1500px]"
+            >
                {[
                   { title: "واتساب مزدحم مبعثر", desc: "طلبات العملاء تضيع بين المحادثات الشخصية والعشوائية.", icon: MessageSquare, color: "text-emerald-500", bg: "bg-emerald-50" },
                   { title: "فواتير يدوية متعبة", desc: "أكسيل، وورد، وبحث متواصل عن الأرقام الضريبية وتتبع التحويلات.", icon: FileText, color: "text-blue-500", bg: "bg-blue-50" },
                   { title: "غرامات ومخاطر", desc: "تأخر الرواتب، انتهاء الإقامات، وغرامات WPS و التأمينات الاجتماعية.", icon: ShieldAlert, color: "text-rose-500", bg: "bg-rose-50" },
                ].map((item, i) => (
                   <motion.div 
-                     initial={{ opacity: 0, y: 50, rotateX: 20 }}
-                     whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
-                     viewport={{ once: true, margin: "-50px" }}
-                     transition={{ delay: i * 0.15, duration: 0.8, type: "spring", bounce: 0.4 }}
+                     variants={{
+                        hidden: { opacity: 0, y: 50, rotateX: 20 },
+                        visible: { opacity: 1, y: 0, rotateX: 0, transition: { type: "spring", bounce: 0.4 } }
+                     }}
                      whileHover={{ y: -10, rotateX: 0, rotateY: i === 0 ? 5 : i === 2 ? -5 : 0, scale: 1.02 }}
                      key={i} 
                      className="bg-white border border-zinc-100 rounded-[2rem] p-8 shadow-[0_20px_40px_-20px_rgba(0,0,0,0.1)] hover:shadow-[0_40px_60px_-20px_rgba(0,0,0,0.15)] transition-shadow duration-500 relative group overflow-hidden"
@@ -302,7 +311,20 @@ const ProblemSection = () => {
                      <p className="text-zinc-500 font-medium leading-relaxed relative z-10">{item.desc}</p>
                   </motion.div>
                ))}
-            </div>
+            </motion.div>
+            
+            <motion.div 
+               initial={{ opacity: 0, y: 20 }}
+               whileInView={{ opacity: 1, y: 0 }}
+               viewport={{ once: true }}
+               transition={{ delay: 0.5, duration: 0.8 }}
+               className="mt-16 flex justify-center"
+            >
+               <Link to="/app" className="group inline-flex items-center gap-3 px-8 py-4 bg-zinc-900 text-white rounded-2xl font-bold text-lg hover:bg-zinc-800 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-zinc-200">
+                  <span>تخلص من الفوضى الآن</span>
+                  <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+               </Link>
+            </motion.div>
          </div>
       </section>
    )
@@ -395,6 +417,19 @@ const FeatureShowcase = () => {
                   </div>
                </motion.div>
             </div>
+
+            <motion.div 
+               initial={{ opacity: 0, y: 20 }}
+               whileInView={{ opacity: 1, y: 0 }}
+               viewport={{ once: true }}
+               transition={{ delay: 0.4, duration: 0.8 }}
+               className="mt-20 flex justify-center"
+            >
+               <Link to="/app" className="group inline-flex items-center gap-3 px-10 py-5 bg-primary text-white rounded-2xl font-bold text-xl hover:bg-primary/90 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/20">
+                  <span>اكتشف جميع الميزات</span>
+                  <ChevronLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+               </Link>
+            </motion.div>
          </div>
       </section>
    )
@@ -412,9 +447,25 @@ const FlowTransformation = () => {
                <p className="text-xl text-zinc-400 font-medium">خط سير أوتوماتيكي يبدأ من رسالة واتساب وينتهي في حسابك البنكي.</p>
             </div>
 
-            <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-4 relative">
+            <motion.div 
+               initial="hidden"
+               whileInView="visible"
+               viewport={{ once: true, margin: "-100px" }}
+               variants={{
+                  visible: { transition: { staggerChildren: 0.3 } },
+                  hidden: {}
+               }}
+               className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-4 relative"
+            >
                {/* 1. Chat */}
-               <motion.div whileHover={{ y: -10 }} className="bg-white/5 border border-white/10 p-6 rounded-3xl w-full md:w-1/3 backdrop-blur-md">
+               <motion.div 
+                  variants={{
+                     hidden: { opacity: 0, x: 50, scale: 0.9 },
+                     visible: { opacity: 1, x: 0, scale: 1, transition: { type: "spring", bounce: 0.5, duration: 1 } }
+                  }}
+                  whileHover={{ y: -15, scale: 1.05, rotate: -2, zIndex: 10 }}
+                  className="bg-white/5 border border-white/10 p-6 rounded-3xl w-full md:w-1/3 backdrop-blur-md relative"
+               >
                   <div className="flex items-center gap-3 mb-4 text-emerald-400">
                      <MessageSquare className="w-6 h-6" />
                      <h4 className="font-bold">استقبال الطلب (واتساب)</h4>
@@ -425,11 +476,20 @@ const FlowTransformation = () => {
                   </div>
                </motion.div>
 
-               <ArrowLeft className="w-8 h-8 text-zinc-600 hidden md:block" />
-               <ArrowLeft className="w-8 h-8 text-zinc-600 rotate-90 md:hidden" />
+               <motion.div variants={{ hidden: { opacity: 0, scale: 0 }, visible: { opacity: 1, scale: 1 } }}>
+                  <ArrowLeft className="w-8 h-8 text-zinc-600 hidden md:block" />
+                  <ArrowLeft className="w-8 h-8 text-zinc-600 rotate-90 md:hidden" />
+               </motion.div>
 
                {/* 2. Invoice */}
-               <motion.div whileHover={{ y: -10 }} className="bg-white/5 border border-white/10 p-6 rounded-3xl w-full md:w-1/3 backdrop-blur-md">
+               <motion.div 
+                  variants={{
+                     hidden: { opacity: 0, y: 50, scale: 0.9 },
+                     visible: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", bounce: 0.5, duration: 1 } }
+                  }}
+                  whileHover={{ y: -15, scale: 1.05, zIndex: 10 }}
+                  className="bg-white/5 border border-white/10 p-6 rounded-3xl w-full md:w-1/3 backdrop-blur-md relative"
+               >
                   <div className="flex items-center gap-3 mb-4 text-blue-400">
                      <FileText className="w-6 h-6" />
                      <h4 className="font-bold">توليد الفاتورة (AI)</h4>
@@ -447,25 +507,47 @@ const FlowTransformation = () => {
                   </div>
                </motion.div>
 
-               <ArrowLeft className="w-8 h-8 text-zinc-600 hidden md:block" />
-               <ArrowLeft className="w-8 h-8 text-zinc-600 rotate-90 md:hidden" />
+               <motion.div variants={{ hidden: { opacity: 0, scale: 0 }, visible: { opacity: 1, scale: 1 } }}>
+                  <ArrowLeft className="w-8 h-8 text-zinc-600 hidden md:block" />
+                  <ArrowLeft className="w-8 h-8 text-zinc-600 rotate-90 md:hidden" />
+               </motion.div>
 
                {/* 3. Analytics */}
-               <motion.div whileHover={{ y: -10 }} className="bg-white/5 border border-white/10 p-6 rounded-3xl w-full md:w-1/3 backdrop-blur-md">
+               <motion.div 
+                  variants={{
+                     hidden: { opacity: 0, x: -50, scale: 0.9 },
+                     visible: { opacity: 1, x: 0, scale: 1, transition: { type: "spring", bounce: 0.5, duration: 1 } }
+                  }}
+                  whileHover={{ y: -15, scale: 1.05, rotate: 2, zIndex: 10 }}
+                  className="bg-white/5 border border-white/10 p-6 rounded-3xl w-full md:w-1/3 backdrop-blur-md relative"
+               >
                   <div className="flex items-center gap-3 mb-4 text-primary">
                      <PieChart className="w-6 h-6" />
                      <h4 className="font-bold">تحديث التقارير لحظياً</h4>
                   </div>
-                  <div className="flex items-end gap-2 h-24 pt-4 border-b border-white/5">
-                     <div className="w-1/4 bg-primary/20 rounded-t-sm h-1/3" />
-                     <div className="w-1/4 bg-primary/40 rounded-t-sm h-1/2" />
-                     <div className="w-1/4 bg-primary/60 rounded-t-sm h-3/4" />
-                     <div className="w-1/4 bg-primary text-primary-foreground font-black text-[10px] flex items-start justify-center pt-2 rounded-t-sm h-full shadow-[0_0_15px_rgba(var(--primary),0.5)]">
+                  <div className="flex items-end gap-2 h-24 pt-4 border-b border-white/5 overflow-hidden group">
+                     <motion.div initial={{ height: 0 }} whileInView={{ height: "33.333333%" }} transition={{ delay: 0.8, duration: 1 }} className="w-1/4 bg-primary/20 rounded-t-sm" />
+                     <motion.div initial={{ height: 0 }} whileInView={{ height: "50%" }} transition={{ delay: 1.0, duration: 1 }} className="w-1/4 bg-primary/40 rounded-t-sm" />
+                     <motion.div initial={{ height: 0 }} whileInView={{ height: "75%" }} transition={{ delay: 1.2, duration: 1 }} className="w-1/4 bg-primary/60 rounded-t-sm group-hover:bg-primary/80 transition-colors" />
+                     <motion.div initial={{ height: 0 }} whileInView={{ height: "100%" }} transition={{ delay: 1.4, duration: 1 }} className="w-1/4 bg-primary text-primary-foreground font-black text-[10px] flex items-start justify-center pt-2 rounded-t-sm shadow-[0_0_15px_rgba(var(--primary),0.5)] group-hover:shadow-[0_0_30px_rgba(var(--primary),0.8)] transition-all">
                         +500
-                     </div>
+                     </motion.div>
                   </div>
                </motion.div>
-            </div>
+            </motion.div>
+
+            <motion.div 
+               initial={{ opacity: 0, y: 20 }}
+               whileInView={{ opacity: 1, y: 0 }}
+               viewport={{ once: true }}
+               transition={{ delay: 0.6, duration: 0.8 }}
+               className="mt-20 flex justify-center"
+            >
+               <Link to="/app" className="group inline-flex items-center gap-3 px-10 py-5 bg-white text-zinc-950 rounded-2xl font-black text-xl hover:bg-zinc-100 hover:scale-105 active:scale-95 transition-all shadow-[0_0_30px_rgba(255,255,255,0.1)]">
+                  <span>ابدأ خط سيرك المربح</span>
+                  <ChevronLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+               </Link>
+            </motion.div>
          </div>
       </section>
    )
@@ -529,10 +611,19 @@ const PricingSection = () => {
                   <h3 className="text-xl font-bold text-zinc-900 mb-2">البداية (Starter)</h3>
                   <p className="text-zinc-500 text-sm font-medium mb-6">لرواد الأعمال المستقلين</p>
                   <div className="text-4xl font-black mb-8">مجاناً <span className="text-sm text-zinc-400 font-medium">/ مدى الحياة</span></div>
-                  <ul className="space-y-4 mb-8 text-zinc-700 font-medium text-sm">
-                     <li className="flex gap-3 items-center"><CheckCircle2 className="w-5 h-5 text-emerald-500 hover:scale-125 transition-transform" /> إدارة 50 عميل</li>
-                     <li className="flex gap-3 items-center"><CheckCircle2 className="w-5 h-5 text-emerald-500 hover:scale-125 transition-transform" /> فواتير إلكترونية أساسية</li>
-                  </ul>
+                  <motion.ul 
+                     initial="hidden"
+                     whileInView="visible"
+                     viewport={{ once: true }}
+                     variants={{
+                        visible: { transition: { staggerChildren: 0.1 } },
+                        hidden: {}
+                     }}
+                     className="space-y-4 mb-8 text-zinc-700 font-medium text-sm"
+                  >
+                     <motion.li variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }} className="flex gap-3 items-center"><CheckCircle2 className="w-5 h-5 text-emerald-500 hover:scale-125 transition-transform" /> إدارة 50 عميل</motion.li>
+                     <motion.li variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }} className="flex gap-3 items-center"><CheckCircle2 className="w-5 h-5 text-emerald-500 hover:scale-125 transition-transform" /> فواتير إلكترونية أساسية</motion.li>
+                  </motion.ul>
                   <button className="w-full py-4 rounded-xl border-2 border-zinc-900 text-zinc-900 font-bold hover:bg-zinc-900 hover:text-white transition-all shadow-[0_0_0_0_rgba(24,24,27,0)] hover:shadow-[0_10px_20px_-10px_rgba(24,24,27,0.5)]">ابدأ مجاناً</button>
                </motion.div>
 
@@ -552,12 +643,21 @@ const PricingSection = () => {
                   <h3 className="text-2xl font-black mb-2 relative z-10">الاحترافي (Pro)</h3>
                   <p className="text-zinc-400 text-sm font-medium mb-6 relative z-10">للشركات الصغيرة الطموحة</p>
                   <div className="text-5xl font-black mb-8 flex items-baseline gap-2 relative z-10">299 <span className="text-xl text-zinc-500 font-medium tracking-tight">ريال / شهرياً</span></div>
-                  <ul className="space-y-4 mb-10 text-zinc-300 font-medium relative z-10">
-                     <li className="flex gap-3 items-center group/item"><CheckCircle2 className="w-5 h-5 text-primary group-hover/item:scale-125 transition-transform shrink-0" /> <span className="font-bold text-white">ترخيص ZATCA المرحلة الثانية مدعوم</span></li>
-                     <li className="flex gap-3 items-center group/item"><CheckCircle2 className="w-5 h-5 text-primary group-hover/item:scale-125 transition-transform shrink-0" /> ربط ZATCA المرحلة 2 مباشر (مجاني)</li>
-                     <li className="flex gap-3 items-center group/item"><CheckCircle2 className="w-5 h-5 text-primary group-hover/item:scale-125 transition-transform shrink-0" /> جميع أدوات (FWC-OS و ImportOS)</li>
-                     <li className="flex gap-3 items-center group/item"><CheckCircle2 className="w-5 h-5 text-primary group-hover/item:scale-125 transition-transform shrink-0" /> برنامج الشركاء: شهرين مجاناً لكل دعوة</li>
-                  </ul>
+                  <motion.ul 
+                     initial="hidden"
+                     whileInView="visible"
+                     viewport={{ once: true }}
+                     variants={{
+                        visible: { transition: { staggerChildren: 0.1 } },
+                        hidden: {}
+                     }}
+                     className="space-y-4 mb-10 text-zinc-300 font-medium relative z-10"
+                  >
+                     <motion.li variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }} className="flex gap-3 items-center group/item"><CheckCircle2 className="w-5 h-5 text-primary group-hover/item:scale-125 transition-transform shrink-0" /> <span className="font-bold text-white">ترخيص ZATCA المرحلة الثانية مدعوم</span></motion.li>
+                     <motion.li variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }} className="flex gap-3 items-center group/item"><CheckCircle2 className="w-5 h-5 text-primary group-hover/item:scale-125 transition-transform shrink-0" /> ربط ZATCA المرحلة 2 مباشر (مجاني)</motion.li>
+                     <motion.li variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }} className="flex gap-3 items-center group/item"><CheckCircle2 className="w-5 h-5 text-primary group-hover/item:scale-125 transition-transform shrink-0" /> جميع أدوات (FWC-OS و ImportOS)</motion.li>
+                     <motion.li variants={{ hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } }} className="flex gap-3 items-center group/item"><CheckCircle2 className="w-5 h-5 text-primary group-hover/item:scale-125 transition-transform shrink-0" /> برنامج الشركاء: شهرين مجاناً لكل دعوة</motion.li>
+                  </motion.ul>
                   <button className="w-full py-4 rounded-xl bg-primary text-white font-black hover:scale-[1.02] active:scale-[0.98] shadow-xl shadow-primary/20 transition-all text-lg relative z-10 overflow-hidden group/btn">
                      <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover/btn:translate-y-[0%] transition-transform duration-300" />
                      <span className="relative z-10">اشترك الآن</span>

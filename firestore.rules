@@ -16,6 +16,10 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function isCronSystem() {
+      return isSignedIn() && request.auth.token.email == 'cron-system@mudarij.os';
+    }
+
     function isValidId(id) {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
@@ -93,6 +97,16 @@ service cloud.firestore {
       allow create: if isSignedIn() && incoming().userId == request.auth.uid;
     }
 
+    // System Alerts Rules
+    match /system_alerts/{alertId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isCronSystem();
+      allow update: if isSignedIn() && 
+                       resource.data.userId == request.auth.uid && 
+                       incoming().diff(existing()).affectedKeys().hasOnly(['isRead']);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
     // Lead Rules
     match /leads/{leadId} {
       function isValidLead(data) {
@@ -125,9 +139,10 @@ service cloud.firestore {
 
     // Payroll Runs Rules
     match /payroll_runs/{runId} {
-      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list, get: if (isSignedIn() && resource.data.userId == request.auth.uid) || isCronSystem();
       allow create: if isSignedIn() && incoming().userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if (isSignedIn() && resource.data.userId == request.auth.uid) || (isCronSystem() && existing().isLocked == true);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Shipment Rules (ImportOS)
@@ -156,6 +171,35 @@ service cloud.firestore {
       match /events/{eventId} {
         allow read, write: if isSignedIn() && get(/databases/$(database)/documents/shipments/$(shipmentId)).data.userId == request.auth.uid;
       }
+    }
+
+    // Financial Transactions Rules (Anti-Concealment Audit Trail)
+    match /financial_transactions/{txId} {
+      function isValidTransaction(data) {
+        return data.userId == request.auth.uid &&
+               data.nationalId is string &&
+               data.nationalId.size() >= 10 &&
+               data.amountHalalas is int &&
+               data.isOwner is bool &&
+               data.needsOwnerVerification is bool;
+      }
+
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidTransaction(incoming()) && (
+        // Auto-flag large transactions approved by non-owners
+        incoming().needsOwnerVerification == (!incoming().isOwner && incoming().amountHalalas > 1000000)
+      );
+      allow update: if isSignedIn() && 
+                       resource.data.userId == request.auth.uid && 
+                       incoming().userId == existing().userId &&
+                       // Only owners can verify flagged transactions
+                       (
+                         !existing().needsOwnerVerification || 
+                         // To update a flagged tx, the verifier must be an owner
+                         (incoming().diff(existing()).affectedKeys().hasOnly(['verificationStatus', 'needsOwnerVerification', 'updatedAt']) && incoming().isOwner)
+                       );
+      allow delete: if false; // Audit trails are immutable and cannot be deleted
     }
 
     match /brokers/{brokerId} { 

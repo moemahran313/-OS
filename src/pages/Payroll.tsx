@@ -1,13 +1,15 @@
 
 import React, { useState, useEffect, useMemo } from "react";
+import PayrollAudit from '@/src/components/PayrollAudit';
 import { 
   Plus, Search, Download, CreditCard, TrendingUp, Users, ShieldCheck,
   CalendarDays, MoreVertical, Play, CheckCircle2, AlertCircle, FileText,
   Building, Wallet, Activity, ArrowRight, Settings, Calculator, Edit3, Save, X,
-  ChevronLeft, ChevronRight, Trash2
+  ChevronLeft, ChevronRight, Trash2, AlertOctagon, History
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
+import { toast } from "sonner";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -30,7 +32,7 @@ import { useUser } from "@/src/contexts/UserContext";
 export default function Payroll() {
   const { user } = useUser();
   const { settings } = useSettings();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'employees' | 'runs'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'employees' | 'runs' | 'audit'>('dashboard');
   const [employees, setEmployees] = useState<any[]>([]);
   const [runs, setRuns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +41,12 @@ export default function Payroll() {
   const [showSimulateModal, setShowSimulateModal] = useState(false);
   const [simulationData, setSimulationData] = useState<any>(null);
   const [simulatePeriod, setSimulatePeriod] = useState(new Date().toISOString().slice(0, 7));
+  const [sifValidateRun, setSifValidateRun] = useState<any>(null); // For SIF validation checklist modal
+  const [showLargeTxModal, setShowLargeTxModal] = useState(false);
+  const [auditRun, setAuditRun] = useState<any>(null);
+  
+  // Bulk selection for Runs
+  const [selectedRuns, setSelectedRuns] = useState<string[]>([]);
 
   // States for Edit / Add Employee Modal
   const [showEmployeeModal, setShowEmployeeModal] = useState(false);
@@ -94,19 +102,47 @@ export default function Payroll() {
     }
   };
 
+  const attemptCommitPayroll = () => {
+    if (!simulationData) return;
+    if (simulationData.totalNet > 1000000 && user?.role !== 'Administrator') {
+      setShowLargeTxModal(true);
+      return;
+    }
+    commitPayroll();
+  };
+
   const commitPayroll = async () => {
     if (!user || !simulationData) return;
     try {
-      await addDoc(collection(db, "payroll_runs"), {
+      const isOwner = user.role === 'Administrator';
+      const needsOwnerVerification = !isOwner && simulationData.totalNet > 1000000;
+      
+      const docRef = await addDoc(collection(db, "payroll_runs"), {
         ...simulationData,
         userId: user.uid,
         createdAt: serverTimestamp()
       });
+
+      // Write to Anti-Concealment Audit Trail
+      await addDoc(collection(db, "financial_transactions"), {
+        userId: user.uid,
+        nationalId: user.crNumber || "1000000000", // Fallback to CR or dummy national ID
+        amountHalalas: Math.round(simulationData.totalNet * 100),
+        isOwner,
+        needsOwnerVerification,
+        verificationStatus: needsOwnerVerification ? 'pending' : 'verified',
+        description: `Payroll run for period ${simulationData.period} (Run ID: ${docRef.id})`,
+        createdAt: new Date().toISOString()
+      });
+
       setShowSimulateModal(false);
       setSimulationData(null);
       setActiveTab('runs');
+      toast.success("تم اعتماد المسير بنجاح");
+      setShowLargeTxModal(false);
     } catch (e) {
       console.error(e);
+      toast.error("فشل في الاعتماد");
     }
   };
 
@@ -186,6 +222,80 @@ export default function Payroll() {
     }
   };
 
+  const downloadMudadSif = async (run: any) => {
+    setSifValidateRun(run);
+  };
+
+  const toggleLock = async (run: any) => {
+    if (!user) return;
+    try {
+      await updateDoc(doc(db, "payroll_runs", run.id), {
+        isLocked: !run.isLocked,
+        systemLockState: !run.isLocked ? "pending" : null,
+        logs: [
+          ...(run.logs || []),
+          {
+            action: !run.isLocked ? "Manual Lock" : "Manual Unlock",
+            user: user.email || user.uid,
+            timestamp: new Date().toISOString()
+          }
+        ]
+      });
+      toast.success(!run.isLocked ? "تم تحويل المسير إلى الإقفال (قيد المعالجة)" : "تم فك إقفال المسير");
+    } catch (e) {
+      console.error(e);
+      toast.error("حدث خطأ أثناء تعديل الإقفال");
+    }
+  };
+
+  const handleBulkAction = async (actionType: 'approve' | 'correction') => {
+    if (!user || selectedRuns.length === 0) return;
+    try {
+      const batchDocs = runs.filter(r => selectedRuns.includes(r.id));
+      for (const run of batchDocs) {
+        if (actionType === 'approve') {
+           await updateDoc(doc(db, 'payroll_runs', run.id), {
+             status: 'finalized',
+             logs: [...(run.logs || []), { action: "Bulk Approved", timestamp: new Date().toISOString(), user: user.email }]
+           });
+        } else {
+           await updateDoc(doc(db, 'payroll_runs', run.id), {
+             status: 'needs_correction',
+             isLocked: false,
+             systemLockState: null,
+             logs: [...(run.logs || []), { action: "Bulk Correction Requested", timestamp: new Date().toISOString(), user: user.email }]
+           });
+        }
+      }
+      toast.success(`تم تنفيذ الإجراء (${actionType === 'approve' ? 'اعتماد' : 'طلب تعديل'}) على المعاملات المحددة.`);
+      setSelectedRuns([]);
+    } catch(e) {
+      console.error(e);
+      toast.error("فشل تنفيذ الإجراء المجمع");
+    }
+  };
+
+  const confirmDownloadMudadSif = async () => {
+    if(!user || !sifValidateRun) return;
+    try {
+      const { PayrollService } = await import('@/src/services/payroll.service');
+      const { data, period } = await PayrollService.generateMudadSIF(user.uid, sifValidateRun.id);
+      const blob = new Blob([data], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `SIF_MUDAD_${period}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("تم توليد ملف SIF بنجاح");
+      setSifValidateRun(null);
+    } catch(e) {
+      console.error(e);
+      alert("فشل تنزيل ملف أجور لمدد");
+    }
+  };
+
   const downloadReportCsv = (run: any) => {
     try {
       // English requested columns: employee name, bank, basic salary, allowances, deductions, net pay
@@ -249,6 +359,26 @@ export default function Payroll() {
     }
   };
 
+  const downloadBatchMudadSif = async (period: string) => {
+    if(!user) return;
+    try {
+      const { PayrollService } = await import('@/src/services/payroll.service');
+      const { data } = await PayrollService.batchGenerateMudadSIF(user.uid, period);
+      const blob = new Blob([data], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `BATCH_SIF_MUDAD_${period}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("تم توليد ملف مسير الرواتب بصيغة SIF لشهر " + period);
+    } catch(e: any) {
+      console.error(e);
+      toast.error(e.message || "فشل توليد ملف SIF");
+    }
+  };
+
   const totalPayrollCost = useMemo(() => {
     if (!Array.isArray(employees)) return 0;
     return (employees.reduce((acc, emp) => acc + (emp.baseSalaryHalalas || 0) + (emp.housingAllowanceHalalas || 0) + (emp.transportAllowanceHalalas || 0), 0) / 100);
@@ -306,6 +436,34 @@ export default function Payroll() {
   const totalPages = Math.ceil(sortedEmployees.length / pageSize);
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
+  const exportEmployeesAsPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    // Since default jsPDF doesn't support Arabic natively without a custom TTF,
+    // we use an English title or simple Arabic if supported.
+    doc.text("سجل الموظفين - Employee List", 14, 20);
+    
+    const headers = [['Employee Name / الاسم', 'Position / القسم', 'Bank / البنك', 'Basic Salary / الراتب', 'Status / الحالة']];
+    const data = sortedEmployees.map(emp => [
+      emp.name || '',
+      emp.department || '',
+      emp.bank || '',
+      ((emp.baseSalaryHalalas || 0) / 100).toLocaleString(),
+      emp.status === 'active' ? 'نشط / Active' : 'غير نشط / Inactive'
+    ]);
+
+    autoTable(doc, {
+      startY: 30,
+      head: headers,
+      body: data,
+      theme: 'grid',
+      styles: { font: 'helvetica', fontSize: 10, halign: 'right' },
+      headStyles: { fillColor: [39, 39, 42] }
+    });
+
+    doc.save("employees-list.pdf");
+  };
 
   const exportEmployeesAsCSV = () => {
     const headers = ['الاسم', 'المنصب', 'القسم', 'الراتب الأساسي', 'بدل السكن', 'بدل النقل', 'خصومات أخرى', 'الحالة', 'البنك', 'الآيبان'];
@@ -375,13 +533,15 @@ export default function Payroll() {
           <p className="text-zinc-500 mt-1 text-sm font-medium">أتمتة كاملة لمسير الرواتب، التامينات، والامتثال لوزارة الموارد البشرية.</p>
         </div>
         
-        <div className="flex bg-zinc-100 p-1.5 rounded-2xl w-full md:w-auto">
+        
+        <div className="flex bg-zinc-100 p-1.5 rounded-2xl w-full md:w-auto overflow-x-auto">
           {[
             { id: 'dashboard', label: 'اللوحة', icon: Activity },
             { id: 'employees', label: 'الموظفين', icon: Users },
-            { id: 'runs', label: 'مسيرات الرواتب', icon: Calculator }
+            { id: 'runs', label: 'مسيرات الرواتب', icon: Calculator },
+            { id: 'audit', label: 'سجل الامتثال', icon: ShieldCheck }
           ].map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={cn("flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all", activeTab === tab.id ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50")}>
+            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={cn("flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap", activeTab === tab.id ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50")}>
               <tab.icon className="w-4 h-4" />
               <span>{tab.label}</span>
             </button>
@@ -538,9 +698,12 @@ export default function Payroll() {
               <h3 className="text-xl font-black text-zinc-900">سجل الموظفين والرواتب</h3>
               <p className="text-sm font-medium text-zinc-500 mt-1">إضافة موظفين، تعديل الرواتب الأساسية، البدلات ومعلومات البنك</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap md:flex-nowrap">
               <button onClick={exportEmployeesAsCSV} className="flex items-center justify-center gap-2 bg-white text-zinc-700 border border-zinc-200 px-5 py-2.5 rounded-xl font-bold hover:bg-zinc-50 transition-all shadow-sm">
                 <Download className="w-4 h-4" /> تصدير CSV
+              </button>
+              <button onClick={exportEmployeesAsPDF} className="flex items-center justify-center gap-2 bg-white text-zinc-700 border border-zinc-200 px-5 py-2.5 rounded-xl font-bold hover:bg-zinc-50 transition-all shadow-sm">
+                <FileText className="w-4 h-4" /> تصدير PDF
               </button>
               <div className="relative">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
@@ -713,16 +876,62 @@ export default function Payroll() {
                   <button onClick={handleSimulate} className="bg-white text-zinc-900 font-bold px-6 py-3 rounded-xl shadow-lg hover:scale-105 transition-transform flex items-center gap-2 w-full sm:w-auto justify-center">
                     <Play className="w-4 h-4" /> معالجة مسير الشهر
                   </button>
+                  <button onClick={() => downloadBatchMudadSif(simulatePeriod)} className="bg-emerald-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-emerald-600 hover:scale-105 transition-all flex items-center gap-2 w-full sm:w-auto justify-center">
+                    <CheckCircle2 className="w-4 h-4" /> الامتثال وتسليم مدد (Batch SIF)
+                  </button>
                 </div>
              </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
+            
+            {/* Bulk Actions Toolbar */}
+            {selectedRuns.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-zinc-100 p-4 rounded-2xl flex items-center justify-between border border-zinc-200"
+              >
+                <div className="flex items-center gap-4">
+                   <div className="bg-white px-3 py-1 rounded-xl text-xs font-bold text-zinc-600 border border-zinc-200">
+                     تم تحديد {selectedRuns.length}
+                   </div>
+                   <button 
+                     onClick={() => setSelectedRuns(runs.map(r => r.id))}
+                     className="text-xs font-bold text-primary hover:underline"
+                   >
+                     تحديد الكل
+                   </button>
+                   <button 
+                     onClick={() => setSelectedRuns([])}
+                     className="text-xs font-bold text-zinc-500 hover:underline"
+                   >
+                     إلغاء التحديد
+                   </button>
+                </div>
+                <div className="flex items-center gap-2">
+                   <button onClick={() => handleBulkAction('approve')} className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-emerald-700 transition">اعتماد جماعي</button>
+                   <button onClick={() => handleBulkAction('correction')} className="bg-amber-100 text-amber-700 px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-200 transition">طلب تعديل جماعي</button>
+                </div>
+              </motion.div>
+            )}
+
             {runs.length === 0 ? (
               <div className="text-center py-12 text-zinc-400 font-bold">لا يوجد مسيرات رواتب معتمدة بعد.</div>
             ) : runs.map(run => (
-              <div key={run.id} className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex items-center gap-4">
+              <div key={run.id} className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-6 relative">
+                <div className="absolute top-6 right-6">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedRuns.includes(run.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedRuns([...selectedRuns, run.id]);
+                      else setSelectedRuns(selectedRuns.filter(id => id !== run.id));
+                    }}
+                    className="w-5 h-5 rounded-lg border-zinc-300 text-primary focus:ring-primary/20 cursor-pointer"
+                  />
+                </div>
+                <div className="flex items-center gap-4 pr-10">
                   <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
                     <CheckCircle2 className="w-7 h-7" />
                   </div>
@@ -736,8 +945,11 @@ export default function Payroll() {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-3">
+                  <button onClick={() => downloadMudadSif(run)} className="flex items-center gap-2 bg-primary text-white px-4 py-2 text-xs font-bold rounded-xl shadow-sm hover:bg-primary/90 transition-transform">
+                    <Download className="w-4 h-4" /> توليد ملف SIF (نظام مدد)
+                  </button>
                   <button onClick={() => downloadWps(run.id)} className="flex items-center gap-2 bg-zinc-900 text-white px-4 py-2 text-xs font-bold rounded-xl shadow-sm hover:-translate-y-0.5 transition-transform">
-                    <Download className="w-4 h-4" /> تصدير وتوثيق أجور (منصة مدد - WPS)
+                    <Download className="w-4 h-4" /> منصة مدد - WPS (القديم)
                   </button>
                   <button onClick={() => downloadReportCsv(run)} className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 text-xs font-bold rounded-xl hover:bg-emerald-100 transition-colors">
                     <Download className="w-4 h-4" /> تقرير المسير (CSV)
@@ -745,11 +957,76 @@ export default function Payroll() {
                   <button onClick={() => downloadReportPdf(run)} className="flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 text-xs font-bold rounded-xl hover:bg-blue-100 transition-colors">
                     <FileText className="w-4 h-4" /> Download Payroll Report (PDF)
                   </button>
+                  <button onClick={() => setAuditRun(run)} className="flex items-center gap-2 bg-zinc-100 text-zinc-700 px-4 py-2 text-xs font-bold rounded-xl hover:bg-zinc-200 transition-colors">
+                    <History className="w-4 h-4" /> سجل الإجراءات
+                  </button>
+                  {run.preventModifications ? (
+                     <div className="flex items-center gap-2 bg-rose-50 text-rose-700 px-4 py-2 text-xs font-bold rounded-xl border border-rose-100">
+                        مغلق نهائياً
+                     </div>
+                  ) : (
+                     <button onClick={() => toggleLock(run)} className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-colors ${run.isLocked ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
+                       {run.isLocked ? 'فك الإقفال' : 'إقفال المسير'}
+                     </button>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         </motion.div>
+      )}
+
+      {/* AUDIT TAB */}
+      {activeTab === 'audit' && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+          <div className="bg-white p-8 rounded-[2rem] border border-zinc-200 shadow-sm">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-zinc-900">سجل الامتثال والعمليات التلقائية</h3>
+                <p className="text-zinc-500 font-medium text-sm">تتبع جميع الإقفالات الآلية والتعديلات اليدوية على مسيرات الرواتب لأغراض المراجعة.</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+               {runs.map(run => (
+                 run.logs && run.logs.length > 0 ? run.logs.map((log: any, i: number) => (
+                   <div key={`${run.id}-${i}`} className="flex gap-4 items-start pb-4 border-b border-zinc-100 last:border-0 hover:bg-zinc-50 transition-colors p-4 rounded-xl">
+                      <div className={cn(
+                        "w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center border",
+                        log.action.includes('System') || log.action.includes('Auto') ? "bg-amber-50 text-amber-600 border-amber-100" :
+                        "bg-zinc-100 text-zinc-400 border-zinc-200"
+                      )}>
+                        {log.action.includes('System') || log.action.includes('Auto') ? <AlertOctagon className="w-5 h-5" /> : <History className="w-5 h-5" />}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-sm font-bold text-zinc-900">{log.action}</p>
+                          <span className="text-[10px] font-bold text-zinc-400 bg-white border px-1.5 py-0.5 rounded shadow-sm">(مسير {run.period})</span>
+                        </div>
+                        {log.note && <p className="text-xs text-zinc-500 font-medium mt-1 leading-relaxed">{log.note}</p>}
+                        <div className="text-[10px] text-zinc-400 mt-2 font-bold flex gap-3">
+                          <span>{new Date(log.timestamp).toLocaleString('ar-SA')}</span>
+                          {log.user && <span>• {log.user}</span>}
+                        </div>
+                      </div>
+                   </div>
+                 )) : null
+               ))}
+               {!runs.some(r => r.logs && r.logs.length > 0) && (
+                 <div className="text-center py-10 text-zinc-400 font-bold border-2 border-dashed rounded-[2rem] border-zinc-200">
+                   لا توجد سجلات امتثال متاحة.
+                 </div>
+               )}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {auditRun && (
+        <PayrollAudit run={auditRun} onClose={() => setAuditRun(null)} />
       )}
 
       {/* EMPLOYEE ADD/EDIT MODAL */}
@@ -948,6 +1225,99 @@ export default function Payroll() {
         )}
       </AnimatePresence>
 
+      {/* SIF VALIDATION MODAL */}
+      <AnimatePresence>
+        {sifValidateRun && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSifValidateRun(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex flex-col p-8 gap-6">
+              <div>
+                <h2 className="text-2xl font-black text-zinc-900 flex items-center gap-2">
+                  <ShieldCheck className="w-6 h-6 text-emerald-500" />
+                  قائمة تدقيق SIF {sifValidateRun.period}
+                </h2>
+                <p className="text-sm font-medium text-zinc-500 mt-2">نظام التحقق الآلي قبل توليد ملف مدد أو WPS</p>
+              </div>
+
+              {(() => {
+                // Validation checks
+                const activeEmpsCount = employees.filter(e => e.status === 'Active' || e.status === 'نشط' || !e.status).length;
+                const runEmpsCount = sifValidateRun.entries?.length || 0;
+                
+                const entriesWithEmpData = (sifValidateRun.entries || []).map((entry: any) => {
+                  const empObj = employees.find(e => e.id === entry.employeeId) || {};
+                  return { ...entry, empObj };
+                });
+
+                const missingBank = entriesWithEmpData.filter((e: any) => !e.empObj.iban || e.empObj.iban.trim() === '');
+                const zeroSalary = entriesWithEmpData.filter((e: any) => e.netPay <= 0);
+
+                const hasWarning = missingBank.length > 0 || zeroSalary.length > 0;
+
+                return (
+                  <div className="flex flex-col gap-4">
+                    <div className="bg-zinc-50 rounded-2xl p-4 border border-zinc-100 flex flex-col gap-3">
+                      <div className="flex justify-between items-center text-sm font-bold">
+                        <span className="flex items-center gap-2 text-zinc-700">
+                          <Users className="w-4 h-4" /> جميع الموظفين النشطين متضمنون
+                        </span>
+                        {runEmpsCount >= activeEmpsCount ? (
+                          <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs">مطابق ({runEmpsCount}/{activeEmpsCount})</span>
+                        ) : (
+                          <span className="text-amber-600 bg-amber-50 px-2 py-1 rounded-md text-xs">نقص ({runEmpsCount}/{activeEmpsCount})</span>
+                        )}
+                      </div>
+
+                      <div className="flex justify-between items-center text-sm font-bold">
+                        <span className="flex items-center gap-2 text-zinc-700">
+                          <CheckCircle2 className="w-4 h-4" /> بيانات الحساب البنكي (IBAN) متوفرة
+                        </span>
+                        {missingBank.length === 0 ? (
+                          <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs">مكتمل</span>
+                        ) : (
+                          <span className="text-rose-600 bg-rose-50 px-2 py-1 rounded-md text-xs">{missingBank.length} موظف بدون آيبان</span>
+                        )}
+                      </div>
+
+                      <div className="flex justify-between items-center text-sm font-bold">
+                        <span className="flex items-center gap-2 text-zinc-700">
+                          <AlertOctagon className="w-4 h-4" /> لا يوجد رواتب صفرية
+                        </span>
+                        {zeroSalary.length === 0 ? (
+                          <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs">سليم</span>
+                        ) : (
+                          <span className="text-rose-600 bg-rose-50 px-2 py-1 rounded-md text-xs">{zeroSalary.length} رواتب بقيمة صفر</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {hasWarning && (
+                      <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-xl text-xs font-bold leading-relaxed">
+                        تنبيه: يوجد نقص في البيانات الأساسية. الاستمرار سيؤدي لرفض الملف في أنظمة مدد. يرجى تحديث بيانات الموظفين (الآيبان) من صفحة الموظفين أو مراجعة قيم الرواتب.
+                      </div>
+                    )}
+
+                    <div className="flex justify-end gap-3 mt-4">
+                      <button onClick={() => setSifValidateRun(null)} className="px-6 py-3 font-bold text-zinc-600 bg-zinc-100 rounded-xl hover:bg-zinc-200 transition-colors">
+                        إلغاء
+                      </button>
+                      <button 
+                        onClick={confirmDownloadMudadSif} 
+                        disabled={hasWarning}
+                        className="px-6 py-3 font-bold text-white bg-primary rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 disabled:bg-primary/50 disabled:cursor-not-allowed"
+                      >
+                        <Download className="w-4 h-4" /> تأكيد وتنزيل SIF
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* SIMULATE MODAL */}
       <AnimatePresence>
         {showSimulateModal && simulationData && (
@@ -1011,9 +1381,47 @@ export default function Payroll() {
 
               <div className="p-6 bg-white border-t border-zinc-100 flex justify-end gap-3">
                 <button onClick={() => setShowSimulateModal(false)} className="px-6 py-3 rounded-xl border border-zinc-200 font-bold text-zinc-600 hover:bg-zinc-50">إلغاء وتعديل</button>
-                <button onClick={commitPayroll} className="px-8 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-transform flex items-center gap-2">
+                <button onClick={attemptCommitPayroll} className="px-8 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-transform flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5" /> اعتماد المسير وإنشاء WPS
                 </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* LARGE TRANSACTION 1M+ MODAL */}
+      <AnimatePresence>
+        {showLargeTxModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowLargeTxModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white max-w-lg w-full rounded-[2rem] shadow-2xl relative z-10 p-8 flex flex-col gap-6">
+              <div className="flex flex-col items-center text-center gap-4">
+                <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center">
+                  <ShieldCheck className="w-8 h-8" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-rose-700">تنبيه أمني (مكافحة التستر)</h2>
+                  <p className="text-sm font-medium text-zinc-500 mt-2 leading-relaxed">
+                    تحاول اعتماد تحويلات مالية تتجاوز قيمتها 1,000,000 ر.س، وهذا يتطلب موافقة المالك المخول للوقاية من التستر التجاري.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-rose-50 text-rose-800 p-4 rounded-xl text-xs font-bold border border-rose-100 flex items-start gap-2">
+                <AlertOctagon className="w-5 h-5 shrink-0" />
+                <span>
+                  سيتم تعليق هذه العملية في الانتظار. يرجى توجيه مالك الشركة (الذي يملك صلاحية Administrator) للدخول للنظام واعتماد هذه الحركة المالية باستخدام هويته الوطنية.
+                </span>
+              </div>
+
+              <div className="flex gap-3">
+                 <button onClick={() => setShowLargeTxModal(false)} className="flex-1 px-4 py-3 bg-zinc-100 text-zinc-700 font-bold rounded-xl hover:bg-zinc-200 transition-colors">
+                   إلغاء ومراجعة
+                 </button>
+                 <button onClick={commitPayroll} className="flex-1 px-4 py-3 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 shadow-lg transition-colors">
+                   اعتماد مبدئي مع التحقق
+                 </button>
               </div>
             </motion.div>
           </div>

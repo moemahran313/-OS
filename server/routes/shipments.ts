@@ -234,4 +234,23 @@ router.post("/webhooks/carrier-update", async (req, res) => {
   res.json({ received: true });
 });
 
+router.post("/:id/notify-whatsapp-broker", authenticate, async (req: any, res) => {
+  try {
+    const { documentName } = req.body;
+    const shipmentId = req.params.id;
+    
+    // Webhook simulation for sending Whatsapp messages via API to the broker
+    console.log(`[WHATSAPP WEBHOOK] Sending message to broker for shipment ${shipmentId} related to missing/expiring document: ${documentName}`);
+    
+    await emitShipmentEvent(ShipmentEvents.UPDATED, {
+       shipmentId,
+       description: `تم إرسال تنبيه آلي للمخلص عبر واتساب بخصوص: ${documentName}`,
+    });
+
+    res.json({ success: true, message: "تم إرسال رسالة واتساب بنجاح." });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

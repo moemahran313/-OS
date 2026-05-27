@@ -53,8 +53,12 @@ export function generateZatcaQR(data: ZatcaData): string {
     offset += tag.length;
   }
 
-  // Convert to Base64
-  return btoa(String.fromCharCode(...combined));
+  // Convert to Base64 safely avoiding Maximum call stack size exceeded
+  let binary = '';
+  for (let i = 0; i < combined.length; i++) {
+    binary += String.fromCharCode(combined[i]);
+  }
+  return btoa(binary);
 }
 
 /**

@@ -98,6 +98,8 @@ export interface User {
   passwordHash: string;
   role: 'admin' | 'user';
   createdAt: string;
+  nafathVerified?: boolean;
+  verifiedAt?: string;
 }
 
 export interface Lead {

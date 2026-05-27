@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/src/lib/utils";
+import { toast } from "sonner";
 import { 
   collection, 
   query, 
@@ -679,6 +680,63 @@ export default function Suppliers() {
                     </motion.div>
                   )}
                 </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === "brokers" && (
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-[2.5rem] border border-zinc-100 shadow-sm p-8 space-y-6"
+            >
+              <div className="flex justify-between items-center bg-zinc-50 p-6 rounded-3xl border border-zinc-100 mb-6 group hover:border-zinc-200 transition-colors">
+                 <div>
+                    <h2 className="text-xl font-black text-zinc-900 flex items-center gap-3">
+                      <Building2 className="w-6 h-6 text-primary group-hover:rotate-6 transition-transform" /> 
+                      قائمة المخلصين الجمركيين
+                    </h2>
+                    <p className="text-sm text-zinc-500 font-medium mt-2 max-w-lg leading-relaxed">قم بإدارة قائمة المخلصين وارسل طلبات تحديث المستندات السريعة بنقرة واحدة لضمان دقة العمليات وعدم التأخير في المنافذ.</p>
+                 </div>
+                 <button onClick={() => {
+                   toast.loading("جاري الإرسال الجماعي...");
+                   setTimeout(() => toast.success("تم إرسال طلب التحديث لجميع المخلصين بنجاح"), 1500);
+                 }} className="bg-primary text-white font-bold text-sm px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-zinc-900 hover:scale-105 transition-all shadow-lg shadow-primary/20">
+                   <Send className="w-4 h-4" /> إرسال طلب تحديث جماعي
+                 </button>
+              </div>
+
+              <div className="space-y-4">
+                 {[
+                   { name: "مؤسسة الدانة للتخليص", license: "LIC-109283", activeShipments: 12, rating: 4.8 },
+                   { name: "شركاء الإمداد الجمركي", license: "LIC-993821", activeShipments: 5, rating: 4.5 },
+                   { name: "الشركة الوطنية للعبور", license: "LIC-112003", activeShipments: 1, rating: 4.0 },
+                 ].map((broker, i) => (
+                   <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-6 bg-zinc-50/50 rounded-2xl border border-zinc-100/80 hover:bg-white hover:border-zinc-200 hover:shadow-xl hover:shadow-zinc-900/5 transition-all group">
+                      <div className="flex items-center gap-4">
+                         <div className="w-14 h-14 bg-zinc-100 text-zinc-400 rounded-2xl flex items-center justify-center font-black text-xl group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                           {broker.name.charAt(0)}
+                         </div>
+                         <div>
+                            <h4 className="font-bold text-zinc-900">{broker.name}</h4>
+                            <div className="flex items-center gap-3 mt-1.5">
+                               <span className="text-[10px] font-black tracking-widest text-zinc-400 uppercase bg-zinc-100 px-2 py-0.5 rounded">{broker.license}</span>
+                               <span className="text-xs font-bold text-zinc-500">تقييم: <span className="text-amber-500">★ {broker.rating}</span></span>
+                            </div>
+                         </div>
+                      </div>
+                      <div className="flex items-center gap-4 mt-4 sm:mt-0">
+                         <div className="text-center sm:text-right">
+                           <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">شحنات نشطة</p>
+                           <p className="text-xl font-bold tracking-tighter text-zinc-900 mt-0.5">{broker.activeShipments}</p>
+                         </div>
+                         <div className="w-px h-8 bg-zinc-200" />
+                         <button onClick={() => toast.success(`تم إرسال تنبيه للمخلص: ${broker.name}`)} className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 transition-colors tooltip" title="واتساب المخلص">
+                            <MessageSquare className="w-4 h-4" />
+                         </button>
+                      </div>
+                   </div>
+                 ))}
               </div>
             </motion.div>
           )}

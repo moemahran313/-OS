@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import ComplianceDashboard from "@/src/components/ComplianceDashboard";
+import EmergencyLockdownIndicator from "@/src/components/EmergencyLockdownIndicator";
 import { 
   TrendingUp, 
   Users, 
@@ -20,7 +22,10 @@ import {
   GripHorizontal,
   X,
   Zap,
-  CheckCircle2
+  CheckCircle2,
+  Download,
+  ShieldCheck,
+  AlertCircle
 } from "lucide-react";
 import { 
   AreaChart, 
@@ -56,6 +61,7 @@ import {
 import { db } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
 import { handleFirestoreError, OperationType } from "@/src/lib/firestore-errors";
+import { PayrollService } from "@/src/services/payroll.service";
 
 interface WidgetConfig {
   id: string;
@@ -66,6 +72,7 @@ interface WidgetConfig {
 const DEFAULT_CONFIG: WidgetConfig[] = [
   { id: "intelligence", title: "توصيات مدارج الذكية للنمو", visible: true },
   { id: "quick_actions", title: "الإجراءات السريعة", visible: true },
+  { id: "compliance", title: "لوحة الامتثال", visible: true },
   { id: "stats", title: "الإحصائيات السريعة", visible: true },
   { id: "payroll", title: "مسيرات الرواتب", visible: true },
   { id: "chart", title: "منحنى المبيعات", visible: true },
@@ -209,14 +216,17 @@ function QuickActionsWidget({ quickActions, setQuickActions, user, updateProfile
 export default function Dashboard() {
   const { user, updateProfile } = useUser();
   const location = useLocation();
+  const navigate = useNavigate();
   const [showWelcomeModal, setShowWelcomeModal] = useState(location.state?.showWelcome || false);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [dashboardStats, setDashboardStats] = useState<any>(null);
+  const [systemAlerts, setSystemAlerts] = useState<any[]>([]);
   const [config, setConfig] = useState<WidgetConfig[]>(DEFAULT_CONFIG);
   const [quickActions, setQuickActions] = useState<string[]>(DEFAULT_QUICK_ACTIONS);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeView, setActiveView] = useState<'ceo' | 'hr' | 'accountant'>('ceo');
+  const [dismissedLocalAlerts, setDismissedLocalAlerts] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -260,11 +270,31 @@ export default function Dashboard() {
 
     const payrollQuery = query(collection(db, "payroll_runs"), where("userId", "==", user.uid));
     const unsubPayroll = onSnapshot(payrollQuery, (snapshot) => {
-      const runs = snapshot.docs.map(doc => doc.data());
-      const totalCost = runs.reduce((acc, curr) => acc + (curr.totalGross || 0), 0);
+      const runs: any[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const totalCost = runs.reduce((acc, curr: any) => acc + (curr.totalGross || 0), 0);
+      
+      const sortedByPeriod = [...runs].sort((a: any, b: any) => (b.period || '').localeCompare(a.period || ''));
+      const latestPeriod = sortedByPeriod.length > 0 ? sortedByPeriod[0].period : null;
+
+      // Determine lockdown status
+      const now = new Date();
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastMonthStr = lastMonth.toISOString().slice(0, 7);
+      const lastRun = runs.find((r: any) => r.period === lastMonthStr);
+      const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0); 
+      const deadline = new Date(endOfLastMonth);
+      deadline.setDate(deadline.getDate() + 30);
+      const daysLeft = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      const isGenerated = lastRun ? (lastRun.mudadSifGenerated || lastRun.wpsGenerated) : false;
+      const isLockdown = !isGenerated && daysLeft <= 0;
+
       setDashboardStats((prev: any) => ({
         ...prev,
         payrollCost: totalCost,
+        recentPayroll: sortedByPeriod.slice(0, 3),
+        latestPeriod,
+        isLockdown,
+        lockdownPeriod: lastMonthStr
       }));
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, "payroll_runs");
@@ -272,12 +302,31 @@ export default function Dashboard() {
 
     const employeesQuery = query(collection(db, "employees"), where("userId", "==", user.uid));
     const unsubEmployees = onSnapshot(employeesQuery, (snapshot) => {
-      const emps = snapshot.docs.map(doc => doc.data());
-      const saudiEmployees = emps.filter(e => e.nationality === 'سعودي' || e.nationality === 'Saudi').length;
+      const emps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const saudiEmployees = emps.filter((e: any) => e.nationality?.includes('سعودي') || e.nationality?.toLowerCase().includes('saudi')).length;
+      
+      const localExpiringAlerts: any[] = [];
+      emps.forEach((emp: any) => {
+         if (emp.contractEndDate) {
+            const daysLeft = (new Date(emp.contractEndDate).getTime() - Date.now()) / (1000 * 3600 * 24);
+            if (daysLeft > 0 && daysLeft <= 30) {
+               localExpiringAlerts.push({
+                  id: `local_expr_${emp.id}`,
+                  title: "تنبيه انتهاء عقد",
+                  message: `عقد الموظف ${emp.name} ينتهي خلال ${Math.floor(daysLeft)} يوماً.`,
+                  type: 'warning',
+                  isLocal: true,
+                  actionPath: "/app/fwcos"
+               });
+            }
+         }
+      });
+
       setDashboardStats((prev: any) => ({
-        ...prev,
-        employeesCount: emps.length,
-        saudiEmployees: saudiEmployees,
+         ...prev,
+         employeesCount: emps.length,
+         saudiEmployees: saudiEmployees,
+         expiringContractsAlerts: localExpiringAlerts
       }));
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, "employees");
@@ -324,9 +373,22 @@ export default function Dashboard() {
       handleFirestoreError(error, OperationType.LIST, "audit_logs");
     });
 
+    // Listen to System Alerts
+    const alertsQuery = query(
+      collection(db, "system_alerts"),
+      where("userId", "==", user.uid),
+      where("isRead", "==", false)
+    );
+    const unsubAlerts = onSnapshot(alertsQuery, (snapshot) => {
+      setSystemAlerts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, "system_alerts");
+    });
+
     return () => {
       unsubLeads();
       unsubLogs();
+      unsubAlerts();
       unsubPayroll();
       unsubRules();
       unsubEmployees();
@@ -506,6 +568,8 @@ export default function Dashboard() {
         );
       case "quick_actions":
         return <QuickActionsWidget key="quick_actions" quickActions={quickActions} setQuickActions={setQuickActions} user={user} updateProfile={updateProfile} />;
+      case "compliance":
+        return <ComplianceDashboard key="compliance" />;
       case "stats":
         return renderStats();
       case "payroll":
@@ -516,9 +580,35 @@ export default function Dashboard() {
                 <h3 className="text-lg font-black text-zinc-900">مسيرات الرواتب الأخيرة</h3>
                 <p className="text-sm font-medium text-zinc-500">موجز مسيرات الرواتب الحديثة وحالتها</p>
               </div>
-              <button className="text-xs font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-xl hover:bg-blue-100 transition-colors">
-                عرض الكل
-              </button>
+              <div className="flex items-center gap-2">
+                {dashboardStats?.latestPeriod && (
+                  <button 
+                    onClick={async () => {
+                       try {
+                         if (!user) return;
+                         const { data } = await PayrollService.batchGenerateMudadSIF(user.uid, dashboardStats.latestPeriod);
+                         const blob = new Blob([data], { type: 'text/csv;charset=utf-8;' });
+                         const url = URL.createObjectURL(blob);
+                         const link = document.createElement("a");
+                         link.setAttribute("href", url);
+                         link.setAttribute("download", `BATCH_SIF_MUDAD_${dashboardStats.latestPeriod}.csv`);
+                         document.body.appendChild(link);
+                         link.click();
+                         document.body.removeChild(link);
+                         // Note: toast is available if imported. If not, maybe we just use alert or nothing.
+                       } catch(e: any) {
+                         console.error(e);
+                       }
+                    }}
+                    className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-xl hover:bg-emerald-100 transition-colors flex items-center gap-2"
+                  >
+                    <Download className="w-3.5 h-3.5" /> تحميل SIF ({dashboardStats.latestPeriod})
+                  </button>
+                )}
+                <button className="text-xs font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-xl hover:bg-blue-100 transition-colors">
+                  عرض الكل
+                </button>
+              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-right text-sm">
@@ -735,6 +825,76 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-20">
+      <EmergencyLockdownIndicator navigateToPayroll={() => navigate('/app/payroll')} />
+
+      {[...systemAlerts, ...(dashboardStats?.expiringContractsAlerts || [])].filter(a => !dismissedLocalAlerts.includes(a.id)).length > 0 && (
+        <div className="space-y-4">
+          {[...systemAlerts, ...(dashboardStats?.expiringContractsAlerts || [])].filter(a => !dismissedLocalAlerts.includes(a.id)).map(alert => (
+            <motion.div 
+              key={alert.id}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-amber-50 border border-amber-200 p-6 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden"
+              dir="rtl"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-[40px] pointer-events-none" />
+              <div className="flex items-center gap-4 relative z-10 w-full md:w-auto">
+                <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center shrink-0 border border-amber-200">
+                  <AlertCircle className="w-6 h-6 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-amber-900 mb-1">{alert.title}</h3>
+                  <p className="text-sm font-bold text-amber-700">{alert.message}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 relative z-10 w-full md:w-auto shrink-0">
+                <button 
+                  onClick={async () => {
+                     if (!alert.isLocal) {
+                        try {
+                           await updateDoc(doc(db, "system_alerts", alert.id), { isRead: true });
+                        } catch(e){}
+                     } else {
+                        setDismissedLocalAlerts(prev => [...prev, alert.id]);
+                     }
+                  }} 
+                  className="w-full md:w-auto px-5 py-2.5 bg-white text-amber-600 font-bold text-sm rounded-xl border border-amber-200 hover:bg-amber-100 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Check className="w-4 h-4" />
+                  تعليم كمقروء
+                </button>
+                <Link to={alert.actionPath || "/app/payroll"} className="w-full md:w-auto text-center bg-amber-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-md hover:bg-amber-700 transition">
+                  {alert.isLocal ? "مراجعة الموظفين" : "انتقال"}
+                </Link>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {dashboardStats?.isLockdown && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-rose-600 text-white p-6 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border-4 border-rose-200"
+        >
+          <div className="flex items-center gap-4">
+            <div className="bg-white/20 p-4 rounded-full animate-pulse">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black mb-1">حالة طوارئ: إيقاف الخدمات (Emergency Lockdown)</h2>
+              <p className="text-sm font-medium text-rose-100">
+                تم تجاوز المدة النظامية (15 يوم) لاعتماد ورفع مسير الرواتب لشهر {dashboardStats.lockdownPeriod}. بعض الخدمات ستظل مقيدة إلى حين المعالجة بملف WPS أو مدد.
+              </p>
+            </div>
+          </div>
+          <Link to="/app/payroll" className="shrink-0 bg-white text-rose-600 px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:scale-105 transition-transform flex items-center gap-2">
+             الانتقال للرواتب للمعالجة
+          </Link>
+        </motion.div>
+      )}
+
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
           <div className="flex items-center gap-3">

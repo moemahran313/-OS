@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useUser } from "../contexts/UserContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { ShieldCheck, ArrowLeft, Mail, Lock } from "lucide-react";
 import { Logo } from "@/src/components/Logo";
@@ -12,13 +12,15 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [searchParams] = useSearchParams();
+  const refCode = searchParams.get('ref');
   const { loginWithGoogle, loginWithEmail, registerWithEmail } = useUser();
   const navigate = useNavigate();
 
   const handleGoogleSignIn = async () => {
     try {
       setError("");
-      const success = await loginWithGoogle();
+      const success = await loginWithGoogle(); // Needs refCode
       if (success) {
         navigate("/app");
       } else {
@@ -40,7 +42,8 @@ export default function Login() {
       if (isLogin) {
         await loginWithEmail(email, password);
       } else {
-        await registerWithEmail(email, password, name, avatar);
+        // @ts-ignore
+        await registerWithEmail(email, password, name, avatar, refCode || undefined);
       }
       navigate("/app");
     } catch (err: any) {
