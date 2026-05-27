@@ -755,8 +755,17 @@ export default function LandingPage() {
             <div className="container mx-auto max-w-7xl flex items-center justify-between">
                <Logo theme="dark" />
                
+               <div className="hidden md:flex items-center gap-8 mr-12 ml-auto text-sm font-bold text-zinc-300">
+                  <Link to="/about" className="hover:text-white transition-colors">عن مدارج</Link>
+                  <Link to="/product" className="hover:text-white transition-colors">المنتج</Link>
+                  <Link to="/solutions" className="hover:text-white transition-colors">الحلول</Link>
+                  <Link to="/solutions/invoicing" className="hover:text-white transition-colors">الفواتير</Link>
+                  <Link to="/security" className="hover:text-white transition-colors">الأمان</Link>
+                  <Link to="/demo" className="text-primary hover:text-primary/80 transition-colors">تجربة حية</Link>
+               </div>
+               
                <div className="flex items-center gap-4">
-                  <Link to="/app" className="text-sm font-bold text-zinc-300 hover:text-white transition-colors hidden sm:block">تسجيل الدخول</Link>
+                  <Link to="/login" className="text-sm font-bold text-zinc-300 hover:text-white transition-colors hidden sm:block">تسجيل الدخول</Link>
                   <Link to="/app" className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-all shadow-md shadow-primary/20">ابدأ الآن</Link>
                </div>
             </div>
@@ -771,8 +780,45 @@ export default function LandingPage() {
          <FinalCTA />
          
          {/* Footer */}
-         <footer className="bg-zinc-950 py-12 border-t border-white/5 text-center" dir="rtl">
-            <p className="text-zinc-600 text-sm font-medium">© 2024 Mudarij OS. صُنع بفخر للشركات الخليجية.</p>
+         <footer className="bg-zinc-950 pt-20 pb-12 border-t border-white/5" dir="rtl">
+            <div className="container mx-auto px-6 max-w-7xl">
+               <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
+                  <div>
+                     <Logo theme="dark" />
+                     <p className="text-zinc-500 font-medium mt-6 leading-relaxed text-sm">
+                        نظام تشغيل رقمي موحد يعكس ثقافتنا المحلية ويلبي احتياجاتنا بدقة.
+                     </p>
+                  </div>
+                  <div>
+                     <h4 className="text-white font-bold mb-6">المنتج</h4>
+                     <ul className="space-y-4 text-sm font-medium text-zinc-400">
+                        <li><Link to="/product" className="hover:text-primary transition-colors">الميزات الرئيسية</Link></li>
+                        <li><Link to="/solutions/invoicing" className="hover:text-primary transition-colors">نظام الفواتير ZATCA</Link></li>
+                        <li><Link to="/demo" className="hover:text-primary transition-colors">جولة تفاعلية (Demo)</Link></li>
+                     </ul>
+                  </div>
+                  <div>
+                     <h4 className="text-white font-bold mb-6">الحلول</h4>
+                     <ul className="space-y-4 text-sm font-medium text-zinc-400">
+                        <li><Link to="/solutions" className="hover:text-primary transition-colors">قطاع التجزئة</Link></li>
+                        <li><Link to="/solutions" className="hover:text-primary transition-colors">المقاولات والبناء</Link></li>
+                        <li><Link to="/solutions" className="hover:text-primary transition-colors">الاستشارات والوكالات</Link></li>
+                        <li><Link to="/solutions" className="hover:text-primary transition-colors">الخدمات والصيانة</Link></li>
+                     </ul>
+                  </div>
+                  <div>
+                     <h4 className="text-white font-bold mb-6">الشركة</h4>
+                     <ul className="space-y-4 text-sm font-medium text-zinc-400">
+                        <li><Link to="/about" className="hover:text-primary transition-colors">عن مدارج</Link></li>
+                        <li><Link to="/security" className="hover:text-primary transition-colors">الأمان والامتثال</Link></li>
+                        <li><Link to="/contact" className="hover:text-primary transition-colors">تواصل معنا</Link></li>
+                     </ul>
+                  </div>
+               </div>
+               <div className="border-t border-white/5 pt-8 text-center">
+                  <p className="text-zinc-600 text-sm font-medium">© 2024 Mudarij OS. صُنع بفخر للشركات الخليجية.</p>
+               </div>
+            </div>
          </footer>
       </div>
    );

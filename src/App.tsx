@@ -70,6 +70,13 @@ function GlobalPayrollMonitor() {
 const Login = lazy(() => import("./pages/Login"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const About = lazy(() => import("./pages/About"));
+const Security = lazy(() => import("./pages/Security"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Demo = lazy(() => import("./pages/Demo"));
+const InvoicingFeature = lazy(() => import("./pages/InvoicingFeature"));
+const Product = lazy(() => import("./pages/Product"));
+const Solutions = lazy(() => import("./pages/Solutions"));
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useUser();
@@ -145,6 +152,13 @@ function AppRoutes() {
         <Suspense fallback={<LoadingSpinner />}>
           <Routes location={location}>
             <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
+            <Route path="/about" element={<PageTransition><About /></PageTransition>} />
+            <Route path="/security" element={<PageTransition><Security /></PageTransition>} />
+            <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
+            <Route path="/demo" element={<PageTransition><Demo /></PageTransition>} />
+            <Route path="/solutions/invoicing" element={<PageTransition><InvoicingFeature /></PageTransition>} />
+            <Route path="/product" element={<PageTransition><Product /></PageTransition>} />
+            <Route path="/solutions" element={<PageTransition><Solutions /></PageTransition>} />
             <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
             <Route path="/onboarding" element={<ProtectedRoute><PageTransition><Onboarding /></PageTransition></ProtectedRoute>} />
             <Route path="/pay/:id" element={<PageTransition><PublicInvoiceView /></PageTransition>} />
