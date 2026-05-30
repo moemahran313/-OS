@@ -696,7 +696,9 @@ export default function Settings() {
                   <h3 className="text-lg font-black text-zinc-900 mb-6">
                     بوابات الدفع الإلكتروني
                   </h3>
-                  <div className="bg-white p-5 rounded-2xl border border-zinc-200">
+                  
+                  {/* PayPal */}
+                  <div className="bg-white p-5 rounded-2xl border border-zinc-200 mb-4">
                      <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-[#00457C] text-white rounded-xl flex items-center justify-center">
@@ -720,6 +722,80 @@ export default function Settings() {
                         <p className="text-[10px] text-zinc-400 mt-1">
                           يمكنك الحصول على Client ID من خلال <a href="https://developer.paypal.com/dashboard/applications/sandbox" target="_blank" rel="noreferrer" className="text-primary hover:underline">موقع مطوري PayPal</a> 
                         </p>
+                     </div>
+                  </div>
+
+                  {/* Mada */}
+                  <div className="bg-white p-5 rounded-2xl border border-zinc-200 mb-4">
+                     <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center font-bold text-xl uppercase">
+                            M
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-zinc-900">مدى (Mada)</h4>
+                            <p className="text-xs text-zinc-500">تمكين الدفع المباشر عبر بطاقات مدى السعودية</p>
+                          </div>
+                        </div>
+                     </div>
+                     <div className="mt-4 flex flex-col gap-4">
+                        <div>
+                           <label className="text-[10px] font-bold text-zinc-500 uppercase block mb-1">Mada Merchant ID</label>
+                           <input 
+                              type="text" 
+                              value={formData.madaMerchantId || ""} 
+                              onChange={(e) => handleChange('madaMerchantId', e.target.value)} 
+                              placeholder="MADA_MERCHANT_..." 
+                              className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-primary/20 outline-none" 
+                           />
+                        </div>
+                        <div>
+                           <label className="text-[10px] font-bold text-zinc-500 uppercase block mb-1">Mada Terminal ID</label>
+                           <input 
+                              type="text" 
+                              value={formData.madaTerminalId || ""} 
+                              onChange={(e) => handleChange('madaTerminalId', e.target.value)} 
+                              placeholder="TERMINAL_..." 
+                              className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-primary/20 outline-none" 
+                           />
+                        </div>
+                     </div>
+                  </div>
+
+                  {/* Apple Pay */}
+                  <div className="bg-white p-5 rounded-2xl border border-zinc-200">
+                     <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center">
+                             <svg role="img" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.56-1.702z"/></svg>
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-zinc-900">Apple Pay</h4>
+                            <p className="text-xs text-zinc-500">تمكين الدفع السريع والآمن عبر أجهزة آبل</p>
+                          </div>
+                        </div>
+                     </div>
+                     <div className="mt-4 flex flex-col gap-4">
+                        <div>
+                           <label className="text-[10px] font-bold text-zinc-500 uppercase block mb-1">Merchant Identifier</label>
+                           <input 
+                              type="text" 
+                              value={formData.applePayMerchantId || ""} 
+                              onChange={(e) => handleChange('applePayMerchantId', e.target.value)} 
+                              placeholder="merchant.com.example..." 
+                              className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-primary/20 outline-none" 
+                           />
+                        </div>
+                        <div>
+                           <label className="text-[10px] font-bold text-zinc-500 uppercase block mb-1">Processing Certificate (Base64)</label>
+                           <textarea 
+                              value={formData.applePayCert || ""} 
+                              onChange={(e) => handleChange('applePayCert', e.target.value)} 
+                              placeholder="-----BEGIN CERTIFICATE-----\n..." 
+                              rows={3}
+                              className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-primary/20 outline-none resize-none" 
+                           />
+                        </div>
                      </div>
                   </div>
                 </section>

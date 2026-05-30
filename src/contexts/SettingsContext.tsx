@@ -29,6 +29,10 @@ export interface Settings {
   zapierWebhookInvoicePaid?: string;
   slackWebhookUrl?: string;
   paypalClientId?: string;
+  madaMerchantId?: string;
+  madaTerminalId?: string;
+  applePayMerchantId?: string;
+  applePayCert?: string;
 }
 
 const defaultSettings: Settings = {

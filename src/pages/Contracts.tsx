@@ -90,7 +90,7 @@ const DEFAULT_DATA: ContractData = {
 
 export default function Contracts() {
   const [data, setData] = useState<ContractData>(DEFAULT_DATA);
-  const [activeTab, setActiveTab] = useState<"employer" | "employee" | "terms" | "settings">("employer");
+  const [activeTab, setActiveTab] = useState<"employer" | "employee" | "terms" | "settings" | "templates">("templates");
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -250,6 +250,7 @@ export default function Contracts() {
 
         <div className="flex border-b border-zinc-100 shrink-0 bg-white px-4 pt-2 gap-2 overflow-x-auto">
           {[
+            { id: "templates", icon: FileSignature, label: "النماذج الجاهزة" },
             { id: "employer", icon: Building, label: "المنشأة" },
             { id: "employee", icon: User, label: "العامل" },
             { id: "terms", icon: Scale, label: "الشروط والرواتب" },
@@ -271,6 +272,33 @@ export default function Contracts() {
 
         <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
           <form className="space-y-8 pb-10">
+            {activeTab === "templates" && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="bg-[#10b981]/10 border border-[#10b981]/20 rounded-xl p-4 mb-6">
+                  <h3 className="font-bold text-[#10b981] mb-1">النماذج الجاهزة الذكية</h3>
+                  <p className="text-sm text-zinc-600">اختر نموذجاً للبدء وسيقوم النظام بتعبئة البنود القانونية وتفاصيل الراتب تلقائياً لتناسب الدور الوظيفي.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button type="button" onClick={() => setData(prev => ({ ...prev, jobTitle: 'مدير مبيعات', jobTitleEn: 'Sales Manager', contractType: 'fixed', basicSalary: '6000', housingAllowance: '1500', transportAllowance: '500', otherAllowances: '2000' }))} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group">
+                    <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">عقد موظف مبيعات</h4>
+                    <p className="text-xs text-zinc-500">يتضمن بدلات وتسويات العمولات</p>
+                  </button>
+                  <button type="button" onClick={() => setData(prev => ({ ...prev, jobTitle: 'مطور برمجيات', jobTitleEn: 'Software Developer', contractType: 'indefinite', basicSalary: '12000', housingAllowance: '3000', transportAllowance: '1000', otherAllowances: '0' }))} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group">
+                    <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">عقد مهندس / تقني</h4>
+                    <p className="text-xs text-zinc-500">يتضمن شروط السرية وعدم المنافسة</p>
+                  </button>
+                  <button type="button" onClick={() => setData(prev => ({ ...prev, jobTitle: 'محاسب', jobTitleEn: 'Accountant', contractType: 'fixed', basicSalary: '5000', housingAllowance: '1250', transportAllowance: '400', otherAllowances: '0' }))} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group">
+                    <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">عقد مالي / محاسب</h4>
+                    <p className="text-xs text-zinc-500">يتضمن بند عهدة ومسؤولية مالية</p>
+                  </button>
+                  <button type="button" onClick={() => setData(prev => ({ ...prev, jobTitle: 'عامل صيانة', jobTitleEn: 'Maintenance Worker', contractType: 'fixed', basicSalary: '2000', housingAllowance: '500', transportAllowance: '200', otherAllowances: '0' }))} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group">
+                    <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">عقد عمالة مهنية</h4>
+                    <p className="text-xs text-zinc-500">يتضمن توفير سكن وإعاشة</p>
+                  </button>
+                </div>
+              </div>
+            )}
+            
             {activeTab === "employer" && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="grid grid-cols-2 gap-4">

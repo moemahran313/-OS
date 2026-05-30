@@ -16,6 +16,7 @@ import {
   Truck,
   CheckCircle2,
   FileSignature,
+  Code2,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Logo } from "@/src/components/Logo";
@@ -36,6 +37,8 @@ const navigationData = [
   { name: "الأدوات والحسابات", id: "Calculations", href: "/app/calculations", icon: Calculator },
   { name: "الفواتير", id: "Invoices", href: "/app/invoices", icon: FileText },
   { name: "سوق التطبيقات والربط", id: "Integrations", href: "/app/integrations", icon: Blocks },
+  { name: "أدوات المطورين", id: "DeveloperTools", href: "/app/developer-tools", icon: Code2 },
+  { name: "الأمان والامتثال", id: "SecurityCompliance", href: "/app/security-compliance", icon: ShieldCheck },
   { name: "الرواتب", id: "Payroll", href: "/app/payroll", icon: CreditCard },
   { name: "التقارير", id: "Analytics", href: "/app/analytics", icon: BarChart3 },
 ];

@@ -63,6 +63,46 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+  
+  #contract-document {
+    display: block !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Prevent elements from breaking mid-page */
+  #contract-document p, 
+  #contract-document h1,
+  #contract-document h2,
+  #contract-document h3,
+  #contract-document h4,
+  #contract-document li,
+  #contract-document table,
+  #contract-document .border-b {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  #contract-document section {
+    page-break-inside: auto;
+  }
+  
+  /* Create repeating table headers/footers trick or fixed elements for print */
+  @page {
+    margin: 20mm;
+    @top-center {
+      content: "عقد موثق - مدارج OS";
+    }
+    @bottom-center {
+      content: counter(page);
+    }
+  }
+  
+  /* Force a page break before certain important sections if needed */
+  .page-break-before {
+    page-break-before: always;
+  }
 }
 
 .dark {
