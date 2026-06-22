@@ -1,0 +1,48 @@
+{
+  "dashboard": "Tableau de bord",
+  "workflows": "Flux de travail",
+  "common": {
+    "dashboard": "Outils & Calculs",
+    "invoices": "Factures",
+    "payroll": "Paie",
+    "settings": "Paramètres",
+    "logout": "Se déconnecter",
+    "welcome": "Bienvenue",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "language": "Langue",
+    "arabic": "Arabe",
+    "english": "Anglais",
+    "french": "Français"
+  },
+  "sidebar": {
+    "home": "Simulateur Console",
+    "employees": "Employés & CRM",
+    "contracts": "Contrats",
+    "attendance": "Présence",
+    "inventory": "Inventaire",
+    "suppliers": "Fournisseurs",
+    "integrations": "Marché d'Applications & Lancement",
+    "analytics": "Rapports & Analyses"
+  },
+  "settings": {
+    "tabs": {
+      "profile": "Profil & Entreprise",
+      "notifications": "Notifications",
+      "security": "Sécurité & Webhooks",
+      "appearance": "Apparence",
+      "email": "Paramètres de messagerie",
+      "reminders": "Rappels Automatiques",
+      "audit": "Journal des opérations",
+      "payment": "Passerelles de paiement",
+      "referrals": "Programme de parrainage",
+      "compliance": "Conformité & Sécurité Avancée",
+      "developer": "Portail Développeur & API",
+      "mobile": "Application Compagnon mobile"
+    },
+    "mobile": {
+      "title": "Application Mobile & Contrôle",
+      "subtitle": "Simulation en temps réel pour iOS et Android afin d'interagir avec les clients et de générer des factures express."
+    }
+  }
+}

@@ -37,12 +37,16 @@ import {
   ListOrdered,
   Edit2,
   Trash2,
-  Truck
+  Truck,
+  GitBranch,
+  Users2,
+  Zap,
+  XCircle
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { 
   collection, 
   query, 
@@ -58,6 +62,7 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
+import { useTranslation } from "react-i18next";
 
 import PayrollComplianceWidget from "@/src/components/PayrollComplianceWidget";
 
@@ -112,16 +117,31 @@ type SortField = "value" | "expectedCloseDate" | "none";
 type SortOrder = "asc" | "desc";
 
 export default function CRM() {
+  const { t } = useTranslation();
   const { user } = useUser();
   const navigate = useNavigate();
+  const location = useLocation();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"details" | "history" | "shipments">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "history" | "shipments" | "invoices">("details");
+  const [mainTab, setMainTab] = useState<'crm' | 'identity'>('crm');
+  const [identityTab, setIdentityTab] = useState('companies');
+
+  const identityTabsArr = [
+    { id: 'companies', label: 'الشركات', icon: Building },
+    { id: 'branches', label: 'الفروع', icon: GitBranch },
+    { id: 'employees', label: 'الموظفين', icon: Users },
+    { id: 'customers', label: 'العملاء', icon: Briefcase },
+    { id: 'suppliers', label: 'الموردين', icon: Truck },
+    { id: 'contractors', label: 'المقاولين', icon: Briefcase },
+    { id: 'shareholders', label: 'المساهمين', icon: Users2 },
+  ];
   const [editingClient, setEditingClient] = useState<Partial<Client> | null>(
     null,
   );
   const [shipments, setShipments] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
 
   const [columnSort, setColumnSort] = useState<
     Record<string, { primaryField: SortField; primaryOrder: SortOrder; secondaryField: SortField; secondaryOrder: SortOrder }>
@@ -169,11 +189,40 @@ export default function CRM() {
       setPayrollRuns(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
+    const qShipments = query(
+      collection(db, "shipments"),
+      where("userId", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
+    const unsubShipments = onSnapshot(qShipments, (snapshot) => {
+      setShipments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    const qInvoices = query(
+      collection(db, "invoices"),
+      where("userId", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
+    const unsubInvoices = onSnapshot(qInvoices, (snapshot) => {
+      setInvoices(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     return () => {
       unsubscribe();
       unsubRuns();
+      unsubShipments();
+      unsubInvoices();
     };
   }, [user]);
+
+  useEffect(() => {
+    if (user && (location.pathname === "/app/crm/new" || location.state?.openAddLead)) {
+      setEditingClient({ status: "new", value: 0 });
+      setActiveTab("details");
+      setIsModalOpen(true);
+      navigate("/app/crm", { replace: true, state: {} });
+    }
+  }, [user, location]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -543,10 +592,10 @@ export default function CRM() {
       <header className="flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-black text-zinc-900 tracking-tight">
-            إدارة العملاء والصفقات
+            {t("crm.title", "العملاء والموظفين والهويات")}
           </h1>
           <p className="text-zinc-500 mt-1 font-medium italic">
-            مدارج CRM: تتبع وتحكم في رحلة العميل الاستراتيجية.
+            {t("crm.subtitle", "مدارج CRM: تتبع وتحكم في رحلة العميل والهويات الاستراتيجية.")}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -580,12 +629,29 @@ export default function CRM() {
             className="flex items-center gap-2 bg-zinc-900 text-white px-8 py-3.5 rounded-2xl font-bold shadow-xl shadow-zinc-900/10 hover:scale-[1.02] active:scale-[0.98] transition-all text-sm"
           >
             <Plus className="w-4 h-4" />
-            <span>إضافة عميل استراتيجي</span>
+            <span>إضافة سجل جديد</span>
           </button>
         </div>
       </header>
 
-      {/* Advanced Filters */}
+      <div className="flex gap-4 border-b border-zinc-200 mb-2">
+        <button 
+          onClick={() => setMainTab('crm')}
+          className={`pb-4 px-2 font-black text-sm flex items-center gap-2 border-b-2 transition-colors ${mainTab === 'crm' ? 'border-zinc-900 text-zinc-900' : 'border-transparent text-zinc-500 hover:text-zinc-900'}`}
+        >
+          <Briefcase className="w-5 h-5" /> إدارة علاقات العملاء (CRM)
+        </button>
+        <button 
+          onClick={() => setMainTab('identity')}
+          className={`pb-4 px-2 font-black text-sm flex items-center gap-2 border-b-2 transition-colors ${mainTab === 'identity' ? 'border-purple-600 text-purple-600' : 'border-transparent text-zinc-500 hover:text-zinc-900'}`}
+        >
+          <IdCard className="w-5 h-5" /> محرك الهوية والبيانات (Identity Engine)
+        </button>
+      </div>
+
+      {mainTab === 'crm' ? (
+        <>
+          {/* Advanced Filters */}
       <div className="bg-white p-4 rounded-3xl border border-zinc-200 shadow-sm flex flex-wrap gap-4 items-center">
         <div className="flex-1 min-w-[200px] relative">
           <Search className="w-4 h-4 text-zinc-400 absolute right-4 top-1/2 -translate-y-1/2" />
@@ -891,7 +957,7 @@ export default function CRM() {
                         })
                       }
                       className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-medium focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-zinc-600"
-                      placeholder="https://example.com/logo.png"
+                      placeholder="https://company.com/logo.png"
                     />
                   </div>
 
@@ -1089,6 +1155,24 @@ export default function CRM() {
                     >
                       الشحنات
                       {activeTab === "shipments" && (
+                        <motion.div
+                          layoutId="activetab"
+                          className="absolute -bottom-[9px] left-0 right-0 h-1 bg-primary rounded-t-full"
+                        />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("invoices")}
+                      className={cn(
+                        "px-4 py-2 font-black text-sm uppercase tracking-widest relative transition-all",
+                        activeTab === "invoices"
+                          ? "text-zinc-900"
+                          : "text-zinc-400 hover:text-zinc-600",
+                      )}
+                    >
+                      الفواتير والتحصيل
+                      {activeTab === "invoices" && (
                         <motion.div
                           layoutId="activetab"
                           className="absolute -bottom-[9px] left-0 right-0 h-1 bg-primary rounded-t-full"
@@ -1303,7 +1387,7 @@ export default function CRM() {
                             })
                           }
                           className="w-full px-5 py-3.5 bg-zinc-50 border border-zinc-100 rounded-2xl font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-zinc-300"
-                          placeholder="example@domain.com"
+                          placeholder="mail@domain.com"
                         />
                       </div>
                       <div className="space-y-2">
@@ -1544,6 +1628,113 @@ export default function CRM() {
                       </div>
                     )}
                   </div>
+                ) : activeTab === "invoices" ? (
+                  <div className="flex-1 flex flex-col pt-4 space-y-6 overflow-y-auto scrollbar-hide">
+                    <div className="flex justify-between items-center px-2">
+                       <h4 className="text-xs font-black text-zinc-900 uppercase tracking-widest flex items-center gap-2">
+                         <FileText className="w-4 h-4 text-emerald-600" />
+                         الفواتير وطلبات التحصيل المرتبطة بالعميل
+                       </h4>
+                       <button 
+                         type="button"
+                         onClick={() => {
+                           setIsModalOpen(false);
+                           navigate("/app/invoices", { 
+                             state: { 
+                               openInvoiceBuilder: true,
+                               initialData: { 
+                                 clientName: editingClient.name,
+                                 clientEmail: editingClient.email,
+                                 clientId: editingClient.id
+                               } 
+                             } 
+                           });
+                         }}
+                         className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-black hover:bg-emerald-100 transition-all"
+                       >
+                         <Plus className="w-3.5 h-3.5" />
+                         <span>إنشاء فاتورة جديدة / Create Invoice</span>
+                       </button>
+                    </div>
+
+                    {/* Simple summary stats for this client's invoices */}
+                    {(() => {
+                      const clientInvoices = invoices.filter(inv => inv.clientId === editingClient.id || inv.clientName?.toLowerCase() === editingClient.name?.toLowerCase());
+                      const totalAmount = clientInvoices.reduce((acc, current) => acc + (current.totalAmountHalalas || 0), 0) / 100;
+                      const paidAmount = clientInvoices.filter(inv => inv.status === 'paid').reduce((acc, current) => acc + (current.totalAmountHalalas || 0), 0) / 100;
+                      const outstandingAmount = totalAmount - paidAmount;
+
+                      return (
+                        <div className="space-y-6 text-right">
+                          <div className="grid grid-cols-3 gap-4 text-center">
+                            <div className="p-4 bg-zinc-50 border border-zinc-100 rounded-2xl">
+                              <p className="text-[10px] font-extrabold text-zinc-400">إجمالي المبيعات / Total Billed</p>
+                              <p className="text-base font-black text-zinc-900 mt-1">{totalAmount.toLocaleString()} ر.س</p>
+                            </div>
+                            <div className="p-4 bg-emerald-50/60 border border-emerald-100 rounded-2xl">
+                              <p className="text-[10px] font-extrabold text-emerald-700">المحصل / Total Paid</p>
+                              <p className="text-base font-black text-emerald-800 mt-1">{paidAmount.toLocaleString()} ر.س</p>
+                            </div>
+                            <div className="p-4 bg-amber-50/60 border border-amber-100 rounded-2xl">
+                              <p className="text-[10px] font-extrabold text-amber-700 font-sans">المستحق / Outstanding</p>
+                              <p className="text-base font-black text-amber-900 mt-1">{outstandingAmount.toLocaleString()} ر.س</p>
+                            </div>
+                          </div>
+
+                          {clientInvoices.length > 0 ? (
+                            <div className="grid gap-3">
+                              {clientInvoices.map(inv => (
+                                <div 
+                                  key={inv.id}
+                                  onClick={() => {
+                                    setIsModalOpen(false);
+                                    navigate("/app/invoices");
+                                  }}
+                                  className="p-4 bg-white border border-zinc-200 hover:border-emerald-600 rounded-2xl flex justify-between items-center cursor-pointer transition-all shadow-2xs group"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 bg-zinc-50 border border-zinc-150 rounded-xl flex items-center justify-center group-hover:bg-emerald-50 transition-colors">
+                                      <FileText className="w-4 h-4 text-zinc-400 group-hover:text-emerald-600" />
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-xs font-black text-zinc-900 group-hover:text-emerald-700 transition-colors">
+                                        فاتورة #{inv.number || '0000'}
+                                      </p>
+                                      <p className="text-[10px] text-zinc-400 font-bold">
+                                        {inv.issueDate ? new Date(inv.issueDate).toLocaleDateString('ar-SA') : ''}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-xs font-black text-zinc-950 font-sans">
+                                      {((inv.totalAmountHalalas || 0) / 100).toLocaleString()} ر.س
+                                    </span>
+                                    <span className={cn(
+                                      "px-2 py-0.5 rounded-lg text-[9px] font-black uppercase",
+                                      inv.status === 'paid' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                                      inv.status === 'overdue' ? 'bg-rose-50 text-rose-700 border border-rose-100 animate-pulse' :
+                                      'bg-amber-50 text-amber-700 border border-amber-100'
+                                    )}>
+                                      {inv.status === 'paid' ? 'مدفوعة' : inv.status === 'overdue' ? 'متأخرة السداد' : 'بانتظار التحصيل'}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-16 bg-zinc-50 rounded-[2rem] border border-zinc-150 border-dashed">
+                              <div className="w-12 h-12 bg-white rounded-full shadow-2xs flex items-center justify-center mx-auto mb-3">
+                                <FileText className="w-6 h-6 text-zinc-300" />
+                              </div>
+                              <p className="text-xs font-black text-zinc-800">لا توجد فواتير صادرة لهذا العميل</p>
+                              <p className="text-[10px] text-zinc-400 font-medium mt-1 text-center">هل ترغب في إصدار أول فاتورة تحصيل فوراً؟</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
                 ) : (
                   <div className="flex-1 flex flex-col pt-4">
                     <div className="mb-6 flex gap-2">
@@ -1683,6 +1874,120 @@ export default function CRM() {
           </div>
         )}
       </AnimatePresence>
+        </>
+      ) : (
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {identityTabsArr.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setIdentityTab(tab.id)}
+                className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold whitespace-nowrap transition-colors ${
+                  identityTab === tab.id ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 border border-zinc-200'
+                }`}
+              >
+                <tab.icon className="w-5 h-5" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <motion.div
+            key={identityTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6"
+          >
+            <div className="bg-white border border-zinc-200 rounded-[2.5rem] p-8 shadow-sm">
+              <div className="flex justify-between items-start mb-6">
+                 <div>
+                   <h3 className="text-2xl font-black text-zinc-900 mb-1 flex items-center gap-3">
+                     {React.createElement(identityTabsArr.find(t => t.id === identityTab)?.icon || Building, { className: "w-6 h-6 text-purple-600" })}
+                     سجل {identityTabsArr.find(t => t.id === identityTab)?.label} المركزي
+                   </h3>
+                   <p className="text-zinc-500 font-medium">سجل موحد (Single Source of Truth) مرتبط بكافة إدارات مدارج لضمان الامتثال الدقيق.</p>
+                 </div>
+                 <button className="bg-purple-600 text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 hover:bg-purple-700 shadow-lg shadow-purple-600/20">
+                   <Plus className="w-5 h-5" /> إضافة سجل جديد
+                 </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-right">
+                  <thead>
+                    <tr className="border-b border-zinc-100">
+                      <th className="py-4 px-4 text-xs font-black text-zinc-400 uppercase tracking-widest w-1/3">الاسم / السجل</th>
+                      <th className="py-4 px-4 text-xs font-black text-zinc-400 uppercase tracking-widest w-1/4">معرف الهوية / KYC</th>
+                      <th className="py-4 px-4 text-xs font-black text-zinc-400 uppercase tracking-widest w-1/4">حالة الامتثال (Compliance)</th>
+                      <th className="py-4 px-4 text-xs font-black text-zinc-400 uppercase tracking-widest text-left w-1/4">إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { id: 1, name: 'مؤسسة الرمال الذهبية', kycId: 'CR-1010101010', kycStatus: 'verified', compliance: 'active', meta: 'نشط منذ 2024' },
+                      { id: 2, name: 'أحمد محمود العبدالله', kycId: 'NID-2019283746', kycStatus: 'pending', compliance: 'warning', meta: 'إقامة تنتهي قريباً' },
+                      { id: 3, name: 'شركة الصناعات المتقدمة', kycId: 'CR-2938475610', kycStatus: 'verified', compliance: 'active', meta: 'مورد معتمد' },
+                      { id: 4, name: 'سارة خالد الدوسري', kycId: 'NID-1029384756', kycStatus: 'rejected', compliance: 'danger', meta: 'وثائق مرفوضة' },
+                    ].map((row, idx) => (
+                      <tr key={idx} className="border-b border-zinc-50 hover:bg-zinc-50/50 transition-colors">
+                        <td className="py-4 px-4">
+                          <p className="font-bold text-zinc-900">{row.name}</p>
+                          <p className="text-xs text-zinc-500 font-medium">{row.meta}</p>
+                        </td>
+                        <td className="py-4 px-4">
+                          <p className="font-mono text-sm font-bold text-zinc-700">{row.kycId}</p>
+                          {row.kycStatus === 'verified' && <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-1 border border-emerald-100"><ShieldCheck className="w-3 h-3" /> تم التحقق (Yaqeen)</span>}
+                          {row.kycStatus === 'pending' && <span className="inline-flex items-center gap-1 text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full mt-1 border border-amber-100"><Clock className="w-3 h-3" /> قيد المراجعة</span>}
+                          {row.kycStatus === 'rejected' && <span className="inline-flex items-center gap-1 text-[10px] font-black text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full mt-1 border border-rose-100"><XCircle className="w-3 h-3" /> مراجعته مطلوبة</span>}
+                        </td>
+                        <td className="py-4 px-4">
+                           {row.compliance === 'active' && <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500"></div><span className="text-xs font-bold text-emerald-700">متوافق (100%)</span></div>}
+                           {row.compliance === 'warning' && <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-amber-500"></div><span className="text-xs font-bold text-amber-700">تنويه امتثال</span></div>}
+                           {row.compliance === 'danger' && <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-rose-500 translate-y-[-1px] animate-pulse"></div><span className="text-xs font-bold text-rose-700">حظر مؤقت (معلق)</span></div>}
+                        </td>
+                        <td className="py-4 px-4 text-left">
+                          <button className="text-xs font-bold text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition-colors border border-purple-100">
+                             عرض السجل (360°)
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div className="bg-white border border-zinc-200 rounded-[2.5rem] p-8 shadow-sm">
+                 <h4 className="text-lg font-black text-zinc-900 mb-4">التحقق الآلي ومطابقة الهويات</h4>
+                 <div className="space-y-4">
+                   <div className="flex items-center justify-between bg-zinc-50 p-4 rounded-2xl border border-zinc-100">
+                      <div>
+                        <p className="text-sm font-bold text-zinc-900">ربط مقيم ويقين (Yaqeen API)</p>
+                        <p className="text-xs text-zinc-500">مزامنة حية لبيانات الإقامات والهويات الوطنية.</p>
+                      </div>
+                      <span className="bg-emerald-100 text-emerald-700 text-xs font-black px-3 py-1 rounded-full border border-emerald-200 flex gap-1.5 items-center"><Zap className="w-3.5 h-3.5 fill-current" /> متصل الآﻥ</span>
+                   </div>
+                   <div className="flex items-center justify-between bg-zinc-50 p-4 rounded-2xl border border-zinc-100">
+                      <div>
+                        <p className="text-sm font-bold text-zinc-900">ربط وزارة التجارة (Wathiq)</p>
+                        <p className="text-xs text-zinc-500">التحقق اللحظي من السجلات والمنشآت التجارية.</p>
+                      </div>
+                      <span className="bg-emerald-100 text-emerald-700 text-xs font-black px-3 py-1 rounded-full border border-emerald-200 flex gap-1.5 items-center"><Zap className="w-3.5 h-3.5 fill-current" /> متصل الآﻥ</span>
+                   </div>
+                 </div>
+               </div>
+
+               <div className="bg-purple-900 border border-purple-800 rounded-[2.5rem] p-8 shadow-lg text-white relative overflow-hidden">
+                 <div className="absolute top-0 right-0 w-40 h-40 bg-purple-600/30 rounded-full blur-3xl"></div>
+                 <h4 className="text-lg font-black mb-1 relative z-10">إدارة صلاحيات الوصول والدخول</h4>
+                 <p className="text-purple-200 text-sm mb-6 relative z-10 w-4/5">نظام التحكم بالمناصب (RBAC) يعتمد على السجل المركزي مباشرة.</p>
+                 <button className="bg-white text-purple-900 w-full rounded-2xl py-3 font-bold text-sm shadow-xl shadow-black/10 relative z-10 border-b-4 border-purple-100 active:border-b-0 active:translate-y-1 transition-all">تكوين الصلاحيات وهيكلة الحوكمة</button>
+               </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

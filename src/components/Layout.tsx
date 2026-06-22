@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   FileSignature,
   Code2,
+  Video,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Logo } from "@/src/components/Logo";
@@ -24,28 +25,31 @@ import { motion, AnimatePresence } from "motion/react";
 import { processBusinessCommand } from "@/src/services/aiService";
 import { useSettings } from "@/src/contexts/SettingsContext";
 import { useUser } from "@/src/contexts/UserContext";
-import { LogOut, ChevronDown, User as UserIcon, Bell } from "lucide-react";
+import { LogOut, ChevronDown, User as UserIcon, Bell, Globe, Menu, X } from "lucide-react";
 import { toast } from "sonner";
+import { auth } from "@/src/lib/firebase";
+import { useTranslation } from "react-i18next";
 
 const navigationData = [
-  { name: "لوحة التحكم", id: "Dashboard", href: "/app", icon: LayoutDashboard },
-  { name: "العملاء", id: "CRM", href: "/app/crm", icon: Users },
-  { name: "الموردين", id: "Suppliers", href: "/app/suppliers", icon: Truck },
-  { name: "عقود العمل", id: "Contracts", href: "/app/contracts", icon: FileSignature },
-  { name: "الموارد البشرية", id: "Compliance", href: "/app/fwcos", icon: ShieldCheck },
-  { name: "محاكي السيناريوهات", id: "Simulator", href: "/app/simulator", icon: Calculator },
-  { name: "الأدوات والحسابات", id: "Calculations", href: "/app/calculations", icon: Calculator },
-  { name: "الفواتير", id: "Invoices", href: "/app/invoices", icon: FileText },
-  { name: "سوق التطبيقات والربط", id: "Integrations", href: "/app/integrations", icon: Blocks },
-  { name: "أدوات المطورين", id: "DeveloperTools", href: "/app/developer-tools", icon: Code2 },
-  { name: "الأمان والامتثال", id: "SecurityCompliance", href: "/app/security-compliance", icon: ShieldCheck },
-  { name: "الرواتب", id: "Payroll", href: "/app/payroll", icon: CreditCard },
-  { name: "التقارير", id: "Analytics", href: "/app/analytics", icon: BarChart3 },
+  { nameKey: "dashboard", id: "Dashboard", href: "/app", icon: LayoutDashboard },
+  { nameKey: "sidebar.employees", id: "CRM", href: "/app/crm", icon: Users },
+  { nameKey: "sidebar.suppliers", id: "Suppliers", href: "/app/suppliers", icon: Truck },
+  { nameKey: "sidebar.contracts", id: "Contracts", href: "/app/contracts", icon: FileSignature },
+  { nameKey: "sidebar.negotiations", id: "SmartNegotiations", href: "/app/smart-negotiations", icon: Video },
+  { nameKey: "workflows", id: "Workflows", href: "/app/workflows", icon: Blocks },
+  { nameKey: "sidebar.employees", id: "Compliance", href: "/app/fwcos", icon: ShieldCheck },
+  { nameKey: "sidebar.home", id: "Simulator", href: "/app/simulator", icon: Calculator },
+  { nameKey: "common.dashboard", id: "Calculations", href: "/app/calculations", icon: Calculator },
+  { nameKey: "common.invoices", id: "Invoices", href: "/app/invoices", icon: FileText },
+  { nameKey: "sidebar.integrations", id: "Integrations", href: "/app/integrations", icon: Blocks },
+  { nameKey: "common.payroll", id: "Payroll", href: "/app/payroll", icon: CreditCard },
+  { nameKey: "sidebar.analytics", id: "Analytics", href: "/app/analytics", icon: BarChart3 },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
   const location = useLocation();
-  const { settings } = useSettings();
+  const { settings, updateSettings } = useSettings();
   const { user, logout, hasPermission } = useUser();
   const [command, setCommand] = useState("");
   const [aiResponse, setAiResponse] = useState("");
@@ -57,6 +61,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [isListening, setIsListening] = useState(false);
   const [showDialects, setShowDialects] = useState(false);
   const [selectedDialect, setSelectedDialect] = useState("ar-SA");
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   React.useEffect(() => {
     if (user) {
@@ -68,22 +73,38 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const fetchNotifications = async () => {
     try {
-      const res = await fetch("/api/notifications");
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) return;
+      
+      const res = await fetch("/api/notifications", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
       if (res.ok) {
         const contentType = res.headers.get("content-type");
         if (contentType && contentType.includes("application/json")) {
            const data = await res.json();
            setNotifications(data);
         }
+      } else {
+        console.warn("Failed to fetch notifications, status: " + res.status);
       }
     } catch (err) {
-      console.error("Failed to fetch notifications", err);
+      console.warn("Failed to fetch notifications (network or parse error)", err);
     }
   };
 
   const markAsRead = async (id: string) => {
     try {
-      await fetch(`/api/notifications/${id}/read`, { method: "PUT" });
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) return;
+      await fetch(`/api/notifications/${id}/read`, { 
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
     } catch (err) {
       console.error("Failed to mark as read", err);
@@ -125,7 +146,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       
       // Auto-submit command
       setIsProcessing(true);
-      const result = await processBusinessCommand(transcript);
+      const result = await processBusinessCommand(transcript, settings.language);
       setAiResponse(result || "");
       setIsProcessing(false);
       setCommand("");
@@ -148,12 +169,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     recognition.start();
   };
 
-  const filteredNavigation = navigationData.filter(item => hasPermission(item.id));
+  const filteredNavigation = navigationData.filter(item => item.id === "SmartNegotiations" || hasPermission(item.id));
 
   const handleCommand = async (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && command.trim()) {
       setIsProcessing(true);
-      const result = await processBusinessCommand(command);
+      const result = await processBusinessCommand(command, settings.language);
       setAiResponse(result || "");
       setIsProcessing(false);
       setCommand("");
@@ -163,10 +184,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="flex h-screen bg-zinc-50 font-sans overflow-hidden"
-      dir="rtl"
+      dir={settings.language === "ar" ? "rtl" : "ltr"}
     >
-      {/* Sidebar */}
-      <aside className="w-64 glass border-l border-zinc-200 h-full flex flex-col z-20">
+      {/* Desktop Sidebar */}
+      <aside className={cn(
+        "w-64 glass h-full flex flex-col z-20 hidden lg:flex shrink-0", 
+        settings.language === 'ar' ? "border-l border-zinc-200" : "border-r border-zinc-200"
+      )}>
         <div className="p-6 border-b border-zinc-100 flex justify-center">
           <Logo />
         </div>
@@ -176,7 +200,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             const isActive = location.pathname === item.href;
             return (
               <Link
-                key={item.name}
+                key={item.id}
                 to={item.href}
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                 className={cn(
@@ -194,7 +218,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       : "group-hover:text-primary transition-colors",
                   )}
                 />
-                <span className="font-medium">{item.name}</span>
+                <span className="font-medium">
+                  {item.id === "SmartNegotiations"
+                    ? (settings.language === "ar" ? "التفاوض والاجتماعات" : "Smart Negotiations")
+                    : t(item.nameKey)}
+                </span>
               </Link>
             );
           })}
@@ -212,16 +240,117 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               )}
             >
               <Settings className="w-4 h-4" />
-              <span className="font-medium">الإعدادات</span>
+              <span className="font-medium">{t("common.settings")}</span>
             </Link>
           )}
         </div>
       </aside>
 
+      {/* Mobile Drawer Sidebar */}
+      <AnimatePresence>
+        {mobileSidebarOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileSidebarOpen(false)}
+              className="fixed inset-0 bg-black z-40 lg:hidden"
+            />
+            {/* Modal Drawer */}
+            <motion.aside
+              initial={{ x: settings.language === 'ar' ? 260 : -260 }}
+              animate={{ x: 0 }}
+              exit={{ x: settings.language === 'ar' ? 260 : -260 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className={cn(
+                "fixed top-0 bottom-0 w-64 bg-white h-full flex flex-col z-50 shadow-2xl lg:hidden",
+                settings.language === 'ar' ? "right-0 border-l border-zinc-200 shadow-[-10px_0_30px_rgba(0,0,0,0.15)]" : "left-0 border-r border-zinc-200 shadow-[10px_0_30px_rgba(0,0,0,0.15)]"
+              )}
+            >
+              <div className="p-6 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50 font-sans" dir={settings.language === 'ar' ? 'rtl' : 'ltr'}>
+                <Logo />
+                <button
+                  type="button"
+                  onClick={() => setMobileSidebarOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-zinc-200 text-zinc-500 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto scroll-smooth" dir={settings.language === 'ar' ? 'rtl' : 'ltr'}>
+                {filteredNavigation.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <Link
+                      key={item.id}
+                      to={item.href}
+                      onClick={() => {
+                        setMobileSidebarOpen(false);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group text-sm",
+                        isActive
+                          ? "bg-primary text-white shadow-md shadow-primary/10"
+                          : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900",
+                      )}
+                    >
+                      <item.icon
+                        className={cn(
+                          "w-4 h-4 shrink-0",
+                          isActive
+                            ? "text-white"
+                            : "group-hover:text-primary transition-colors",
+                        )}
+                      />
+                      <span className="font-semibold">
+                        {item.id === "SmartNegotiations"
+                          ? (settings.language === "ar" ? "التفاوض والاجتماعات" : "Smart Negotiations")
+                          : t(item.nameKey)}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </nav>
+
+              <div className="p-4 border-t border-zinc-100 space-y-2 bg-zinc-50/50" dir={settings.language === 'ar' ? 'rtl' : 'ltr'}>
+                {user?.role === "Administrator" && (
+                  <Link
+                    to="/app/settings"
+                    onClick={() => setMobileSidebarOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 w-full rounded-lg transition-all duration-200 group text-sm",
+                      location.pathname === "/app/settings"
+                        ? "bg-zinc-900 text-white shadow-md"
+                        : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+                    )}
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span className="font-semibold">{t("common.settings")}</span>
+                  </Link>
+                )}
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
-        <header className="h-20 glass border-b border-zinc-200 flex items-center px-8 justify-between gap-8 z-10">
+        <header className="h-16 md:h-20 glass border-b border-zinc-200 flex items-center px-4 md:px-8 justify-between gap-3 md:gap-8 z-10 shrink-0">
+          {/* Mobile hamburger menu button */}
+          <button
+            onClick={() => setMobileSidebarOpen(true)}
+            className="p-2 -mr-1 rounded-xl text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 lg:hidden cursor-pointer"
+            aria-label="Toggle Menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
           <div className="flex-1 max-w-2xl relative group flex items-center gap-2">
             <div className="relative w-full">
               <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
@@ -313,6 +442,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-4 relative">
+            {/* Seamless Language Toggle Button */}
+            <button
+              onClick={() => {
+                const newLang = settings.language === "ar" ? "en" : "ar";
+                updateSettings({ language: newLang });
+                toast.success(newLang === "ar" ? "تم تحويل لغة النظام إلى العربية" : "System language switched to English");
+              }}
+              className="px-3 py-1.5 rounded-xl border border-zinc-200 text-xs font-black text-zinc-700 hover:bg-zinc-100 hover:border-zinc-300 transition-all cursor-pointer flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white"
+              title={settings.language === "ar" ? "Switch to English" : "تغيير إلى العربية"}
+            >
+              <Globe className="w-3.5 h-3.5 text-zinc-500 animate-pulse" />
+              <span>{settings.language === "ar" ? "English" : "العربية"}</span>
+            </button>
+
             <div className="relative">
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
@@ -433,7 +576,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Viewport */}
-        <div className="flex-1 overflow-y-auto p-8">{children}</div>
+        <div className="flex-1 overflow-y-auto p-4 md:p-8">{children}</div>
       </main>
     </div>
   );

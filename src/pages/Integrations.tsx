@@ -4,6 +4,109 @@ import { Store, CheckCircle2, Zap, ArrowUpRight, Search, Sparkles } from 'lucide
 import { cn } from '@/src/lib/utils';
 import { useSettings } from '../contexts/SettingsContext';
 
+const BRAND_LOGOS: Record<string, React.ReactNode> = {
+  salla: (
+    <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="22" fill="#00b093" />
+      <path d="M28 45 C28 65, 33 72, 50 72 C67 72, 72 65, 72 45" stroke="white" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M38 42 C38 28, 62 28, 62 42" stroke="white" strokeWidth="8" strokeLinecap="round" />
+      <circle cx="38" cy="45" r="4.5" fill="white" />
+      <circle cx="62" cy="45" r="4.5" fill="white" />
+      <path d="M44 58 C47 61, 53 61, 56 58" stroke="white" strokeWidth="4.5" strokeLinecap="round" />
+    </svg>
+  ),
+  zid: (
+    <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="22" fill="#4f2d7f" />
+      <path d="M28 35 H46 V65 H28" stroke="white" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M54 35 H72 V50 H54 V65 H72" stroke="white" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="33" y="18" width="9" height="9" rx="2" fill="#ffb400" />
+    </svg>
+  ),
+  zatca: (
+    <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="22" fill="#0f4a36" />
+      <circle cx="50" cy="50" r="28" stroke="#c9a054" strokeWidth="3" />
+      <circle cx="50" cy="50" r="20" stroke="white" strokeWidth="1.5" strokeDasharray="4 4" />
+      <path d="M50 32 V58" stroke="#c9a054" strokeWidth="4" strokeLinecap="round" />
+      <path d="M50 32 C46 26, 38 29, 38 34" stroke="#c9a054" strokeWidth="3" strokeLinecap="round" />
+      <path d="M50 32 C54 26, 62 29, 62 34" stroke="#c9a054" strokeWidth="3" strokeLinecap="round" />
+      <path d="M35 56 L65 56" stroke="white" strokeWidth="4" strokeLinecap="round" />
+      <path d="M35 56 L42 66 H58 L65 56" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M43 45 L48 50 L57 38" stroke="#00b093" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  whatsapp: (
+    <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" fill="white" />
+      <path d="M50 8C26.8 8 8 26.8 8 50C8 57.4 9.9 64.4 13.3 70.5L9 86.5L25.8 82.2C31.6 85.3 38.2 87 45 87C68.2 87 87 68.2 87 45C87 21.8 68.2 8 45 8H50Z" fill="#25D366" />
+      <path d="M50 17.5C32.1 17.5 17.5 32.1 17.5 50C17.5 56.2 19.2 62.1 22.3 67.2L20.2 76.5L30 74.4C34.8 77 40.2 78.4 45.8 78.4C63.7 78.4 78.3 63.8 78.3 45.9C78.3 28 63.7 17.5 45.8 17.5H50Z" fill="white" />
+      <path d="M38.5 32C37.5 32 36.5 32.5 35.8 33.3C34.5 34.6 33.7 37 34.8 39.8C36.4 44 39.6 48.5 43.6 52.5C47.6 56.5 52.1 59.7 56.3 61.3C59.1 62.4 61.5 61.6 62.8 60.3C63.6 59.6 64.1 58.6 64.1 57.6C64.1 56.8 63.7 56 63 55.6L57.5 52.8C56.8 52.5 56 52.5 55.4 53L53.1 54.8C52.2 55.5 51 55.5 50.1 54.9C47.8 53.4 45.1 50.7 43.6 48.4C43 47.5 43 46.3 43.7 45.4L45.5 43.1C46 42.5 46 41.7 45.7 41L42.9 35.5C42.5 34.8 41.7 34.4 40.9 34.4C39.5 32 38.5 32 38.5 32Z" fill="#25D366" />
+    </svg>
+  ),
+  muqeem: (
+    <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="22" fill="#0c2340" />
+      <circle cx="50" cy="50" r="30" stroke="#c5a059" strokeWidth="2.5" />
+      <g stroke="#c5a059" strokeWidth="3" strokeLinecap="round">
+        <path d="M37 40 H53" />
+        <path d="M37 50 H63" />
+        <path d="M37 60 H58" />
+      </g>
+      <circle cx="63" cy="40" r="4.5" fill="#10b981" />
+    </svg>
+  ),
+  moyasar: (
+    <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="22" fill="#001a30" />
+      <path d="M25 50 C25 35, 45 35, 45 50 C45 65, 65 65, 65 50" stroke="#00a2e3" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M35 50 C35 43, 45 43, 45 50 C45 57, 55 57, 55 50" stroke="#00e5a3" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  stcpay: (
+    <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="22" fill="#4a0072" />
+      <path d="M25 45 H75 M25 55 H75" stroke="#ff007f" strokeWidth="8" strokeLinecap="round" />
+      <path d="M38 32 C45 32, 50 38, 50 45 C50 52, 45 58, 38 58" stroke="white" strokeWidth="6" strokeLinecap="round" />
+      <circle cx="62" cy="50" r="6" fill="white" />
+    </svg>
+  ),
+  zapier: (
+    <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="22" fill="#ff4f00" />
+      <g stroke="white" strokeWidth="8.5" strokeLinecap="round">
+        <path d="M50 22 V78" />
+        <path d="M26 34 L74 66" />
+        <path d="M26 66 L74 34" />
+      </g>
+    </svg>
+  ),
+  slack: (
+    <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="22" fill="#4a154b" />
+      <g transform="translate(18, 18) scale(0.64)">
+        <rect x="25" y="0" width="14" height="34" rx="7" fill="#36C5F0" />
+        <circle cx="12" cy="17" r="7" fill="#36C5F0" />
+        <rect x="66" y="25" width="34" height="14" rx="7" fill="#2EB67D" />
+        <circle cx="83" cy="12" r="7" fill="#2EB67D" />
+        <rect x="61" y="66" width="14" height="34" rx="7" fill="#ECB22E" />
+        <circle cx="88" cy="83" r="7" fill="#ECB22E" />
+        <rect x="0" y="61" width="34" height="14" rx="7" fill="#E01E5A" />
+        <circle cx="17" cy="88" r="7" fill="#E01E5A" />
+      </g>
+    </svg>
+  ),
+  fasah: (
+    <svg viewBox="0 0 100 100" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" rx="22" fill="#075985" />
+      <path d="M24 35 L50 18 L76 35 L50 52 Z" fill="#0ea5e9" fillOpacity="0.8" />
+      <path d="M24 50 L50 33 L76 50 L50 67 Z" fill="white" fillOpacity="0.9" />
+      <path d="M24 65 L50 48 L76 65 L50 82 Z" fill="#f97316" />
+      <circle cx="50" cy="50" r="3" fill="#075985" />
+    </svg>
+  )
+};
+
 const APPS = [
   {
     id: 'salla',
@@ -187,16 +290,22 @@ export default function Integrations() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full translate-x-8 -translate-y-8 group-hover:scale-110 transition-transform pointer-events-none" />
             
             <div className="flex justify-between items-start mb-6 relative z-10">
-              <div className="w-16 h-16 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center p-3 shadow-sm group-hover:shadow-md transition-shadow bg-white">
-                <img 
-                  src={app.icon} 
-                  alt={app.name} 
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "https://ui-avatars.com/api/?name=" + app.name + "&background=random";
-                  }}
-                />
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all overflow-hidden bg-white shrink-0">
+                {BRAND_LOGOS[app.id] ? (
+                  BRAND_LOGOS[app.id]
+                ) : (
+                  <div className="w-full h-full bg-zinc-50 border border-zinc-100 flex items-center justify-center p-3">
+                    <img 
+                      src={app.icon} 
+                      alt={app.name} 
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(app.name) + "&background=random";
+                      }}
+                    />
+                  </div>
+                )}
               </div>
               <div className="flex flex-col items-end gap-2">
                 {app.status === 'connected' ? (

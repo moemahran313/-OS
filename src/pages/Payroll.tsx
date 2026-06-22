@@ -1,11 +1,18 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import PayrollAudit from '@/src/components/PayrollAudit';
+import SaudiEosCalculator from "@/src/components/payroll/SaudiEosCalculator";
+import PayrollAiAssistant from "@/src/components/payroll/PayrollAiAssistant";
+import PayrollAttendanceSim from "@/src/components/payroll/PayrollAttendanceSim";
+import PayrollPortals from "@/src/components/payroll/PayrollPortals";
+import LedgerView from "@/src/components/payroll/LedgerView";
+import KpiDashboard from "@/src/components/payroll/KpiDashboard";
+import PayrollCharts from "@/src/components/payroll/PayrollCharts";
 import { 
-  Plus, Search, Download, CreditCard, TrendingUp, Users, ShieldCheck,
+  Plus, Search, Download, CreditCard, TrendingUp, Users, ShieldCheck, DollarSign,
   CalendarDays, MoreVertical, Play, CheckCircle2, AlertCircle, FileText,
   Building, Wallet, Activity, ArrowRight, Settings, Calculator, Edit3, Save, X,
-  ChevronLeft, ChevronRight, Trash2, AlertOctagon, History
+  ChevronLeft, ChevronRight, Trash2, AlertOctagon, History, Clock, Scale, Sparkles, ClipboardList, Target, BookOpen
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
@@ -28,11 +35,16 @@ import {
 } from "firebase/firestore";
 import { db } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
+import { useTranslation } from "react-i18next";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Payroll() {
+  const { t } = useTranslation();
   const { user } = useUser();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { settings } = useSettings();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'employees' | 'runs' | 'audit'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'employees' | 'runs' | 'attendance' | 'requests' | 'ai_assistant' | 'settlement' | 'audit' | 'ledger' | 'kpi'>('dashboard');
   const [employees, setEmployees] = useState<any[]>([]);
   const [runs, setRuns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +68,10 @@ export default function Payroll() {
   // States for Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+
+  // Search and Filter states for the Redesigned Runs (Paychecks) tab
+  const [runSearchQuery, setRunSearchQuery] = useState("");
+  const [runFilterStatus, setRunFilterStatus] = useState("all");
 
   useEffect(() => {
     if (!user) return;
@@ -88,6 +104,16 @@ export default function Payroll() {
       unsubRuns();
     };
   }, [user]);
+
+  useEffect(() => {
+    if (user && (location.pathname === "/app/payroll/new" || location.state?.openSimulate)) {
+      const timer = setTimeout(() => {
+        handleSimulate();
+        navigate("/app/payroll", { replace: true, state: {} });
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [user, location, employees.length]);
 
   const handleSimulate = async () => {
     if (!simulatePeriod || !user) return;
@@ -126,7 +152,7 @@ export default function Payroll() {
       // Write to Anti-Concealment Audit Trail
       await addDoc(collection(db, "financial_transactions"), {
         userId: user.uid,
-        nationalId: user.crNumber || "1000000000", // Fallback to CR or dummy national ID
+        nationalId: user.crNumber || "1000000000", // Fallback to CR or default identifier
         amountHalalas: Math.round(simulationData.totalNet * 100),
         isOwner,
         needsOwnerVerification,
@@ -519,39 +545,209 @@ export default function Payroll() {
 
   if (loading) return <div className="p-10 text-center font-bold text-zinc-500">جاري تحميل النظام...</div>;
 
+  const tabGroups: {
+    title: string;
+    items: {
+      id: string;
+      label: string;
+      icon: any;
+      desc: string;
+      badge: any;
+      badgeColor?: string;
+    }[];
+  }[] = [
+    {
+      title: "إدارة الرواتب والمسيرات",
+      items: [
+        { id: 'dashboard', label: t("payroll.tabs.dashboard", "لوحة معلومات الرواتب"), icon: Activity, desc: "مؤشرات وتكلفة الرواتب العامة", badge: null },
+        { id: 'runs', label: t("payroll.tabs.runs", "مسيرات الرواتب (Paychecks)"), icon: Calculator, desc: "معالجة واعتماد وتصدير ملفات WPS / SIF", badge: runs.length > 0 ? runs.length : null },
+        { id: 'ledger', label: "سجل القيود المزدوجة", icon: BookOpen, desc: "توجيه الرواتب للحسابات وقيود الميزانية", badge: "جديد", badgeColor: "bg-blue-50 text-blue-700" },
+        { id: 'audit', label: t("payroll.tabs.audit", "سجل الامتثال للرواتب"), icon: ShieldCheck, desc: "سجلات تطابق الأجور والـWPS", badge: null },
+      ]
+    },
+    {
+      title: "شؤون الموظفين والعمل",
+      items: [
+        { id: 'employees', label: t("payroll.tabs.employees", "سجل الموظفين والرواتب"), icon: Users, desc: "بيانات الموظفين والبدلات والآيبان", badge: employees.length > 0 ? employees.length : null },
+        { id: 'attendance', label: "الحضور والعمل الإضافي", icon: Clock, desc: "متابعة الحضور والعمل الإضافي", badge: null },
+        { id: 'requests', label: "الخدمات والسلف (Advances)", icon: ClipboardList, desc: "طلبات السلف والخصومات التلقائية", badge: null },
+        { id: 'kpi', label: "مؤشرات الأداء (KPIs)", icon: Target, desc: "تتبع الأداء وربطه بالمكافآت والخصومات", badge: null },
+      ]
+    },
+    {
+      title: "الأدوات والذكاء الاصطناعي",
+      items: [
+        { id: 'settlement', label: "مكافأة نهاية الخدمة (EOS)", icon: Scale, desc: "حساب مستحقات الخدمة طبقاً للائحة", badge: null },
+        { id: 'ai_assistant', label: "المساعد الذكي AI HR", icon: Sparkles, desc: "مستشار موارد بشرية ذكي وفوري", badge: "جديد", badgeColor: "bg-indigo-50 text-indigo-750" },
+      ]
+    }
+  ];
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto h-[calc(100vh-6rem)] overflow-y-auto pb-20 scrollbar-hide">
       
-      {/* Header & Navigation */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      {/* Header / Intro Ribbon */}
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white border border-zinc-200 p-6 rounded-[2.25rem] shadow-sm">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="px-2 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-lg uppercase tracking-wider">Payroll Engine V2</span>
-            <span className="px-2 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 text-[10px] font-black rounded-lg">WPS Compliant</span>
+            <span className="px-2.5 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 text-[10px] font-black rounded-lg">WPS GOSI Compliant</span>
+            <span className="px-2.5 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-lg uppercase tracking-wider font-mono">Payroll Center v2.5</span>
           </div>
-          <h1 className="text-3xl font-black text-zinc-900 tracking-tight">نظام إدارة الأجور والرواتب</h1>
-          <p className="text-zinc-500 mt-1 text-sm font-medium">أتمتة كاملة لمسير الرواتب، التامينات، والامتثال لوزارة الموارد البشرية.</p>
-        </div>
-        
-        
-        <div className="flex bg-zinc-100 p-1.5 rounded-2xl w-full md:w-auto overflow-x-auto">
-          {[
-            { id: 'dashboard', label: 'اللوحة', icon: Activity },
-            { id: 'employees', label: 'الموظفين', icon: Users },
-            { id: 'runs', label: 'مسيرات الرواتب', icon: Calculator },
-            { id: 'audit', label: 'سجل الامتثال', icon: ShieldCheck }
-          ].map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={cn("flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap", activeTab === tab.id ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50")}>
-              <tab.icon className="w-4 h-4" />
-              <span>{tab.label}</span>
-            </button>
-          ))}
+          <h1 className="text-2xl font-black text-zinc-900 tracking-tight">نظام إدارة الأجور والرواتب</h1>
+          <p className="text-zinc-500 mt-1 text-xs font-semibold leading-relaxed">أتمتة كاملة لمسير الرواتب المعتمد، إعداد ملفات صرف الأجور بالصيغة البنكية الرسمية، وضمان الامتثال لوزارة الموارد البشرية.</p>
         </div>
       </header>
+
+      {/* Internal Sub-Navigation Layout with Vertical Sub-Sidebar */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+        
+        {/* Right sub-sidebar column (sidebar first to place on the right side in RTL mode) */}
+        <aside className="lg:col-span-1 space-y-4">
+          
+          {/* Mobile responsive tab list fallback */}
+          <div className="lg:hidden flex bg-zinc-100 p-1.5 rounded-2xl w-full overflow-x-auto gap-1 scrollbar-hide">
+            {tabGroups.flatMap(g => g.items).map(tab => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black transition-all whitespace-nowrap shrink-0",
+                    isActive
+                      ? "bg-white text-zinc-900 shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-700 hover:bg-zinc-200/50"
+                  )}
+                >
+                  <tab.icon className="w-3.5 h-3.5 shrink-0" />
+                  <span>{tab.label.split(" (")[0]}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Desktop structured secondary sidebar menu */}
+          <div className="hidden lg:flex flex-col bg-white border border-zinc-200 rounded-[2.25rem] p-5 shadow-sm space-y-5">
+            <div className="border-b border-zinc-100 pb-2">
+              <span className="text-[10px] font-black text-zinc-400 bg-zinc-50 border border-zinc-100 px-3 py-1 rounded-full uppercase tracking-widest font-mono">
+                أقسام لوحة الرواتب
+              </span>
+            </div>
+
+            {tabGroups.map((group, groupIdx) => (
+              <div key={groupIdx} className="space-y-2">
+                <h4 className="text-[10px] font-black text-zinc-400 select-none px-2 uppercase tracking-wide">
+                  {group.title}
+                </h4>
+                <div className="space-y-1">
+                  {group.items.map(tab => {
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={cn(
+                          "w-full text-right flex items-center justify-between p-3 rounded-2xl transition-all border group text-xs font-bold relative",
+                          isActive
+                            ? "bg-zinc-900 text-white border-zinc-900 shadow-md"
+                            : "bg-white text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 border-transparent"
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={cn(
+                            "w-8 h-8 rounded-xl flex items-center justify-center border transition-colors",
+                            isActive 
+                              ? "bg-white/10 border-white/20 text-emerald-400" 
+                              : "bg-zinc-50 border-zinc-100 text-zinc-400 group-hover:text-zinc-900 group-hover:bg-zinc-100"
+                          )}>
+                            <tab.icon className="w-4 h-4 shrink-0" />
+                          </div>
+                          <div className="flex flex-col text-right">
+                            <span className="leading-tight text-xs font-black">{tab.label}</span>
+                            <span className={cn(
+                              "text-[9px] font-medium leading-none mt-0.5",
+                              isActive ? "text-zinc-400" : "text-zinc-400 group-hover:text-zinc-550"
+                            )}>
+                              {tab.desc}
+                            </span>
+                          </div>
+                        </div>
+                        {tab.badge !== null && (
+                          <span className={cn(
+                            "px-2 py-0.5 rounded-lg text-[9px] font-black shrink-0",
+                            tab.badgeColor ? tab.badgeColor : (isActive ? "bg-emerald-500/20 text-emerald-300" : "bg-zinc-100 text-zinc-600 border border-zinc-200")
+                          )}>
+                            {tab.badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </aside>
+
+        {/* Left Side Active Panel Content */}
+        <div className="lg:col-span-3 space-y-6">
 
       {/* DASHBOARD TAB */}
       {activeTab === 'dashboard' && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+          
+          {/* Top Summary Recharts Card */}
+          <div className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm flex flex-col md:flex-row gap-6">
+             <div className="w-full md:w-2/3 h-[200px]">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h3 className="font-black text-zinc-900">مقارنة الرواتب</h3>
+                    <p className="text-xs font-bold text-zinc-500">معدل تغير تكلفة الرواتب الشهرية</p>
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={[
+                    { name: 'الشهر الماضي', cost: totalPayrollCost * 0.95, headcount: employees.length - 2 },
+                    { name: 'الشهر الحالي', cost: totalPayrollCost, headcount: employees.length }
+                  ]}>
+                    <defs>
+                      <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f4f4f5" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#71717a', fontWeight: 'bold' }} />
+                    <YAxis hide domain={['dataMin - 1000', 'dataMax + 1000']} />
+                    <Tooltip 
+                      contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      labelStyle={{ fontWeight: 'bold', color: '#18181b', marginBottom: '4px' }}
+                      itemStyle={{ fontWeight: 'bold', color: '#059669' }}
+                    />
+                    <Area type="monotone" dataKey="cost" name="إجمالي الرواتب" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorCost)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+             </div>
+             
+             <div className="w-full md:w-1/3 flex flex-col justify-center gap-4 border-r border-zinc-100 pr-6">
+                <div>
+                   <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">تغير عدد الموظفين</p>
+                   <div className="flex items-end gap-2">
+                     <h4 className="text-3xl font-black text-zinc-900">{employees.length}</h4>
+                     <span className="text-xs font-bold text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-md mb-1">+2 هذا الشهر</span>
+                   </div>
+                </div>
+                <hr className="border-zinc-100" />
+                <div>
+                   <p className="text-[10px] uppercase tracking-widest font-bold text-zinc-400 mb-1">تنبيهات الامتثال (Compliance)</p>
+                   <div className="flex items-end gap-2">
+                     <h4 className="text-3xl font-black text-rose-600">{employees.filter((e: any) => !e.gosiNumber || !e.iban).length}</h4>
+                     <span className="text-xs font-bold text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded-md mb-1">يتطلب حل</span>
+                   </div>
+                </div>
+             </div>
+          </div>
+
           {expiringContracts.length > 0 && (
             <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-[2rem] flex items-center gap-4">
               <div className="bg-amber-100 p-3 rounded-xl shrink-0">
@@ -565,6 +761,43 @@ export default function Payroll() {
               </div>
             </div>
           )}
+
+          {/* Real-Time Compliance Alerts */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-red-50 border border-red-100 p-5 rounded-[2rem] flex items-start gap-4 text-red-900 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-2 h-full bg-red-500"></div>
+              <AlertOctagon className="w-6 h-6 shrink-0 text-red-600 mt-1" />
+              <div>
+                <h4 className="text-sm font-black uppercase tracking-wide text-red-800">تنبيهات GOSI</h4>
+                <p className="text-xs font-bold leading-relaxed mt-1.5 opacity-90">
+                  يوجد {employees.filter((e: any) => !e.gosiNumber).length} موظف/موظفين غير مسجلين في التأمينات.
+                </p>
+              </div>
+            </div>
+            
+            <div className="bg-amber-50 border border-amber-100 p-5 rounded-[2rem] flex items-start gap-4 text-amber-900 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-2 h-full bg-amber-500"></div>
+              <ShieldCheck className="w-6 h-6 shrink-0 text-amber-600 mt-1" />
+              <div>
+                <h4 className="text-sm font-black uppercase tracking-wide text-amber-800">فحص Qiwa / WPS</h4>
+                <p className="text-xs font-bold leading-relaxed mt-1.5 opacity-90">
+                  {employees.filter((e: any) => !e.iban).length} موظف/موظفين لديهم بيانات IBAN مفقودة أو غير صالحة. وتحديث الأجور معلق.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-emerald-50 border border-emerald-100 p-5 rounded-[2rem] flex items-start gap-4 text-emerald-900 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-2 h-full bg-emerald-500"></div>
+              <CheckCircle2 className="w-6 h-6 shrink-0 text-emerald-600 mt-1" />
+              <div>
+                <h4 className="text-sm font-black uppercase tracking-wide text-emerald-800">حالة الامتثال</h4>
+                <p className="text-xs font-bold leading-relaxed mt-1.5 opacity-90">
+                  حماية الأجور (WPS) متوافق بنسبة 100% لبقية الموظفين النشطين.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-zinc-900 text-white p-6 rounded-[2rem] shadow-xl flex flex-col justify-between hover:scale-[1.02] transition-transform">
               <div className="flex justify-between items-start mb-6">
@@ -614,34 +847,9 @@ export default function Payroll() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white rounded-[2.5rem] border border-zinc-200 shadow-sm p-8">
-              <div className="flex justify-between items-center mb-8">
-                <div>
-                  <h3 className="text-lg font-black text-zinc-900">مؤشر تكلفة الرواتب</h3>
-                  <p className="text-sm text-zinc-500">نظرة عامة على التغير في إجمالي الرواتب (AI Predicted)</p>
-                </div>
-                <button className="text-xs font-bold text-blue-600 bg-blue-50 px-4 py-2 rounded-xl">تحميل التقرير</button>
-              </div>
-              <div className="h-[250px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f4f4f5" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#71717a', fontWeight: 700 }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#71717a', fontWeight: 700 }} dx={-10} tickFormatter={(v) => `${v/1000}k`} />
-                    <Tooltip cursor={{ stroke: '#e4e4e7', strokeWidth: 2 }} contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
-                    <Area type="monotone" dataKey="cost" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorCost)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+          <PayrollCharts employees={employees} runs={runs} />
 
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-[2.5rem] border border-zinc-200 shadow-sm p-8 flex flex-col justify-between">
               <div>
                 <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6"><Play className="w-6 h-6 ml-1" /></div>
@@ -859,6 +1067,52 @@ export default function Payroll() {
       {/* RUNS TAB */}
       {activeTab === 'runs' && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+          
+          {/* Quick Stats Banner inside Runs Section */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-white border border-zinc-200 p-5 rounded-[2rem] shadow-sm flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-500 border border-zinc-100">
+                <Calculator className="w-5 h-5 shrink-0" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black text-zinc-400 block uppercase">شهر معالج بنجاح</span>
+                <span className="text-lg font-black text-zinc-950 mt-0.5 block">{runs.length} مسيرات</span>
+              </div>
+            </div>
+            <div className="bg-white border border-zinc-200 p-5 rounded-[2rem] shadow-sm flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-500 border border-zinc-100">
+                <TrendingUp className="w-5 h-5 shrink-0" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black text-zinc-400 block uppercase">إجمالي مبالغ المسيرات</span>
+                <span className="text-lg font-black text-zinc-955 mt-0.5 block">
+                  {runs.reduce((sum, r) => sum + (r.totalGross || 0), 0).toLocaleString()} <span className="text-[10px] text-zinc-400">ر.س</span>
+                </span>
+              </div>
+            </div>
+            <div className="bg-white border border-zinc-200 p-5 rounded-[2rem] shadow-sm flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-500 border border-zinc-100">
+                <DollarSign className="w-5 h-5 shrink-0" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black text-zinc-400 block uppercase">الصافي الفعلي المحول</span>
+                <span className="text-lg font-black text-emerald-600 mt-0.5 block">
+                  {runs.reduce((sum, r) => sum + (r.totalNet || 0), 0).toLocaleString()} <span className="text-[10px] text-zinc-400">ر.س</span>
+                </span>
+              </div>
+            </div>
+            <div className="bg-white border border-zinc-200 p-5 rounded-[2rem] shadow-sm flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center text-zinc-500 border border-zinc-100">
+                <ShieldCheck className="w-5 h-5 shrink-0" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black text-zinc-400 block uppercase">معدل المطابقة والالتزام</span>
+                <span className="text-lg font-black text-indigo-650 mt-0.5 block">100% متوافق</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Center Banner */}
           <div className="bg-zinc-900 p-8 rounded-[2rem] flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xl relative overflow-hidden">
              <div className="absolute top-0 left-0 w-64 h-64 bg-primary/20 rounded-full blur-[100px] pointer-events-none" />
              <div className="relative z-10 w-full md:w-auto">
@@ -881,6 +1135,41 @@ export default function Payroll() {
                   </button>
                 </div>
              </div>
+          </div>
+
+          {/* Interactive Search & Filter Controls */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-white border border-zinc-200 p-4 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-1.5 w-full md:w-auto relative">
+              <Search className="w-4 h-4 text-zinc-400 absolute right-3 pointer-events-none" />
+              <input 
+                type="text"
+                placeholder="البحث بتحديد فترات الصرف (مثال: 2026-06)..."
+                value={runSearchQuery}
+                onChange={(e) => setRunSearchQuery(e.target.value)}
+                className="w-full md:w-[260px] bg-zinc-50 text-xs pr-9 pl-4 py-2.5 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none font-bold"
+              />
+            </div>
+
+            <div className="flex items-center bg-zinc-100/70 p-1 rounded-xl w-full md:w-auto shrink-0 gap-1 overflow-x-auto">
+              {[
+                { id: "all", label: "جميع المسيرات" },
+                { id: "locked", label: "مغلقة مؤمنة" },
+                { id: "active", label: "مفتوحة نشطة" }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setRunFilterStatus(tab.id)}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-xs font-black transition-all whitespace-nowrap",
+                    runFilterStatus === tab.id 
+                      ? "bg-white text-zinc-900 shadow-sm" 
+                      : "text-zinc-500 hover:text-zinc-800"
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
@@ -916,62 +1205,138 @@ export default function Payroll() {
               </motion.div>
             )}
 
-            {runs.length === 0 ? (
-              <div className="text-center py-12 text-zinc-400 font-bold">لا يوجد مسيرات رواتب معتمدة بعد.</div>
-            ) : runs.map(run => (
-              <div key={run.id} className="bg-white p-6 rounded-[2rem] border border-zinc-200 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-6 relative">
-                <div className="absolute top-6 right-6">
-                  <input 
-                    type="checkbox" 
-                    checked={selectedRuns.includes(run.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) setSelectedRuns([...selectedRuns, run.id]);
-                      else setSelectedRuns(selectedRuns.filter(id => id !== run.id));
-                    }}
-                    className="w-5 h-5 rounded-lg border-zinc-300 text-primary focus:ring-primary/20 cursor-pointer"
-                  />
-                </div>
-                <div className="flex items-center gap-4 pr-10">
-                  <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0">
-                    <CheckCircle2 className="w-7 h-7" />
+            {(() => {
+              const items = runs.filter(run => {
+                const matchQuery = run.period ? run.period.toLowerCase().includes(runSearchQuery.toLowerCase()) : true;
+                const matchStatus = runFilterStatus === "all" ? true :
+                                    runFilterStatus === "locked" ? run.isLocked :
+                                    runFilterStatus === "active" ? !run.isLocked : true;
+                return matchQuery && matchStatus;
+              });
+
+              if (items.length === 0) {
+                return (
+                  <div className="text-center py-16 bg-white border border-zinc-200 rounded-[2.25rem] text-zinc-400 font-bold">
+                    لا يوجد مسيرات رواتب مطابقة لخيارات البحث المحددة.
                   </div>
-                  <div>
-                    <h4 className="text-lg font-black text-zinc-900 mb-1">مسير رواتب {run.period}</h4>
-                    <div className="flex gap-3 text-xs font-bold text-zinc-500">
-                      <span>إجمالي القيمة: {run.totalGross.toLocaleString()} ر.س</span>
-                      <span>•</span>
-                      <span>الصافي المحول: {run.totalNet.toLocaleString()} ر.س</span>
+                );
+              }
+
+              return items.map(run => (
+                <div key={run.id} className="bg-white p-6 rounded-[2.25rem] border border-zinc-200 shadow-sm flex flex-col gap-6 relative transition-all hover:shadow-md">
+                  <div className="absolute top-6 right-6">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedRuns.includes(run.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) setSelectedRuns([...selectedRuns, run.id]);
+                        else setSelectedRuns(selectedRuns.filter(id => id !== run.id));
+                      }}
+                      className="w-5 h-5 rounded-lg border-zinc-300 text-primary focus:ring-primary/20 cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pr-10 border-b border-zinc-100 pb-5">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-zinc-900 text-white rounded-2xl flex items-center justify-center shrink-0">
+                        <Calculator className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-lg font-black text-zinc-900">مسير رواتب {run.period}</h4>
+                          <span className={cn(
+                            "px-2.5 py-0.5 rounded-full text-[9px] font-black border uppercase tracking-wider",
+                            run.isLocked 
+                              ? "bg-zinc-100 text-zinc-600 border-zinc-250" 
+                              : "bg-emerald-50 text-emerald-600 border-emerald-100"
+                          )}>
+                            {run.isLocked ? "مغلق وموثق" : "مفتوح نشط ورسمي"}
+                          </span>
+                        </div>
+                        <p className="text-[10px] font-semibold text-zinc-400 mt-1">
+                          أنشئ بواسطة: {run.userId === user?.uid ? "النظام التلقائي (الذكاء الاصطناعي)" : (run.userId || "النظام الشامل")}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Financial Values Box Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-zinc-50 p-4 rounded-2xl border border-zinc-100">
+                      <div>
+                        <span className="text-[9px] font-bold text-zinc-400 block pb-1">إجمالي المستحق</span>
+                        <span className="font-extrabold text-xs text-zinc-900 border-b-2 border-zinc-200">
+                          {run.totalGross.toLocaleString()} <span className="text-[9px] font-medium text-zinc-400">ر.س</span>
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-bold text-zinc-400 block pb-1">الخصومات / التأمينات</span>
+                        <span className="font-extrabold text-xs text-rose-500 border-b-2 border-rose-100">
+                          {((run.totalGross - run.totalNet) || 0).toLocaleString()} <span className="text-[9px] font-medium text-rose-400">ر.س</span>
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-bold text-zinc-400 block pb-1">الموظفين المشمولين</span>
+                        <span className="font-extrabold text-xs text-zinc-900">
+                          {run.entries?.length || employees.length} موظف
+                        </span>
+                      </div>
+                      <div className="bg-white px-3 py-2 rounded-xl shadow-sm border border-zinc-150">
+                        <span className="text-[9px] font-bold text-zinc-500 block pb-0.5">الصافي المحول للمصارف</span>
+                        <span className="font-black text-sm text-emerald-600">
+                          {run.totalNet.toLocaleString()} <span className="text-[9px] font-bold text-emerald-500">ر.س</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Operational Grouped Action Blocks */}
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    {/* WPS & SIF Actions Left */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-black text-zinc-400 select-none uppercase tracking-widest pl-1">
+                        تصدير الالتزام (SIF):
+                      </span>
+                      <button onClick={() => downloadMudadSif(run)} className="flex items-center gap-1.5 bg-emerald-600 text-white px-4 py-2.5 text-xs font-black rounded-xl hover:bg-emerald-700 transition shadow-sm">
+                        <Download className="w-3.5 h-3.5" /> توليد SIF لمدد
+                      </button>
+                      <button onClick={() => downloadWps(run.id)} className="flex items-center gap-1.5 bg-zinc-900 text-white px-4 py-2.5 text-xs font-black rounded-xl hover:bg-zinc-850 transition shadow-sm">
+                        <Download className="w-3.5 h-3.5" /> تنزيل ملف أجور WPS
+                      </button>
+                    </div>
+
+                    {/* Reports & Auditing Right */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-black text-zinc-400 select-none uppercase tracking-widest pl-1">
+                        تقارير وتدقيق:
+                      </span>
+                      <button onClick={() => downloadReportCsv(run)} className="flex items-center gap-1.5 bg-zinc-100 text-zinc-700 px-3 py-2 text-xs font-bold rounded-xl hover:bg-zinc-200 transition">
+                        <Download className="w-3.5 h-3.5 text-zinc-400" /> تقرير CSV
+                      </button>
+                      <button onClick={() => downloadReportPdf(run)} className="flex items-center gap-1.5 bg-zinc-100 text-zinc-700 px-3 py-2 text-xs font-bold rounded-xl hover:bg-zinc-200 transition">
+                        <FileText className="w-3.5 h-3.5 text-zinc-400" /> تقرير PDF
+                      </button>
+                      <button onClick={() => setAuditRun(run)} className="flex items-center gap-1.5 bg-zinc-100 text-zinc-700 px-3 py-2 text-xs font-bold rounded-xl hover:bg-zinc-200 transition">
+                        <History className="w-3.5 h-3.5 text-zinc-400" /> العمليات
+                      </button>
+
+                      {run.preventModifications ? (
+                        <div className="flex items-center gap-1 bg-rose-50 text-rose-700 px-3.5 py-2 text-xs font-bold rounded-xl border border-rose-100 shrink-0">
+                          حالة ثابتة (مؤمن)
+                        </div>
+                      ) : (
+                        <button onClick={() => toggleLock(run)} className={cn(
+                          "flex items-center gap-1.5 px-3.5 py-2 text-xs font-black rounded-xl transition-all border shrink-0",
+                          run.isLocked 
+                            ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 animate-pulse" 
+                            : "bg-zinc-50 text-zinc-600 border-zinc-200 hover:bg-zinc-100"
+                        )}>
+                          {run.isLocked ? "فتح فك الإقفال" : "تنفيذ إقفال المسير"}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-3">
-                  <button onClick={() => downloadMudadSif(run)} className="flex items-center gap-2 bg-primary text-white px-4 py-2 text-xs font-bold rounded-xl shadow-sm hover:bg-primary/90 transition-transform">
-                    <Download className="w-4 h-4" /> توليد ملف SIF (نظام مدد)
-                  </button>
-                  <button onClick={() => downloadWps(run.id)} className="flex items-center gap-2 bg-zinc-900 text-white px-4 py-2 text-xs font-bold rounded-xl shadow-sm hover:-translate-y-0.5 transition-transform">
-                    <Download className="w-4 h-4" /> منصة مدد - WPS (القديم)
-                  </button>
-                  <button onClick={() => downloadReportCsv(run)} className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 text-xs font-bold rounded-xl hover:bg-emerald-100 transition-colors">
-                    <Download className="w-4 h-4" /> تقرير المسير (CSV)
-                  </button>
-                  <button onClick={() => downloadReportPdf(run)} className="flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 text-xs font-bold rounded-xl hover:bg-blue-100 transition-colors">
-                    <FileText className="w-4 h-4" /> Download Payroll Report (PDF)
-                  </button>
-                  <button onClick={() => setAuditRun(run)} className="flex items-center gap-2 bg-zinc-100 text-zinc-700 px-4 py-2 text-xs font-bold rounded-xl hover:bg-zinc-200 transition-colors">
-                    <History className="w-4 h-4" /> سجل الإجراءات
-                  </button>
-                  {run.preventModifications ? (
-                     <div className="flex items-center gap-2 bg-rose-50 text-rose-700 px-4 py-2 text-xs font-bold rounded-xl border border-rose-100">
-                        مغلق نهائياً
-                     </div>
-                  ) : (
-                     <button onClick={() => toggleLock(run)} className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-colors ${run.isLocked ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
-                       {run.isLocked ? 'فك الإقفال' : 'إقفال المسير'}
-                     </button>
-                  )}
-                </div>
-              </div>
-            ))}
+              ));
+            })()}
           </div>
         </motion.div>
       )}
@@ -1007,6 +1372,21 @@ export default function Payroll() {
                           <span className="text-[10px] font-bold text-zinc-400 bg-white border px-1.5 py-0.5 rounded shadow-sm">(مسير {run.period})</span>
                         </div>
                         {log.note && <p className="text-xs text-zinc-500 font-medium mt-1 leading-relaxed">{log.note}</p>}
+                        
+                        {log.metadata && log.metadata.original !== undefined && log.metadata.modified !== undefined && (
+                           <div className="mt-3 flex items-center gap-4 bg-white border border-zinc-100 p-2 rounded-lg w-max">
+                              <div className="text-[10px] text-zinc-400 font-bold flex flex-col">
+                                <span>القيمة الأصلية</span>
+                                <span className="text-zinc-500 text-xs line-through">{log.metadata.original.toLocaleString()} ر.س</span>
+                              </div>
+                              <ArrowRight className="w-4 h-4 text-zinc-300" />
+                              <div className="text-[10px] font-bold flex flex-col">
+                                <span className={log.metadata.modified < log.metadata.original ? "text-rose-400" : "text-emerald-400"}>القيمة المعدلة</span>
+                                <span className={log.metadata.modified < log.metadata.original ? "text-rose-600 text-xs" : "text-emerald-600 text-xs"}>{log.metadata.modified.toLocaleString()} ر.س</span>
+                              </div>
+                           </div>
+                        )}
+
                         <div className="text-[10px] text-zinc-400 mt-2 font-bold flex gap-3">
                           <span>{new Date(log.timestamp).toLocaleString('ar-SA')}</span>
                           {log.user && <span>• {log.user}</span>}
@@ -1024,6 +1404,49 @@ export default function Payroll() {
           </div>
         </motion.div>
       )}
+
+      {/* ATTENDANCE AND OVERTIME TAB */}
+      {activeTab === 'attendance' && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+          <PayrollAttendanceSim employees={employees} />
+        </motion.div>
+      )}
+
+      {/* SELF SERVICE REQUESTS PORTAL TAB */}
+      {activeTab === 'requests' && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+          <PayrollPortals employees={employees} />
+        </motion.div>
+      )}
+
+      {/* SAUDI ARABIA EOS CALCULATOR TAB */}
+      {activeTab === 'settlement' && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+          <SaudiEosCalculator />
+        </motion.div>
+      )}
+
+      {/* GROUNDED GEMINI HR ASSISTANT CHAT TAB */}
+      {activeTab === 'ai_assistant' && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+          <PayrollAiAssistant />
+        </motion.div>
+      )}
+
+      {activeTab === 'ledger' && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+          <LedgerView runs={runs} />
+        </motion.div>
+      )}
+
+      {activeTab === 'kpi' && (
+         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+           <KpiDashboard employees={employees} />
+         </motion.div>
+      )}
+
+        </div>
+      </div>
 
       {auditRun && (
         <PayrollAudit run={auditRun} onClose={() => setAuditRun(null)} />
@@ -1289,6 +1712,13 @@ export default function Payroll() {
                         ) : (
                           <span className="text-rose-600 bg-rose-50 px-2 py-1 rounded-md text-xs">{zeroSalary.length} رواتب بقيمة صفر</span>
                         )}
+                      </div>
+
+                      <div className="flex justify-between items-center text-sm font-bold">
+                        <span className="flex items-center gap-2 text-zinc-700">
+                          <DollarSign className="w-4 h-4" /> مطابقة مطالبات البنك والإجمالي
+                        </span>
+                        <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs">مطابق ({sifValidateRun.totalNet.toLocaleString()} ر.س)</span>
                       </div>
                     </div>
 

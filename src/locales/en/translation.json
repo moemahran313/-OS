@@ -1,0 +1,48 @@
+{
+  "dashboard": "Dashboard",
+  "workflows": "Workflows",
+  "common": {
+    "dashboard": "Tools & Calculations",
+    "invoices": "Invoices",
+    "payroll": "Payroll",
+    "settings": "Settings",
+    "logout": "Logout",
+    "welcome": "Welcome",
+    "save": "Save",
+    "cancel": "Cancel",
+    "language": "Language",
+    "arabic": "Arabic",
+    "english": "English",
+    "french": "French"
+  },
+  "sidebar": {
+    "home": "Simulator Console",
+    "employees": "Employees & CRM",
+    "contracts": "Contracts",
+    "attendance": "Attendance",
+    "inventory": "Inventory",
+    "suppliers": "Suppliers",
+    "integrations": "App Marketplace & Integration",
+    "analytics": "Reports & Analytics"
+  },
+  "settings": {
+    "tabs": {
+      "profile": "Profile & Company",
+      "notifications": "Notifications",
+      "security": "Security & Webhooks",
+      "appearance": "Appearance",
+      "email": "Email Settings",
+      "reminders": "Automatic Reminders",
+      "audit": "Operations Log",
+      "payment": "Payment Gateways",
+      "referrals": "Referral Program",
+      "compliance": "Advanced Compliance & Security",
+      "developer": "Developer Portal & API",
+      "mobile": "Mobile App Companion"
+    },
+    "mobile": {
+      "title": "Smartphones & Mobile Companion",
+      "subtitle": "Real-time iOS and Android simulation to connect with verified partners & manage sales pipelines."
+    }
+  }
+}

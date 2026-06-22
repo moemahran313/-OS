@@ -1145,7 +1145,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                                     type="email"
                                     value={clientEmail}
                                     onChange={(e) => setClientEmail(e.target.value)}
-                                    placeholder="client@example.com"
+                                    placeholder="client@domain.com"
                                     className="w-full bg-zinc-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 font-bold"
                                   />
                                 </div>
@@ -1170,7 +1170,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                                     type="email"
                                     value={billingEmail}
                                     onChange={(e) => setBillingEmail(e.target.value)}
-                                    placeholder="billing@example.com"
+                                    placeholder="billing@domain.com"
                                     className="w-full bg-zinc-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 font-bold"
                                   />
                                 </div>
@@ -1641,7 +1641,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                     type="text"
                     value={branding.logo || ""}
                     onChange={(e) => setBranding({ ...branding, logo: e.target.value })}
-                    placeholder="https://example.com/logo.png"
+                    placeholder="https://company.com/logo.png"
                     className="w-full bg-zinc-50 border border-zinc-100 rounded-lg px-3 py-2.5 text-xs focus:ring-2 focus:ring-primary/20"
                   />
                   <div className="relative">
@@ -2202,7 +2202,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                     onChange={(e) =>
                       setBranding({ ...branding, customPaymentLink: e.target.value })
                     }
-                    placeholder="https://example.com/pay/..."
+                    placeholder="https://company.com/pay/..."
                     className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-primary/20 outline-none hover:border-zinc-300 transition-colors"
                   />
                   <p className="text-[10px] text-zinc-400 font-medium">

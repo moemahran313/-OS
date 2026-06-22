@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { ShieldCheck, Lock, Smartphone, KeyRound, Server, AlertTriangle, Activity } from 'lucide-react';
+import { ShieldCheck, Lock, Smartphone, KeyRound, Server, AlertTriangle, Activity, MapPin } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useSettings } from '../contexts/SettingsContext';
 
 const securityData = [
   { time: '08:00', authAttempts: 12, apiCalls: 154 },
@@ -14,16 +15,70 @@ const securityData = [
 ];
 
 export default function SecurityCompliance() {
+  const { settings, updateSettings } = useSettings();
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
 
   return (
-    <div className="p-6 md:p-8 max-w-5xl mx-auto font-sans" dir="rtl">
+    <div className="space-y-8">
       <div className="mb-8">
         <h1 className="text-3xl font-black text-zinc-900 flex items-center gap-3">
           <ShieldCheck className="w-8 h-8 text-emerald-500" /> الأمان والامتثال (Security & Compliance)
         </h1>
-        <p className="text-zinc-500 mt-2 font-medium">لوحة التحكم الأمنية لحماية بيانات منشأتك وعملائك وفق أعلى المعايير.</p>
+        <p className="text-zinc-500 mt-2 font-medium">لوحة التحكم الأمنية لحماية بيانات منشأتك وعملائك وفق أعلى المعايير وتوافق كامل مع نظام حماية البيانات الشخصية PDPL.</p>
       </div>
+
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white p-6 rounded-2xl border border-zinc-200 shadow-sm"
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center">
+            <MapPin className="w-5 h-5 text-rose-500" />
+          </div>
+          <div>
+            <h3 className="text-lg font-black text-zinc-900">سيادة البيانات (PDPL & SDAIA)</h3>
+            <p className="text-xs text-zinc-500 mt-1 font-medium">التحكم الصارم بأماكن تخزين واستضافة البيانات وفق متطلبات "سدايا".</p>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="flex flex-col gap-4 p-4 border border-zinc-100 bg-zinc-50 rounded-xl">
+             <div className="flex justify-between items-center">
+               <div>
+                  <h4 className="font-bold text-zinc-900 text-sm">موقع استضافة البيانات (Data Residency)</h4>
+                  <p className="text-xs text-zinc-500 mt-1">يلزم نظام PDPL الشركات الكبرى بإبقاء البيانات الحساسة داخل المملكة.</p>
+               </div>
+               <select 
+                 value={settings.dataResidency || "saudi_arabia"}
+                 onChange={e => updateSettings({ dataResidency: e.target.value as any })}
+                 className="bg-white border border-zinc-200 rounded-lg py-2 px-3 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold"
+               >
+                 <option value="saudi_arabia">محلي (On-Premise / GCP Dammam)</option>
+                 <option value="global" disabled>عالمي (محظور للمنشآت المتوسطة والكبرى)</option>
+               </select>
+             </div>
+             
+             <div className="flex items-center justify-between pt-4 border-t border-zinc-200/60">
+                <div className="flex items-center gap-3">
+                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${settings.pdplComplianceMode ? 'bg-emerald-100 text-emerald-600' : 'bg-zinc-200 text-zinc-500'}`}>
+                     <ShieldCheck className="w-4 h-4" />
+                   </div>
+                   <div>
+                     <h4 className="text-sm font-bold text-zinc-900 leading-none mb-1">تفعيل القيود الصارمة للـ PDPL</h4>
+                     <p className="text-[10px] text-zinc-500 font-medium">منع تصدير البيانات أو نقل القواعد السحابية خارج النطاق المحلي لمنع المخالفات والغرامات.</p>
+                   </div>
+                </div>
+                <button 
+                  onClick={() => updateSettings({ pdplComplianceMode: !settings.pdplComplianceMode })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.pdplComplianceMode ? 'bg-emerald-500' : 'bg-zinc-300'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.pdplComplianceMode ? '-translate-x-6' : '-translate-x-1'}`} />
+                </button>
+             </div>
+          </div>
+        </div>
+      </motion.div>
 
       <div className="grid md:grid-cols-2 gap-6 mb-8">
         <motion.div 

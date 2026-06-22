@@ -80,7 +80,7 @@ export default function Analytics() {
     <div className="h-full flex flex-col items-center justify-center p-20 text-center animate-pulse">
       <Brain className="w-16 h-16 text-primary mb-6 animate-bounce" />
       <h2 className="text-2xl font-black text-zinc-900 mb-2">جاري تشغيل محرك التحليلات المتقدم...</h2>
-      <p className="text-zinc-500 font-medium tracking-wide">نقوم بتحليل التدفق النقدي، سلوك العملاء، والتوقعات المستقبلية</p>
+      <p className="text-zinc-500 font-medium">نقوم بتحليل التدفق النقدي، سلوك العملاء، والتوقعات المستقبلية</p>
     </div>
   );
 
@@ -93,7 +93,7 @@ export default function Analytics() {
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
             Mudarij Intelligence Engine v2.0
           </div>
-          <h1 className="text-4xl font-black text-zinc-900 tracking-tight">التقارير والتحليلات الاستراتيجية</h1>
+          <h1 className="text-4xl font-black text-zinc-900">التقارير والتحليلات الاستراتيجية</h1>
         </div>
         <div className="flex gap-3 w-full md:w-auto">
           <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white text-zinc-900 px-6 py-3.5 rounded-2xl font-bold border-2 border-zinc-100 hover:border-zinc-200 transition-all text-xs shadow-sm">
@@ -132,7 +132,7 @@ export default function Analytics() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Unit Economics Side */}
         <div className="space-y-8">
-          <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+          <h4 className="text-xs font-black text-zinc-400 uppercase flex items-center gap-2">
             <Activity className="w-3.5 h-3.5" />
             اقتصاديات الوحدة / Unit Economics
           </h4>
@@ -152,7 +152,7 @@ export default function Analytics() {
                     <span className="text-lg font-black text-zinc-900">{eco.value}</span>
                     <span className="text-[10px] font-bold text-zinc-400">{typeof eco.value === 'number' ? eco.unit : ''}</span>
                   </div>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">{eco.desc}</p>
+                  <p className="text-[10px] font-bold text-zinc-500 uppercase">{eco.desc}</p>
                 </div>
               </div>
             ))}
@@ -169,7 +169,7 @@ export default function Analytics() {
                    <p className="text-[10px] text-zinc-400 font-medium max-w-[200px] leading-relaxed">{kpi.description}</p>
                 </div>
                 <div className={cn(
-                  "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest",
+                  "px-4 py-1.5 rounded-full text-[10px] font-black uppercase",
                   kpi.status === 'strong' ? "bg-emerald-500 text-white" :
                   kpi.status === 'average' ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"
                 )}>
@@ -189,7 +189,7 @@ export default function Analytics() {
                 </div>
                 
                 <div className="pt-6 border-t border-zinc-50">
-                  <div className="text-[10px] font-black text-zinc-400 uppercase mb-4 tracking-widest flex items-center gap-2">
+                  <div className="text-[10px] font-black text-zinc-400 uppercase mb-4 flex items-center gap-2">
                     <Layers className="w-3.5 h-3.5" />
                     محركات الأداء المتصلة / Sub-Drivers
                   </div>
@@ -255,7 +255,7 @@ export default function Analytics() {
 
             <footer className="pt-8 border-t border-white/5">
               <div className="flex flex-wrap gap-4 items-center">
-                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">عوامل الحسم المتغيرة:</span>
+                <span className="text-[10px] font-black text-zinc-500 uppercase">عوامل الحسم المتغيرة:</span>
                 {data.forecast.variables.map((v, idx) => (
                   <span key={idx} className="px-5 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold text-zinc-300">
                     {v}
@@ -352,10 +352,10 @@ export default function Analytics() {
                       <h5 className="font-black text-lg text-zinc-900">{rec.action}</h5>
                       <div className="flex gap-2 mt-1">
                         <span className={cn(
-                          "text-[9px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest",
+                          "text-[9px] px-2.5 py-1 rounded-full font-black uppercase",
                           rec.impact === 'high' ? "bg-emerald-100 text-emerald-700" : "bg-zinc-200 text-zinc-600"
                         )}>التأثير: {rec.impact === 'high' ? 'عالي' : 'متوسط'}</span>
-                        <span className="text-[9px] bg-zinc-100 text-zinc-500 px-2.5 py-1 rounded-full font-black uppercase tracking-widest">الجهد: {rec.effort === 'low' ? 'بسيط' : 'متوسط'}</span>
+                        <span className="text-[9px] bg-zinc-100 text-zinc-500 px-2.5 py-1 rounded-full font-black uppercase">الجهد: {rec.effort === 'low' ? 'بسيط' : 'متوسط'}</span>
                       </div>
                     </div>
                   </div>
@@ -394,7 +394,7 @@ export default function Analytics() {
                       <div key={i} className="w-8 h-8 rounded-full border-2 border-primary bg-zinc-900 flex items-center justify-center text-[10px] font-black text-primary">CEO</div>
                     ))}
                  </div>
-                 <span className="text-[10px] font-black uppercase tracking-widest text-zinc-900/60">بناءً على بروتوكول Mudarij الاستشاري</span>
+                 <span className="text-[10px] font-black uppercase tracking-normal text-zinc-900/60">بناءً على بروتوكول Mudarij الاستشاري</span>
               </div>
               <button className="w-full bg-zinc-900 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-3 hover:scale-[1.02] transition-transform shadow-xl shadow-zinc-900/30 group">
                 تنفيذ القرار فوراً

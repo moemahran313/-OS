@@ -25,14 +25,21 @@ import {
   MessageSquare,
   MessageCircle,
   Camera,
+  Monitor,
+  Code2,
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useSettings } from "../contexts/SettingsContext";
 import { useUser } from "../contexts/UserContext";
 import { collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { useTranslation } from "react-i18next";
+import SecurityCompliance from "./SecurityCompliance";
+import DeveloperTools from "./DeveloperTools";
+import MobileSimulator from "../components/MobileSimulator";
 
 export default function Settings() {
+  const { t } = useTranslation();
   const { settings, updateSettings } = useSettings();
   const { user, updateProfile } = useUser();
   const [activeTab, setActiveTab] = useState("profile");
@@ -104,15 +111,18 @@ export default function Settings() {
   }, [formData.contractReminderDays, formData.contractEndReminder, activeTab]);
 
   const tabs = [
-    { id: "profile", label: "الملف الشخصي والشركة", icon: Building2 },
-    { id: "notifications", label: "التنبيهات", icon: Bell },
-    { id: "security", label: "الأمان والربط", icon: ShieldCheck },
-    { id: "appearance", label: "المظهر", icon: Palette },
-    { id: "email", label: "إعدادات البريد", icon: Mail },
-    { id: "reminders", label: "تذكيرات تلقائية", icon: Smartphone },
-    { id: "audit", label: "سجل العمليات", icon: History },
-    { id: "payment", label: "بوابات الدفع", icon: Lock },
-    { id: "referrals", label: "برنامج الإحالة", icon: Users },
+    { id: "profile", label: t("settings.tabs.profile", "الملف الشخصي والشركة"), icon: Building2 },
+    { id: "notifications", label: t("settings.tabs.notifications", "التنبيهات"), icon: Bell },
+    { id: "security", label: t("settings.tabs.security", "الأمان والربط"), icon: ShieldCheck },
+    { id: "appearance", label: t("settings.tabs.appearance", "المظهر"), icon: Palette },
+    { id: "email", label: t("settings.tabs.email", "إعدادات البريد"), icon: Mail },
+    { id: "reminders", label: t("settings.tabs.reminders", "تذكيرات تلقائية"), icon: Smartphone },
+    { id: "audit", label: t("settings.tabs.audit", "سجل العمليات"), icon: History },
+    { id: "payment", label: t("settings.tabs.payment", "بوابات الدفع"), icon: Lock },
+    { id: "referrals", label: t("settings.tabs.referrals", "برنامج الإحالة"), icon: Users },
+    { id: "compliance", label: t("settings.tabs.compliance", "الامتثال والأمان المتقدم"), icon: ShieldCheck },
+    { id: "developer", label: t("settings.tabs.developer", "أدوات المطورين"), icon: Code2 },
+    { id: "mobile", label: t("settings.tabs.mobile", "تطبيق الجوال والتحكم"), icon: Smartphone },
   ];
 
   const fetchAuditLogs = async () => {
@@ -340,12 +350,12 @@ export default function Settings() {
 
                 <section className="border-t border-zinc-100 pt-8">
                   <h3 className="text-lg font-black text-zinc-900 mb-6">
-                    اللغة والمنطقة الزمنية
+                    {t("settings.languageTimezone.title", "اللغة والمنطقة الزمنية")}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-zinc-500 uppercase block">
-                        اللغة المفضلة
+                        {t("common.language", "اللغة المفضلة")}
                       </label>
                       <select
                         value={formData.language}
@@ -354,13 +364,14 @@ export default function Settings() {
                         }
                         className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-zinc-900/20 outline-none transition-all"
                       >
-                        <option value="ar">العربية (SA)</option>
-                        <option value="en">English (US)</option>
+                        <option value="ar">{t("common.arabic", "العربية (SA)")}</option>
+                        <option value="en">{t("common.english", "English (US)")}</option>
+                        <option value="fr">{t("common.french", "Français (FR)")}</option>
                       </select>
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-zinc-500 uppercase block">
-                        المنطقة الزمنية
+                        {t("settings.languageTimezone.timezone", "المنطقة الزمنية")}
                       </label>
                       <select
                         value={formData.timezone}
@@ -370,10 +381,10 @@ export default function Settings() {
                         className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-zinc-900/20 outline-none transition-all"
                       >
                         <option value="Asia/Riyadh">
-                          (GMT+03:00) توقيت الرياض
+                          {t("settings.languageTimezone.riyadh", "(GMT+03:00) توقيت الرياض")}
                         </option>
                         <option value="Asia/Dubai">
-                          (GMT+04:00) توقيت دبي
+                          {t("settings.languageTimezone.dubai", "(GMT+04:00) توقيت دبي")}
                         </option>
                       </select>
                     </div>
@@ -618,10 +629,123 @@ export default function Settings() {
                   <h3 className="text-lg font-black text-zinc-900 mb-6">
                     إعدادات الأمان
                   </h3>
-                  <button className="flex items-center gap-3 px-6 py-3 bg-zinc-100 text-zinc-900 rounded-xl font-bold text-sm hover:bg-zinc-200 transition-colors">
-                    <Lock className="w-4 h-4" />
-                    تغيير كلمة المرور
-                  </button>
+                  
+                  <div className="bg-white p-5 rounded-2xl border border-zinc-200 mb-6">
+                    <h4 className="font-bold text-zinc-900 mb-4 flex items-center gap-2">
+                       <Lock className="w-5 h-5 text-primary" />
+                       التحكم بالجلسات والوصول
+                    </h4>
+                    
+                    <div className="space-y-4 mb-6">
+                      <div>
+                        <label className="text-xs font-bold text-zinc-600 block mb-2">مدة انتهاء الجلسة (بالدقائق)</label>
+                        <input 
+                          type="number"
+                          value={formData.sessionTimeout || 60}
+                          onChange={(e) => handleChange('sessionTimeout', parseInt(e.target.value) || 60)}
+                          className="w-full md:w-1/3 bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary/30"
+                        />
+                        <p className="text-[10px] text-zinc-400 mt-1">يتم تسجيل الخروج تلقائياً بعد هذه المدة من الخمول.</p>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-bold text-zinc-600 block mb-2">القائمة البيضاء لعناوين IP (Trusted IPs)</label>
+                        <input 
+                          type="text"
+                          value={formData.trustedIps || ""}
+                          onChange={(e) => handleChange('trustedIps', e.target.value)}
+                          placeholder="مثال: 192.168.1.1, 10.0.0.1"
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary/30 font-mono"
+                        />
+                        <p className="text-[10px] text-zinc-400 mt-1">افصل بين العناوين بفاصلة. أفرغ الحقل للسماح بالوصول من أي مكان.</p>
+                      </div>
+                    </div>
+                    
+                    <div className="border-t border-zinc-100 pt-4 mb-4">
+                       <h5 className="font-bold text-sm text-zinc-800 mb-3">تنبيهات الدخول غير المعتاد</h5>
+                       <div className="flex flex-col gap-3">
+                         <label className="flex items-center justify-between cursor-pointer group">
+                           <div className="flex items-center gap-3">
+                             <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                               <Mail className="w-4 h-4" />
+                             </div>
+                             <div>
+                               <p className="text-sm font-bold text-zinc-900 leading-none mb-1">تنبيه البريد الإلكتروني</p>
+                               <p className="text-[10px] text-zinc-500 font-medium">إرسال بريد عند تسجيل دخول من جهاز جديد</p>
+                             </div>
+                           </div>
+                           <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${formData.notifyUnusualLoginEmail ? 'bg-primary' : 'bg-zinc-300'}`}>
+                             <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${formData.notifyUnusualLoginEmail ? 'translate-x-1' : '-translate-x-3'}`} />
+                             <input type="checkbox" className="absolute opacity-0 w-full h-full cursor-pointer" checked={formData.notifyUnusualLoginEmail || false} onChange={(e) => handleChange('notifyUnusualLoginEmail', e.target.checked)} />
+                           </div>
+                         </label>
+
+                         <label className="flex items-center justify-between cursor-pointer group">
+                           <div className="flex items-center gap-3">
+                             <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+                               <Smartphone className="w-4 h-4" />
+                             </div>
+                             <div>
+                               <p className="text-sm font-bold text-zinc-900 leading-none mb-1">تنبيه واتساب</p>
+                               <p className="text-[10px] text-zinc-500 font-medium">رسالة واتساب للإداري عند محاولة دخول مشبوهة</p>
+                             </div>
+                           </div>
+                           <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${formData.notifyUnusualLoginWhatsapp ? 'bg-primary' : 'bg-zinc-300'}`}>
+                             <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${formData.notifyUnusualLoginWhatsapp ? 'translate-x-1' : '-translate-x-3'}`} />
+                             <input type="checkbox" className="absolute opacity-0 w-full h-full cursor-pointer" checked={formData.notifyUnusualLoginWhatsapp || false} onChange={(e) => handleChange('notifyUnusualLoginWhatsapp', e.target.checked)} />
+                           </div>
+                         </label>
+                       </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-2xl border border-zinc-200">
+                     <h4 className="font-bold text-zinc-900 mb-4 flex items-center gap-2">
+                        <Monitor className="w-5 h-5 text-indigo-500" />
+                        الجلسات النشطة (Active Sessions)
+                     </h4>
+                     <p className="text-xs text-zinc-500 mb-4">هذه قائمة بالأجهزة والمتصفحات التي سجلت الدخول حالياً إلى حسابك.</p>
+                     
+                     <div className="space-y-3">
+                       <div className="flex items-center justify-between p-3 border border-emerald-100 bg-emerald-50/50 rounded-xl">
+                          <div className="flex items-center gap-3">
+                             <div className="w-10 h-10 bg-white border border-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center">
+                               <Monitor className="w-5 h-5" />
+                             </div>
+                             <div>
+                               <h5 className="text-sm font-bold text-zinc-900">MacBook Pro - Chrome</h5>
+                               <p className="text-xs text-emerald-600 font-bold mt-0.5">الجهاز الحالي الموثوق (الرياض، السعودية)</p>
+                             </div>
+                          </div>
+                          <button disabled className="text-xs font-bold text-zinc-400">نشط</button>
+                       </div>
+
+                       {[
+                         { id: 1, name: "iPhone 13 - Safari", loc: "جدة، السعودية", time: "قبل ساعتين", icon: Smartphone },
+                         { id: 2, name: "Windows PC - Edge", loc: "دبي، الإمارات", time: "أمس", icon: Monitor }
+                       ].map(session => (
+                         <div key={session.id} className="flex items-center justify-between p-3 border border-zinc-100 bg-white rounded-xl">
+                            <div className="flex items-center gap-3">
+                               <div className="w-10 h-10 bg-zinc-50 text-zinc-500 rounded-lg flex items-center justify-center">
+                                 <session.icon className="w-5 h-5" />
+                               </div>
+                               <div>
+                                 <h5 className="text-sm font-bold text-zinc-900">{session.name}</h5>
+                                 <p className="text-xs text-zinc-500 mt-0.5">{session.loc} • أخر نشاط: {session.time}</p>
+                               </div>
+                            </div>
+                            <button className="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">إنهاء الجلسة</button>
+                         </div>
+                       ))}
+                     </div>
+                  </div>
+
+                  <div className="mt-8">
+                    <button className="flex items-center gap-3 px-6 py-3 bg-zinc-100 text-zinc-900 rounded-xl font-bold text-sm hover:bg-zinc-200 transition-colors">
+                      <Lock className="w-4 h-4" />
+                      تغيير كلمة المرور
+                    </button>
+                  </div>
                 </section>
 
                 <section className="border-t border-zinc-100 pt-8">
@@ -782,7 +906,7 @@ export default function Settings() {
                               type="text" 
                               value={formData.applePayMerchantId || ""} 
                               onChange={(e) => handleChange('applePayMerchantId', e.target.value)} 
-                              placeholder="merchant.com.example..." 
+                              placeholder="merchant.com.company..." 
                               className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-primary/20 outline-none" 
                            />
                         </div>
@@ -932,7 +1056,7 @@ export default function Settings() {
                         <label className="text-xs font-black text-zinc-500 uppercase block">خادم البريد (SMTP Host)</label>
                         <input 
                            type="text" 
-                           placeholder="smtp.example.com"
+                           placeholder="smtp.company.com"
                            className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-zinc-900/20 outline-none transition-all" 
                         />
                       </div>
@@ -968,7 +1092,7 @@ export default function Settings() {
                          type="email" 
                          value={testEmail}
                          onChange={(e) => setTestEmail(e.target.value)}
-                         placeholder="test@example.com"
+                         placeholder="test@domain.com"
                          className="flex-1 bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-zinc-900/20 outline-none transition-all" 
                       />
                       <button 
@@ -1133,6 +1257,25 @@ export default function Settings() {
                 </div>
               </div>
             )}
+
+            {activeTab === "compliance" && (
+              <div className="relative z-10 -mx-6 -mt-6">
+                <SecurityCompliance />
+              </div>
+            )}
+
+            {activeTab === "developer" && (
+              <div className="relative z-10 -mx-6 -mt-6">
+                <DeveloperTools />
+              </div>
+            )}
+
+            {activeTab === "mobile" && (
+              <div className="relative z-10">
+                <MobileSimulator />
+              </div>
+            )}
+
             <div className="mt-12 pt-6 border-t border-zinc-100 flex items-center justify-between bg-white relative z-10 w-full rounded-b-3xl">
               <AnimatePresence>
                 {saved && (

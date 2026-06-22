@@ -167,6 +167,37 @@
         "description": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       }
+    },
+    "LeaveRequest": {
+      "title": "LeaveRequest",
+      "description": "An employee leave request",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "leaveType": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "notes": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "AdvanceRequest": {
+      "title": "AdvanceRequest",
+      "description": "An employee advance salary request",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "amount": { "type": "number" },
+        "installments": { "type": "number" },
+        "reason": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "firestore": {
@@ -181,6 +212,8 @@
     "shipments/{shipmentId}/documents": { "schema": "ShipmentDocument", "description": "Shipment documents" },
     "shipments/{shipmentId}/comments": { "schema": "ShipmentComment", "description": "Shipment comments" },
     "shipments/{shipmentId}/events": { "schema": "ShipmentEvent", "description": "Shipment events" },
-    "financial_transactions": { "schema": "FinancialTransaction", "description": "Anti-Concealment Audit Trail" }
+    "financial_transactions": { "schema": "FinancialTransaction", "description": "Anti-Concealment Audit Trail" },
+    "leave_requests": { "schema": "LeaveRequest", "description": "Employee leave requests" },
+    "advance_requests": { "schema": "AdvanceRequest", "description": "Salary advance requests" }
   }
 }

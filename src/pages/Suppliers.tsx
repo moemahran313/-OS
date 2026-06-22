@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { countries } from "@/src/constants/countries";
 import { 
   Truck, 
@@ -79,6 +79,7 @@ const statusSteps = [
 export default function Suppliers() {
   const { user } = useUser();
   const navigate = useNavigate();
+  const location = useLocation();
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [activeTab, setActiveTab] = useState("shipments");
   const [loading, setLoading] = useState(true);
@@ -147,6 +148,27 @@ export default function Suppliers() {
       unsubscribeShipments();
     };
   }, [user]);
+
+  useEffect(() => {
+    if (user && (location.pathname === "/app/suppliers/new" || location.state?.openAddShipment)) {
+      setShowAddModal(true);
+      setFormStep(1);
+      setSelectedShipment(null);
+      setNewShipment({
+        supplierName: "",
+        productDescription: "",
+        countryOfOrigin: "الصين",
+        originPort: "",
+        destinationPort: "Mina' al Malik 'Abd al 'Aziz (Dammam)",
+        carrier: "Aramex",
+        brokerId: "",
+        alias: "",
+        estimatedDeliveryDate: "",
+        clientId: ""
+      });
+      navigate("/app/suppliers", { replace: true, state: {} });
+    }
+  }, [user, location]);
 
   const handleCreateShipment = async () => {
     if (!user) return;

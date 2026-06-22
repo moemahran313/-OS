@@ -77,6 +77,7 @@ export interface Invoice {
     certificate?: string;
     prevHash?: string;
   };
+  zatcaData?: any;
   branding: InvoiceBranding;
   logs: { action: string; timestamp: string; note?: string; user?: string; data?: any }[];
   auditTrail?: AuditEntry[];

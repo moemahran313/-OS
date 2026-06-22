@@ -12,7 +12,7 @@ export default function DeveloperTools() {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-6xl mx-auto font-sans" dir="rtl">
+    <div className="space-y-8">
       <div className="mb-8">
         <h1 className="text-3xl font-black text-zinc-900 flex items-center gap-3">
           <Code2 className="w-8 h-8 text-primary" /> أدوات المطورين و واجهة برمجة التطبيقات (API)

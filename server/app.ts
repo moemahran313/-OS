@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { fileURLToPath } from "url";
 import cookieParser from "cookie-parser";
 import rateLimit from "express-rate-limit";
 import { createServer as createViteServer } from "vite";
@@ -22,9 +21,8 @@ import isicRoutes from "./routes/isic.js";
 import publicRoutes from "./routes/public.js";
 import auditLogRoutes from "./routes/auditLogs.js";
 import certificateRoutes from "./routes/certificate.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import workflowRoutes from "./routes/workflows.js";
+import negotiationRoutes from "./routes/negotiations.js";
 
 export async function createApp() {
   const app = express();
@@ -58,6 +56,8 @@ export async function createApp() {
   app.use("/api/public", publicRoutes);
   app.use("/api/audit-logs", auditLogRoutes);
   app.use("/api/certificate", certificateRoutes);
+  app.use("/api/workflows", workflowRoutes);
+  app.use("/api/negotiations", negotiationRoutes);
   
   // HR routes like /api/nitaqat/calculate and /api/workpermit/calculate
   app.use("/api", hrRoutes); 

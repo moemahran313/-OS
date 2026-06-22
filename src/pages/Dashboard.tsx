@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ComplianceDashboard from "@/src/components/ComplianceDashboard";
 import EmergencyLockdownIndicator from "@/src/components/EmergencyLockdownIndicator";
+import PayrollComplianceWidget from "@/src/components/PayrollComplianceWidget";
 import { 
   TrendingUp, 
   Users, 
@@ -25,7 +26,15 @@ import {
   CheckCircle2,
   Download,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  Building2,
+  Calendar,
+  DollarSign,
+  AlertOctagon,
+  Truck,
+  Anchor,
+  ShieldAlert,
+  Briefcase
 } from "lucide-react";
 import { 
   AreaChart, 
@@ -225,8 +234,72 @@ export default function Dashboard() {
   const [quickActions, setQuickActions] = useState<string[]>(DEFAULT_QUICK_ACTIONS);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeView, setActiveView] = useState<'ceo' | 'hr' | 'accountant'>('ceo');
+  const [activeView, setActiveView] = useState<'ceo' | 'hr' | 'accountant' | 'operations'>('ceo');
   const [dismissedLocalAlerts, setDismissedLocalAlerts] = useState<string[]>([]);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [payrollRuns, setPayrollRuns] = useState<any[]>([]);
+  const [activeShipments, setActiveShipments] = useState<any[]>([]);
+  const [shipmentsCount, setShipmentsCount] = useState<number>(0);
+  const [quarterlyData, setQuarterlyData] = useState<{name: string, current: number, projected: number}[]>([
+    { name: "الربع 1", current: 0, projected: 0 },
+    { name: "الربع 2", current: 0, projected: 0 },
+    { name: "الربع 3", current: 0, projected: 0 },
+    { name: "الربع 4", current: 0, projected: 0 },
+  ]);
+
+  useEffect(() => {
+    const quarters = [
+      { name: "الربع 1", current: 0, projected: 0 },
+      { name: "الربع 2", current: 0, projected: 0 },
+      { name: "الربع 3", current: 0, projected: 0 },
+      { name: "الربع 4", current: 0, projected: 0 },
+    ];
+
+    // Compute "current" (Paid invoices)
+    invoices.forEach(inv => {
+      if (!inv.issueDate) return;
+      const date = new Date(inv.issueDate);
+      if (isNaN(date.getTime())) return;
+      
+      const month = date.getMonth(); // 0-11
+      const quarterIdx = Math.floor(month / 3); // 0-3
+      const isPaid = inv.status === 'paid';
+      
+      const amount = (inv.totalAmountHalalas || 0) / 100;
+      if (quarterIdx >= 0 && quarterIdx <= 3) {
+        if (isPaid) {
+          quarters[quarterIdx].current += amount;
+        } else if (inv.status !== 'cancelled') {
+          // If unpaid or pending, it counts towards projected
+          quarters[quarterIdx].projected += amount;
+        }
+      }
+    });
+
+    // Compute "projected" (leads pipeline)
+    leads.forEach(lead => {
+      let date: Date | null = null;
+      if (lead.expectedCloseDate) {
+        date = new Date(lead.expectedCloseDate);
+      } else if (lead.createdAt) {
+        const ts = lead.createdAt.toDate ? lead.createdAt.toDate() : new Date(lead.createdAt);
+        date = ts;
+      }
+      
+      if (!date || isNaN(date.getTime())) return;
+      
+      const month = date.getMonth();
+      const quarterIdx = Math.floor(month / 3);
+      const val = lead.value || lead.amount || 0;
+      
+      if (quarterIdx >= 0 && quarterIdx <= 3) {
+        quarters[quarterIdx].projected += val;
+      }
+    });
+
+    setQuarterlyData(quarters);
+  }, [leads, invoices]);
 
   useEffect(() => {
     if (!user) return;
@@ -242,11 +315,12 @@ export default function Dashboard() {
     // Listen to Leads (for sales pipeline stats)
     const leadsQuery = query(collection(db, "leads"), where("userId", "==", user.uid));
     const unsubLeads = onSnapshot(leadsQuery, (snapshot) => {
-      const leads = snapshot.docs.map(doc => doc.data());
-      const revenue = leads.reduce((acc, curr) => acc + (curr.value || 0), 0);
-      const wonLeads = leads.filter(l => l.status === 'won').length;
+      const leadsList: any[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setLeads(leadsList);
+      const revenue = leadsList.reduce((acc, curr) => acc + (curr.value || 0), 0);
+      const wonLeads = leadsList.filter(l => l.status === 'won').length;
       
-      const salesByMonth = leads.reduce((acc: any, lead) => {
+      const salesByMonth = leadsList.reduce((acc: any, lead) => {
         if (!lead.expectedCloseDate) return acc;
         const d = new Date(lead.expectedCloseDate);
         const m = d.toLocaleString('ar-SA', { month: 'short' });
@@ -260,7 +334,7 @@ export default function Dashboard() {
       setDashboardStats((prev: any) => ({
         ...prev,
         revenue,
-        leadsCount: leads.length,
+        leadsCount: leadsList.length,
         wonLeads,
         chartData: cData,
       }));
@@ -271,6 +345,7 @@ export default function Dashboard() {
     const payrollQuery = query(collection(db, "payroll_runs"), where("userId", "==", user.uid));
     const unsubPayroll = onSnapshot(payrollQuery, (snapshot) => {
       const runs: any[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPayrollRuns(runs);
       const totalCost = runs.reduce((acc, curr: any) => acc + (curr.totalGross || 0), 0);
       
       const sortedByPeriod = [...runs].sort((a: any, b: any) => (b.period || '').localeCompare(a.period || ''));
@@ -334,7 +409,8 @@ export default function Dashboard() {
 
     const invoicesQuery = query(collection(db, "invoices"), where("userId", "==", user.uid));
     const unsubInvoices = onSnapshot(invoicesQuery, (snapshot) => {
-      const invs = snapshot.docs.map(doc => doc.data());
+      const invs: any[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setInvoices(invs);
       const pendingInvoices = invs.filter(i => i.status !== 'paid').length;
       const vatExposure = invs.reduce((acc, i) => acc + (i.vatAmountHalalas || 0), 0) / 100;
       setDashboardStats((prev: any) => ({
@@ -385,6 +461,16 @@ export default function Dashboard() {
       handleFirestoreError(error, OperationType.LIST, "system_alerts");
     });
 
+    // Listen to Shipments (Logistics and supply chain)
+    const shipmentsQuery = query(collection(db, "shipments"), where("userId", "==", user.uid));
+    const unsubShipments = onSnapshot(shipmentsQuery, (snapshot) => {
+      const shList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setShipmentsCount(shList.length);
+      setActiveShipments(shList.filter((s: any) => s.status !== 'delivered' && s.status !== 'cancelled'));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, "shipments");
+    });
+
     return () => {
       unsubLeads();
       unsubLogs();
@@ -393,6 +479,7 @@ export default function Dashboard() {
       unsubRules();
       unsubEmployees();
       unsubInvoices();
+      unsubShipments();
     };
   }, [user]);
 
@@ -635,8 +722,8 @@ export default function Dashboard() {
                       </tr>
                     ))
                   ) : dashboardStats.recentPayroll?.length > 0 ? (
-                    dashboardStats.recentPayroll.map((run: any) => (
-                      <tr key={run.id} className="hover:bg-zinc-50 transition-colors">
+                    dashboardStats.recentPayroll.map((run: any, idx: number) => (
+                      <tr key={run.id || idx} className="hover:bg-zinc-50 transition-colors">
                         <td className="px-6 py-4 font-mono font-bold text-zinc-900">{run.id.substring(0, 8)}</td>
                         <td className="px-6 py-4 font-bold text-zinc-700">{run.period}</td>
                         <td className="px-6 py-4">
@@ -655,7 +742,7 @@ export default function Dashboard() {
                       </tr>
                     ))
                   ) : (
-                    <tr>
+                    <tr key="empty-payroll-recent">
                       <td colSpan={6} className="py-20 text-center text-zinc-400 font-bold uppercase tracking-widest text-[10px]">
                         لا توجد مسيرات رواتب أخيرة
                       </td>
@@ -674,12 +761,7 @@ export default function Dashboard() {
                  <h3 className="font-bold text-lg mb-6">نمو الإيرادات المتوقع (المبيعات)</h3>
                  <div className="w-full h-full pb-8">
                    <ResponsiveContainer width="100%" height="100%">
-                     <BarChart data={[
-                        { name: "الربع 1", current: 400000, projected: 450000 },
-                        { name: "الربع 2", current: 380000, projected: 480000 },
-                        { name: "الربع 3", current: 520000, projected: 600000 },
-                        { name: "الربع 4", current: 0, projected: 750000 },
-                     ]}>
+                     <BarChart data={quarterlyData}>
                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#a1a1aa", fontSize: 10 }} dy={10} />
                        <YAxis hide domain={['auto', 'auto']} />
@@ -823,6 +905,766 @@ export default function Dashboard() {
     }
   };
 
+  const renderHRView = () => {
+    const saudiCount = dashboardStats?.saudiEmployees || 0;
+    const totalCount = dashboardStats?.employeesCount || 0;
+    const expatCount = totalCount - saudiCount;
+    const saudizationPct = totalCount > 0 ? (saudiCount / totalCount) * 100 : 0;
+    
+    // Nitaqat Band
+    let nitaqatLabel = "أحمر";
+    let nitaqatColorClass = "text-rose-600 bg-rose-50 border-rose-200";
+    if (saudizationPct >= 30) {
+      nitaqatLabel = "أخضر مرتفع";
+      nitaqatColorClass = "text-emerald-700 bg-emerald-50 border-emerald-200";
+    } else if (saudizationPct >= 15) {
+      nitaqatLabel = "أخضر منخفض";
+      nitaqatColorClass = "text-green-700 bg-green-50 border-green-200";
+    } else if (saudizationPct > 0) {
+      nitaqatLabel = "أصفر";
+      nitaqatColorClass = "text-amber-700 bg-amber-50 border-amber-200";
+    }
+
+    return (
+      <div className="space-y-8 animate-fade-in" dir="rtl">
+        {/* Metric Cards */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 rounded-2xl bg-emerald-50">
+                <Users className="w-6 h-6 text-emerald-500" />
+              </div>
+              <span className={cn("px-2.5 py-1 rounded-lg text-xs font-bold border", nitaqatColorClass)}>
+                {nitaqatLabel}
+              </span>
+            </div>
+            <p className="text-zinc-500 text-sm font-medium">نطاقات وتوطين الكوادر (Nitaqat)</p>
+            <h3 className="text-2xl font-black text-zinc-900 mt-1">{saudizationPct.toFixed(1)}%</h3>
+            <div className="mt-4 flex gap-1 h-2 rounded-full overflow-hidden bg-zinc-100">
+              <div style={{ width: `${saudizationPct}%` }} className="bg-emerald-500 h-full" />
+              <div style={{ width: `${100 - saudizationPct}%` }} className="bg-zinc-300 h-full" />
+            </div>
+            <p className="text-[10px] text-zinc-400 mt-2 font-bold">
+              سعودي: {saudiCount} | وافد: {expatCount}
+            </p>
+          </div>
+
+          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 rounded-2xl bg-blue-50">
+                <Briefcase className="w-6 h-6 text-blue-500" />
+              </div>
+              <span className="text-xs font-bold px-2 py-1 bg-blue-50 text-blue-600 rounded-lg">
+                نشطين حالياً
+              </span>
+            </div>
+            <p className="text-zinc-500 text-sm font-medium">قوة العمل الحالية (Headcount)</p>
+            <h3 className="text-2xl font-black text-zinc-900 mt-1">{totalCount} موظف</h3>
+            <p className="text-[10px] text-zinc-400 mt-2 font-bold">إجمالي عقود العمل الموثقة بنجاح</p>
+          </div>
+
+          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 rounded-2xl bg-amber-50">
+                <DollarSign className="w-6 h-6 text-amber-500" />
+              </div>
+              <span className="text-xs font-bold px-2 py-1 bg-amber-50 text-amber-600 rounded-lg">
+                تقديري
+              </span>
+            </div>
+            <p className="text-zinc-500 text-sm font-medium">التزامات موازنة الأجور (Payroll)</p>
+            <h3 className="text-2xl font-black text-zinc-900 mt-1">
+              {(dashboardStats?.payrollCost || 0).toLocaleString()} ر.س
+            </h3>
+            <p className="text-[10px] text-zinc-400 mt-2 font-bold">شامل الأساسي وبدل سكن والانتقال</p>
+          </div>
+        </section>
+
+        {/* Intelligence Recommender */}
+        <section className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-[2rem] border border-primary/20 p-6 relative overflow-hidden">
+          <div className="absolute -left-20 -top-20 w-64 h-64 bg-primary/20 rounded-full blur-[80px] pointer-events-none mix-blend-overlay" />
+          <div className="flex items-center gap-4 mb-6 relative z-10">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-md border border-primary/10">
+              <Zap className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-black text-xl text-zinc-900">مساعد شؤون الموظفين الذكي (HR Advisory)</h3>
+              <p className="text-xs font-bold text-primary">توصيات حية لتحسين امتثال الموارد البشرية وتفادي مخالفات الأجور</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 relative z-10">
+            <div className="bg-white p-5 rounded-3xl border border-primary/10 flex flex-col justify-between">
+              <div>
+                <span className="text-[9px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-100">قوى Qiwa</span>
+                <h4 className="font-bold text-zinc-900 mt-2 mb-1">عقود العمل الرقمية الموحدة</h4>
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  تطالب وزارة الموارد البشرية بتغطية 100% من عقود الموظفين رقمياً على منصة قوى. قم بتسجيل وتوثيق العقود فوراً لتجنب إيقاف الاستقدام.
+                </p>
+              </div>
+              <Link to="/app/fwcos" className="mt-4 text-xs font-black text-emerald-600 flex items-center gap-1 group">
+                <span>الذهاب لإدارة العقود</span>
+                <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </Link>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-primary/10 flex flex-col justify-between">
+              <div>
+                <span className="text-[9px] font-black bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">صندوق هدف</span>
+                <h4 className="font-bold text-zinc-900 mt-2 mb-1">تنمية الكوادر الوطنية</h4>
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  معدل التوطين الحالي لديك يسمح لك بالاستفادة من برامج دعم أجور المواطنين بنسب تصل إلى 50٪ لمدد تصل إلى سنتين. قدم عبر برامج صندوق هدف الآن.
+                </p>
+              </div>
+              <a href="https://hrdf.org.sa" target="_blank" rel="noreferrer" className="mt-4 text-xs font-black text-blue-600 flex items-center gap-1 group">
+                <span>تصفح برامج دعم هدف</span>
+                <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </a>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-primary/10 flex flex-col justify-between">
+              <div>
+                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${saudizationPct < 20 ? "bg-rose-50 text-rose-600 border-rose-100 animate-pulse" : "bg-zinc-50 text-zinc-600 border-zinc-200"}`}>تحكم نطاقات</span>
+                <h4 className="font-bold text-zinc-900 mt-2 mb-1">موازنة التوطين العاجلة</h4>
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  {saudizationPct < 20 
+                    ? "أنت حالياً في نطاق حرج. توظيف شخص سعودي إضافي سينقل منصتك فوراً إلى النطاق الأخضر الآمن ويفتح لك ميزات الاستقدام ونقل الكفالة."
+                    : "لقد نجحت في الحفاظ على النطاق الأخضر الآمن. استمر في الالتزام لتأهيل شركتك للحصول على مناقصات حكومية متميزة."}
+                </p>
+              </div>
+              <Link to="/app/fwcos/new" className="mt-4 text-xs font-black text-rose-600 flex items-center gap-1 group">
+                <span>تسجيل موظف جديد</span>
+                <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Mid grid: Compliance Dashboard & WPS Panel */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-7">
+            <ComplianceDashboard />
+          </div>
+          <div className="lg:col-span-5">
+            <PayrollComplianceWidget runs={payrollRuns} />
+          </div>
+        </div>
+
+        {/* Bottom double bento: In-flight Payroll runs vs Expiring Documents alerts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Contracts Alerts */}
+          <section className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="font-black text-lg text-zinc-900">تنبيهات عقود العمل والإقامات</h3>
+                <p className="text-xs text-zinc-500 font-medium">عقود شارفت على الانتهاء تتطلب إجراءً فورياً لتلافي الإيقاف</p>
+              </div>
+              <Link to="/app/fwcos" className="text-xs font-bold text-primary hover:underline">إدارة الكادر</Link>
+            </div>
+
+            <div className="space-y-4">
+              {dashboardStats?.expiringContractsAlerts?.length > 0 ? (
+                dashboardStats.expiringContractsAlerts.map((alert: any) => (
+                  <div key={alert.id} className="p-4 rounded-2xl bg-amber-50/50 border border-amber-100 flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center shrink-0">
+                        <AlertCircle className="w-5 h-5 animate-pulse" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-zinc-900">{alert.message}</p>
+                        <p className="text-[10px] text-zinc-400 mt-0.5">موعد التجديد المقترح: قبل 10 أيام من الانتهاء</p>
+                      </div>
+                    </div>
+                    <Link to="/app/fwcos" className="bg-amber-600 text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-amber-700 transition">
+                      تجديد الآن
+                    </Link>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-16">
+                  <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center mx-auto mb-3">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest leading-none">مؤشر أمان العقود مستقر وممتاز</p>
+                  <p className="text-zinc-400 text-[10px] font-medium mt-1">لا توجد عقود تنتهي خلال الـ 30 يوماً القادمة</p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Payroll Runs */}
+          <section className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6 overflow-hidden">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="font-black text-lg text-zinc-900">مسيرات رواتب الكادر (الأخيرة)</h3>
+                <p className="text-xs text-zinc-500 font-medium">سجلات الصرف الشهرية المعتمدة</p>
+              </div>
+              <Link to="/app/payroll" className="text-xs font-bold text-primary hover:underline">كل المسيرات</Link>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-right text-sm">
+                <thead>
+                  <tr className="text-zinc-400 font-bold border-b border-zinc-100 uppercase tracking-wider text-[10px]">
+                    <th className="pb-3 text-right">الفترة</th>
+                    <th className="pb-3 text-center">الموظفين</th>
+                    <th className="pb-3 text-center">الصرف المعتمد</th>
+                    <th className="pb-3 text-left">أوامر SIF</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {payrollRuns?.slice(0, 4).map((run: any, idx: number) => (
+                    <tr key={run.id || idx} className="hover:bg-zinc-50/50 transition-colors">
+                      <td className="py-3 font-bold text-zinc-800">{run.period}</td>
+                      <td className="py-3 text-center text-zinc-500 font-bold">{run.entries?.length || 0}</td>
+                      <td className="py-3 text-center font-bold text-zinc-950">
+                        {run.totalNet?.toLocaleString() || run.totalGross?.toLocaleString()} ر.س
+                      </td>
+                      <td className="py-3 text-left">
+                        <button 
+                          onClick={async () => {
+                             try {
+                               if (!user) return;
+                               const { data } = await PayrollService.batchGenerateMudadSIF(user.uid, run.period);
+                               const blob = new Blob([data], { type: 'text/csv;charset=utf-8;' });
+                               const url = URL.createObjectURL(blob);
+                               const link = document.createElement("a");
+                               link.setAttribute("href", url);
+                               link.setAttribute("download", `WPS_SIF_${run.period}.csv`);
+                               document.body.appendChild(link);
+                               link.click();
+                               document.body.removeChild(link);
+                               toast.success("تم توليد وتحميل ملف SIF لمدد بنجاح");
+                             } catch(e) {
+                               toast.error("فشل في استخراج ملف مدد");
+                             }
+                          }}
+                          className="text-[10px] font-black text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1.5 rounded-lg border border-emerald-100 transition-colors inline-flex items-center gap-1"
+                        >
+                          <Download className="w-3 h-3" /> SIF
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {(!payrollRuns || payrollRuns.length === 0) && (
+                    <tr key="empty-payroll-runs">
+                      <td colSpan={4} className="py-12 text-center text-zinc-400 text-xs font-bold uppercase tracking-widest">
+                        لا توجد مسيرات مسجلة حتى الآن
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  };
+
+  const renderAccountingView = () => {
+    // VAT liability calculation
+    const collectedVat = dashboardStats?.vatExposure || 0;
+    
+    // Invoices summary
+    const pendingInvoicesCount = invoices.filter(i => i.status !== 'paid' && i.status !== 'cancelled').length;
+    const totalPendingAmountAr = invoices
+      .filter(i => i.status !== 'paid' && i.status !== 'cancelled')
+      .reduce((acc, i) => acc + (i.totalAmountHalalas || 0), 0) / 100;
+    
+    const paidInvoicesAmount = invoices
+      .filter(i => i.status === 'paid')
+      .reduce((acc, i) => acc + (i.totalAmountHalalas || 0), 0) / 100;
+
+    return (
+      <div className="space-y-8 animate-fade-in" dir="rtl">
+        {/* KPI Row */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 rounded-2xl bg-amber-50">
+                <DollarSign className="w-6 h-6 text-amber-500" />
+              </div>
+              <span className="text-xs font-bold px-2 py-1 bg-amber-50 text-amber-600 rounded-lg">
+                هيئة الزكاة (VAT)
+              </span>
+            </div>
+            <p className="text-zinc-500 text-sm font-medium">التزامات ضريبة القيمة المضافة (Collected VAT)</p>
+            <h3 className="text-2xl font-black text-zinc-900 mt-1">{collectedVat.toLocaleString()} ر.س</h3>
+            <p className="text-[10px] text-zinc-400 mt-2 font-bold">
+              يُحتسب تراكمياً ومباشرةً من الفواتير الصادرة للعملاء بمعدل 15٪
+            </p>
+          </div>
+
+          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 rounded-2xl bg-rose-50">
+                <FileText className="w-6 h-6 text-rose-500" />
+              </div>
+              <span className="text-xs font-bold px-2 py-1 bg-rose-50 text-rose-600 rounded-lg">
+                {pendingInvoicesCount} معلقة
+              </span>
+            </div>
+            <p className="text-zinc-500 text-sm font-medium">المدفوعات المستحقة للتحصيل (Receivables)</p>
+            <h3 className="text-2xl font-black text-zinc-900 mt-1">{totalPendingAmountAr.toLocaleString()} ر.س</h3>
+            <p className="text-[10px] text-zinc-400 mt-2 font-bold">فواتير بانتظار السداد أو التسوية للمرحلة 2</p>
+          </div>
+
+          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 rounded-2xl bg-emerald-50">
+                <TrendingUp className="w-6 h-6 text-emerald-500" />
+              </div>
+              <span className="text-xs font-bold px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg">
+                سيولة محققة
+              </span>
+            </div>
+            <p className="text-zinc-500 text-sm font-medium">إجمالي كشوف الإيرادات المصونة (Paid Cash)</p>
+            <h3 className="text-2xl font-black text-zinc-900 mt-1">{paidInvoicesAmount.toLocaleString()} ر.س</h3>
+            <p className="text-[10px] text-zinc-400 mt-2 font-bold">التدفقات النقدية الداخلة التي طابقت بنجاح</p>
+          </div>
+        </section>
+
+        {/* Intelligence Recommender */}
+        <section className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-[2rem] border border-primary/20 p-6 relative overflow-hidden">
+          <div className="absolute -left-20 -top-20 w-64 h-64 bg-primary/20 rounded-full blur-[80px] pointer-events-none mix-blend-overlay" />
+          <div className="flex items-center gap-4 mb-6 relative z-10">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-md border border-primary/10">
+              <Zap className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-black text-xl text-zinc-900">محرك الرقابة والامتثال الضريبي (ZATCA Advisory)</h3>
+              <p className="text-xs font-bold text-primary">توصيات حية للامتثال لمتطلبات الفوترة الإلكترونية والتقارير المالية للربع الحالي</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 relative z-10">
+            <div className="bg-white p-5 rounded-3xl border border-primary/10 flex flex-col justify-between">
+              <div>
+                <span className="text-[9px] font-black bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">هيئة الزكاة</span>
+                <h4 className="font-bold text-zinc-900 mt-2 mb-1">الربط الإلكتروني للمرحلة الثانية</h4>
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  يتيح لك نظام مدارج إرسال فواتيرك مباشرة إلى بورتال فاتورة (ZATCA) لحظياً باستخدام التوقيعات الرقمية المشفرة. فعل التكامل وتخلص من القلق تماماً.
+                </p>
+              </div>
+              <Link to="/app/integrations" className="mt-4 text-xs font-black text-blue-600 flex items-center gap-1 group">
+                <span>تفعيل ربط ZATCA</span>
+                <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </Link>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-primary/10 flex flex-col justify-between">
+              <div>
+                <span className="text-[9px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-100">التدفق المالي</span>
+                <h4 className="font-bold text-zinc-900 mt-2 mb-1">تحصيل المبالغ المستحقة المتأخرة</h4>
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  متوسط فترات السداد من عملائك ارتفعت بمعدل 5 أيام. أتمتة إرسال رسائل التذكير بالفواتير عبر مدارج يقلل الذمم المدينة بنسبة 25%.
+                </p>
+              </div>
+              <Link to="/app/invoices" className="mt-4 text-xs font-black text-emerald-600 flex items-center gap-1 group">
+                <span>فحص الفواتير المعلقة</span>
+                <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </Link>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-primary/10 flex flex-col justify-between">
+              <div>
+                <span className="text-[9px] font-black bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full border border-purple-100">الإقرار الضريبي</span>
+                <h4 className="font-bold text-zinc-900 mt-2 mb-1">أرشفة وحساب الإقرار بضغطة زر</h4>
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  قاربت نهاية الفترة الضريبية الحالية. نظام الفرز الآلي في مدارج يسمح لك بمشاهدة وتحميل تقرير الإقرارات الربع سنوي المدقق المتوافق مع متطلبات الهيئة.
+                </p>
+              </div>
+              <Link to="/app/analytics" className="mt-4 text-xs font-black text-purple-600 flex items-center gap-1 group">
+                <span>توليد تقرير الإقرار الضريبي</span>
+                <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Charts & Invoiced stats ledger */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Revenue distribution chart */}
+          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm h-[380px] lg:col-span-8 flex flex-col">
+            <h3 className="font-black text-zinc-900 text-lg mb-1">تطور الفوترة ومتحصلات السيولة</h3>
+            <p className="text-xs text-zinc-400 font-bold mb-6">قيمة الفواتير الصادرة المعتمدة مقارنةً بالمتحصلات الفعلية شهرياً</p>
+            <div className="h-full pb-6">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={quarterlyData}>
+                  <defs>
+                    <linearGradient id="paidGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="pendingGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" tick={{ fill: "#a1a1aa", fontSize: 10 }} />
+                  <Tooltip formatter={(value: any) => [`${value.toLocaleString()} ر.س`, ""]} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" vertical={false} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Area type="monotone" dataKey="current" name="المتحصل الفعلي" stroke="#10b981" strokeWidth={3} fill="url(#paidGrad)" />
+                  <Area type="monotone" dataKey="projected" name="تحت التحصيل / ذمم" stroke="#3b82f6" strokeWidth={3} fill="url(#pendingGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Key Checklist card */}
+          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm lg:col-span-4 flex flex-col justify-between">
+            <div>
+              <h3 className="font-black text-zinc-900 text-base mb-1">تدقيق الضوابط والامتثال المالي</h3>
+              <p className="text-[11px] text-zinc-400 font-bold mb-4">قائمة التحقق التفاعلية لسلامة الدفاتر</p>
+              
+              <div className="space-y-3.5 pt-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-1 rounded-lg bg-emerald-100 text-emerald-700 shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-xs text-zinc-600 font-bold">تطابق الرقم الضريبي VAT ومرحلة ZATCA 2</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-1 rounded-lg bg-emerald-100 text-emerald-700 shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-xs text-zinc-600 font-bold">ترميز المنتجات وإشعارات الخصم الضريبية</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-1 rounded-lg bg-emerald-100 text-emerald-700 shrink-0">
+                    <Check className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-xs text-zinc-600 font-bold">تسوية كشوف الأجور ومطابقتها لمسيرات تأمينات</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  {collectedVat > 0 ? (
+                    <div className="p-1 rounded-lg bg-emerald-100 text-emerald-700 shrink-0">
+                      <Check className="w-3.5 h-3.5" />
+                    </div>
+                  ) : (
+                    <div className="p-1 rounded-lg bg-amber-100 text-amber-700 shrink-0">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                    </div>
+                  )}
+                  <span className="text-xs text-zinc-600 font-bold">احتساب الفروقات الضريبية للداخلة والمخرجات</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-zinc-100 pt-4 mt-6">
+              <span className="text-[10px] text-zinc-400 font-black tracking-widest uppercase block mb-1">الرتبة في شبكة مدارجOS</span>
+              <p className="text-sm font-black text-emerald-600 flex items-center gap-1">
+                <span>شركة مؤهلة وممتثلة بالكامل</span>
+                <ShieldCheck className="w-4 h-4" />
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Ledger table */}
+        <section className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6 overflow-hidden">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="font-black text-lg text-zinc-900">دفتر فواتير المبيعات الصادرة (المتكامل)</h3>
+              <p className="text-xs text-zinc-500 font-medium">سجلات فواتيرك الصادرة من صفحة الفواتير في النظام مجلوبة حياً</p>
+            </div>
+            <Link to="/app/invoices" className="text-xs font-bold text-primary hover:underline">إدارة الفواتير</Link>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-right text-sm">
+              <thead>
+                <tr className="text-zinc-400 font-bold border-b border-zinc-100 uppercase tracking-wider text-[11px]">
+                  <th className="pb-3 text-right">رقم الفاتورة</th>
+                  <th className="pb-3 text-right">العميل</th>
+                  <th className="pb-3 text-center">التاريخ</th>
+                  <th className="pb-3 text-center">مبلغ الضريبة</th>
+                  <th className="pb-3 text-center">المجموع الكلي</th>
+                  <th className="pb-3 text-center">الحالة</th>
+                  <th className="pb-3 text-left">أوامر</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {invoices?.slice(0, 5).map((inv: any, idx: number) => (
+                  <tr key={inv.id || idx} className="hover:bg-zinc-50/50 transition-colors">
+                    <td className="py-3 font-mono font-bold text-zinc-800">#{inv.invoiceNumber || inv.id?.substring(0,6)}</td>
+                    <td className="py-3 font-bold text-zinc-950">{inv.customerName || "عميل غير محدد"}</td>
+                    <td className="py-3 text-center text-zinc-500 font-bold">
+                      {inv.issueDate ? new Date(inv.issueDate).toLocaleDateString('ar-SA') : "-"}
+                    </td>
+                    <td className="py-3 text-center text-zinc-500 font-bold">
+                      {((inv.vatAmountHalalas || 0) / 100).toLocaleString()} ر.س
+                    </td>
+                    <td className="py-3 text-center font-black text-zinc-950">
+                      {((inv.totalAmountHalalas || 0) / 100).toLocaleString()} ر.س
+                    </td>
+                    <td className="py-3 text-center">
+                      <span className={cn(
+                        "px-2.5 py-1 rounded-lg text-xs font-bold border",
+                        inv.status === 'paid' ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
+                        inv.status === 'sent' ? "bg-blue-50 text-blue-700 border-blue-100" :
+                        "bg-zinc-50 text-zinc-600 border-zinc-100"
+                      )}>
+                        {inv.status === 'paid' ? 'مدفوعة' : inv.status === 'sent' ? 'مرسلة' : 'غير مدفوعة'}
+                      </span>
+                    </td>
+                    <td className="py-3 text-left">
+                      <Link to={`/invoice/${inv.id || inv.invoiceNumber}`} target="_blank" className="text-[11px] font-black text-blue-600 hover:underline">
+                        عرض للطباعة
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+                {(!invoices || invoices.length === 0) && (
+                  <tr key="empty-invoices-ledger">
+                    <td colSpan={7} className="py-12 text-center text-zinc-400 text-xs font-bold uppercase tracking-widest">
+                      لا توجد فواتير صادرة مسجلة في النظام
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    );
+  };
+
+  const renderOperationsView = () => {
+    return (
+      <div className="space-y-8 animate-fade-in" dir="rtl">
+        {/* Metric Row */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 rounded-2xl bg-rose-50">
+                <Truck className="w-6 h-6 text-rose-500" />
+              </div>
+              <span className="text-xs font-bold px-2 py-1 bg-rose-50 text-rose-600 rounded-lg">
+                قيد التتبع
+              </span>
+            </div>
+            <p className="text-zinc-500 text-sm font-medium">إجمالي الشحنات النشطة (Active Shipments)</p>
+            <h3 className="text-2xl font-black text-zinc-900 mt-1">{activeShipments.length} شحنة جارية</h3>
+            <p className="text-[10px] text-zinc-400 mt-2 font-bold">
+              شحنات دولية مفعّل لها تتبع الحاويات وبوالص الشحن عبر المنافذ
+            </p>
+          </div>
+
+          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 rounded-2xl bg-blue-50">
+                <Anchor className="w-6 h-6 text-blue-500" />
+              </div>
+              <span className="text-xs font-bold px-2 py-1 bg-blue-50 text-blue-600 rounded-lg">
+                جاهز ومطابق
+              </span>
+            </div>
+            <p className="text-zinc-500 text-sm font-medium">سجلات الاستيراد الموثقة (Historical)</p>
+            <h3 className="text-2xl font-black text-zinc-900 mt-1">{shipmentsCount} شحنة إجمالية</h3>
+            <p className="text-[10px] text-zinc-400 mt-2 font-bold">بين المخلص والناقل والمستودعات في الرياض</p>
+          </div>
+
+          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
+            <div className="flex justify-between items-start mb-4">
+              <div className="p-3 rounded-2xl bg-amber-50">
+                <ShieldAlert className="w-6 h-6 text-amber-500" />
+              </div>
+              <span className="text-xs font-bold px-2 py-1 bg-amber-50 text-amber-600 rounded-lg">
+                مطابق لفسح
+              </span>
+            </div>
+            <p className="text-zinc-500 text-sm font-medium">مخلصين جمارك معتمدين (Brokers linked)</p>
+            <h3 className="text-2xl font-black text-zinc-900 mt-1">3 مخلصين نشطين</h3>
+            <p className="text-[10px] text-zinc-400 mt-2 font-bold">
+              مرتبطين مباشرة لإعطاء تحديثات بوابات فسح الجمركية بالسعودية
+            </p>
+          </div>
+        </section>
+
+        {/* Intelligence Recommender */}
+        <section className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-[2rem] border border-primary/20 p-6 relative overflow-hidden">
+          <div className="absolute -left-20 -top-20 w-64 h-64 bg-primary/20 rounded-full blur-[80px] pointer-events-none mix-blend-overlay" />
+          <div className="flex items-center gap-4 mb-6 relative z-10">
+            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-md border border-primary/10">
+              <Zap className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-black text-xl text-zinc-900">مساعد اللوجستية الذكي (Operations Advisory)</h3>
+              <p className="text-xs font-bold text-primary">توصيات حية لتمثيل سلاسل التوريد وتتبع خطوط الشحن البحري والجوي</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 relative z-10">
+            <div className="bg-white p-5 rounded-3xl border border-primary/10 flex flex-col justify-between">
+              <div>
+                <span className="text-[9px] font-black bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">فسح (Fasah)</span>
+                <h4 className="font-bold text-zinc-900 mt-2 mb-1">تطابق البيان الجمركي لفسح</h4>
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  تأكد من إدراج رقم السجل التجاري والرمز الجمركي الموحد في حسابك لتفادي حدوث تعليق المعاملات اللوجستية في الموانئ السعودية عن طريق ربط منصة فسح.
+                </p>
+              </div>
+              <Link to="/app/suppliers" className="mt-4 text-xs font-black text-blue-600 flex items-center gap-1 group">
+                <span>تعديل السجل الجمركي</span>
+                <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </Link>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-primary/10 flex flex-col justify-between">
+              <div>
+                <span className="text-[9px] font-black bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-100">سلاسل الإمداد</span>
+                <h4 className="font-bold text-zinc-900 mt-2 mb-1">جدولة شحنات الصين والخليج</h4>
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  تم رصد تأخير بنسبة 4 أيام في موانئ الشحن المغادرة من جنوب شرق آسيا. ننصح بطلب زيادة الكمية الاحتياطية لتفادي نفاد المخزون هذا الشهر.
+                </p>
+              </div>
+              <Link to="/app/suppliers/new" className="mt-4 text-xs font-black text-emerald-600 flex items-center gap-1 group">
+                <span>طلب وإضافة شحنة جديدة</span>
+                <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </Link>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-primary/10 flex flex-col justify-between">
+              <div>
+                <span className="text-[9px] font-black bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full border border-purple-100">إدارة المستودعات</span>
+                <h4 className="font-bold text-zinc-900 mt-2 mb-1">تسوية توريد البضائع المستلمة</h4>
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  بمجرد وصول الشحنة، يسمح لك مدارج بإنشاء مطابقة فواتير مشتركة وتحويل الفواتير الأجنبية بعملات متعددة (USD, RMB, SAR) بذكاء وامتثال ضريبي.
+                </p>
+              </div>
+              <Link to="/app/suppliers" className="mt-4 text-xs font-black text-purple-600 flex items-center gap-1 group">
+                <span>الذهاب لإدارة الموردين</span>
+                <ArrowUpRight className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Live Transit Tracker View Container */}
+        <section className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6">
+          <h3 className="font-black text-lg text-zinc-900 mb-1">خط سير الشحنات الدولي النشط (Transit Maps)</h3>
+          <p className="text-xs text-zinc-500 font-medium mb-6">مراقب المسار المباشر للحاويات من ميناء التصدير لبلد المنشأ وحتى التسليم بالمستودعات</p>
+          
+          <div className="relative p-6 pt-12 md:p-12 bg-zinc-50 rounded-2xl border border-zinc-100 overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]" />
+            
+            {/* Visual Step 1 (Origin Port) */}
+            <div className="flex flex-col items-center text-center relative z-10 group">
+              <div className="w-14 h-14 bg-white shadow-md border border-zinc-200 rounded-full flex items-center justify-center text-zinc-500 group-hover:border-primary group-hover:text-primary transition-colors">
+                <Anchor className="w-6 h-6" />
+              </div>
+              <h4 className="font-bold text-sm text-zinc-800 mt-3">ميناء المنشأ الدولي</h4>
+              <p className="text-[10px] text-zinc-400 mt-1 w-32 font-bold">تحميل الشحنة وإتمام الجمارك بالخارج</p>
+            </div>
+
+            {/* Line 1 */}
+            <div className="hidden md:block flex-1 h-1 bg-gradient-to-r from-emerald-500 to-blue-500 relative z-10">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 border-emerald-500 rounded-full animate-ping" />
+            </div>
+
+            {/* Visual Step 2 (Sea Ocean Transit) */}
+            <div className="flex flex-col items-center text-center relative z-10 group">
+              <div className="w-14 h-14 rounded-full bg-blue-500 shadow-lg shadow-blue-500/20 text-white flex items-center justify-center">
+                <Truck className="w-6 h-6 animate-pulse" />
+              </div>
+              <h4 className="font-bold text-sm text-zinc-800 mt-3">عرض البحر (In Oceans)</h4>
+              <p className="text-[10px] text-zinc-400 mt-1 w-32 font-bold">بين المحيطات وخطوط الملاحة البحري</p>
+            </div>
+
+            {/* Line 2 */}
+            <div className="hidden md:block flex-1 h-1 bg-gradient-to-r from-blue-500 to-zinc-300 relative z-10" />
+
+            {/* Visual Step 3 (KSA Customs Clearance) */}
+            <div className="flex flex-col items-center text-center relative z-10 group">
+              <div className="w-14 h-14 bg-white shadow-md border border-zinc-200 rounded-full flex items-center justify-center text-zinc-500 group-hover:border-primary group-hover:text-primary transition-colors">
+                <Building2 className="w-6 h-6" />
+              </div>
+              <h4 className="font-bold text-sm text-zinc-800 mt-3">التخليص الجمركي السعودي</h4>
+              <p className="text-[10px] text-zinc-400 mt-1 w-32 font-bold">ميناء الوصول بجدة / الدمام (فسح)</p>
+            </div>
+
+            {/* Line 3 */}
+            <div className="hidden md:block flex-1 h-1 bg-zinc-300 relative z-10" />
+
+            {/* Visual Step 4 (Deliver to Warehouse) */}
+            <div className="flex flex-col items-center text-center relative z-10 group">
+              <div className="w-14 h-14 bg-white shadow-md border border-zinc-200 rounded-full flex items-center justify-center text-zinc-500 group-hover:border-primary group-hover:text-primary transition-colors">
+                <Package className="w-6 h-6" />
+              </div>
+              <h4 className="font-bold text-sm text-zinc-800 mt-3">المستودعات المركزية (SAR)</h4>
+              <p className="text-[10px] text-zinc-400 mt-1 w-32 font-bold">الاستلام والمطابقة وحساب التكلفة</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Shipments list */}
+        <section className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6 overflow-hidden">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="font-black text-lg text-zinc-900">سجل الشحنات وسلاسل التوريد (المتصل)</h3>
+              <p className="text-xs text-zinc-500 font-medium">قائمة الشحنات قيد التشغيل المجلوبة من قاعدة البيانات مباشرة</p>
+            </div>
+            <Link to="/app/suppliers" className="text-xs font-bold text-primary hover:underline">مراجعة الموردين والشحنات</Link>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-right text-sm">
+              <thead>
+                <tr className="text-zinc-400 font-bold border-b border-zinc-100 uppercase tracking-wider text-[11px]">
+                  <th className="pb-3 text-right">رقم الشحنة</th>
+                  <th className="pb-3 text-right">ميناء المنشأ</th>
+                  <th className="pb-3 text-center">ميناء الوصول (المملكة)</th>
+                  <th className="pb-3 text-center">الناقل الدولي</th>
+                  <th className="pb-3 text-center">تاريخ التوصيل المتوقع</th>
+                  <th className="pb-3 text-center">الحالة</th>
+                  <th className="pb-3 text-left">تفاصيل</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {activeShipments?.slice(0, 5).map((ship: any, idx: number) => (
+                  <tr key={ship.id || idx} className="hover:bg-zinc-50/50 transition-colors">
+                    <td className="py-3 font-mono font-bold text-zinc-800">#{ship.id?.substring(0,6).toUpperCase()}</td>
+                    <td className="py-3 font-bold text-zinc-950">{ship.originPort || "ميناء غير محدد"}</td>
+                    <td className="py-3 text-center text-zinc-700 font-bold">{ship.destinationPort || "ميناء المملكة"}</td>
+                    <td className="py-3 text-center text-zinc-500 font-bold">{ship.carrier || "ميرسك / ناقل لوجستي"}</td>
+                    <td className="py-3 text-center text-zinc-500 font-bold">
+                      {ship.expectedDelivery ? new Date(ship.expectedDelivery).toLocaleDateString('ar-SA') : "-"}
+                    </td>
+                    <td className="py-3 text-center">
+                      <span className={cn(
+                        "px-2.5 py-1 rounded-lg text-xs font-bold border",
+                        ship.status === 'in_transit' ? "bg-blue-50 text-blue-700 border-blue-100" :
+                        ship.status === 'customs' ? "bg-amber-50 text-amber-700 border-amber-100" :
+                        ship.status === 'delivered' ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
+                        "bg-zinc-50 text-zinc-600 border-zinc-100"
+                      )}>
+                        {ship.status === 'in_transit' ? 'في عرض البحر' : ship.status === 'customs' ? 'جمارك' : 'تم الاستلام'}
+                      </span>
+                    </td>
+                    <td className="py-3 text-left">
+                      <Link to={`/app/suppliers`} className="text-[11px] font-black text-blue-600 hover:underline">
+                        عرض وتحديث
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+                {(!activeShipments || activeShipments.length === 0) && (
+                  <tr key="empty-shipments-ops">
+                    <td colSpan={7} className="py-12 text-center text-zinc-400 text-xs font-bold uppercase tracking-widest">
+                      لا توجد شحنات لوجستية نشطة جارية حالياً
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-20">
       <EmergencyLockdownIndicator navigateToPayroll={() => navigate('/app/payroll')} />
@@ -906,10 +1748,11 @@ export default function Dashboard() {
           <p className="text-zinc-500 mt-1 mb-4">مرحباً بك مجدداً، إليك أحدث نشاطات عملك اليوم.</p>
 
           {!isEditing && (
-             <div className="flex bg-zinc-100 p-1 rounded-2xl w-fit">
-                <button onClick={() => setActiveView('ceo')} className={cn("px-4 py-2 rounded-xl text-sm font-bold transition-all", activeView === 'ceo' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700")}>نظرة الإدارة (CEO)</button>
-                <button onClick={() => setActiveView('hr')} className={cn("px-4 py-2 rounded-xl text-sm font-bold transition-all", activeView === 'hr' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700")}>شؤون الموظفين (HR)</button>
-                <button onClick={() => setActiveView('accountant')} className={cn("px-4 py-2 rounded-xl text-sm font-bold transition-all", activeView === 'accountant' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700")}>المحاسبة والامتثال</button>
+             <div className="flex bg-zinc-100 p-1 rounded-2xl flex-wrap gap-1 md:w-fit">
+                <button onClick={() => setActiveView('ceo')} className={cn("px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap", activeView === 'ceo' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700")}>نظرة الإدارة (CEO)</button>
+                <button onClick={() => setActiveView('hr')} className={cn("px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap", activeView === 'hr' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700")}>شؤون الموظفين (HR)</button>
+                <button onClick={() => setActiveView('accountant')} className={cn("px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap", activeView === 'accountant' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700")}>المحاسبة والمالية</button>
+                <button onClick={() => setActiveView('operations')} className={cn("px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap", activeView === 'operations' ? "bg-white text-zinc-900 shadow-sm" : "text-zinc-500 hover:text-zinc-700")}>التشغيل وسلاسل الإمداد</button>
              </div>
           )}
         </div>
@@ -989,11 +1832,18 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="space-y-8">
-          {config.filter(w => w.visible).map(widget => (
-            <React.Fragment key={widget.id}>
-              {renderWidget(widget.id)}
-            </React.Fragment>
-          ))}
+          {activeView === 'ceo' && (
+            <>
+              {config.filter(w => w.visible).map(widget => (
+                <React.Fragment key={widget.id}>
+                  {renderWidget(widget.id)}
+                </React.Fragment>
+              ))}
+            </>
+          )}
+          {activeView === 'hr' && renderHRView()}
+          {activeView === 'accountant' && renderAccountingView()}
+          {activeView === 'operations' && renderOperationsView()}
         </div>
       )}
       

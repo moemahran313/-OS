@@ -3,6 +3,7 @@ import { auth, db } from "../lib/firebase";
 import { doc, getDocFromServer, setDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { useUser } from "./UserContext";
+import i18n from "../i18n";
 
 export interface Settings {
   companyName: string;
@@ -33,6 +34,12 @@ export interface Settings {
   madaTerminalId?: string;
   applePayMerchantId?: string;
   applePayCert?: string;
+  sessionTimeout?: number;
+  trustedIps?: string;
+  notifyUnusualLoginEmail?: boolean;
+  notifyUnusualLoginWhatsapp?: boolean;
+  dataResidency?: "saudi_arabia" | "global";
+  pdplComplianceMode?: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -56,6 +63,12 @@ const defaultSettings: Settings = {
   contractReminderDays: 30,
   theme: "light",
   primaryColor: "#10b981", // emerald-500
+  sessionTimeout: 60,
+  trustedIps: "",
+  notifyUnusualLoginEmail: true,
+  notifyUnusualLoginWhatsapp: false,
+  dataResidency: "saudi_arabia",
+  pdplComplianceMode: true,
 };
 
 interface SettingsContextType {
@@ -150,7 +163,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [settings.theme, settings.primaryColor]);
+
+    // Apply language and direction
+    if (settings.language) {
+      i18n.changeLanguage(settings.language);
+      document.documentElement.dir = settings.language === 'ar' ? 'rtl' : 'ltr';
+      document.documentElement.lang = settings.language;
+    }
+  }, [settings.theme, settings.primaryColor, settings.language]);
 
   return (
     <SettingsContext.Provider value={{ settings, updateSettings }}>

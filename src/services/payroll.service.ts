@@ -10,13 +10,33 @@ export class PayrollService {
     );
     const employeesSnap = await getDocs(q);
 
+    const advQuery = query(
+      collection(db, "advance_requests"),
+      where("userId", "==", userId),
+      where("status", "==", "approved")
+    );
+    const advSnap = await getDocs(advQuery);
+    const advances = advSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+
     const payrollEntries = employeesSnap.docs.map((docSnap) => {
       const e = docSnap.data();
       const grossHalalas =
         (e.baseSalaryHalalas || 0) +
         (e.housingAllowanceHalalas || 0) +
         (e.transportAllowanceHalalas || 0);
-      const deductionsHalalas = Math.round(grossHalalas * 0.09) + (e.otherDeductionsHalalas || 0);
+
+      // Check for advance installments for this employee
+      const employeeAdvances = advances.filter(a => a.employeeId === docSnap.id);
+      let advanceDeductionHalalas = 0;
+      employeeAdvances.forEach(adv => {
+          const advAmountHalalas = adv.amountHalalas || (adv.amount ? adv.amount * 100 : 0);
+          if (adv.installments && advAmountHalalas) {
+              const installmentHalalas = Math.round(advAmountHalalas / adv.installments);
+              advanceDeductionHalalas += installmentHalalas;
+          }
+      });
+
+      const deductionsHalalas = Math.round(grossHalalas * 0.09) + (e.otherDeductionsHalalas || 0) + advanceDeductionHalalas;
       const netHalalas = grossHalalas - deductionsHalalas;
 
       return {
@@ -24,9 +44,11 @@ export class PayrollService {
         employeeName: e.name,
         position: e.position,
         bank: e.bank,
+        gross: grossHalalas / 100,
         basic: (e.baseSalaryHalalas || 0) / 100,
         allowances: (grossHalalas - (e.baseSalaryHalalas || 0)) / 100,
         deductions: deductionsHalalas / 100,
+        advanceDeductions: advanceDeductionHalalas / 100,
         netPay: netHalalas / 100,
         status: "pending_approval",
       };

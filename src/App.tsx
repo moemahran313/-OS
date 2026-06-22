@@ -101,6 +101,8 @@ const Calculations = lazy(() => import("./pages/Calculations"));
 const Contracts = lazy(() => import("./pages/Contracts"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Suppliers = lazy(() => import("./pages/Suppliers"));
+const Chat = lazy(() => import("./pages/Chat"));
+const SmartNegotiations = lazy(() => import("./pages/SmartNegotiations"));
 
 function LoadingSpinner() {
   return (
@@ -185,6 +187,8 @@ const SecurityCompliance = lazy(() => import("./pages/SecurityCompliance"));
 const DeveloperTools = lazy(() => import("./pages/DeveloperTools"));
 const ShipmentDetails = lazy(() => import("./pages/ShipmentDetails"));
 
+const Workflows = lazy(() => import("./pages/Workflows"));
+
 function AppInnerRoutes() {
   const location = useLocation();
   
@@ -194,12 +198,22 @@ function AppInnerRoutes() {
         <Suspense fallback={<LoadingSpinner />}>
           <Routes location={location}>
             <Route path="/" element={<PageTransition><Dashboard /></PageTransition>} />
+            <Route path="workflows" element={<PageTransition><Workflows /></PageTransition>} />
+
             <Route path="crm" element={<PageTransition><CRM /></PageTransition>} />
+            <Route path="crm/new" element={<PageTransition><CRM /></PageTransition>} />
 
             <Route path="invoices" element={<PageTransition><Invoices /></PageTransition>} />
+            <Route path="invoices/new" element={<PageTransition><Invoices /></PageTransition>} />
+
             <Route path="payroll" element={<PageTransition><Payroll /></PageTransition>} />
+            <Route path="payroll/new" element={<PageTransition><Payroll /></PageTransition>} />
+
             <Route path="fwcos" element={<PageTransition><FWCOS /></PageTransition>} />
+            <Route path="fwcos/new" element={<PageTransition><FWCOS /></PageTransition>} />
+
             <Route path="contracts" element={<PageTransition><Contracts /></PageTransition>} />
+            <Route path="smart-negotiations" element={<PageTransition><SmartNegotiations /></PageTransition>} />
             <Route path="simulator" element={<PageTransition><Simulator /></PageTransition>} />
             <Route path="calculations" element={<PageTransition><Calculations /></PageTransition>} />
             <Route path="analytics" element={<PageTransition><Analytics /></PageTransition>} />
@@ -207,8 +221,12 @@ function AppInnerRoutes() {
             <Route path="developer-tools" element={<PageTransition><DeveloperTools /></PageTransition>} />
             <Route path="security-compliance" element={<PageTransition><SecurityCompliance /></PageTransition>} />
             <Route path="settings" element={<PageTransition><Settings /></PageTransition>} />
+            
             <Route path="suppliers" element={<PageTransition><Suppliers /></PageTransition>} />
+            <Route path="suppliers/new" element={<PageTransition><Suppliers /></PageTransition>} />
             <Route path="suppliers/:id" element={<PageTransition><ShipmentDetails /></PageTransition>} />
+            
+            <Route path="chat" element={<PageTransition><Chat /></PageTransition>} />
             <Route path="*" element={<Navigate to="/app" />} />
           </Routes>
         </Suspense>

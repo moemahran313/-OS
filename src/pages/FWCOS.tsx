@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Select from 'react-select';
 import { toast } from 'sonner';
 import { 
@@ -104,6 +105,8 @@ const RiskGauge = ({ score, size = 48 }: { score: number, size?: number }) => {
 };
 
 export default function FWCOS() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'workers' | 'tasks' | 'rules' | 'settings' | 'zatca' | 'gosi'>('dashboard');
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [rules, setRules] = useState(INITIAL_RULES as any[]);
@@ -121,6 +124,24 @@ export default function FWCOS() {
   React.useEffect(() => {
     fetchWorkers();
   }, []);
+
+  React.useEffect(() => {
+    if (location.pathname === "/app/fwcos/new" || location.state?.openAddWorker) {
+      setActiveTab('workers');
+      setEditingWorker({
+        id: '',
+        name: '',
+        nationality: '',
+        role: '',
+        iqamaExpiry: new Date().toISOString().slice(0, 10),
+        wpsStatus: 'compliant',
+        country: 'SGP',
+        documents: []
+      });
+      setIsAddingNew(true);
+      navigate("/app/fwcos", { replace: true, state: {} });
+    }
+  }, [location]);
 
   const fetchWorkers = async () => {
     try {
