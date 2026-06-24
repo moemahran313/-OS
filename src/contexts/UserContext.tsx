@@ -259,8 +259,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     if (user.role === "Administrator") return true;
     
     const permissions: Record<string, string[]> = {
-      Manager: ["Dashboard", "CRM", "Invoices", "Analytics", "Settings", "Simulator"],
-      Employee: ["Dashboard", "CRM"],
+      Manager: ["Dashboard", "CRM", "Invoices", "Analytics", "Settings", "Simulator", "Inventory"],
+      Employee: ["Dashboard", "CRM", "Inventory"],
     };
 
     return permissions[user.role as keyof typeof permissions]?.includes(module) || false;

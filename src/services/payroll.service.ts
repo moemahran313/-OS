@@ -20,10 +20,19 @@ export class PayrollService {
 
     const payrollEntries = employeesSnap.docs.map((docSnap) => {
       const e = docSnap.data();
-      const grossHalalas =
+      
+      // Base contract salary package (Basic + Housing + Transport)
+      const basePackageHalalas =
         (e.baseSalaryHalalas || 0) +
         (e.housingAllowanceHalalas || 0) +
         (e.transportAllowanceHalalas || 0);
+
+      // Custom adjustments injected by manager
+      const overtimeHalalas = e.customOvertimeHalalas || 0;
+      const commissionHalalas = e.commissionHalalas || 0;
+
+      // Dynamic Gross Salary (Base Package + Custom additions)
+      const grossHalalas = basePackageHalalas + overtimeHalalas + commissionHalalas;
 
       // Check for advance installments for this employee
       const employeeAdvances = advances.filter(a => a.employeeId === docSnap.id);
@@ -36,7 +45,11 @@ export class PayrollService {
           }
       });
 
-      const deductionsHalalas = Math.round(grossHalalas * 0.09) + (e.otherDeductionsHalalas || 0) + advanceDeductionHalalas;
+      // GOSI deduction (9%) computed legally on basic + housing + transport (base contract package), NOT including variable overtime or bonuses
+      const gosiDeductionHalalas = Math.round(basePackageHalalas * 0.09);
+
+      // Total deductions (GOSI + other/custom manager deductions + advances)
+      const deductionsHalalas = gosiDeductionHalalas + (e.otherDeductionsHalalas || 0) + advanceDeductionHalalas;
       const netHalalas = grossHalalas - deductionsHalalas;
 
       return {

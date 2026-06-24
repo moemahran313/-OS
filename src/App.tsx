@@ -188,6 +188,7 @@ function AppRoutes() {
 const SecurityCompliance = lazy(() => import("./pages/SecurityCompliance"));
 const DeveloperTools = lazy(() => import("./pages/DeveloperTools"));
 const ShipmentDetails = lazy(() => import("./pages/ShipmentDetails"));
+const Inventory = lazy(() => import("./pages/Inventory"));
 
 const Workflows = lazy(() => import("./pages/Workflows"));
 
@@ -219,6 +220,7 @@ function AppInnerRoutes() {
             <Route path="simulator" element={<PageTransition><Simulator /></PageTransition>} />
             <Route path="calculations" element={<PageTransition><Calculations /></PageTransition>} />
             <Route path="analytics" element={<PageTransition><Analytics /></PageTransition>} />
+            <Route path="inventory" element={<PageTransition><Inventory /></PageTransition>} />
             <Route path="integrations" element={<PageTransition><Integrations /></PageTransition>} />
             <Route path="developer-tools" element={<PageTransition><DeveloperTools /></PageTransition>} />
             <Route path="security-compliance" element={<PageTransition><SecurityCompliance /></PageTransition>} />

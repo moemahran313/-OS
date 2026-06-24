@@ -18,6 +18,7 @@ import {
   FileSignature,
   Code2,
   Video,
+  Warehouse,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Logo } from "@/src/components/Logo";
@@ -43,6 +44,7 @@ const navigationData = [
   { nameKey: "common.invoices", id: "Invoices", href: "/app/invoices", icon: FileText },
   { nameKey: "sidebar.integrations", id: "Integrations", href: "/app/integrations", icon: Blocks },
   { nameKey: "common.payroll", id: "Payroll", href: "/app/payroll", icon: CreditCard },
+  { nameKey: "المخزون والمستودعات", id: "Inventory", href: "/app/inventory", icon: Warehouse },
   { nameKey: "sidebar.analytics", id: "Analytics", href: "/app/analytics", icon: BarChart3 },
 ];
 
