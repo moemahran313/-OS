@@ -2,7 +2,8 @@
   "name": "Mudarij OS (مدارج)",
   "description": "An Arabic-first, AI-powered Business Operating System for SMEs in the GCC. Includes CRM, WhatsApp Sales Hub, VAT-compliant Invoicing, and Payroll.",
   "requestFramePermissions": [
-    "microphone"
+    "microphone",
+    "camera"
   ],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

@@ -42,6 +42,7 @@ export interface CorrectionNote {
 export interface Invoice {
   id: string;
   userId: string; // Ownership
+  type: 'standard' | 'simplified' | 'credit_note' | 'debit_note';
   number: string;
   clientId: string;
   clientName: string;

@@ -126,8 +126,8 @@ export default function ShipmentDetails() {
       const { GoogleGenAI, Type } = await import("@google/genai");
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       
-      const response = await ai.models.generateContent({
-        model: "gemini-3.1-flash",
+      const params = {
+        model: "gemini-3.5-flash",
         contents: `Analyze this shipment for Saudi Arabian import requirements (ZATCA, SASO, SFDA).
         
         Product: ${shipment?.productDescription || 'General Goods'}
@@ -155,7 +155,18 @@ export default function ShipmentDetails() {
             required: ["isCompliant", "requirements", "missingDocs", "riskFlags"]
           }
         }
-      });
+      };
+
+      let response;
+      try {
+        response = await ai.models.generateContent(params);
+      } catch (apiErr: any) {
+        console.warn("Primary model gemini-3.5-flash busy or failed, using gemini-3.1-flash-lite fallback", apiErr);
+        response = await ai.models.generateContent({
+          ...params,
+          model: "gemini-3.1-flash-lite"
+        });
+      }
       
       const report = JSON.parse(response.text || "{}");
       setComplianceReport(report);
@@ -222,10 +233,19 @@ export default function ShipmentDetails() {
         Mention required certificates if applicable.
       `;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.1-flash",
-        contents: prompt
-      });
+      let response;
+      try {
+        response = await ai.models.generateContent({
+          model: "gemini-3.5-flash",
+          contents: prompt
+        });
+      } catch (apiErr: any) {
+        console.warn("Primary model gemini-3.5-flash busy or failed, trying gemini-3.1-flash-lite fallback", apiErr);
+        response = await ai.models.generateContent({
+          model: "gemini-3.1-flash-lite",
+          contents: prompt
+        });
+      }
       
       setAiResponse(response.text || "لم نتمكن من الحصول على رد حالياً.");
       fetchComplianceReport();

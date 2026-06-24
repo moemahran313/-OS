@@ -240,8 +240,8 @@ export default function Suppliers() {
       const { GoogleGenAI, Type } = await import("@google/genai");
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+      const params = {
+        model: "gemini-3.5-flash",
         contents: `Analyze this ad-hoc shipment request for Saudi Arabian import requirements (ZATCA, SASO, SFDA).
         
         Product: ${compCheckData.desc}
@@ -272,8 +272,19 @@ export default function Suppliers() {
             required: ["required_documents", "required_approvals", "risk_flags"]
           }
         }
-      });
+      };
 
+      let response;
+      try {
+        response = await ai.models.generateContent(params);
+      } catch (apiErr: any) {
+        console.warn("Primary model gemini-3.5-flash failed or busy, trying gemini-3.1-flash-lite", apiErr);
+        response = await ai.models.generateContent({
+          ...params,
+          model: "gemini-3.1-flash-lite"
+        });
+      }
+      
       const data = JSON.parse(response.text || "{}");
       setCompResult(data);
     } catch (err) {

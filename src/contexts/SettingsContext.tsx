@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { auth, db } from "../lib/firebase";
-import { doc, getDocFromServer, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { useUser } from "./UserContext";
 import i18n from "../i18n";
@@ -78,6 +78,19 @@ interface SettingsContextType {
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
+// Helper to execute a promise with a fast timeout to prevent Firestore hanging on unreachable backends
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number = 1000): Promise<T> {
+  let timeoutId: any;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error("Timeout"));
+    }, timeoutMs);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    clearTimeout(timeoutId);
+  });
+}
+
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
   const [settings, setSettings] = useState<Settings>(defaultSettings);
@@ -114,18 +127,21 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         setUserId(user.uid);
         try {
           const docRef = doc(db, "settings", user.uid);
-          const docSnap = await getDocFromServer(docRef);
+          const docSnap = await withTimeout(getDoc(docRef), 1000);
           if (docSnap.exists()) {
             const fbSettings = docSnap.data() as Settings;
             setSettings({ ...defaultSettings, ...fbSettings });
           }
         } catch (error: any) {
           if (error.message?.includes("insufficient permissions")) {
-            console.warn("Settings document doesn't exist or permission denied. Creating default.");
-            // Try to create it
-            await setDoc(doc(db, "settings", user.uid), defaultSettings, { merge: true });
+            console.warn("Settings document doesn't exist or permission denied. Trying to initialize defaults.");
+            try {
+              await withTimeout(setDoc(doc(db, "settings", user.uid), defaultSettings, { merge: true }), 1000);
+            } catch (innerErr) {
+              console.warn("Could not write default settings to Firebase (possibly offline or read-only):", innerErr);
+            }
           } else {
-            console.error("Failed to load settings from Firebase:", error);
+            console.warn("Failed to load settings from Firebase (offline or unreachable):", error.message);
           }
         }
       } else {

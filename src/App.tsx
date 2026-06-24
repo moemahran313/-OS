@@ -59,6 +59,8 @@ function GlobalPayrollMonitor() {
       } else {
         localStorage.removeItem('emergency_lockdown'); // reset if compliant
       }
+    }, (error) => {
+      console.warn("Global payroll monitor failed to sync with Firestore (unreachable/permission):", error);
     });
 
     return () => unsub();

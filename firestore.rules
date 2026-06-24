@@ -230,6 +230,16 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
+    // Contracts Rules
+    match /contracts/{contractId} {
+      allow get: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().authorUid == request.auth.uid;
+      allow update: if isSignedIn() && 
+                       resource.data.authorUid == request.auth.uid && 
+                       incoming().authorUid == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
+
     match /tenants/{tenantId} { allow read: if isSignedIn(); }
   }
 }

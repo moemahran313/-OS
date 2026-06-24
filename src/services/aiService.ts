@@ -22,18 +22,35 @@ export async function processBusinessCommand(command: string, language: string =
          Stats: ${contextData.leads} leads, ${contextData.invoices} invoices, ${contextData.employees} employees.`
       : "User Context: Local environment, no DB stats available.";
 
-    const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
-      contents: command,
-      config: {
-        systemInstruction: `You are the core AI operator for Mudarij OS (مدارج), a ${language === 'ar' ? 'Arabic' : 'English'} Business Operating System for GCC SMEs.
-        ${contextStr}
-        Your goal is to parse user commands and suggest actions based on their REAL data above.
-        
-        Available modules: CRM, Invoicing (VAT GCC), Payroll, Analytics.
-        Respond in a helpful, professional tone in the user's preferred language: ${language === 'ar' ? 'Arabic' : 'English'}. Be concise.`,
-      },
-    });
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: command,
+        config: {
+          systemInstruction: `You are the core AI operator for Mudarij OS (مدارج), a ${language === 'ar' ? 'Arabic' : 'English'} Business Operating System for GCC SMEs.
+          ${contextStr}
+          Your goal is to parse user commands and suggest actions based on their REAL data above.
+          
+          Available modules: CRM, Invoicing (VAT GCC), Payroll, Analytics.
+          Respond in a helpful, professional tone in the user's preferred language: ${language === 'ar' ? 'Arabic' : 'English'}. Be concise.`,
+        },
+      });
+    } catch (err: any) {
+      console.warn("Primary AI call failed, trying gemini-3.1-flash-lite fallback: ", err);
+      response = await ai.models.generateContent({
+        model: "gemini-3.1-flash-lite",
+        contents: command,
+        config: {
+          systemInstruction: `You are the core AI operator for Mudarij OS (مدارج), a ${language === 'ar' ? 'Arabic' : 'English'} Business Operating System for GCC SMEs.
+          ${contextStr}
+          Your goal is to parse user commands and suggest actions based on their REAL data above.
+          
+          Available modules: CRM, Invoicing (VAT GCC), Payroll, Analytics.
+          Respond in a helpful, professional tone in the user's preferred language: ${language === 'ar' ? 'Arabic' : 'English'}. Be concise.`,
+        },
+      });
+    }
     
     return response.text || (language === 'ar' ? "لم أتمكن من معالجة الطلب." : "I could not process the request.");
   } catch (error) {

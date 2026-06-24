@@ -21,6 +21,25 @@ function getGeminiClient() {
   });
 }
 
+// Resilient wrapper that catches 503 UNAVAILABLE or high demand errors and retries using gemini-3.1-flash-lite
+async function generateWithFallback(ai: any, params: any) {
+  const primaryModel = params.model || "gemini-3.5-flash";
+  try {
+    return await ai.models.generateContent(params);
+  } catch (err: any) {
+    const errMsg = (err?.message || "").toLowerCase();
+    const isUnavailable = errMsg.includes("503") || errMsg.includes("unavailable") || errMsg.includes("demand") || errMsg.includes("resource_exhausted") || errMsg.includes("429");
+    if (isUnavailable && primaryModel !== "gemini-3.1-flash-lite") {
+      console.warn(`Model ${primaryModel} is experiencing high demand or limit. Falling back to gemini-3.1-flash-lite...`);
+      return await ai.models.generateContent({
+        ...params,
+        model: "gemini-3.1-flash-lite"
+      });
+    }
+    throw err;
+  }
+}
+
 // Mock Database of Saudi accounting transaction datasets for simulations 
 const mockTransactions = [
   { id: "TX-1001", date: "2026-06-01", description: "أجهزة كمبيوتر مكتبي - شركة حلول الحاسب", amountBeforeVat: 45000, vatRate: 0.15, vatAmount: 6750, total: 51750, type: "purchase", supplierName: "مؤسسة حلول الحاسب الذكية", supplierVat: "310459841200003", docNumber: "INV-6672", compliance: "valid" },
@@ -118,7 +137,7 @@ ${JSON.stringify(mockBankLedger.filter(b => !b.hasMatchingDoc), null, 2)}
 صيغة الرد يجب أن تدمج لغة الأرقام الصارمة والقوانين السعودية (لوائح ضريبة القيمة المضافة المعتمدة من ZATCA ولوائح الفوترة الإلكترونية المرحلة الثانية - الربط والتكامل). أظهر النتيجة بأسلوب رائع ومنسق وجاهز للعرض على مجلس الإدارة كتقرير مهني.
 `;
 
-    const response = await ai.models.generateContent({
+    const response = await generateWithFallback(ai, {
       model: "gemini-3.5-flash",
       contents: question,
       config: {
@@ -344,8 +363,67 @@ router.post("/suggest-workflow", authenticate, async (req: any, res) => {
       fallbackMode = true;
     }
 
+    // Call Gemini API to build a fully bespoke workflow
+    const systemPrompt = `
+      You are an expert AI system engineering and workflow automation architect like n8n, combined with being a certified Saudi compliance specialist (ZATCA, GOSI, WPS, SOCPA).
+      Analyze the user's prompt and generate a bespoke, professional workflow sequence.
+      You MUST respond ONLY with a raw JSON object matching the following structure:
+      {
+        "workflowName": "A descriptive workflow name in English",
+        "workflowNameAr": "اسم منسق معرب معبر بطريقة ممتازة ومثالية",
+        "description": "Short summary of what this workflow automates in English",
+        "descriptionAr": "شرح سريع للمسار المحفز وما يسهم في أتمتته من عمليات مخصصة",
+        "nodes": [
+          {
+            "id": "node-1",
+            "name": "Node Title (Eng)",
+            "nameAr": "عنوان العقدة بالعربية",
+            "desc": "Explanation of node activity (Eng)",
+            "descAr": "شرح مبسط ووظيفي لعمل العقدة",
+            "type": "trigger",
+            "iconName": "Play",
+            "x": 100,
+            "y": 150
+          }
+        ],
+        "edges": [
+          { "from": "node-1", "to": "node-2" }
+        ]
+      }
+
+      Guidelines:
+      - Place nodes sequentially in increments of 200px horizontally (e.g., node 1 at x=100, node 2 at x=300, node 3 at x=500).
+      - Node fields mandatory options:
+        * type: MUST be exactly "trigger" or "action" or "condition" 
+        * iconName: MUST be one of "Play", "Mail", "Zap", "ShieldAlert", "Database", "Cpu", "Clock", "Send", "CheckCircle2", "AlertTriangle", "FileText"
+      - If there is a condition node, you can branch branches out (e.g. node 4 at x=700, y=80; node 5 at x=700, y=250) and link them.
+      - Make sure names and description elements in Arabic are highly professional, authentic to Saudi financial & legal frameworks.
+      - Ensure you provide a valid JSON parser format. Do not prepend markdown wraps like \`\`\`json.
+    `;
+
+    try {
+      const response = await generateWithFallback(ai, {
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          systemInstruction: systemPrompt,
+          temperature: 0.2,
+          responseMimeType: "application/json"
+        }
+      });
+
+      const parsed = JSON.parse(response.text.trim());
+      return res.json({
+        success: true,
+        workflow: parsed
+      });
+    } catch (apiErr: any) {
+      console.warn("AI Generation failed, falling back to basic mock mode:", apiErr);
+      fallbackMode = true;
+    }
+
     if (fallbackMode) {
-      // Return structured fallback workflows based on keyword matching when Gemini SDK cannot be initialized
+      // Return structured fallback workflows based on keyword matching when Gemini SDK cannot be initialized or fails
       const normalizedPrompt = prompt.toLowerCase();
       let selectedWorkflow = {
         workflowName: "Custom AI Workflow",
@@ -410,63 +488,9 @@ router.post("/suggest-workflow", authenticate, async (req: any, res) => {
       return res.json({
         success: true,
         workflow: selectedWorkflow,
-        warning: "تم تشغيل وضع العرض التجريبي الذكي لتوفير مسار تماثلي لعدم تواجد مفتاح Gemini."
+        warning: "انشغال في الخادم الذكي حالياً، تم توليد مسار مخصص بديل."
       });
     }
-
-    // Call Gemini API to build a fully bespoke workflow
-    const systemPrompt = `
-      You are an expert AI system engineering and workflow automation architect like n8n, combined with being a certified Saudi compliance specialist (ZATCA, GOSI, WPS, SOCPA).
-      Analyze the user's prompt and generate a bespoke, professional workflow sequence.
-      You MUST respond ONLY with a raw JSON object matching the following structure:
-      {
-        "workflowName": "A descriptive workflow name in English",
-        "workflowNameAr": "اسم منسق معرب معبر بطريقة ممتازة ومثالية",
-        "description": "Short summary of what this workflow automates in English",
-        "descriptionAr": "شرح سريع للمسار المحفز وما يسهم في أتمتته من عمليات مخصصة",
-        "nodes": [
-          {
-            "id": "node-1",
-            "name": "Node Title (Eng)",
-            "nameAr": "عنوان العقدة بالعربية",
-            "desc": "Explanation of node activity (Eng)",
-            "descAr": "شرح مبسط ووظيفي لعمل العقدة",
-            "type": "trigger",
-            "iconName": "Play",
-            "x": 100,
-            "y": 150
-          }
-        ],
-        "edges": [
-          { "from": "node-1", "to": "node-2" }
-        ]
-      }
-
-      Guidelines:
-      - Place nodes sequentially in increments of 200px horizontally (e.g., node 1 at x=100, node 2 at x=300, node 3 at x=500).
-      - Node fields mandatory options:
-        * type: MUST be exactly "trigger" or "action" or "condition" 
-        * iconName: MUST be one of "Play", "Mail", "Zap", "ShieldAlert", "Database", "Cpu", "Clock", "Send", "CheckCircle2", "AlertTriangle", "FileText"
-      - If there is a condition node, you can branch branches out (e.g. node 4 at x=700, y=80; node 5 at x=700, y=250) and link them.
-      - Make sure names and description elements in Arabic are highly professional, authentic to Saudi financial & legal frameworks.
-      - Ensure you provide a valid JSON parser format. Do not prepend markdown wraps like \`\`\`json.
-    `;
-
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: prompt,
-      config: {
-        systemInstruction: systemPrompt,
-        temperature: 0.2,
-        responseMimeType: "application/json"
-      }
-    });
-
-    const parsed = JSON.parse(response.text.trim());
-    res.json({
-      success: true,
-      workflow: parsed
-    });
 
   } catch (err: any) {
     console.error("Workflow Suggestion Error:", err);

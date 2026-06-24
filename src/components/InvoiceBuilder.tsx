@@ -43,6 +43,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
   const [clientName, setClientName] = useState(initialData?.clientName || "");
   const [clientPhone, setClientPhone] = useState(initialData?.clientPhone || "");
   const [clientEmail, setClientEmail] = useState(initialData?.clientEmail || "");
+  const [invoiceType, setInvoiceType] = useState<'standard' | 'simplified' | 'credit_note' | 'debit_note'>(initialData?.type || 'standard');
   const [paymentLink, setPaymentLink] = useState(initialData?.paymentLink || "");
   const [billingEmail, setBillingEmail] = useState(initialData?.billingEmail || "");
   const [dueDate, setDueDate] = useState(initialData?.dueDate || "");
@@ -608,6 +609,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
       .replace("{SEQ}", nextSeq.toString().padStart(3, "0"));
 
     return {
+      type: invoiceType,
       clientName,
       clientEmail,
       billingEmail,
@@ -1123,6 +1125,21 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
                                         {c.name}
                                       </option>
                                     ))}
+                                  </select>
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                                    نوع الفاتورة (ZATCA)
+                                  </label>
+                                  <select
+                                    value={invoiceType}
+                                    onChange={(e) => setInvoiceType(e.target.value as any)}
+                                    className="w-full bg-zinc-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 appearance-none font-bold text-zinc-900"
+                                  >
+                                    <option value="standard">فاتورة ضريبية قياسية (Standard Tax Invoice)</option>
+                                    <option value="simplified">فاتورة ضريبية مبسطة (Simplified Tax Invoice)</option>
+                                    <option value="credit_note">إشعار دائن (Credit Note)</option>
+                                    <option value="debit_note">إشعار مدين (Debit Note)</option>
                                   </select>
                                 </div>
                                 <div className="space-y-2">

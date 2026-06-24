@@ -45,6 +45,16 @@ export default function InvoicePrintTemplate({ invoice }: InvoicePrintTemplatePr
 
   const primaryColor = invoice.branding?.primaryColor || '#10b981';
 
+  const getInvoiceTitle = () => {
+    switch(invoice.type) {
+      case 'simplified': return getLabel('فاتورة ضريبية مبسطة', 'Simplified Tax Invoice');
+      case 'credit_note': return getLabel('إشعار دائن', 'Credit Note');
+      case 'debit_note': return getLabel('إشعار مدين', 'Debit Note');
+      case 'standard':
+      default: return getLabel('فاتورة ضريبية', 'Tax Invoice');
+    }
+  };
+
   return (
     <div 
       className={cn(
@@ -83,7 +93,7 @@ export default function InvoicePrintTemplate({ invoice }: InvoicePrintTemplatePr
                "text-3xl font-black mb-2 text-zinc-900",
                isClassic && "text-4xl italic font-serif",
              )}>
-               {getLabel('فاتورة ضريبية', 'Tax Invoice')}
+               {getInvoiceTitle()}
              </h1>
              <p className="text-sm font-bold tracking-widest text-zinc-400">
                 #{invoice.number}

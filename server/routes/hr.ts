@@ -91,6 +91,25 @@ function getGeminiClient() {
   });
 }
 
+// Resilient wrapper that catches 503 UNAVAILABLE or high demand errors and retries using gemini-3.1-flash-lite
+async function generateWithFallback(ai: any, params: any) {
+  const primaryModel = params.model || "gemini-3.5-flash";
+  try {
+    return await ai.models.generateContent(params);
+  } catch (err: any) {
+    const errMsg = (err?.message || "").toLowerCase();
+    const isUnavailable = errMsg.includes("503") || errMsg.includes("unavailable") || errMsg.includes("demand") || errMsg.includes("resource_exhausted") || errMsg.includes("429");
+    if (isUnavailable && primaryModel !== "gemini-3.1-flash-lite") {
+      console.warn(`Model ${primaryModel} is experiencing high demand or limit. Falling back to gemini-3.1-flash-lite...`);
+      return await ai.models.generateContent({
+        ...params,
+        model: "gemini-3.1-flash-lite"
+      });
+    }
+    throw err;
+  }
+}
+
 import { GoogleGenAI } from "@google/genai";
 import { db } from "../services/firebase.js";
 
@@ -202,7 +221,7 @@ ${JSON.stringify(runs, null, 2)}
       { role: "user" as const, parts: [{ text: message }] }
     ];
 
-    const response = await ai.models.generateContent({
+    const response = await generateWithFallback(ai, {
       model: "gemini-3.5-flash",
       contents,
       config: {

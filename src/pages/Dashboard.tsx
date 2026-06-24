@@ -88,7 +88,7 @@ const DEFAULT_CONFIG: WidgetConfig[] = [
   { id: "activity", title: "النشاط الأخير", visible: true },
 ];
 
-export const AVAILABLE_QUICK_ACTIONS = [
+const AVAILABLE_QUICK_ACTIONS = [
   { id: "create_invoice", label: "إنشاء فاتورة", icon: FileText, path: "/app/invoices/new", color: "text-emerald-500", bg: "bg-emerald-50" },
   { id: "add_lead", label: "إضافة عميل محتمل", icon: Users, path: "/app/crm/new", color: "text-blue-500", bg: "bg-blue-50" },
   { id: "unread_chats", label: "المحادثات غير المقروءة", icon: MessageSquare, path: "/app/chat", color: "text-purple-500", bg: "bg-purple-50" },

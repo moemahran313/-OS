@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 import { onIdTokenChanged, signInWithPopup, signOut, User as FirebaseUser, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile as updateAuthProfile } from "firebase/auth";
-import { doc, getDocFromServer, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "../lib/firebase";
 import { toast } from "sonner";
 
@@ -35,9 +35,45 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+// Helper to execute a promise with a fast timeout to prevent Firestore hanging on unreachable backends
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number = 1000): Promise<T> {
+  let timeoutId: any;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error("Timeout"));
+    }, timeoutMs);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    clearTimeout(timeoutId);
+  });
+}
+
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const cached = localStorage.getItem("mudarij_user");
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(true);
+
+  const setUserAndCache = (val: User | null | ((prev: User | null) => User | null)) => {
+    setUser((prev) => {
+      const updated = typeof val === "function" ? val(prev) : val;
+      try {
+        if (updated) {
+          localStorage.setItem("mudarij_user", JSON.stringify(updated));
+        } else {
+          localStorage.removeItem("mudarij_user");
+        }
+      } catch (err) {
+        console.warn("Failed to save user to localStorage:", err);
+      }
+      return updated;
+    });
+  };
 
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
@@ -50,7 +86,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         await syncUser(firebaseUser);
       } else {
         document.cookie = "mudarij_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-        setUser(null);
+        setUserAndCache(null);
         setLoading(false);
       }
     });
@@ -61,28 +97,43 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const syncUser = async (firebaseUser: FirebaseUser) => {
     try {
       const userDocRef = doc(db, "users", firebaseUser.uid);
-      const userDoc = await getDocFromServer(userDocRef);
+      const userDoc = await withTimeout(getDoc(userDocRef), 15000);
 
       if (userDoc.exists()) {
-        setUser({ id: firebaseUser.uid, ...userDoc.data() } as User);
+        const data = userDoc.data();
+        setUserAndCache({ ...data, id: firebaseUser.uid, uid: firebaseUser.uid } as User);
       } else {
         // Create initial user profile
         const newUser: User = {
           id: firebaseUser.uid,
+          uid: firebaseUser.uid,
           email: firebaseUser.email || "",
           name: firebaseUser.displayName || "",
           role: "Administrator", // Default role
           avatar: firebaseUser.photoURL || null
         };
-        await setDoc(userDocRef, {
-          ...newUser,
-          uid: firebaseUser.uid,
-          createdAt: serverTimestamp(),
-        });
-        setUser({ ...newUser, uid: firebaseUser.uid });
+        try {
+          await withTimeout(setDoc(userDocRef, {
+            ...newUser,
+            uid: firebaseUser.uid,
+            createdAt: serverTimestamp(),
+          }), 15000);
+        } catch (writeErr) {
+          console.warn("Could not write initial profile to Firestore:", writeErr);
+        }
+        setUserAndCache({ ...newUser, uid: firebaseUser.uid });
       }
     } catch (e) {
-      console.error("User sync failed", e);
+      console.warn("User sync failed (offline or permission issue), using fallback local profile:", e);
+      // Construct a valid local fallback user in memory so the application does not break
+      setUserAndCache((prev) => prev || ({
+        id: firebaseUser.uid,
+        uid: firebaseUser.uid,
+        email: firebaseUser.email || "",
+        name: firebaseUser.displayName || "Administrator",
+        role: "Administrator",
+        avatar: firebaseUser.photoURL || null
+      } as User));
     } finally {
       setLoading(false);
     }
@@ -93,14 +144,20 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       const result = await signInWithPopup(auth, googleProvider);
       
-      const userDocRef = doc(db, "users", result.user.uid);
-      const userDoc = await getDocFromServer(userDocRef);
-      if (!userDoc.exists() && referredBy) {
-         await setDoc(userDocRef, {
-           name: result.user.displayName || "",
-           avatar: result.user.photoURL || null,
-           referredBy: referredBy
-         }, { merge: true });
+      try {
+        const userDocRef = doc(db, "users", result.user.uid);
+        const userDoc = await withTimeout(getDoc(userDocRef), 15000);
+        if (!userDoc.exists()) {
+           await withTimeout(setDoc(userDocRef, {
+             email: result.user.email || "",
+             role: "Administrator",
+             name: result.user.displayName || "",
+             avatar: result.user.photoURL || null,
+             referredBy: referredBy || null
+           }, { merge: true }), 15000);
+        }
+      } catch (dbErr) {
+        console.warn("Could not save Google user record to Firestore:", dbErr);
       }
 
       return true;
@@ -129,23 +186,30 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
       
       if (name || avatar) {
-        await updateAuthProfile(userCredential.user, {
-          displayName: name || null,
-          photoURL: avatar || null
-        });
+        try {
+          await updateAuthProfile(userCredential.user, {
+            displayName: name || null,
+            photoURL: avatar || null
+          });
+        } catch (profileErr) {
+          console.warn("Could not update auth profile", profileErr);
+        }
       }
       
       // Update the user document explicitly since syncUser might have written an empty name/avatar 
       // if it fired before updateAuthProfile completed.
-      const userDocRef = doc(db, "users", userCredential.user.uid);
-      await setDoc(userDocRef, {
-        name: name || "",
-        avatar: avatar || null,
-        referredBy: referredBy || null
-      }, { merge: true });
-
-      // If referredBy is present, you could also add a document logic here or Cloud Function, 
-      // but saving it to the user doc is sufficient for the program.
+      try {
+        const userDocRef = doc(db, "users", userCredential.user.uid);
+        await withTimeout(setDoc(userDocRef, {
+          email: userCredential.user.email || "",
+          role: "Administrator",
+          name: name || "",
+          avatar: avatar || null,
+          referredBy: referredBy || null
+        }, { merge: true }), 15000);
+      } catch (dbErr) {
+        console.warn("Could not write user record to Firestore, proceeding with client sign-up:", dbErr);
+      }
 
       return true;
     } catch (e) {
@@ -158,7 +222,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await signOut(auth);
-      setUser(null);
+      setUserAndCache(null);
       document.cookie.split(";").forEach((c) => {
         document.cookie = c
           .replace(/^ +/, "")
@@ -180,12 +244,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const userDocRef = doc(db, "users", user.id);
-      await setDoc(userDocRef, { ...cleanUpdates, updatedAt: serverTimestamp() }, { merge: true });
-      setUser(prev => prev ? { ...prev, ...cleanUpdates } : null);
+      await withTimeout(setDoc(userDocRef, { ...cleanUpdates, updatedAt: serverTimestamp() }, { merge: true }), 15000);
+      setUserAndCache(prev => prev ? { ...prev, ...cleanUpdates, id: prev.id, uid: prev.uid || prev.id } : null);
       toast.success("تم تحديث الملف الشخصي بنجاح");
     } catch (e) {
-      console.error("Profile update failed", e);
-      toast.error("فشل تحديث الملف الشخصي");
+      console.warn("Profile update failed on backend (offline/unreachable), updating locally:", e);
+      setUserAndCache(prev => prev ? { ...prev, ...cleanUpdates, id: prev.id, uid: prev.uid || prev.id } : null);
+      toast.success("تم تحديث الملف الشخصي محلياً");
     }
   };
 

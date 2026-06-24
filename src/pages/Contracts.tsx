@@ -2,13 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import { toPng } from 'html-to-image';
-import html2canvas from "html2canvas";
 import NafathAuth from "@/src/components/NafathAuth";
 import { QRCodeSVG } from "qrcode.react";
 import { useSettings } from "@/src/contexts/SettingsContext";
 import { useUser } from "@/src/contexts/UserContext";
 import { db } from "@/src/lib/firebase";
-import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, setDoc, getDoc } from "firebase/firestore";
 import {
   FileSignature,
   Download,
@@ -35,7 +34,9 @@ import {
   FileCheck,
   Users,
   Save,
-  Plus
+  Plus,
+  Clock,
+  Cloud
 } from "lucide-react";
 
 interface ContractData {
@@ -955,6 +956,89 @@ export default function Contracts() {
   });
   const [verificationLink, setVerificationLink] = useState<string | null>(null);
 
+  const [lastModifiedInfo, setLastModifiedInfo] = useState<{ date: string; author: string } | null>(null);
+  const [isSavingFirebase, setIsSavingFirebase] = useState(false);
+
+  // Load contract from Firestore on mount/category change
+  useEffect(() => {
+    if (!user) return;
+    const contractId = `${user.uid}_${data.contractCategory || "employment"}`;
+    const contractDocRef = doc(db, "contracts", contractId);
+
+    const loadDoc = async () => {
+      try {
+        const docSnap = await getDoc(contractDocRef);
+        if (docSnap.exists()) {
+          const docData = docSnap.data();
+          if (docData.contractData) {
+            setData(docData.contractData);
+          }
+          if (docData.editedTexts) {
+            setEditedTexts(docData.editedTexts);
+          }
+          if (docData.documentStatus) {
+            setDocumentStatus(docData.documentStatus);
+          }
+          if (docData.signatureImage) {
+            setSignatureImage(docData.signatureImage);
+          }
+          if (docData.lastModified) {
+            const date = new Date(docData.lastModified);
+            setLastModifiedInfo({
+              date: date.toLocaleString('ar-SA') + " / " + date.toLocaleString('en-US'),
+              author: docData.authorEmail || "Administrator"
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to load contract from Firestore:", err);
+      }
+    };
+
+    loadDoc();
+  }, [user, data.contractCategory]);
+
+  const saveContractToFirebase = async (forcedSignature?: string | null, forcedStatus?: string) => {
+    if (!user) {
+      toast.error("يجب تسجيل الدخول أولاً لحفظ العقد في السحابة!");
+      return;
+    }
+    setIsSavingFirebase(true);
+    const contractId = `${user.uid}_${data.contractCategory || "employment"}`;
+    try {
+      const contractDocRef = doc(db, "contracts", contractId);
+      const signatureToSave = typeof forcedSignature !== 'undefined' ? forcedSignature : signatureImage;
+      const statusToSave = forcedStatus || documentStatus;
+      
+      const payload = {
+        contractCategory: data.contractCategory || "employment",
+        contractData: data,
+        editedTexts: editedTexts,
+        documentStatus: statusToSave,
+        signatureImage: signatureToSave || null,
+        isSigned: typeof forcedSignature !== 'undefined' ? !!forcedSignature : isSigned,
+        lastModified: new Date().toISOString(),
+        authorEmail: user.email || "Administrator",
+        authorUid: user.uid,
+      };
+
+      await setDoc(contractDocRef, payload, { merge: true });
+      
+      const date = new Date();
+      setLastModifiedInfo({
+        date: date.toLocaleString('ar-SA') + " / " + date.toLocaleString('en-US'),
+        author: user.email || "Administrator"
+      });
+      
+      toast.success("تم حفظ وتوثيق العقد بنجاح في قاعدة بيانات مدارج السحابية! ☁️");
+    } catch (err: any) {
+      console.error("Failed to save contract to Firestore:", err);
+      toast.error(`فشل حفظ العقد سحابياً: ${err.message || err}`);
+    } finally {
+      setIsSavingFirebase(false);
+    }
+  };
+
   // Settings mapping utility helper
   const applySettingsToContract = (prevData: ContractData) => {
     return {
@@ -1160,7 +1244,7 @@ export default function Contracts() {
 
   const downloadContractAsPDF = async () => {
     setIsExportingPDF(true);
-    const loadingToast = toast.loading('جاري توليد ملف PDF باستخدام html2canvas و jsPDF...');
+    const loadingToast = toast.loading('جاري توليد ملف PDF باستخدام jsPDF...');
 
     try {
       const contractElement = document.getElementById("contract-document");
@@ -1170,32 +1254,18 @@ export default function Contracts() {
         return;
       }
 
-      // Hide custom interactives before capturing to preserve clean layout
-      const elementsToHide = contractElement.querySelectorAll('.print\\:hidden');
-      elementsToHide.forEach(el => el.classList.add('opacity-0'));
-
-      // Use html2canvas to capture the visual representation
-      const canvas = await html2canvas(contractElement, {
-        scale: 2.5, // Ultra-sharp precision
-        useCORS: true,
-        allowTaint: true,
+      // We don't need to manually hide elements because we can use the filter option in toPng
+      const imgData = await toPng(contractElement, {
+        quality: 1.0,
+        pixelRatio: 2.5, // Ultra-sharp precision
         backgroundColor: '#ffffff',
-        logging: false,
-        onclone: (documentClone) => {
-          // Additional safety styling adjustments on cloned doc
-          const cloneElement = documentClone.getElementById("contract-document");
-          if (cloneElement) {
-            cloneElement.style.transform = "none";
-            cloneElement.style.margin = "0";
-            cloneElement.style.width = docLayoutTheme === "wide" ? "240mm" : "210mm";
+        filter: (node) => {
+          if (node instanceof HTMLElement && node.classList?.contains('print:hidden')) {
+            return false;
           }
+          return true;
         }
       });
-
-      // Restore interactives
-      elementsToHide.forEach(el => el.classList.remove('opacity-0'));
-
-      const imgData = canvas.toDataURL('image/jpeg', 1.0);
       
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -1203,8 +1273,9 @@ export default function Contracts() {
         format: 'a4'
       });
 
+      const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
       let heightLeft = pdfHeight;
       let position = 0;
@@ -1227,17 +1298,18 @@ export default function Contracts() {
       pdf.save(fileName);
       toast.success('تم تصدير وتحميل مستند العقد بصيغة PDF بنجاح 📄', { id: loadingToast });
     } catch (error) {
-      console.error('html2canvas PDF generation error:', error);
+      console.error('PDF generation error:', error);
       toast.error('حدث خطأ أثناء إنشاء وتنزيل ملف PDF', { id: loadingToast });
     } finally {
       setIsExportingPDF(false);
     }
   };
 
-  const handleSignatureSuccess = () => {
+  const handleSignatureSuccess = async () => {
     setIsSigned(true);
     setDocumentStatus("Signed");
     setQrCodeData(`NAFEZ_AUTH_${data.employeeId}_${Date.now()}`);
+    await saveContractToFirebase(signatureImage, "Signed");
   };
 
   const generateVerificationLink = () => {
@@ -2349,6 +2421,20 @@ export default function Contracts() {
                     )}
                     <span>تحميل PDF (موثق) / Export PDF</span>
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={() => saveContractToFirebase()}
+                    disabled={isSavingFirebase}
+                    className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer shadow-md disabled:opacity-50"
+                  >
+                    {isSavingFirebase ? (
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent animate-spin rounded-full" />
+                    ) : (
+                      <Cloud className="w-3.5 h-3.5 text-emerald-100" />
+                    )}
+                    <span>حفظ ومزامنة سحابية / Cloud Sync</span>
+                  </button>
                 </div>
               </div>
 
@@ -2394,6 +2480,25 @@ export default function Contracts() {
               <div className={`relative z-10 bg-[rgba(255,255,255,0.4)] transition-all duration-300 ${
                 docLayoutTheme === "wide" ? "p-16 space-y-8" : "p-12 space-y-6"
               }`}>
+                {/* Last Modified & Author Indicator fetched from Database */}
+                {lastModifiedInfo && (
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-slate-50/90 border border-slate-200 rounded-2xl p-4 text-[10px] text-slate-600 font-sans gap-3 mb-6 shadow-xs z-50">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-indigo-500 shrink-0" />
+                      <div>
+                        <span className="font-bold text-slate-700 block text-right">آخر تعديل سحابي / Last Modified (Cloud)</span>
+                        <span className="font-mono bg-white border border-slate-200 px-2 py-0.5 rounded text-indigo-600 font-bold block text-left mt-0.5">{lastModifiedInfo.date}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-indigo-500 shrink-0" />
+                      <div>
+                        <span className="font-bold text-slate-700 block text-right">المؤلف والموثق سحابياً / Document Author</span>
+                        <span className="font-mono bg-white border border-slate-200 px-2 py-0.5 rounded text-indigo-600 font-bold block text-left mt-0.5">{lastModifiedInfo.author}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {/* INTERACTIVE CONTROLS BAR (PRINT HIDDEN) - Statuses, Compare Toggle, Auto-Bind */}
                 <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-8 border-b pb-4 border-zinc-100 print:hidden select-none bg-zinc-50 p-4 rounded-2xl border border-zinc-200">
                   {/* Status Lifecycle toggles */}
@@ -2894,16 +2999,25 @@ export default function Contracts() {
                       <img src={signatureImage} alt="Signature" className="h-10 object-contain" />
                       <button 
                         type="button"
-                        onClick={() => setSignatureImage(null)} 
-                        className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-bold text-xs hover:bg-rose-600 print:hidden shadow-md"
+                        onClick={() => {
+                          setSignatureImage(null);
+                          saveContractToFirebase(null);
+                        }} 
+                        className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-bold text-xs hover:bg-rose-600 print:hidden shadow-md cursor-pointer"
                       >
                         ×
                       </button>
                     </div>
                   ) : (
                     <SignaturePad 
-                      onSave={(dataUrl) => setSignatureImage(dataUrl)} 
-                      onClear={() => setSignatureImage(null)} 
+                      onSave={(dataUrl) => {
+                        setSignatureImage(dataUrl);
+                        saveContractToFirebase(dataUrl);
+                      }} 
+                      onClear={() => {
+                        setSignatureImage(null);
+                        saveContractToFirebase(null);
+                      }} 
                     />
                   )}
                 </div>
