@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import PayrollAudit from '@/src/components/PayrollAudit';
 import SaudiEosCalculator from "@/src/components/payroll/SaudiEosCalculator";
 import PayrollAiAssistant from "@/src/components/payroll/PayrollAiAssistant";
+import PayrollTemplates from "@/src/components/payroll/PayrollTemplates";
 import PayrollAttendanceSim from "@/src/components/payroll/PayrollAttendanceSim";
 import PayrollPortals from "@/src/components/payroll/PayrollPortals";
 import LedgerView from "@/src/components/payroll/LedgerView";
@@ -31,7 +32,8 @@ import {
   deleteDoc,
   doc, 
   serverTimestamp,
-  orderBy 
+  orderBy,
+  getDocs 
 } from "firebase/firestore";
 import { db } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
@@ -44,7 +46,7 @@ export default function Payroll() {
   const navigate = useNavigate();
   const location = useLocation();
   const { settings } = useSettings();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'employees' | 'runs' | 'attendance' | 'requests' | 'ai_assistant' | 'settlement' | 'audit' | 'ledger' | 'kpi'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'employees' | 'runs' | 'attendance' | 'requests' | 'ai_assistant' | 'settlement' | 'audit' | 'ledger' | 'kpi' | 'templates'>('dashboard');
   const [employees, setEmployees] = useState<any[]>([]);
   const [runs, setRuns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -149,6 +151,92 @@ export default function Payroll() {
         createdAt: serverTimestamp()
       });
 
+      // Fetch existing chart of accounts to find/create relevant accounts
+      const qAcc = query(collection(db, "chart_of_accounts"), where("authorUid", "==", user.uid));
+      const accSnap = await getDocs(qAcc);
+      const accountsList = accSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+
+      const findOrCreateAccount = async (code: string, nameAr: string, nameEn: string, type: string) => {
+        let acc = accountsList.find(a => a.accountCode === code);
+        if (!acc) {
+          const newDoc = await addDoc(collection(db, "chart_of_accounts"), {
+            accountCode: code,
+            nameAr,
+            nameEn,
+            type,
+            balanceHalalas: 0,
+            authorUid: user.uid,
+            createdAt: serverTimestamp()
+          });
+          acc = { id: newDoc.id, accountCode: code, nameAr, nameEn, type };
+        }
+        return acc;
+      };
+
+      const wageExpAcc = await findOrCreateAccount("510201", "مصاريف الرواتب والأجور", "Salaries & Wages Expense", "Expense");
+      const salPayableAcc = await findOrCreateAccount("210301", "رواتب مستحقة الدفع", "Salaries Payable", "Liability");
+      const gosiPayableAcc = await findOrCreateAccount("210401", "مستحقات التأمينات الاجتماعية (GOSI)", "GOSI Payable", "Liability");
+      const adminExpAcc = await findOrCreateAccount("510301", "مصاريف عمومية وإدارية", "General & Admin Expenses", "Expense");
+
+      const Gross = Math.round(simulationData.totalGross * 100);
+      const Net = Math.round(simulationData.totalNet * 100);
+      const GOSI = Math.round((simulationData.totalGosi || 0) * 100);
+      const otherDeductionsHalalas = Gross - Net - GOSI;
+
+      const lines = [
+        { 
+          accountId: wageExpAcc.id, 
+          accountCode: wageExpAcc.accountCode,
+          accountNameAr: wageExpAcc.nameAr,
+          accountNameEn: wageExpAcc.nameEn,
+          debitHalalas: Gross, 
+          creditHalalas: 0 
+        },
+        { 
+          accountId: salPayableAcc.id, 
+          accountCode: salPayableAcc.accountCode,
+          accountNameAr: salPayableAcc.nameAr,
+          accountNameEn: salPayableAcc.nameEn,
+          debitHalalas: 0, 
+          creditHalalas: Net 
+        }
+      ];
+
+      if (GOSI > 0) {
+        lines.push({ 
+          accountId: gosiPayableAcc.id, 
+          accountCode: gosiPayableAcc.accountCode,
+          accountNameAr: gosiPayableAcc.nameAr,
+          accountNameEn: gosiPayableAcc.nameEn,
+          debitHalalas: 0, 
+          creditHalalas: GOSI 
+        });
+      }
+
+      if (otherDeductionsHalalas > 0) {
+        lines.push({ 
+          accountId: adminExpAcc.id, 
+          accountCode: adminExpAcc.accountCode,
+          accountNameAr: adminExpAcc.nameAr,
+          accountNameEn: adminExpAcc.nameEn,
+          debitHalalas: 0, 
+          creditHalalas: otherDeductionsHalalas 
+        });
+      }
+
+      const entryNum = `JV-PR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      await addDoc(collection(db, "journal_entries"), {
+        entryNumber: entryNum,
+        date: `${simulationData.period}-28`,
+        descriptionAr: `توجيه قيد استحقاق مسير رواتب شهر ${simulationData.period} تلقائياً`,
+        descriptionEn: `Automated Accrual Booking for Payroll Period ${simulationData.period}`,
+        lines,
+        isBalanced: true,
+        sourceDoc: `Payroll Run ${docRef.id}`,
+        authorUid: user.uid,
+        createdAt: serverTimestamp()
+      });
+
       // Write to Anti-Concealment Audit Trail
       await addDoc(collection(db, "financial_transactions"), {
         userId: user.uid,
@@ -178,6 +266,9 @@ export default function Payroll() {
       name: '', position: '', department: '',
       baseSalaryHalalas: 0, housingAllowanceHalalas: 0, transportAllowanceHalalas: 0,
       otherDeductionsHalalas: 0,
+      nationality: 'سعودي',
+      absenceDays: 0,
+      hireDate: new Date().toISOString().split('T')[0],
       bank: '', iban: '',
       status: 'active',
       documents: []
@@ -189,6 +280,9 @@ export default function Payroll() {
     setEditingEmployee(emp);
     const docs = Array.isArray(emp.documents) ? emp.documents : [];
     setEditForm({ 
+      nationality: 'سعودي',
+      absenceDays: 0,
+      hireDate: emp.hireDate || new Date().toISOString().split('T')[0],
       ...emp, 
       documents: docs 
     });
@@ -250,6 +344,93 @@ export default function Payroll() {
 
   const downloadMudadSif = async (run: any) => {
     setSifValidateRun(run);
+  };
+
+  const disbursePayroll = async (run: any) => {
+    if (!user) return;
+    try {
+      const qAcc = query(collection(db, "chart_of_accounts"), where("authorUid", "==", user.uid));
+      const accSnap = await getDocs(qAcc);
+      const accountsList = accSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+
+      const findOrCreateAccount = async (code: string, nameAr: string, nameEn: string, type: string) => {
+        let acc = accountsList.find(a => a.accountCode === code);
+        if (!acc) {
+          const newDoc = await addDoc(collection(db, "chart_of_accounts"), {
+            accountCode: code,
+            nameAr,
+            nameEn,
+            type,
+            balanceHalalas: 0,
+            authorUid: user.uid,
+            createdAt: serverTimestamp()
+          });
+          acc = { id: newDoc.id, accountCode: code, nameAr, nameEn, type };
+        }
+        return acc;
+      };
+
+      const salPayableAcc = await findOrCreateAccount("210301", "رواتب مستحقة الدفع", "Salaries Payable", "Liability");
+      const bankAcc = await findOrCreateAccount("110101", "نقدية في البنك", "Cash in Bank", "Asset");
+
+      const Net = Math.round((run.totalNet || 0) * 100);
+
+      if (Net <= 0) {
+        toast.error("إجمالي الصافي غير صالح للصرف");
+        return;
+      }
+
+      const lines = [
+        { 
+          accountId: salPayableAcc.id, 
+          accountCode: salPayableAcc.accountCode,
+          accountNameAr: salPayableAcc.nameAr,
+          accountNameEn: salPayableAcc.nameEn,
+          debitHalalas: Net, 
+          creditHalalas: 0 
+        },
+        { 
+          accountId: bankAcc.id, 
+          accountCode: bankAcc.accountCode,
+          accountNameAr: bankAcc.nameAr,
+          accountNameEn: bankAcc.nameEn,
+          debitHalalas: 0, 
+          creditHalalas: Net 
+        }
+      ];
+
+      const entryNumber = `JV-PR-PAY-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      await addDoc(collection(db, "journal_entries"), {
+        entryNumber,
+        date: new Date().toISOString().split("T")[0],
+        descriptionAr: `قيد صرف رواتب الموظفين لشهر ${run.period} بنكياً`,
+        descriptionEn: `Automated bank disbursement for payroll period ${run.period}`,
+        lines,
+        isBalanced: true,
+        sourceDoc: `Payroll Payment ${run.id}`,
+        authorUid: user.uid,
+        createdAt: serverTimestamp()
+      });
+
+      await updateDoc(doc(db, "payroll_runs", run.id), {
+        isPaid: true,
+        logs: [
+          ...(run.logs || []),
+          {
+            action: "Bank Disbursement Posted",
+            user: user.email || user.uid,
+            timestamp: new Date().toISOString(),
+            note: `Posted disbursement entry: ${entryNumber}`
+          }
+        ]
+      });
+
+      toast.success("تم صرف رواتب المسير بنجاح وتوليد قيد الصرف التلقائي!");
+    } catch (e) {
+      console.error(e);
+      toast.error("حدث خطأ أثناء معالجة صرف الرواتب");
+    }
   };
 
   const toggleLock = async (run: any) => {
@@ -561,6 +742,7 @@ export default function Payroll() {
       items: [
         { id: 'dashboard', label: t("payroll.tabs.dashboard", "لوحة معلومات الرواتب"), icon: Activity, desc: "مؤشرات وتكلفة الرواتب العامة", badge: null },
         { id: 'runs', label: t("payroll.tabs.runs", "مسيرات الرواتب (Paychecks)"), icon: Calculator, desc: "معالجة واعتماد وتصدير ملفات WPS / SIF", badge: runs.length > 0 ? runs.length : null },
+        { id: 'templates', label: "قوالب الرواتب (Templates)", icon: ClipboardList, desc: "تحديد البدلات والاستقطاعات المتكررة", badge: "جديد", badgeColor: "bg-emerald-50 text-emerald-700" },
         { id: 'ledger', label: "سجل القيود المزدوجة", icon: BookOpen, desc: "توجيه الرواتب للحسابات وقيود الميزانية", badge: "جديد", badgeColor: "bg-blue-50 text-blue-700" },
         { id: 'audit', label: t("payroll.tabs.audit", "سجل الامتثال للرواتب"), icon: ShieldCheck, desc: "سجلات تطابق الأجور والـWPS", badge: null },
       ]
@@ -972,6 +1154,7 @@ export default function Payroll() {
                       <div className="flex flex-col gap-1">
                         <span className="text-[10px] font-bold text-zinc-600">بدلات: {(((emp.housingAllowanceHalalas || 0) + (emp.transportAllowanceHalalas || 0)) / 100).toLocaleString()}</span>
                         <span className="text-[10px] font-bold text-rose-500">خصومات: {((emp.otherDeductionsHalalas || 0) / 100).toLocaleString()}</span>
+                        <span className="text-[10px] font-bold text-zinc-500">جنسية: {emp.nationality || "سعودي"} | غياب: {emp.absenceDays || 0} يوم</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -1301,6 +1484,15 @@ export default function Payroll() {
                       <button onClick={() => downloadWps(run.id)} className="flex items-center gap-1.5 bg-zinc-900 text-white px-4 py-2.5 text-xs font-black rounded-xl hover:bg-zinc-850 transition shadow-sm">
                         <Download className="w-3.5 h-3.5" /> تنزيل ملف أجور WPS
                       </button>
+                      {run.isPaid ? (
+                        <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-4 py-2.5 text-xs font-black rounded-xl border border-emerald-200">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> تم الصرف والتحويل بنجاح
+                        </span>
+                      ) : (
+                        <button onClick={() => disbursePayroll(run)} className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2.5 text-xs font-black rounded-xl hover:bg-blue-700 transition shadow-sm">
+                          <CreditCard className="w-3.5 h-3.5" /> صرف ودفع الرواتب بنكياً
+                        </button>
+                      )}
                     </div>
 
                     {/* Reports & Auditing Right */}
@@ -1422,7 +1614,7 @@ export default function Payroll() {
       {/* SAUDI ARABIA EOS CALCULATOR TAB */}
       {activeTab === 'settlement' && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-          <SaudiEosCalculator />
+          <SaudiEosCalculator employees={employees} user={user} />
         </motion.div>
       )}
 
@@ -1442,6 +1634,12 @@ export default function Payroll() {
       {activeTab === 'kpi' && (
          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
            <KpiDashboard employees={employees} />
+         </motion.div>
+      )}
+
+      {activeTab === 'templates' && (
+         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+           <PayrollTemplates />
          </motion.div>
       )}
 
@@ -1520,6 +1718,24 @@ export default function Payroll() {
                       </select>
                     </div>
                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     <div className="space-y-2">
+                       <label className="text-xs font-bold text-zinc-500 uppercase">الجنسية (التأمينات GOSI)</label>
+                       <select className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all" value={editForm.nationality || 'سعودي'} onChange={e => setEditForm({...editForm, nationality: e.target.value})}>
+                         <option value="سعودي">سعودي (Saudi) - تأمينات 9.75%</option>
+                         <option value="غير سعودي">غير سعودي (Expat) - تأمينات 2%</option>
+                       </select>
+                     </div>
+                     <div className="space-y-2">
+                       <label className="text-xs font-bold text-zinc-500 uppercase">أيام الغياب</label>
+                       <input type="number" min="0" max="31" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all" value={editForm.absenceDays || 0} onChange={e => setEditForm({...editForm, absenceDays: Number(e.target.value)})} />
+                     </div>
+                     <div className="space-y-2">
+                       <label className="text-xs font-bold text-zinc-500 uppercase">تاريخ التعيين/المباشرة</label>
+                       <input type="date" className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-primary/20 outline-none transition-all" value={editForm.hireDate || ''} onChange={e => setEditForm({...editForm, hireDate: e.target.value})} />
+                     </div>
+                   </div>
 
                   <div className="md:col-span-2 pt-6 border-t border-zinc-100">
                     <div className="flex items-center justify-between mb-4">
@@ -1786,8 +2002,9 @@ export default function Payroll() {
                     <tr className="border-b border-zinc-200 text-zinc-400 font-bold text-[10px] uppercase">
                       <th className="pb-3 text-right">الموظف</th>
                       <th className="pb-3">الأساسي</th>
-                      <th className="pb-3">البدلات</th>
-                      <th className="pb-3">الخصومات (تأمينات)</th>
+                      <th className="pb-3">البدلات (سكن/نقل)</th>
+                      <th className="pb-3">التأمينات (GOSI)</th>
+                      <th className="pb-3">خصم الغياب / أخرى</th>
                       <th className="pb-3">الصافي</th>
                     </tr>
                   </thead>
@@ -1796,12 +2013,24 @@ export default function Payroll() {
                       <tr key={entry.employeeId}>
                         <td className="py-4 font-bold text-zinc-900 flex flex-col gap-0.5">
                           <span>{entry.employeeName}</span>
-                          <span className="text-xs text-zinc-400 font-medium">{entry.position}</span>
+                          <span className="text-xs text-zinc-400 font-medium">{entry.position} (جنسية: {entry.nationality})</span>
                           <span className="text-[9px] font-mono text-zinc-400 bg-white border px-1.5 py-0.5 rounded w-max mt-1">{entry.bank}</span>
                         </td>
                         <td className="py-4 font-bold text-zinc-700">{entry.basic.toLocaleString()}</td>
-                        <td className="py-4 font-bold text-blue-600">+{entry.allowances.toLocaleString()}</td>
-                        <td className="py-4 font-black text-rose-500">-{entry.deductions.toLocaleString()}</td>
+                        <td className="py-4 font-bold text-blue-600">
+                          <div>+{entry.allowances.toLocaleString()}</div>
+                          <div className="text-[10px] font-bold text-zinc-400">سكن: {entry.housing || 0} | نقل: {entry.transport || 0}</div>
+                        </td>
+                        <td className="py-4 font-black text-amber-600">-{entry.gosiDeduction?.toLocaleString()}</td>
+                        <td className="py-4 font-black text-rose-500">
+                          <div>-{(entry.absenceDeduction + entry.otherDeductions + entry.advanceDeductions).toLocaleString()}</div>
+                          {(entry.absenceDays > 0 || entry.advanceDeductions > 0) && (
+                            <div className="text-[10px] font-medium text-zinc-400">
+                              {entry.absenceDays > 0 && <span>غياب {entry.absenceDays} أيام ({entry.absenceDeduction} ر.س)</span>}
+                              {entry.advanceDeductions > 0 && <span> | سلف {entry.advanceDeductions} ر.س</span>}
+                            </div>
+                          )}
+                        </td>
                         <td className="py-4 font-black text-emerald-600">{entry.netPay.toLocaleString()} ر.س</td>
                       </tr>
                     ))}

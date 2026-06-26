@@ -1,11 +1,97 @@
-import React, { useMemo } from 'react';
-import { Target, TrendingUp, CheckCircle2, Clock } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Target, TrendingUp, CheckCircle2, Clock, AlertTriangle, Calendar, ShieldCheck, Check, Activity, Sparkles } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { toast } from 'sonner';
 
 export default function KpiDashboard({ employees }: { employees: any[] }) {
+  const [runningWpsAudit, setRunningWpsAudit] = useState(false);
+
   const activeEmployees = useMemo(() => {
     return (employees || []).filter(e => e.status === "active" || e.status === "نشط");
   }, [employees]);
+
+  // Days until payroll deadline (27th of the month)
+  const daysUntilPayroll = useMemo(() => {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
+    
+    let dueDate = new Date(currentYear, currentMonth, 27);
+    if (today.getDate() > 27) {
+      dueDate = new Date(currentYear, currentMonth + 1, 27);
+    }
+    
+    const diffTime = dueDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  }, []);
+
+  // WPS Compliance Checklist Calculations
+  const wpsComplianceDetails = useMemo(() => {
+    const total = activeEmployees.length;
+    if (total === 0) {
+      return {
+        ibanCount: 0,
+        ibanPercent: 0,
+        salaryFloorCount: 0,
+        salaryFloorPercent: 0,
+        overallPercent: 100,
+        issues: []
+      };
+    }
+    
+    // 1. Check for valid Saudi IBAN (prefixed with 'SA' and usually 24 characters)
+    const withIban = activeEmployees.filter(emp => {
+      const iban = (emp.iban || '').trim().toUpperCase();
+      return iban.startsWith('SA') && iban.length >= 15;
+    });
+    const ibanCount = withIban.length;
+    const ibanPercent = Math.round((ibanCount / total) * 100);
+    
+    // 2. Check if total salary (base + housing + transport - other deductions) >= 3000 SAR (standard GOSI/WPS floor)
+    const withValidSalary = activeEmployees.filter(emp => {
+      const base = (emp.baseSalaryHalalas || 0) / 100;
+      const housing = (emp.housingAllowanceHalalas || 0) / 100;
+      const transport = (emp.transportAllowanceHalalas || 0) / 100;
+      const deductions = (emp.otherDeductionsHalalas || 0) / 100;
+      const net = base + housing + transport - deductions;
+      return net >= 3000;
+    });
+    const salaryFloorCount = withValidSalary.length;
+    const salaryFloorPercent = Math.round((salaryFloorCount / total) * 100);
+    
+    // Issues list
+    const issues: string[] = [];
+    if (ibanCount < total) {
+      issues.push(`يوجد عدد ${total - ibanCount} موظفاً بدون رقم حساب بنكي سعودي (IBAN) مكتمل (يبدأ بـ SA).`);
+    }
+    if (salaryFloorCount < total) {
+      issues.push(`يوجد عدد ${total - salaryFloorCount} موظفاً يقل صافي أجرهم الإجمالي عن 3,000 ر.س (الحد الأدنى للتسجيل المحمي).`);
+    }
+    
+    const overallPercent = Math.round((ibanPercent + salaryFloorPercent) / 2);
+    
+    return {
+      ibanCount,
+      ibanPercent,
+      salaryFloorCount,
+      salaryFloorPercent,
+      overallPercent,
+      issues
+    };
+  }, [activeEmployees]);
+
+  const handleWpsAudit = () => {
+    setRunningWpsAudit(true);
+    setTimeout(() => {
+      setRunningWpsAudit(false);
+      if (wpsComplianceDetails.issues.length === 0) {
+        toast.success("✅ تم الانتهاء من فحص نظام حماية الأجور (WPS): الامتثال 100% متطابق وجاهز للصرف البنكي!");
+      } else {
+        toast.warning(`⚠️ فحص حماية الأجور (WPS): تم العثور على ${wpsComplianceDetails.issues.length} تنبيهات تتطلب المعالجة العاجلة لضمان عدم تأخر الصرف.`);
+      }
+    }, 1200);
+  };
 
   // 1. Dynamic Performance Rate (starts at 100%, penalizes for late & absences, increases for overtime)
   const avgPerf = useMemo(() => {
@@ -71,6 +157,121 @@ export default function KpiDashboard({ employees }: { employees: any[] }) {
             <h2 className="text-2xl font-black tracking-tight">مؤشرات الأداء وتحليل الكفاءة</h2>
           </div>
           <p className="text-zinc-400 text-sm font-medium">مراقبة الأداء، الحضور، وتأثيرهما المباشر على الأجور والمكافآت.</p>
+        </div>
+      </div>
+
+      {/* WPS Compliance & Salary Release Countdown Widget */}
+      <div className="bg-gradient-to-br from-indigo-950 via-zinc-900 to-zinc-950 rounded-[2.5rem] p-8 text-white shadow-xl relative overflow-hidden border border-zinc-800">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+        
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+          {/* Section 1: Countdown (4 cols) */}
+          <div className="lg:col-span-4 bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10 space-y-4 flex flex-col justify-between">
+            <div className="flex justify-between items-start">
+              <div className="space-y-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">موعد مسير الرواتب القادم</span>
+                <h4 className="text-base font-black text-white">إطلاق مسير شهر {new Date().toLocaleDateString('ar-SA', { month: 'long' })}</h4>
+              </div>
+              <div className="w-10 h-10 bg-indigo-500/20 text-indigo-300 rounded-xl flex items-center justify-center border border-indigo-500/30 shrink-0">
+                <Calendar className="w-5 h-5" />
+              </div>
+            </div>
+            
+            <div className="py-2 flex items-baseline gap-2">
+              <span className="text-5xl font-extrabold tracking-tight font-mono text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-emerald-300">
+                {daysUntilPayroll}
+              </span>
+              <span className="text-xs font-black text-zinc-300">يوم متبقي على تاريخ الصرف (27)</span>
+            </div>
+
+            <div className="space-y-2 pt-2 border-t border-white/5">
+              <div className="flex justify-between text-xs text-zinc-400">
+                <span>تاريخ الاستحقاق التقريبي:</span>
+                <span className="font-bold text-white">27 {new Date().toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' })}</span>
+              </div>
+              <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-1000" 
+                  style={{ width: `${Math.max(10, Math.min(100, (30 - daysUntilPayroll) * 3.3))}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: WPS Compliance (8 cols) */}
+          <div className="lg:col-span-8 space-y-5 flex flex-col justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                  <h3 className="text-lg font-black text-white">مؤشر الامتثال لنظام حماية الأجور (WPS)</h3>
+                </div>
+                <p className="text-xs text-zinc-400">تدقيق فوري لمطابقة كشوف الأجور مع متطلبات وزارة الموارد البشرية والتنمية الاجتماعية.</p>
+              </div>
+              
+              <button 
+                onClick={handleWpsAudit}
+                disabled={runningWpsAudit}
+                className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black text-xs rounded-xl shadow-lg transition-all duration-300 flex items-center gap-2 shrink-0 disabled:opacity-50 cursor-pointer"
+              >
+                {runningWpsAudit ? (
+                  <>
+                    <Activity className="w-4 h-4 animate-spin" /> جاري التدقيق والتحليل...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" /> فحص جاهزية WPS
+                  </>
+                )}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-white/5 rounded-2xl p-4 border border-white/10 space-y-1.5">
+                <span className="text-[10px] text-zinc-400 block">نسبة الامتثال الإجمالية</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-xl font-black font-mono text-emerald-400">{wpsComplianceDetails.overallPercent}%</span>
+                  <span className="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded-full font-bold">WPS Safe</span>
+                </div>
+              </div>
+
+              <div className="bg-white/5 rounded-2xl p-4 border border-white/10 space-y-1.5">
+                <span className="text-[10px] text-zinc-400 block">اكتمال الحسابات البنكية (IBAN)</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-xl font-black font-mono text-white">{wpsComplianceDetails.ibanCount} / {activeEmployees.length}</span>
+                  <span className="text-[9px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-1.5 py-0.5 rounded-full font-bold">{wpsComplianceDetails.ibanPercent}% مكتمل</span>
+                </div>
+              </div>
+
+              <div className="bg-white/5 rounded-2xl p-4 border border-white/10 space-y-1.5">
+                <span className="text-[10px] text-zinc-400 block">الحد الأدنى للأجور (3K)</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-xl font-black font-mono text-white">{wpsComplianceDetails.salaryFloorCount} / {activeEmployees.length}</span>
+                  <span className="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.5 rounded-full font-bold">{wpsComplianceDetails.salaryFloorPercent}% ممتثل</span>
+                </div>
+              </div>
+            </div>
+
+            {wpsComplianceDetails.issues.length > 0 ? (
+              <div className="bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-2xl p-4 flex gap-3 items-start">
+                <AlertTriangle className="w-5 h-5 shrink-0 text-amber-400 mt-0.5" />
+                <div className="space-y-1">
+                  <h5 className="text-xs font-black">ملاحظات حيوية للامتثال قبل رفع المسير:</h5>
+                  <ul className="list-disc pl-1 pr-4 space-y-0.5 text-[10px] text-zinc-300">
+                    {wpsComplianceDetails.issues.map((issue, idx) => (
+                      <li key={idx} className="font-medium leading-relaxed">{issue}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 rounded-2xl p-3.5 flex gap-3 items-center">
+                <Check className="w-4 h-4 shrink-0 text-emerald-400" />
+                <p className="text-[11px] font-bold leading-relaxed">تهانينا! كافة ملفات وسجلات الموظفين النشطين متوافقة بالكامل مع قواعد نظام حماية الأجور (WPS) والحد الأدنى للرواتب.</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

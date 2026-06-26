@@ -198,6 +198,75 @@
         "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
         "createdAt": { "type": "string", "format": "date-time" }
       }
+    },
+    "CostCenter": {
+      "title": "CostCenter",
+      "description": "Hierarchical Cost Center (Project, Branch, Department)",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "code": { "type": "string" },
+        "nameAr": { "type": "string" },
+        "nameEn": { "type": "string" },
+        "type": { "type": "string", "enum": ["Project", "Branch", "Department", "Other"] },
+        "parentId": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
+    },
+    "FixedAsset": {
+      "title": "FixedAsset",
+      "description": "Fixed Asset for Depreciation Management",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "assetCode": { "type": "string" },
+        "purchaseDate": { "type": "string" },
+        "historicalValueHalalas": { "type": "integer" },
+        "depreciationRate": { "type": "number" },
+        "depreciationMethod": { "type": "string", "enum": ["straight_line", "diminishing_balance"] },
+        "accumulatedDepreciationHalalas": { "type": "integer" },
+        "currentBookValueHalalas": { "type": "integer" },
+        "status": { "type": "string", "enum": ["active", "disposed"] },
+        "createdAt": { "type": "string" },
+        "lastDepreciationDate": { "type": "string" }
+      }
+    },
+    "Voucher": {
+      "title": "Voucher",
+      "description": "Direct receipt or payment voucher with multi-currency",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "number": { "type": "string" },
+        "type": { "type": "string", "enum": ["receipt", "payment"] },
+        "date": { "type": "string" },
+        "amount": { "type": "number" },
+        "currency": { "type": "string" },
+        "exchangeRate": { "type": "number" },
+        "amountSar": { "type": "number" },
+        "accountFromId": { "type": "string" },
+        "accountToId": { "type": "string" },
+        "descriptionAr": { "type": "string" },
+        "descriptionEn": { "type": "string" },
+        "status": { "type": "string", "enum": ["posted", "draft"] },
+        "createdAt": { "type": "string" }
+      }
+    },
+    "PayrollTemplate": {
+      "title": "PayrollTemplate",
+      "description": "Saved payroll template for an employee group",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "targetDepartment": { "type": "string" },
+        "defaultBaseSalaryHalalas": { "type": "integer" },
+        "defaultHousingAllowanceHalalas": { "type": "integer" },
+        "defaultTransportAllowanceHalalas": { "type": "integer" },
+        "gosiNationalityRule": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "firestore": {
@@ -214,6 +283,13 @@
     "shipments/{shipmentId}/events": { "schema": "ShipmentEvent", "description": "Shipment events" },
     "financial_transactions": { "schema": "FinancialTransaction", "description": "Anti-Concealment Audit Trail" },
     "leave_requests": { "schema": "LeaveRequest", "description": "Employee leave requests" },
-    "advance_requests": { "schema": "AdvanceRequest", "description": "Salary advance requests" }
+    "advance_requests": { "schema": "AdvanceRequest", "description": "Salary advance requests" },
+    "cost_centers": { "schema": "CostCenter", "description": "Hierarchical cost centers" },
+    "fixed_assets": { "schema": "FixedAsset", "description": "Fixed Assets" },
+    "chart_of_accounts": { "schema": "object", "description": "Chart of accounts" },
+    "journal_entries": { "schema": "object", "description": "General journal entries" },
+    "vouchers": { "schema": "Voucher", "description": "Receipt & Payment Vouchers" },
+    "bank_reconciliations": { "schema": "object", "description": "Bank Reconciliation lists" },
+    "payroll_templates": { "schema": "PayrollTemplate", "description": "Saved payroll templates for employee groups" }
   }
 }

@@ -65,6 +65,7 @@ import { useUser } from "@/src/contexts/UserContext";
 import { useTranslation } from "react-i18next";
 
 import PayrollComplianceWidget from "@/src/components/PayrollComplianceWidget";
+import { toast } from "sonner";
 
 interface Client {
   id: string;
@@ -102,6 +103,9 @@ interface Client {
     unitPrice: number;
     taxRate: number;
   }>;
+  leadScore?: "Hot" | "Warm" | "Cold";
+  leadScoreReason?: string;
+  leadScoreDate?: string;
   userId: string;
 }
 
@@ -127,6 +131,7 @@ export default function CRM() {
   const [activeTab, setActiveTab] = useState<"details" | "history" | "shipments" | "invoices">("details");
   const [mainTab, setMainTab] = useState<'crm' | 'identity'>('crm');
   const [identityTab, setIdentityTab] = useState('companies');
+  const [scoringInProgress, setScoringInProgress] = useState(false);
 
   const identityTabsArr = [
     { id: 'companies', label: 'الشركات', icon: Building },
@@ -1550,6 +1555,92 @@ export default function CRM() {
                         </button>
                     </div>
 
+                    {editingClient.id && (
+                      <div className="py-4 border-t border-zinc-100 space-y-3">
+                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+                          <Zap className="w-3.5 h-3.5 text-amber-500" />
+                          تقييم أولوية العميل بالذكاء الاصطناعي (AI Lead Scoring)
+                        </label>
+                        <p className="text-[11px] text-zinc-400 font-bold leading-relaxed">
+                          يقوم محرك الذكاء الاصطناعي بتحليل القطاع، وحجم الشركة، وقيمة الصفقة، وتاريخ التواصل لتقدير أولوية الصفقة بدقة وتوجيه فريق المبيعات.
+                        </p>
+
+                        {editingClient.leadScore && (
+                          <div className={cn(
+                            "p-4 rounded-2xl border flex flex-col gap-2 text-right",
+                            editingClient.leadScore === "Hot" ? "bg-orange-50/70 border-orange-100 text-orange-950" :
+                            editingClient.leadScore === "Warm" ? "bg-yellow-50/70 border-yellow-100 text-yellow-950" :
+                            "bg-blue-50/70 border-blue-100 text-blue-950"
+                          )}>
+                            <div className="flex justify-between items-center border-b pb-2 border-zinc-200/40">
+                              <span className="text-[11px] font-black flex items-center gap-1.5">
+                                <Zap className={cn("w-4 h-4", editingClient.leadScore === 'Hot' ? 'text-orange-500' : editingClient.leadScore === 'Warm' ? 'text-amber-500' : 'text-blue-500')} />
+                                أولوية الفرصة:{" "}
+                                <span className="font-black underline decoration-2">
+                                  {editingClient.leadScore === "Hot" ? "ساخن (أولوية قصوى)" : editingClient.leadScore === "Warm" ? "دافئ (أولوية متوسطة)" : "بارد (أولوية منخفضة)"}
+                                </span>
+                              </span>
+                              {editingClient.leadScoreDate && (
+                                <span className="text-[9px] opacity-60 font-mono">
+                                  تاريخ التقييم: {new Date(editingClient.leadScoreDate).toLocaleDateString('ar-EG')}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs font-semibold leading-relaxed">
+                              {editingClient.leadScoreReason}
+                            </p>
+                          </div>
+                        )}
+
+                        <button
+                          type="button"
+                          disabled={scoringInProgress}
+                          onClick={async () => {
+                            if (!editingClient.id) return;
+                            setScoringInProgress(true);
+                            try {
+                              const res = await fetch(`/api/leads/${editingClient.id}/score`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" }
+                              });
+                              if (!res.ok) {
+                                const errData = await res.json();
+                                throw new Error(errData.error || "Failed to score lead");
+                              }
+                              const scored = await res.json();
+                              setEditingClient({
+                                ...editingClient,
+                                leadScore: scored.score,
+                                leadScoreReason: scored.reason,
+                                leadScoreDate: scored.date
+                              });
+                              // Update local clients state
+                              setClients(prev => prev.map(c => c.id === editingClient.id ? {
+                                ...c,
+                                leadScore: scored.score,
+                                leadScoreReason: scored.reason,
+                                leadScoreDate: scored.date
+                              } : c));
+                              toast.success("تم تقييم الفرصة البيعية بنجاح بواسطة الذكاء الاصطناعي! 🚀");
+                            } catch (err: any) {
+                              toast.error(err.message || "عذراً، فشل احتساب تقييم الفرصة بالذكاء الاصطناعي.");
+                            } finally {
+                              setScoringInProgress(false);
+                            }
+                          }}
+                          className={cn(
+                            "w-full flex items-center justify-center gap-3 px-6 py-4 border rounded-[1.5rem] font-black text-sm transition-all shadow-sm cursor-pointer",
+                            scoringInProgress 
+                              ? "bg-zinc-100 text-zinc-400 border-zinc-200 animate-pulse" 
+                              : "bg-amber-500/10 text-amber-700 border-amber-500/20 hover:bg-amber-500/20"
+                          )}
+                        >
+                          <Zap className={cn("w-5 h-5", scoringInProgress ? "animate-spin" : "text-amber-500")} />
+                          <span>{scoringInProgress ? "جاري تحليل البيانات واحتساب الأولوية بالذكاء الاصطناعي..." : "تحديث التقييم بالذكاء الاصطناعي (AI Score Lead)"}</span>
+                        </button>
+                      </div>
+                    )}
+
                     <div className="pt-6 border-t border-zinc-100 flex gap-4 mt-auto">
                       <button
                         type="submit"
@@ -2038,7 +2129,20 @@ function PipelineCard({ client, provided, snapshot, onClick, onStatusChange }: a
         </div>
       </div>
 
-      <h4 className="font-black text-zinc-900 text-sm mb-1">{client.name}</h4>
+      <div className="flex justify-between items-center gap-2 mb-1">
+        <h4 className="font-black text-zinc-900 text-sm">{client.name}</h4>
+        {client.leadScore && (
+          <span className={cn(
+            "text-[9px] font-black px-2 py-0.5 rounded-full border flex items-center gap-1 shrink-0 shadow-sm",
+            client.leadScore === "Hot" ? "bg-orange-50 text-orange-600 border-orange-100" :
+            client.leadScore === "Warm" ? "bg-yellow-50 text-yellow-600 border-yellow-100" :
+            "bg-blue-50 text-blue-600 border-blue-100"
+          )}>
+            <Zap className={cn("w-2.5 h-2.5", client.leadScore === 'Hot' ? 'text-orange-500 animate-pulse' : client.leadScore === 'Warm' ? 'text-amber-500' : 'text-blue-500')} />
+            {client.leadScore === "Hot" ? "ساخن" : client.leadScore === "Warm" ? "دافئ" : "بارد"}
+          </span>
+        )}
+      </div>
       <div className="flex flex-col gap-2">
         {client.contactJobTitle && (
           <p className="text-[11px] text-zinc-500 font-bold flex items-center gap-1.5 capitalize mt-1 border-b border-zinc-50 pb-1.5">
@@ -2141,6 +2245,21 @@ function PipelineCard({ client, provided, snapshot, onClick, onStatusChange }: a
             {!notesExpanded && client.notes.length > 50 && (
               <span className="text-[8px] font-black text-yellow-600/50 uppercase tracking-tighter mt-1 block">Click to read more...</span>
             )}
+          </div>
+        )}
+
+        {client.leadScoreReason && (
+          <div className={cn(
+            "mt-2 border rounded-xl p-3 text-[10px] leading-relaxed font-semibold text-right",
+            client.leadScore === "Hot" ? "bg-orange-50/40 border-orange-100 text-orange-950" :
+            client.leadScore === "Warm" ? "bg-yellow-50/40 border-yellow-100 text-yellow-950" :
+            "bg-blue-50/40 border-blue-100 text-blue-950"
+          )}>
+            <div className="flex items-center gap-1 mb-1 text-[9px] font-black justify-start">
+              <Zap className={cn("w-3 h-3 shrink-0", client.leadScore === 'Hot' ? 'text-orange-500' : client.leadScore === 'Warm' ? 'text-amber-500' : 'text-blue-500')} />
+              <span>توجيه المبيعات بالذكاء الاصطناعي:</span>
+            </div>
+            <p className="opacity-90">{client.leadScoreReason}</p>
           </div>
         )}
       </div>

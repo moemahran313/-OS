@@ -45,11 +45,22 @@ export class PayrollService {
           }
       });
 
-      // GOSI deduction (9%) computed legally on basic + housing + transport (base contract package), NOT including variable overtime or bonuses
-      const gosiDeductionHalalas = Math.round(basePackageHalalas * 0.09);
+      // Nationality check for GOSI calculation
+      const isSaudi = !e.nationality || 
+        e.nationality.toString().toLowerCase().includes("saud") || 
+        e.nationality.toString().includes("سعودي");
 
-      // Total deductions (GOSI + other/custom manager deductions + advances)
-      const deductionsHalalas = gosiDeductionHalalas + (e.otherDeductionsHalalas || 0) + advanceDeductionHalalas;
+      // GOSI deduction computed legally on (basic + housing)
+      const gosiBaseHalalas = (e.baseSalaryHalalas || 0) + (e.housingAllowanceHalalas || 0);
+      const gosiRate = isSaudi ? 0.0975 : 0.02; // 9.75% for Saudi, 2% for Non-Saudi
+      const gosiDeductionHalalas = Math.round(gosiBaseHalalas * gosiRate);
+
+      // Absence deduction calculated as (Basic Salary / 30) * absenceDays
+      const absenceDays = Number(e.absenceDays || 0);
+      const absenceDeductionHalalas = Math.round(((e.baseSalaryHalalas || 0) / 30) * absenceDays);
+
+      // Total deductions (GOSI + absence + other/custom manager deductions + advances)
+      const deductionsHalalas = gosiDeductionHalalas + absenceDeductionHalalas + (e.otherDeductionsHalalas || 0) + advanceDeductionHalalas;
       const netHalalas = grossHalalas - deductionsHalalas;
 
       return {
@@ -59,13 +70,25 @@ export class PayrollService {
         bank: e.bank,
         gross: grossHalalas / 100,
         basic: (e.baseSalaryHalalas || 0) / 100,
+        housing: (e.housingAllowanceHalalas || 0) / 100,
+        transport: (e.transportAllowanceHalalas || 0) / 100,
         allowances: (grossHalalas - (e.baseSalaryHalalas || 0)) / 100,
-        deductions: deductionsHalalas / 100,
+        gosiDeduction: gosiDeductionHalalas / 100,
+        absenceDeduction: absenceDeductionHalalas / 100,
+        otherDeductions: (e.otherDeductionsHalalas || 0) / 100,
         advanceDeductions: advanceDeductionHalalas / 100,
         netPay: netHalalas / 100,
+        deductions: deductionsHalalas / 100,
         status: "pending_approval",
+        nationality: isSaudi ? "سعودي" : "غير سعودي",
+        absenceDays: absenceDays,
       };
     });
+
+    const totalGosi = payrollEntries.reduce((acc, p) => acc + (p.gosiDeduction || 0), 0);
+    const totalAbsence = payrollEntries.reduce((acc, p) => acc + (p.absenceDeduction || 0), 0);
+    const totalOtherDeductions = payrollEntries.reduce((acc, p) => acc + (p.otherDeductions || 0), 0);
+    const totalAdvanceDeductions = payrollEntries.reduce((acc, p) => acc + (p.advanceDeductions || 0), 0);
 
     return {
       id: `pr_${Date.now()}`,
@@ -73,6 +96,10 @@ export class PayrollService {
       totalGross: payrollEntries.reduce((acc, p) => acc + p.basic + p.allowances, 0),
       totalNet: payrollEntries.reduce((acc, p) => acc + p.netPay, 0),
       totalDeductions: payrollEntries.reduce((acc, p) => acc + p.deductions, 0),
+      totalGosi,
+      totalAbsence,
+      totalOtherDeductions,
+      totalAdvanceDeductions,
       status: "simulated",
       entries: payrollEntries,
     };

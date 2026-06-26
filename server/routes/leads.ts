@@ -3,6 +3,7 @@ import { authenticate } from "../middleware/auth.js";
 import { logAudit } from "../services/utils.js";
 import { db } from "../services/firebase.js";
 import { executeWebhooks } from "../services/webhooks.js";
+import { GoogleGenAI, Type } from "@google/genai";
 
 const router = Router();
 
@@ -76,6 +77,108 @@ router.put("/:id", authenticate, async (req: any, res) => {
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/:id/score", authenticate, async (req: any, res) => {
+  try {
+    const leadId = req.params.id;
+    const leadDoc = await db.collection("leads").doc(leadId).get();
+    
+    if (!leadDoc.exists) {
+      return res.status(404).json({ error: "Lead not found" });
+    }
+    
+    const leadData = leadDoc.data();
+    if (leadData?.userId !== req.user.uid) {
+      return res.status(403).json({ error: "Unauthorized access to this lead" });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(400).json({ error: "مفتاح Gemini API غير متاح في إعدادات النظام." });
+    }
+
+    const ai = new GoogleGenAI({
+      apiKey: apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        }
+      }
+    });
+
+    const prompt = `Analyze this sales lead and assign a lead priority score:
+Lead Name: ${leadData.name || "N/A"}
+Company: ${leadData.company || "N/A"}
+Industry: ${leadData.industry || "N/A"}
+Company Size: ${leadData.companySize || "N/A"}
+Expected Deal Value: ${leadData.value || 0} SAR
+Conversion Probability: ${leadData.conversionProbability || 0}%
+Compliance Risk Level: ${leadData.complianceRisk || "low"}
+Strategic Notes: ${leadData.notes || "N/A"}
+Interaction/History Logs: ${JSON.stringify(leadData.history || [])}
+
+Provide:
+1. leadScore: Must be strictly one of "Hot" or "Warm" or "Cold"
+2. leadScoreReason: A short, professional explanation (max 3 sentences) in Arabic (عربي) detailing why this score was assigned and offering actionable next steps.`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            leadScore: {
+              type: Type.STRING,
+              description: "Strictly one of 'Hot', 'Warm', or 'Cold'",
+            },
+            leadScoreReason: {
+              type: Type.STRING,
+              description: "Short reason and strategic sales advice in Arabic.",
+            }
+          },
+          required: ["leadScore", "leadScoreReason"]
+        }
+      }
+    });
+
+    const resultText = response.text;
+    if (!resultText) {
+      throw new Error("No response from AI lead scoring engine.");
+    }
+
+    const parsed = JSON.parse(resultText);
+    const score = parsed.leadScore || "Warm";
+    const reason = parsed.leadScoreReason || "لا يوجد مبرر كافي.";
+
+    // Append to lead history
+    const newHistoryItem = {
+      id: `h_ai_${Date.now()}`,
+      date: new Date().toISOString(),
+      action: "تقييم الذكاء الاصطناعي",
+      details: `تم تقييم الفرصة البيعية كـ (${score}) بناءً على تحليل البيانات. السبب: ${reason}`
+    };
+
+    const updatedHistory = [newHistoryItem, ...(leadData.history || [])];
+
+    const updatePayload = {
+      leadScore: score,
+      leadScoreReason: reason,
+      leadScoreDate: new Date().toISOString(),
+      history: updatedHistory
+    };
+
+    await db.collection("leads").doc(leadId).update(updatePayload);
+
+    logAudit("CRM", { action: "AI Lead Scoring", id: leadId }, { score, reason }, req);
+
+    res.json({ id: leadId, score, reason, date: updatePayload.leadScoreDate });
+  } catch (err: any) {
+    console.error("AI Lead scoring failed:", err);
+    res.status(500).json({ error: err.message || "Failed to score lead with AI" });
   }
 });
 

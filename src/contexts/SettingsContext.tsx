@@ -34,6 +34,11 @@ export interface Settings {
   madaTerminalId?: string;
   applePayMerchantId?: string;
   applePayCert?: string;
+  paytabsProfileId?: string;
+  paytabsServerKey?: string;
+  paytabsClientKey?: string;
+  benefitPayMerchantId?: string;
+  benefitPaySecretKey?: string;
   sessionTimeout?: number;
   trustedIps?: string;
   notifyUnusualLoginEmail?: boolean;

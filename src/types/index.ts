@@ -7,6 +7,7 @@ export interface LineItem {
   taxRate: number; // e.g., 15 for 15%
   totalHalalas: number;
   customFields?: { key: string, value: string }[];
+  costCenter?: string; // ID of the cost center
 }
 
 export interface InvoiceBranding {
@@ -157,3 +158,58 @@ export interface ChatMessage {
   timestamp: string;
   isAi?: boolean;
 }
+
+export interface CostCenter {
+  id: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  type: 'Project' | 'Branch' | 'Department' | 'Other';
+  parentId: string | null;
+  userId: string;
+  createdAt: string;
+}
+
+export interface FixedAsset {
+  id: string;
+  userId: string;
+  name: string;
+  assetCode: string; // e.g. AST001
+  purchaseDate: string; // ISO date
+  historicalValueHalalas: number;
+  depreciationRate: number; // e.g., 10 for 10%
+  depreciationMethod: 'straight_line' | 'diminishing_balance';
+  accumulatedDepreciationHalalas: number;
+  currentBookValueHalalas: number;
+  status: 'active' | 'disposed';
+  createdAt: string;
+  lastDepreciationDate?: string; // date of last calculated depreciation
+}
+
+export interface Voucher {
+  id: string;
+  userId: string;
+  number: string; // e.g. V-001
+  type: 'receipt' | 'payment';
+  date: string; // ISO Date YYYY-MM-DD
+  amount: number; // Foreign or local amount
+  currency: string; // e.g. USD, EUR, AED, SAR
+  exchangeRate: number; // 1 for SAR
+  amountSar: number; // amount * exchangeRate
+  accountFromId: string; // debit account ID
+  accountToId: string; // credit account ID
+  descriptionAr: string;
+  descriptionEn: string;
+  status: 'posted' | 'draft';
+  createdAt: string;
+}
+
+export interface BankTransaction {
+  id: string;
+  date: string; // YYYY-MM-DD
+  description: string;
+  amount: number; // positive for receipt, negative for payment
+  isReconciled: boolean;
+  reconciledWithId?: string; // ID of the voucher or journal entry
+}
+

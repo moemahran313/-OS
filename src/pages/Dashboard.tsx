@@ -92,6 +92,7 @@ const AVAILABLE_QUICK_ACTIONS = [
   { id: "create_invoice", label: "إنشاء فاتورة", icon: FileText, path: "/app/invoices/new", color: "text-emerald-500", bg: "bg-emerald-50" },
   { id: "add_lead", label: "إضافة عميل محتمل", icon: Users, path: "/app/crm/new", color: "text-blue-500", bg: "bg-blue-50" },
   { id: "unread_chats", label: "المحادثات غير المقروءة", icon: MessageSquare, path: "/app/chat", color: "text-purple-500", bg: "bg-purple-50" },
+  { id: "send_whatsapp", label: "إرسال رسالة واتساب", icon: MessageSquare, path: "#", color: "text-emerald-600", bg: "bg-emerald-50" },
   { id: "payroll_report", label: "إصدار مسير رواتب", icon: FileCheck, path: "/app/payroll/new", color: "text-amber-500", bg: "bg-amber-50" },
   { id: "add_employee", label: "إضافة موظف", icon: UserPlus, path: "/app/fwcos/new", color: "text-indigo-500", bg: "bg-indigo-50" },
   { id: "new_shipment", label: "شحنة جديدة", icon: Package, path: "/app/suppliers/new", color: "text-rose-500", bg: "bg-rose-50" },
@@ -100,11 +101,12 @@ const AVAILABLE_QUICK_ACTIONS = [
 const DEFAULT_QUICK_ACTIONS = [
   "create_invoice",
   "add_lead",
+  "send_whatsapp",
   "unread_chats",
   "payroll_report"
 ];
 
-function QuickActionsWidget({ quickActions, setQuickActions, user, updateProfile }: { quickActions: string[], setQuickActions: any, user: any, updateProfile: any }) {
+function QuickActionsWidget({ quickActions, setQuickActions, user, updateProfile, onWhatsAppClick }: { quickActions: string[], setQuickActions: any, user: any, updateProfile: any, onWhatsAppClick: () => void }) {
   const [isEditing, setIsEditing] = useState(false);
   const [localActions, setLocalActions] = useState(quickActions);
 
@@ -208,6 +210,20 @@ function QuickActionsWidget({ quickActions, setQuickActions, user, updateProfile
         {localActions.map(id => {
           const action = AVAILABLE_QUICK_ACTIONS.find(a => a.id === id);
           if (!action) return null;
+          if (id === "send_whatsapp") {
+            return (
+              <button 
+                key={id} 
+                onClick={onWhatsAppClick} 
+                className="flex flex-col items-center justify-center p-6 rounded-2xl border border-zinc-100 hover:border-primary/30 hover:shadow-md hover:-translate-y-1 bg-gradient-to-b from-white to-zinc-50/50 transition-all group cursor-pointer w-full"
+              >
+                <div className={cn("p-4 rounded-2xl mb-4 group-hover:scale-110 group-active:scale-95 transition-transform", action.bg, action.color)}>
+                  <action.icon className="w-6 h-6" />
+                </div>
+                <span className="text-sm font-bold text-zinc-800 text-center">{action.label}</span>
+              </button>
+            )
+          }
           return (
              <Link key={id} to={action.path} className="flex flex-col items-center justify-center p-6 rounded-2xl border border-zinc-100 hover:border-primary/30 hover:shadow-md hover:-translate-y-1 bg-gradient-to-b from-white to-zinc-50/50 transition-all group">
                 <div className={cn("p-4 rounded-2xl mb-4 group-hover:scale-110 group-active:scale-95 transition-transform", action.bg, action.color)}>
@@ -232,6 +248,10 @@ export default function Dashboard() {
   const [systemAlerts, setSystemAlerts] = useState<any[]>([]);
   const [config, setConfig] = useState<WidgetConfig[]>(DEFAULT_CONFIG);
   const [quickActions, setQuickActions] = useState<string[]>(DEFAULT_QUICK_ACTIONS);
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
+  const [whatsAppPhone, setWhatsAppPhone] = useState("");
+  const [whatsAppTemplate, setWhatsAppTemplate] = useState("welcome");
+  const [whatsAppMessage, setWhatsAppMessage] = useState("مرحباً بك في مدارج. نسعد بخدمتك وتقديم أفضل الحلول لإدارة أعمالك بنجاح. فريق المبيعات جاهز لمساعدتك.");
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeView, setActiveView] = useState<'ceo' | 'hr' | 'accountant' | 'operations'>('ceo');
@@ -654,7 +674,7 @@ export default function Dashboard() {
           </section>
         );
       case "quick_actions":
-        return <QuickActionsWidget key="quick_actions" quickActions={quickActions} setQuickActions={setQuickActions} user={user} updateProfile={updateProfile} />;
+        return <QuickActionsWidget key="quick_actions" quickActions={quickActions} setQuickActions={setQuickActions} user={user} updateProfile={updateProfile} onWhatsAppClick={() => setIsWhatsAppModalOpen(true)} />;
       case "compliance":
         return <ComplianceDashboard key="compliance" />;
       case "stats":
@@ -1886,6 +1906,121 @@ export default function Dashboard() {
                   استكشاف اللوحة
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+
+        {isWhatsAppModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm"
+              onClick={() => setIsWhatsAppModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-lg bg-white rounded-[2.5rem] p-8 shadow-2xl border border-zinc-100 flex flex-col overflow-hidden text-right"
+            >
+              <div className="flex justify-between items-center mb-6 border-b border-zinc-50 pb-4">
+                <button onClick={() => setIsWhatsAppModalOpen(false)} className="p-2 hover:bg-zinc-100 rounded-xl transition-all">
+                  <X className="w-5 h-5 text-zinc-400" />
+                </button>
+                <div className="flex items-center gap-3">
+                  <div>
+                    <h3 className="font-black text-lg text-zinc-900">إرسال رسالة واتساب سريعة</h3>
+                    <p className="text-xs font-bold text-emerald-600">افتح واجهة واتساب ويب مباشرة بقوالب سعودية مسبقة</p>
+                  </div>
+                  <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
+                    <MessageSquare className="w-6 h-6" />
+                  </div>
+                </div>
+              </div>
+
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (!whatsAppPhone) {
+                  toast.error("يرجى إدخال رقم الجوال أولاً");
+                  return;
+                }
+                let cleanPhone = whatsAppPhone.replace(/\D/g, "");
+                if (cleanPhone.startsWith("05")) {
+                  cleanPhone = "966" + cleanPhone.slice(1);
+                } else if (cleanPhone.startsWith("5") && cleanPhone.length === 9) {
+                  cleanPhone = "966" + cleanPhone;
+                } else if (!cleanPhone.startsWith("966") && cleanPhone.length === 9) {
+                  cleanPhone = "966" + cleanPhone;
+                }
+                const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(whatsAppMessage)}`;
+                window.open(url, "_blank");
+                setIsWhatsAppModalOpen(false);
+                toast.success("جاري فتح واتساب ويب في نافذة جديدة... 🚀🟢");
+              }} className="space-y-5">
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-zinc-400">رقم جوال المستلم</label>
+                  <div className="flex gap-2" dir="ltr">
+                    <span className="bg-zinc-100 border border-zinc-200 px-4 py-3 rounded-2xl text-zinc-600 font-bold flex items-center justify-center text-sm">+966</span>
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="5XXXXXXXX" 
+                      value={whatsAppPhone} 
+                      onChange={(e) => setWhatsAppPhone(e.target.value)} 
+                      className="flex-1 px-5 py-3.5 bg-zinc-50 border border-zinc-100 rounded-2xl font-bold text-sm focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-zinc-300"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-zinc-400">اختر أحد القوالب الجاهزة</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: "welcome", title: "ترحيبية", body: "مرحباً بك في مدارج. نسعد بخدمتك وتقديم أفضل الحلول لإدارة أعمالك بنجاح. فريق المبيعات جاهز لمساعدتك." },
+                      { id: "invoice", title: "فاتورة", body: "شريكنا العزيز، تم إصدار فاتورتك الضريبية بنجاح. يمكنك الاطلاع عليها وتحميلها عبر المنصة. شكراً لثقتكم." },
+                      { id: "followup", title: "متابعة", body: "السلام عليكم، نود الاستفسار عن عرض السعر المقدم لكم مؤخراً، هل لديكم أي ملاحظات أو تعديلات مطلوبة؟ نسعد بخدمتكم." }
+                    ].map(t => (
+                      <button 
+                        key={t.id} 
+                        type="button"
+                        onClick={() => {
+                          setWhatsAppTemplate(t.id);
+                          setWhatsAppMessage(t.body);
+                        }}
+                        className={cn(
+                          "p-3 rounded-xl border text-[10px] font-black transition-all text-center",
+                          whatsAppTemplate === t.id 
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm" 
+                            : "bg-white text-zinc-500 border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                        )}
+                      >
+                        {t.title}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-black text-zinc-400">نص الرسالة</label>
+                  <textarea 
+                    rows={4}
+                    value={whatsAppMessage}
+                    onChange={(e) => setWhatsAppMessage(e.target.value)}
+                    className="w-full px-5 py-3 bg-zinc-50 border border-zinc-100 rounded-2xl font-bold text-xs focus:ring-2 focus:ring-primary/20 outline-none transition-all min-h-[100px] placeholder:text-zinc-300 text-right leading-relaxed"
+                    placeholder="اكتب رسالتك المخصصة هنا..."
+                  />
+                </div>
+
+                <button 
+                  type="submit" 
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-[1.5rem] font-black shadow-lg shadow-emerald-600/10 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <MessageSquare className="w-5 h-5" />
+                  <span>إرسال عبر واتساب (Send WhatsApp)</span>
+                </button>
+              </form>
             </motion.div>
           </div>
         )}

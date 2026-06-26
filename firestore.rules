@@ -84,8 +84,46 @@ service cloud.firestore {
 
     // Audit Log Rules
     match /audit_logs/{logId} {
-      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
-      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && (incoming().userId == request.auth.uid || incoming().authorUid == request.auth.uid);
+      allow list, get: if isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.authorUid == request.auth.uid);
+    }
+
+    // Inventory Rules (Warehouses, Items, Transfers, Assemblies, Adjustments)
+    match /warehouses/{whId} {
+      allow list, get: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().authorUid == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
+
+    match /inventory_items/{itemId} {
+      allow list, get: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().authorUid == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
+
+    match /inventory_transfers/{transferId} {
+      allow list, get: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().authorUid == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
+
+    match /assembly_orders/{orderId} {
+      allow list, get: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().authorUid == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
+
+    match /stock_adjustments/{adjId} {
+      allow list, get: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().authorUid == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
+
+    // Tax Filings Rules
+    match /tax_filings/{filingId} {
+      allow list, get: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().authorUid == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
     }
 
     // Notification Rules
@@ -238,6 +276,55 @@ service cloud.firestore {
                        resource.data.authorUid == request.auth.uid && 
                        incoming().authorUid == request.auth.uid;
       allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
+
+    // Cost Centers Rules
+    match /cost_centers/{costCenterId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Fixed Assets Rules
+    match /fixed_assets/{assetId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Chart of Accounts Rules
+    match /chart_of_accounts/{accountId} {
+      allow list, get: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().authorUid == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
+
+    // Journal Entries Rules
+    match /journal_entries/{entryId} {
+      allow list, get: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+      allow create: if isSignedIn() && incoming().authorUid == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
+
+    // Vouchers Rules
+    match /vouchers/{voucherId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Bank Reconciliations Rules
+    match /bank_reconciliations/{reconciliationId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // Payroll Templates Rules
+    match /payroll_templates/{templateId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     match /tenants/{tenantId} { allow read: if isSignedIn(); }

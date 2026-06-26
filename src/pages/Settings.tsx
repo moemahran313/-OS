@@ -886,6 +886,90 @@ export default function Settings() {
                      </div>
                   </div>
 
+                  {/* PayTabs */}
+                  <div className="bg-white p-5 rounded-2xl border border-zinc-200 mb-4 mt-4">
+                     <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-[#E04F2F] text-white rounded-xl flex items-center justify-center font-bold text-lg">
+                            PT
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-zinc-900">PayTabs (بي تابس)</h4>
+                            <p className="text-xs text-zinc-500">بوابة الدفع الإقليمية لدعم بطاقات مدى، البطاقات المحلية، وسداد في الخليج</p>
+                          </div>
+                        </div>
+                     </div>
+                     <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                           <label className="text-[10px] font-bold text-zinc-500 uppercase block mb-1">Profile ID</label>
+                           <input 
+                              type="text" 
+                              value={formData.paytabsProfileId || ""} 
+                              onChange={(e) => handleChange('paytabsProfileId', e.target.value)} 
+                              placeholder="e.g. 12345" 
+                              className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-primary/20 outline-none" 
+                           />
+                        </div>
+                        <div>
+                           <label className="text-[10px] font-bold text-zinc-500 uppercase block mb-1">Server Key</label>
+                           <input 
+                              type="password" 
+                              value={formData.paytabsServerKey || ""} 
+                              onChange={(e) => handleChange('paytabsServerKey', e.target.value)} 
+                              placeholder="SG_XXXXXXXXXXXXX..." 
+                              className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-primary/20 outline-none" 
+                           />
+                        </div>
+                        <div>
+                           <label className="text-[10px] font-bold text-zinc-500 uppercase block mb-1">Client Key</label>
+                           <input 
+                              type="password" 
+                              value={formData.paytabsClientKey || ""} 
+                              onChange={(e) => handleChange('paytabsClientKey', e.target.value)} 
+                              placeholder="CK_XXXXXXXXXXXXX..." 
+                              className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-primary/20 outline-none" 
+                           />
+                        </div>
+                     </div>
+                  </div>
+
+                  {/* BenefitPay */}
+                  <div className="bg-white p-5 rounded-2xl border border-zinc-200 mb-4">
+                     <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-[#005c8a] text-[#ffbf1f] rounded-xl flex items-center justify-center font-bold text-lg">
+                            BP
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-zinc-900">BenefitPay (بنفت باي)</h4>
+                            <p className="text-xs text-zinc-500">بوابة الدفع الوطنية المفضلة في مملكة البحرين عبر QR والتحويلات المباشرة</p>
+                          </div>
+                        </div>
+                     </div>
+                     <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                           <label className="text-[10px] font-bold text-zinc-500 uppercase block mb-1">Benefit Merchant ID</label>
+                           <input 
+                              type="text" 
+                              value={formData.benefitPayMerchantId || ""} 
+                              onChange={(e) => handleChange('benefitPayMerchantId', e.target.value)} 
+                              placeholder="BEN_MERCH_XXXX..." 
+                              className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-primary/20 outline-none" 
+                           />
+                        </div>
+                        <div>
+                           <label className="text-[10px] font-bold text-zinc-500 uppercase block mb-1">Secret Key</label>
+                           <input 
+                              type="password" 
+                              value={formData.benefitPaySecretKey || ""} 
+                              onChange={(e) => handleChange('benefitPaySecretKey', e.target.value)} 
+                              placeholder="BEN_SEC_XXXX..." 
+                              className="w-full bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 text-xs font-mono focus:ring-1 focus:ring-primary/20 outline-none" 
+                           />
+                        </div>
+                     </div>
+                  </div>
+
                   {/* Apple Pay */}
                   <div className="bg-white p-5 rounded-2xl border border-zinc-200">
                      <div className="flex items-start justify-between mb-4">

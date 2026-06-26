@@ -60,7 +60,7 @@ router.post("/invoices/:id/pay", async (req: any, res) => {
     if (!invoiceSnap.exists) return res.status(404).json({ error: "Invoice not found" });
 
     const invoice: any = invoiceSnap.data();
-    const { amount } = req.body;
+    const { amount, gateway, method, transactionId } = req.body;
     const paymentAmountHalalas = Math.round((Number(amount) || (invoice.remainingBalanceHalalas / 100)) * 100);
 
     const paidAmountHalalas = (invoice.paidAmountHalalas || 0) + paymentAmountHalalas;
@@ -73,11 +73,14 @@ router.post("/invoices/:id/pay", async (req: any, res) => {
       status = "partially paid";
     }
 
+    const gatewayInfo = gateway ? ` via ${gateway} (${method || "Direct"})` : "";
+    const txnInfo = transactionId ? ` [Txn: ${transactionId}]` : "";
+
     const currentLogs = Array.isArray(invoice.logs) ? [...invoice.logs] : [];
     currentLogs.unshift({
-      action: `Payment Received: ${(paymentAmountHalalas / 100).toFixed(2)}`,
+      action: `Payment Received: ${(paymentAmountHalalas / 100).toFixed(2)} ${invoice.currency}${gatewayInfo}${txnInfo}`,
       timestamp: new Date().toISOString(),
-      note: `Remaining: ${(remainingBalanceHalalas / 100).toFixed(2)}`,
+      note: `Remaining: ${(remainingBalanceHalalas / 100).toFixed(2)} ${invoice.currency}`,
     });
 
     const updateData = {
