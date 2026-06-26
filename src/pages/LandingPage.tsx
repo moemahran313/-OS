@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Logo } from "@/src/components/Logo";
+import LandingNavbar from "@/src/components/LandingNavbar";
 
 // --- HERO SECTION ---
 const HeroSection = () => {
@@ -750,26 +751,7 @@ export default function LandingPage() {
    return (
       <div className="min-h-screen bg-zinc-950 font-sans antialiased text-zinc-900 selection:bg-primary/30 scroll-smooth">
          <CustomCursor />
-         {/* Simple Global Nav for Landing */}
-         <nav className="fixed top-0 left-0 w-full z-50 px-6 py-4 transition-all duration-300 backdrop-blur-md bg-zinc-950/50 border-b border-white/5" dir="rtl">
-            <div className="container mx-auto max-w-7xl flex items-center justify-between">
-               <Logo theme="dark" />
-               
-               <div className="hidden md:flex items-center gap-8 mr-12 ml-auto text-sm font-bold text-zinc-300">
-                  <Link to="/about" className="hover:text-white transition-colors">عن مدارج</Link>
-                  <Link to="/product" className="hover:text-white transition-colors">المنتج</Link>
-                  <Link to="/solutions" className="hover:text-white transition-colors">الحلول</Link>
-                  <Link to="/solutions/invoicing" className="hover:text-white transition-colors">الفواتير</Link>
-                  <Link to="/security" className="hover:text-white transition-colors">الأمان</Link>
-                  <Link to="/demo" className="text-primary hover:text-primary/80 transition-colors">تجربة حية</Link>
-               </div>
-               
-               <div className="flex items-center gap-4">
-                  <Link to="/login" className="text-sm font-bold text-zinc-300 hover:text-white transition-colors hidden sm:block">تسجيل الدخول</Link>
-                  <Link to="/app" className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary/90 transition-all shadow-md shadow-primary/20">ابدأ الآن</Link>
-               </div>
-            </div>
-         </nav>
+         <LandingNavbar />
 
          <HeroSection />
          <SocialProofSection />

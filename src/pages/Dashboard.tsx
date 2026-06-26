@@ -519,15 +519,23 @@ export default function Dashboard() {
   const renderStats = () => {
     if (!dashboardStats) {
       return (
-        <section key="stats-skeleton" className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm animate-pulse">
+        <section key="stats-skeleton" className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="p-6 bg-white dark:bg-zinc-900/40 backdrop-blur-md rounded-3xl border border-zinc-150 dark:border-zinc-850/60 shadow-sm animate-pulse md:col-span-2">
+            <div className="flex justify-between items-start mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
+              <div className="w-16 h-6 rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+            </div>
+            <div className="w-32 h-4 bg-zinc-200 dark:bg-zinc-800 rounded mt-2 mb-2" />
+            <div className="w-24 h-8 bg-zinc-200 dark:bg-zinc-800 rounded mt-1" />
+          </div>
+          {[1, 2].map((i) => (
+            <div key={i} className="p-6 bg-white dark:bg-zinc-900/40 backdrop-blur-md rounded-3xl border border-zinc-150 dark:border-zinc-850/60 shadow-sm animate-pulse md:col-span-1">
               <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-zinc-200" />
-                <div className="w-16 h-6 rounded-lg bg-zinc-200" />
+                <div className="w-12 h-12 rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
+                <div className="w-16 h-6 rounded-lg bg-zinc-200 dark:bg-zinc-800" />
               </div>
-              <div className="w-32 h-4 bg-zinc-200 rounded mt-2 mb-2" />
-              <div className="w-24 h-8 bg-zinc-200 rounded mt-1" />
+              <div className="w-32 h-4 bg-zinc-200 dark:bg-zinc-800 rounded mt-2 mb-2" />
+              <div className="w-24 h-8 bg-zinc-200 dark:bg-zinc-800 rounded mt-1" />
             </div>
           ))}
         </section>
@@ -537,50 +545,82 @@ export default function Dashboard() {
     let currentStats = [];
     if (activeView === 'ceo') {
        currentStats = [
-         { id: 'revenue', name: "الصافي المتوقع", value: `${(dashboardStats?.revenue || 0).toLocaleString()} ر.س`, change: dashboardStats?.trends?.revenue ? `${dashboardStats.trends.revenue}%` : "غير متوفر", trend: parseFloat(dashboardStats?.trends?.revenue || 0) >= 0 ? "up" : "down", icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-50" },
-         { id: 'compliance', name: "مؤشر الامتثال العام", value: `${dashboardStats?.complianceScore || 0}%`, change: dashboardStats?.trends?.compliance ? `${dashboardStats.trends.compliance}%` : "غير متوفر", trend: parseFloat(dashboardStats?.trends?.compliance || 0) >= 0 ? "up" : "down", icon: FileCheck, color: "text-blue-500", bg: "bg-blue-50" },
-         { id: 'payroll_cost', name: "تكلفة الرواتب", value: `${(dashboardStats?.payrollCost || 0).toLocaleString()} ر.س`, change: dashboardStats?.trends?.payroll ? `${dashboardStats.trends.payroll}%` : "غير متوفر", trend: parseFloat(dashboardStats?.trends?.payroll || 0) >= 0 ? "down" : "up", icon: Users, color: "text-amber-500", bg: "bg-amber-50" },
+         { id: 'revenue', name: "الصافي المتوقع", value: `${(dashboardStats?.revenue || 0).toLocaleString()} ر.س`, change: dashboardStats?.trends?.revenue ? `${dashboardStats.trends.revenue}%` : "غير متوفر", trend: parseFloat(dashboardStats?.trends?.revenue || 0) >= 0 ? "up" : "down", icon: TrendingUp, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+         { id: 'compliance', name: "مؤشر الامتثال العام", value: `${dashboardStats?.complianceScore || 0}%`, change: dashboardStats?.trends?.compliance ? `${dashboardStats.trends.compliance}%` : "غير متوفر", trend: parseFloat(dashboardStats?.trends?.compliance || 0) >= 0 ? "up" : "down", icon: FileCheck, color: "text-blue-500", bg: "bg-blue-500/10" },
+         { id: 'payroll_cost', name: "تكلفة الرواتب", value: `${(dashboardStats?.payrollCost || 0).toLocaleString()} ر.س`, change: dashboardStats?.trends?.payroll ? `${dashboardStats.trends.payroll}%` : "غير متوفر", trend: parseFloat(dashboardStats?.trends?.payroll || 0) >= 0 ? "down" : "up", icon: Users, color: "text-amber-500", bg: "bg-amber-500/10" },
        ];
     } else if (activeView === 'hr') {
        currentStats = [
-         { id: 'nitaqat', name: "نطاقات (نسبة التوطين)", value: `${( (dashboardStats?.saudiEmployees || 0) / (dashboardStats?.employeesCount || 1) * 100).toFixed(1)}%`, change: (dashboardStats?.saudiEmployees / (dashboardStats?.employeesCount || 1)) > 0.3 ? "النطاق الأخضر" : "النطاق الأصفر", trend: "up", icon: Users, color: "text-emerald-500", bg: "bg-emerald-50" },
-         { id: 'total_employees', name: "إجمالي الموظفين", value: dashboardStats?.employeesCount?.toString() || "0", change: dashboardStats?.employeesCount ? `${dashboardStats.employeesCount}` : "غير متوفر", trend: "up", icon: Users, color: "text-blue-500", bg: "bg-blue-50" },
-         { id: 'eosb', name: "التزامات نهاية الخدمة", value: `${( (dashboardStats?.payrollCost || 0) * 0.4).toLocaleString()} ر.س`, change: "غير متوفر", trend: "down", icon: FileText, color: "text-amber-500", bg: "bg-amber-50" },
+         { id: 'nitaqat', name: "نطاقات (نسبة التوطين)", value: `${( (dashboardStats?.saudiEmployees || 0) / (dashboardStats?.employeesCount || 1) * 100).toFixed(1)}%`, change: (dashboardStats?.saudiEmployees / (dashboardStats?.employeesCount || 1)) > 0.3 ? "النطاق الأخضر" : "النطاق الأصفر", trend: "up", icon: Users, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+         { id: 'total_employees', name: "إجمالي الموظفين", value: dashboardStats?.employeesCount?.toString() || "0", change: dashboardStats?.employeesCount ? `${dashboardStats.employeesCount}` : "غير متوفر", trend: "up", icon: Users, color: "text-blue-500", bg: "bg-blue-500/10" },
+         { id: 'eosb', name: "التزامات نهاية الخدمة", value: `${( (dashboardStats?.payrollCost || 0) * 0.4).toLocaleString()} ر.س`, change: "غير متوفر", trend: "down", icon: FileText, color: "text-amber-500", bg: "bg-amber-500/10" },
        ];
     } else {
        currentStats = [
-         { id: 'vat', name: "ضريبة القيمة المضافة", value: `${(dashboardStats?.vatExposure || 0).toLocaleString()} ر.س`, change: "غير متوفر", trend: "up", icon: FileCheck, color: "text-emerald-500", bg: "bg-emerald-50" },
-         { id: 'invoices', name: "فواتير معلقة", value: dashboardStats?.pendingInvoices?.toString() || "0", change: dashboardStats?.pendingInvoices ? `${dashboardStats.pendingInvoices}` : "غير متوفر", trend: "down", icon: FileText, color: "text-amber-500", bg: "bg-amber-50" },
-         { id: 'revenue_acc', name: "إجمالي الإيرادات", value: `${(dashboardStats?.revenue || 0).toLocaleString()} ر.س`, change: dashboardStats?.trends?.revenue ? `${dashboardStats.trends.revenue}%` : "غير متوفر", trend: parseFloat(dashboardStats?.trends?.revenue || 0) >= 0 ? "up" : "down", icon: TrendingUp, color: "text-blue-500", bg: "bg-blue-50" },
+         { id: 'vat', name: "ضريبة القيمة المضافة", value: `${(dashboardStats?.vatExposure || 0).toLocaleString()} ر.س`, change: "غير متوفر", trend: "up", icon: FileCheck, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+         { id: 'invoices', name: "فواتير معلقة", value: dashboardStats?.pendingInvoices?.toString() || "0", change: dashboardStats?.pendingInvoices ? `${dashboardStats.pendingInvoices}` : "غير متوفر", trend: "down", icon: FileText, color: "text-amber-500", bg: "bg-amber-500/10" },
+         { id: 'revenue_acc', name: "إجمالي الإيرادات", value: `${(dashboardStats?.revenue || 0).toLocaleString()} ر.س`, change: dashboardStats?.trends?.revenue ? `${dashboardStats.trends.revenue}%` : "غير متوفر", trend: parseFloat(dashboardStats?.trends?.revenue || 0) >= 0 ? "up" : "down", icon: TrendingUp, color: "text-blue-500", bg: "bg-blue-500/10" },
        ];
     }
 
     return (
-       <section key="stats" className="grid grid-cols-1 md:grid-cols-3 gap-6">
-         {currentStats.map((stat, i) => (
-           <motion.div 
-             key={stat.id}
-             initial={{ opacity: 0, y: 20 }}
-             animate={{ opacity: 1, y: 0 }}
-             transition={{ delay: i * 0.1 }}
-             className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm hover:shadow-md transition-shadow relative"
-           >
-             <div className="flex justify-between items-start mb-4">
-               <div className={cn("p-3 rounded-2xl", stat.bg)}>
-                 <stat.icon className={cn("w-6 h-6", stat.color)} />
+       <section key="stats" className="grid grid-cols-1 md:grid-cols-4 gap-6">
+         {currentStats.map((stat, i) => {
+           const isLarge = i === 0;
+           return (
+             <motion.div 
+               key={stat.id}
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               whileHover={{ y: -6, scale: 1.01 }}
+               transition={{ 
+                 opacity: { duration: 0.3, delay: i * 0.1 },
+                 y: { type: "spring", stiffness: 300, damping: 20 },
+                 scale: { duration: 0.2 }
+               }}
+               className={cn(
+                 "p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between",
+                 "bg-white dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20",
+                 isLarge ? "md:col-span-2" : "md:col-span-1"
+               )}
+             >
+               {/* Background glows on large card */}
+               {isLarge && (
+                 <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+               )}
+               <div>
+                 <div className="flex justify-between items-start mb-6">
+                   <div className={cn("p-3 rounded-2xl flex items-center justify-center", stat.bg)}>
+                     <stat.icon className={cn("w-6 h-6", stat.color)} />
+                   </div>
+                   <div className={cn(
+                     "flex items-center gap-1 text-xs font-black px-2.5 py-1 rounded-xl border",
+                     stat.trend === "up" 
+                       ? "text-emerald-600 bg-emerald-50/80 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/10" 
+                       : "text-rose-600 bg-rose-50/80 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/10"
+                   )}>
+                     {stat.trend === "up" ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                     {stat.change}
+                   </div>
+                 </div>
+                 <p className="text-zinc-500 dark:text-zinc-400 text-sm font-black mb-1">{stat.name}</p>
+                 <h3 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">{stat.value}</h3>
                </div>
-               <div className={cn(
-                 "flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg",
-                 stat.trend === "up" ? "text-emerald-600 bg-emerald-50" : "text-rose-600 bg-rose-50"
-               )}>
-                 {stat.trend === "up" ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                 {stat.change}
-               </div>
-             </div>
-             <p className="text-zinc-500 text-sm font-medium">{stat.name}</p>
-             <h3 className="text-2xl font-bold text-zinc-900 mt-1">{stat.value}</h3>
-           </motion.div>
-         ))}
+               
+               {isLarge && (
+                 <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800/40">
+                   <div className="flex justify-between text-[10px] font-black text-zinc-400 mb-1.5 uppercase tracking-wider">
+                     <span>معدل الأداء المستهدف</span>
+                     <span>92%</span>
+                   </div>
+                   <div className="w-full bg-zinc-100 dark:bg-zinc-800/60 h-2 rounded-full overflow-hidden">
+                     <div className="bg-emerald-500 h-full rounded-full w-[88%]" />
+                   </div>
+                 </div>
+               )}
+             </motion.div>
+           );
+         })}
        </section>
     );
   };
@@ -933,72 +973,92 @@ export default function Dashboard() {
     
     // Nitaqat Band
     let nitaqatLabel = "أحمر";
-    let nitaqatColorClass = "text-rose-600 bg-rose-50 border-rose-200";
+    let nitaqatColorClass = "text-rose-600 bg-rose-500/10 border-rose-200/20";
     if (saudizationPct >= 30) {
       nitaqatLabel = "أخضر مرتفع";
-      nitaqatColorClass = "text-emerald-700 bg-emerald-50 border-emerald-200";
+      nitaqatColorClass = "text-emerald-700 bg-emerald-500/10 border-emerald-200/20";
     } else if (saudizationPct >= 15) {
       nitaqatLabel = "أخضر منخفض";
-      nitaqatColorClass = "text-green-700 bg-green-50 border-green-200";
+      nitaqatColorClass = "text-green-700 bg-green-500/10 border-green-200/20";
     } else if (saudizationPct > 0) {
       nitaqatLabel = "أصفر";
-      nitaqatColorClass = "text-amber-700 bg-amber-50 border-amber-200";
+      nitaqatColorClass = "text-amber-700 bg-amber-500/10 border-amber-200/20";
     }
 
     return (
       <div className="space-y-8 animate-fade-in" dir="rtl">
-        {/* Metric Cards */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-2xl bg-emerald-50">
-                <Users className="w-6 h-6 text-emerald-500" />
+        {/* Metric Cards - Modern Bento Grid */}
+        <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <motion.div 
+            whileHover={{ y: -6, scale: 1.01 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-2"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div>
+              <div className="flex justify-between items-start mb-6">
+                <div className="p-3 rounded-2xl bg-emerald-500/10">
+                  <Users className="w-6 h-6 text-emerald-500" />
+                </div>
+                <span className={cn("px-2.5 py-1 rounded-xl text-xs font-black border uppercase tracking-wider", nitaqatColorClass)}>
+                  {nitaqatLabel}
+                </span>
               </div>
-              <span className={cn("px-2.5 py-1 rounded-lg text-xs font-bold border", nitaqatColorClass)}>
-                {nitaqatLabel}
-              </span>
+              <p className="text-zinc-500 dark:text-zinc-400 text-sm font-black mb-1">نطاقات وتوطين الكوادر (Nitaqat)</p>
+              <h3 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">{saudizationPct.toFixed(1)}%</h3>
+              <div className="mt-6 flex gap-1 h-2 rounded-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                <div style={{ width: `${saudizationPct}%` }} className="bg-emerald-500 h-full rounded-full" />
+                <div style={{ width: `${100 - saudizationPct}%` }} className="bg-zinc-200 dark:bg-zinc-750 h-full rounded-full" />
+              </div>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-2 font-bold">
+                سعودي: {saudiCount} | وافد: {expatCount}
+              </p>
             </div>
-            <p className="text-zinc-500 text-sm font-medium">نطاقات وتوطين الكوادر (Nitaqat)</p>
-            <h3 className="text-2xl font-black text-zinc-900 mt-1">{saudizationPct.toFixed(1)}%</h3>
-            <div className="mt-4 flex gap-1 h-2 rounded-full overflow-hidden bg-zinc-100">
-              <div style={{ width: `${saudizationPct}%` }} className="bg-emerald-500 h-full" />
-              <div style={{ width: `${100 - saudizationPct}%` }} className="bg-zinc-300 h-full" />
-            </div>
-            <p className="text-[10px] text-zinc-400 mt-2 font-bold">
-              سعودي: {saudiCount} | وافد: {expatCount}
-            </p>
-          </div>
+          </motion.div>
 
-          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-2xl bg-blue-50">
-                <Briefcase className="w-6 h-6 text-blue-500" />
+          <motion.div 
+            whileHover={{ y: -6, scale: 1.01 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
+          >
+            <div>
+              <div className="flex justify-between items-start mb-6">
+                <div className="p-3 rounded-2xl bg-blue-500/10">
+                  <Briefcase className="w-6 h-6 text-blue-500" />
+                </div>
+                <span className="text-xs font-black px-2.5 py-1 bg-blue-500/10 text-blue-500 rounded-xl border border-blue-500/10">
+                  نشطين
+                </span>
               </div>
-              <span className="text-xs font-bold px-2 py-1 bg-blue-50 text-blue-600 rounded-lg">
-                نشطين حالياً
-              </span>
+              <p className="text-zinc-500 dark:text-zinc-400 text-sm font-black mb-1">قوة العمل الحالية (Headcount)</p>
+              <h3 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">{totalCount} موظف</h3>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-2 font-bold">عقود موثقة ومطابقة في قوى</p>
             </div>
-            <p className="text-zinc-500 text-sm font-medium">قوة العمل الحالية (Headcount)</p>
-            <h3 className="text-2xl font-black text-zinc-900 mt-1">{totalCount} موظف</h3>
-            <p className="text-[10px] text-zinc-400 mt-2 font-bold">إجمالي عقود العمل الموثقة بنجاح</p>
-          </div>
+          </motion.div>
 
-          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-2xl bg-amber-50">
-                <DollarSign className="w-6 h-6 text-amber-500" />
+          <motion.div 
+            whileHover={{ y: -6, scale: 1.01 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
+          >
+            <div>
+              <div className="flex justify-between items-start mb-6">
+                <div className="p-3 rounded-2xl bg-amber-500/10">
+                  <DollarSign className="w-6 h-6 text-amber-500" />
+                </div>
+                <span className="text-xs font-black px-2.5 py-1 bg-amber-500/10 text-amber-500 rounded-xl border border-amber-500/10">
+                  موازنة الأجور
+                </span>
               </div>
-              <span className="text-xs font-bold px-2 py-1 bg-amber-50 text-amber-600 rounded-lg">
-                تقديري
-              </span>
+              <p className="text-zinc-500 dark:text-zinc-400 text-sm font-black mb-1">الأجور الشهرية (Payroll)</p>
+              <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">
+                {(dashboardStats?.payrollCost || 0).toLocaleString()} ر.س
+              </h3>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-2 font-bold">شامل الأساسي والبدلات</p>
             </div>
-            <p className="text-zinc-500 text-sm font-medium">التزامات موازنة الأجور (Payroll)</p>
-            <h3 className="text-2xl font-black text-zinc-900 mt-1">
-              {(dashboardStats?.payrollCost || 0).toLocaleString()} ر.س
-            </h3>
-            <p className="text-[10px] text-zinc-400 mt-2 font-bold">شامل الأساسي وبدل سكن والانتقال</p>
-          </div>
+          </motion.div>
         </section>
+
 
         {/* Intelligence Recommender */}
         <section className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-[2rem] border border-primary/20 p-6 relative overflow-hidden">
@@ -1198,51 +1258,70 @@ export default function Dashboard() {
 
     return (
       <div className="space-y-8 animate-fade-in" dir="rtl">
-        {/* KPI Row */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-2xl bg-amber-50">
-                <DollarSign className="w-6 h-6 text-amber-500" />
+        {/* KPI Row - Modern Bento Grid */}
+        <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <motion.div 
+            whileHover={{ y: -6, scale: 1.01 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-2"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 dark:bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div>
+              <div className="flex justify-between items-start mb-6">
+                <div className="p-3 rounded-2xl bg-amber-500/10">
+                  <DollarSign className="w-6 h-6 text-amber-500" />
+                </div>
+                <span className="text-xs font-black px-2.5 py-1 bg-amber-500/10 text-amber-500 rounded-xl border border-amber-500/10">
+                  هيئة الزكاة (VAT)
+                </span>
               </div>
-              <span className="text-xs font-bold px-2 py-1 bg-amber-50 text-amber-600 rounded-lg">
-                هيئة الزكاة (VAT)
-              </span>
+              <p className="text-zinc-500 dark:text-zinc-400 text-sm font-black mb-1">التزامات ضريبة القيمة المضافة (Collected VAT)</p>
+              <h3 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">{collectedVat.toLocaleString()} ر.س</h3>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-2 font-bold">
+                يُحتسب تراكمياً ومباشرةً من الفواتير الصادرة للعملاء بمعدل 15٪
+              </p>
             </div>
-            <p className="text-zinc-500 text-sm font-medium">التزامات ضريبة القيمة المضافة (Collected VAT)</p>
-            <h3 className="text-2xl font-black text-zinc-900 mt-1">{collectedVat.toLocaleString()} ر.س</h3>
-            <p className="text-[10px] text-zinc-400 mt-2 font-bold">
-              يُحتسب تراكمياً ومباشرةً من الفواتير الصادرة للعملاء بمعدل 15٪
-            </p>
-          </div>
+          </motion.div>
 
-          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-2xl bg-rose-50">
-                <FileText className="w-6 h-6 text-rose-500" />
+          <motion.div 
+            whileHover={{ y: -6, scale: 1.01 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
+          >
+            <div>
+              <div className="flex justify-between items-start mb-6">
+                <div className="p-3 rounded-2xl bg-rose-500/10">
+                  <FileText className="w-6 h-6 text-rose-500" />
+                </div>
+                <span className="text-xs font-black px-2.5 py-1 bg-rose-500/10 text-rose-500 rounded-xl border border-rose-500/10 animate-pulse">
+                  {pendingInvoicesCount} معلقة
+                </span>
               </div>
-              <span className="text-xs font-bold px-2 py-1 bg-rose-50 text-rose-600 rounded-lg">
-                {pendingInvoicesCount} معلقة
-              </span>
+              <p className="text-zinc-500 dark:text-zinc-400 text-sm font-black mb-1">المدفوعات المستحقة للتحصيل (Receivables)</p>
+              <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">{totalPendingAmountAr.toLocaleString()} ر.س</h3>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-2 font-bold">فواتير بانتظار السداد أو التسوية للمرحلة 2</p>
             </div>
-            <p className="text-zinc-500 text-sm font-medium">المدفوعات المستحقة للتحصيل (Receivables)</p>
-            <h3 className="text-2xl font-black text-zinc-900 mt-1">{totalPendingAmountAr.toLocaleString()} ر.س</h3>
-            <p className="text-[10px] text-zinc-400 mt-2 font-bold">فواتير بانتظار السداد أو التسوية للمرحلة 2</p>
-          </div>
+          </motion.div>
 
-          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-2xl bg-emerald-50">
-                <TrendingUp className="w-6 h-6 text-emerald-500" />
+          <motion.div 
+            whileHover={{ y: -6, scale: 1.01 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
+          >
+            <div>
+              <div className="flex justify-between items-start mb-6">
+                <div className="p-3 rounded-2xl bg-emerald-500/10">
+                  <TrendingUp className="w-6 h-6 text-emerald-500" />
+                </div>
+                <span className="text-xs font-black px-2.5 py-1 bg-emerald-500/10 text-emerald-500 rounded-xl border border-emerald-500/10">
+                  سيولة محققة
+                </span>
               </div>
-              <span className="text-xs font-bold px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg">
-                سيولة محققة
-              </span>
+              <p className="text-zinc-500 dark:text-zinc-400 text-sm font-black mb-1">إجمالي كشوف الإيرادات المصونة (Paid Cash)</p>
+              <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">{paidInvoicesAmount.toLocaleString()} ر.س</h3>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-2 font-bold">التدفقات النقدية الداخلة التي طابقت بنجاح</p>
             </div>
-            <p className="text-zinc-500 text-sm font-medium">إجمالي كشوف الإيرادات المصونة (Paid Cash)</p>
-            <h3 className="text-2xl font-black text-zinc-900 mt-1">{paidInvoicesAmount.toLocaleString()} ر.س</h3>
-            <p className="text-[10px] text-zinc-400 mt-2 font-bold">التدفقات النقدية الداخلة التي طابقت بنجاح</p>
-          </div>
+          </motion.div>
         </section>
 
         {/* Intelligence Recommender */}
@@ -1455,53 +1534,70 @@ export default function Dashboard() {
   const renderOperationsView = () => {
     return (
       <div className="space-y-8 animate-fade-in" dir="rtl">
-        {/* Metric Row */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-2xl bg-rose-50">
-                <Truck className="w-6 h-6 text-rose-500" />
+        {/* Metric Row - Modern Bento Grid */}
+        <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <motion.div 
+            whileHover={{ y: -6, scale: 1.01 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-2"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 dark:bg-rose-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div>
+              <div className="flex justify-between items-start mb-6">
+                <div className="p-3 rounded-2xl bg-rose-500/10">
+                  <Truck className="w-6 h-6 text-rose-500" />
+                </div>
+                <span className="text-xs font-black px-2.5 py-1 bg-rose-500/10 text-rose-500 rounded-xl border border-rose-500/10 animate-pulse">
+                  قيد التتبع
+                </span>
               </div>
-              <span className="text-xs font-bold px-2 py-1 bg-rose-50 text-rose-600 rounded-lg">
-                قيد التتبع
-              </span>
+              <p className="text-zinc-500 dark:text-zinc-400 text-sm font-black mb-1">إجمالي الشحنات النشطة (Active Shipments)</p>
+              <h3 className="text-3xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">{activeShipments.length} شحنة جارية</h3>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-2 font-bold">
+                شحنات دولية مفعّل لها تتبع الحاويات وبوالص الشحن عبر المنافذ
+              </p>
             </div>
-            <p className="text-zinc-500 text-sm font-medium">إجمالي الشحنات النشطة (Active Shipments)</p>
-            <h3 className="text-2xl font-black text-zinc-900 mt-1">{activeShipments.length} شحنة جارية</h3>
-            <p className="text-[10px] text-zinc-400 mt-2 font-bold">
-              شحنات دولية مفعّل لها تتبع الحاويات وبوالص الشحن عبر المنافذ
-            </p>
-          </div>
+          </motion.div>
 
-          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-2xl bg-blue-50">
-                <Anchor className="w-6 h-6 text-blue-500" />
+          <motion.div 
+            whileHover={{ y: -6, scale: 1.01 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
+          >
+            <div>
+              <div className="flex justify-between items-start mb-6">
+                <div className="p-3 rounded-2xl bg-blue-500/10">
+                  <Anchor className="w-6 h-6 text-blue-500" />
+                </div>
+                <span className="text-xs font-black px-2.5 py-1 bg-blue-500/10 text-blue-500 rounded-xl border border-blue-500/10">
+                  جاهز ومطابق
+                </span>
               </div>
-              <span className="text-xs font-bold px-2 py-1 bg-blue-50 text-blue-600 rounded-lg">
-                جاهز ومطابق
-              </span>
+              <p className="text-zinc-500 dark:text-zinc-400 text-sm font-black mb-1">سجلات الاستيراد الموثقة (Historical)</p>
+              <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">{shipmentsCount} شحنة إجمالية</h3>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-2 font-bold">بين المخلص والناقل والمستودعات في الرياض</p>
             </div>
-            <p className="text-zinc-500 text-sm font-medium">سجلات الاستيراد الموثقة (Historical)</p>
-            <h3 className="text-2xl font-black text-zinc-900 mt-1">{shipmentsCount} شحنة إجمالية</h3>
-            <p className="text-[10px] text-zinc-400 mt-2 font-bold">بين المخلص والناقل والمستودعات في الرياض</p>
-          </div>
+          </motion.div>
 
-          <div className="p-6 bg-white rounded-3xl border border-zinc-100 shadow-sm">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-2xl bg-amber-50">
-                <ShieldAlert className="w-6 h-6 text-amber-500" />
+          <motion.div 
+            whileHover={{ y: -6, scale: 1.01 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
+          >
+            <div>
+              <div className="flex justify-between items-start mb-6">
+                <div className="p-3 rounded-2xl bg-amber-500/10">
+                  <ShieldAlert className="w-6 h-6 text-amber-500" />
+                </div>
+                <span className="text-xs font-black px-2.5 py-1 bg-amber-500/10 text-amber-500 rounded-xl border border-amber-500/10">
+                  مطابق لفسح
+                </span>
               </div>
-              <span className="text-xs font-bold px-2 py-1 bg-amber-50 text-amber-600 rounded-lg">
-                مطابق لفسح
-              </span>
+              <p className="text-zinc-500 dark:text-zinc-400 text-sm font-black mb-1">مخلصين جمارك معتمدين (Brokers linked)</p>
+              <h3 className="text-2xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">3 مخلصين نشطين</h3>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-2 font-bold">مرتبطين بفسح الجمركية بالسعودية</p>
             </div>
-            <p className="text-zinc-500 text-sm font-medium">مخلصين جمارك معتمدين (Brokers linked)</p>
-            <h3 className="text-2xl font-black text-zinc-900 mt-1">3 مخلصين نشطين</h3>
-            <p className="text-[10px] text-zinc-400 mt-2 font-bold">
-              مرتبطين مباشرة لإعطاء تحديثات بوابات فسح الجمركية بالسعودية
-            </p>
-          </div>
+          </motion.div>
         </section>
 
         {/* Intelligence Recommender */}

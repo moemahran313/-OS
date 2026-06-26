@@ -80,6 +80,14 @@ const InvoicingFeature = lazy(() => import("./pages/InvoicingFeature"));
 const Product = lazy(() => import("./pages/Product"));
 const Solutions = lazy(() => import("./pages/Solutions"));
 
+// Product subpages
+const ProductCRM = lazy(() => import("./pages/products/ProductCRM"));
+const ProductInvoicing = lazy(() => import("./pages/products/ProductInvoicing"));
+const ProductPayroll = lazy(() => import("./pages/products/ProductPayroll"));
+const ProductContracts = lazy(() => import("./pages/products/ProductContracts"));
+const ProductSupplyChain = lazy(() => import("./pages/products/ProductSupplyChain"));
+const ProductAI = lazy(() => import("./pages/products/ProductAI"));
+
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useUser();
   const location = useLocation();
@@ -133,13 +141,15 @@ function LoadingSpinner() {
   );
 }
 
+import { ThemeProvider } from "./contexts/ThemeContext";
+
 function PageTransition({ children }: { children: ReactNode }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -16 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      exit={{ opacity: 0, y: -24 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       className="h-full w-full"
     >
       {children}
@@ -162,6 +172,12 @@ function AppRoutes() {
             <Route path="/demo" element={<PageTransition><Demo /></PageTransition>} />
             <Route path="/solutions/invoicing" element={<PageTransition><InvoicingFeature /></PageTransition>} />
             <Route path="/product" element={<PageTransition><Product /></PageTransition>} />
+            <Route path="/product/crm" element={<PageTransition><ProductCRM /></PageTransition>} />
+            <Route path="/product/invoicing" element={<PageTransition><ProductInvoicing /></PageTransition>} />
+            <Route path="/product/payroll" element={<PageTransition><ProductPayroll /></PageTransition>} />
+            <Route path="/product/contracts" element={<PageTransition><ProductContracts /></PageTransition>} />
+            <Route path="/product/supply-chain" element={<PageTransition><ProductSupplyChain /></PageTransition>} />
+            <Route path="/product/ai-automation" element={<PageTransition><ProductAI /></PageTransition>} />
             <Route path="/solutions" element={<PageTransition><Solutions /></PageTransition>} />
             <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
             <Route path="/onboarding" element={<ProtectedRoute><PageTransition><Onboarding /></PageTransition></ProtectedRoute>} />
@@ -245,11 +261,13 @@ export default function App() {
   return (
     <UserProvider>
       <SettingsProvider>
-        <Router>
-          <GlobalPayrollMonitor />
-          <Toaster position="top-center" expand={true} richColors />
-          <AppRoutes />
-        </Router>
+        <ThemeProvider>
+          <Router>
+            <GlobalPayrollMonitor />
+            <Toaster position="top-center" expand={true} richColors />
+            <AppRoutes />
+          </Router>
+        </ThemeProvider>
       </SettingsProvider>
     </UserProvider>
   );
