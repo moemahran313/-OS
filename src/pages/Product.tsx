@@ -28,7 +28,7 @@ export default function Product() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white font-sans antialiased selection:bg-primary/30" dir="rtl">
-      <LandingNavbar />
+         <Navbar />
 
       <main className="pt-44 pb-24">
         <div className="container mx-auto px-6 max-w-7xl">

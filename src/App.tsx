@@ -79,6 +79,7 @@ const Demo = lazy(() => import("./pages/Demo"));
 const InvoicingFeature = lazy(() => import("./pages/InvoicingFeature"));
 const Product = lazy(() => import("./pages/Product"));
 const Solutions = lazy(() => import("./pages/Solutions"));
+const Resources = lazy(() => import("./pages/Resources"));
 
 // Product subpages
 const ProductCRM = lazy(() => import("./pages/products/ProductCRM"));
@@ -105,7 +106,6 @@ const Payroll = lazy(() => import("./pages/Payroll"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const PublicInvoiceView = lazy(() => import("./pages/PublicInvoiceView"));
 const FWCOS = lazy(() => import("./pages/FWCOS"));
-const Simulator = lazy(() => import("./pages/Simulator"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const Calculations = lazy(() => import("./pages/Calculations"));
 const Contracts = lazy(() => import("./pages/Contracts"));
@@ -179,6 +179,7 @@ function AppRoutes() {
             <Route path="/product/supply-chain" element={<PageTransition><ProductSupplyChain /></PageTransition>} />
             <Route path="/product/ai-automation" element={<PageTransition><ProductAI /></PageTransition>} />
             <Route path="/solutions" element={<PageTransition><Solutions /></PageTransition>} />
+            <Route path="/resources" element={<PageTransition><Resources /></PageTransition>} />
             <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
             <Route path="/onboarding" element={<ProtectedRoute><PageTransition><Onboarding /></PageTransition></ProtectedRoute>} />
             <Route path="/pay/:id" element={<PageTransition><PublicInvoiceView /></PageTransition>} />
@@ -233,7 +234,6 @@ function AppInnerRoutes() {
 
             <Route path="contracts" element={<PageTransition><Contracts /></PageTransition>} />
             <Route path="smart-negotiations" element={<PageTransition><SmartNegotiations /></PageTransition>} />
-            <Route path="simulator" element={<PageTransition><Simulator /></PageTransition>} />
             <Route path="calculations" element={<PageTransition><Calculations /></PageTransition>} />
             <Route path="analytics" element={<PageTransition><Analytics /></PageTransition>} />
             <Route path="inventory" element={<PageTransition><Inventory /></PageTransition>} />

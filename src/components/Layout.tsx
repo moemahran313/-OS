@@ -40,7 +40,6 @@ const navigationData = [
   { nameKey: "sidebar.negotiations", id: "SmartNegotiations", href: "/app/smart-negotiations", icon: Video },
   { nameKey: "workflows", id: "Workflows", href: "/app/workflows", icon: Blocks },
   { nameKey: "sidebar.employees", id: "Compliance", href: "/app/fwcos", icon: ShieldCheck },
-  { nameKey: "sidebar.home", id: "Simulator", href: "/app/simulator", icon: Calculator },
   { nameKey: "common.dashboard", id: "Calculations", href: "/app/calculations", icon: Calculator },
   { nameKey: "common.invoices", id: "Invoices", href: "/app/invoices", icon: FileText },
   { nameKey: "sidebar.integrations", id: "Integrations", href: "/app/integrations", icon: Blocks },

@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Logo } from "@/src/components/Logo";
-import LandingNavbar from "@/src/components/LandingNavbar";
+import Navbar from "@/src/components/Navbar";
 
 // --- HERO SECTION ---
 const HeroSection = () => {
@@ -751,7 +751,7 @@ export default function LandingPage() {
    return (
       <div className="min-h-screen bg-zinc-950 font-sans antialiased text-zinc-900 selection:bg-primary/30 scroll-smooth">
          <CustomCursor />
-         <LandingNavbar />
+         <Navbar />
 
          <HeroSection />
          <SocialProofSection />
