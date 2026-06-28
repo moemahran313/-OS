@@ -73,7 +73,7 @@ export default function ProductSupplyChain() {
             className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1] max-w-5xl mx-auto mb-8"
           >
             تتبع جمركي لحظي. <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-emerald-400 to-teal-300 drop-shadow-[0_0_30px_rgba(16,185,129,0.2)]">من الموانئ حتى مستودعاتك بالكامل.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-emerald-400 to-teal-300">من الموانئ حتى مستودعاتك بالكامل.</span>
           </motion.h1>
 
           <motion.p

@@ -92,7 +92,7 @@ export default function ProductAI() {
             className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1] max-w-5xl mx-auto mb-8"
           >
             وكلاء ذكاء اصطناعي. <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-cyan-400 to-blue-300 drop-shadow-[0_0_30px_rgba(34,211,238,0.2)]">يتفاوضون ويديرون عملك بالكامل.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-cyan-400 to-blue-300">يتفاوضون ويديرون عملك بالكامل.</span>
           </motion.h1>
 
           <motion.p

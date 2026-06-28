@@ -98,7 +98,7 @@ export default function ProductCRM() {
             className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1] max-w-5xl mx-auto mb-8"
           >
             لا تفقد عميلاً واحداً بعد الآن. <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-blue-400 to-cyan-300 drop-shadow-[0_0_30px_rgba(59,130,246,0.2)]">أغلق صفقاتك بذكاء خارق.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-blue-400 to-cyan-300">أغلق صفقاتك بذكاء خارق.</span>
           </motion.h1>
 
           <motion.p

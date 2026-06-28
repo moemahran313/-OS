@@ -86,7 +86,7 @@ export default function ProductInvoicing() {
             className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1] max-w-5xl mx-auto mb-8"
           >
             فوترة إلكترونية متطابقة. <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-amber-400 to-yellow-300 drop-shadow-[0_0_30px_rgba(245,158,11,0.2)]">معتمدة بالكامل للمرحلة الثانية.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-amber-400 to-yellow-300">معتمدة بالكامل للمرحلة الثانية.</span>
           </motion.h1>
 
           <motion.p

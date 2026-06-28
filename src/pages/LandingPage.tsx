@@ -65,7 +65,7 @@ const HeroSection = () => {
            className="text-6xl md:text-8xl font-black tracking-tight mb-6 mt-4 leading-[1.1] max-w-5xl"
         >
           نظام تشغيل <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-primary to-emerald-400 drop-shadow-[0_0_30px_rgba(16,185,129,0.3)]">لا يقدر بثمن.</span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-primary to-emerald-400">لا يقدر بثمن.</span>
         </motion.h1>
 
         <motion.p

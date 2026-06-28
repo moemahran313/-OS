@@ -189,7 +189,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className="flex h-screen bg-zinc-50 dark:bg-zinc-950 font-sans overflow-hidden text-zinc-900 dark:text-zinc-100 transition-colors duration-300"
+      className="app-workspace flex h-screen bg-zinc-50 dark:bg-zinc-950 font-sans overflow-hidden text-zinc-900 dark:text-zinc-100 transition-colors duration-300"
       dir={settings.language === "ar" ? "rtl" : "ltr"}
     >
       {/* Background ambient glows */}
@@ -590,10 +590,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-3 rounded-2xl border border-zinc-200 dark:border-zinc-850 bg-zinc-100 dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-200 dark:hover:bg-zinc-850 transition-all cursor-pointer flex items-center justify-center outline-none shadow-sm"
+              className="p-3 rounded-2xl border border-zinc-200 dark:border-zinc-850 bg-zinc-100 dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-200 dark:hover:bg-zinc-850 transition-all cursor-pointer flex items-center justify-center outline-none shadow-sm active:scale-95 group"
               title={settings.language === "ar" ? "تغيير المظهر" : "Toggle Theme"}
             >
-              {isDark ? <Sun className="w-4 h-4 text-amber-400 animate-pulse" /> : <Moon className="w-4 h-4 text-indigo-500 animate-pulse" />}
+              {isDark ? (
+                <Sun className="w-4 h-4 text-amber-400 transition-transform duration-500 group-hover:rotate-45" />
+              ) : (
+                <Moon className="w-4 h-4 text-indigo-500 transition-transform duration-500 group-hover:-rotate-12" />
+              )}
             </button>
 
             {/* Glowing Notifications Center */}

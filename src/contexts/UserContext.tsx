@@ -31,6 +31,7 @@ interface UserContextType {
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
   hasPermission: (module: string) => boolean;
+  loginDemoOffline: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -266,8 +267,22 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return permissions[user.role as keyof typeof permissions]?.includes(module) || false;
   };
 
+  const loginDemoOffline = () => {
+    const demoUser: User = {
+      id: "demo-admin-uid",
+      uid: "demo-admin-uid",
+      name: "مدير النظام التجريبي",
+      email: "demo@mudarij.com",
+      role: "Administrator",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256"
+    };
+    setUserAndCache(demoUser);
+    setLoading(false);
+    toast.success("تم تسجيل الدخول بنمط العرض التجريبي المحلي");
+  };
+
   return (
-    <UserContext.Provider value={{ user, loading, loginWithGoogle, loginWithEmail, registerWithEmail, logout, updateProfile, hasPermission }}>
+    <UserContext.Provider value={{ user, loading, loginWithGoogle, loginWithEmail, registerWithEmail, logout, updateProfile, hasPermission, loginDemoOffline }}>
       {children}
     </UserContext.Provider>
   );

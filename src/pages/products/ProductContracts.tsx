@@ -76,7 +76,7 @@ export default function ProductContracts() {
             className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1] max-w-5xl mx-auto mb-8"
           >
             عقودك واتفاقياتك قانونية. <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-purple-400 to-pink-300 drop-shadow-[0_0_30px_rgba(168,85,247,0.2)]">وموقّعة إلكترونياً بختم معتمد وموثق.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-purple-400 to-pink-300">وموقّعة إلكترونياً بختم معتمد وموثق.</span>
           </motion.h1>
 
           <motion.p

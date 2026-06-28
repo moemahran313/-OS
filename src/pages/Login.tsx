@@ -14,7 +14,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [searchParams] = useSearchParams();
   const refCode = searchParams.get('ref');
-  const { loginWithGoogle, loginWithEmail, registerWithEmail } = useUser();
+  const { loginWithGoogle, loginWithEmail, registerWithEmail, loginDemoOffline } = useUser();
   const navigate = useNavigate();
 
   const handleGoogleSignIn = async () => {
@@ -51,7 +51,9 @@ export default function Login() {
       else if (err.code === 'auth/wrong-password') setError('كلمة المرور غير صحيحة.');
       else if (err.code === 'auth/user-not-found') setError('لم يتم العثور على حساب بهذا البريد.');
       else if (err.code === 'auth/operation-not-allowed') setError('التسجيل بالبريد الإلكتروني غير مفعل في Firebase. يرجى تفعيله من لوحة التحكم.');
-      else setError("حدث خطأ: " + (err.message || "خطأ غير معروف"));
+      else if (err.code === 'auth/network-request-failed' || (err.message && err.message.includes('network-request-failed'))) {
+        setError('فشل الاتصال بخوادم التحقق (خطأ شبكة). يرجى الضغط على زر "الدخول المباشر بنمط التجربة" أدناه لتجاوز المشكلة والدخول فوراً.');
+      } else setError("حدث خطأ: " + (err.message || "خطأ غير معروف"));
     }
   };
 
@@ -164,6 +166,18 @@ export default function Login() {
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
             <span>باستخدام حساب جوجل</span>
+          </button>
+
+          <button 
+            type="button"
+            onClick={() => {
+              loginDemoOffline();
+              navigate("/app");
+            }}
+            className="w-full bg-emerald-50 text-emerald-800 border border-emerald-200 py-4 rounded-2xl font-black text-sm hover:bg-emerald-100/70 transition-all active:scale-[0.98] flex items-center justify-center gap-3 shadow-sm group"
+          >
+            <ShieldCheck className="w-5 h-5 text-emerald-600 group-hover:scale-110 transition-transform" />
+            <span>الدخول المباشر بنمط التجربة (Offline Bypass)</span>
           </button>
 
           <AnimatePresence>

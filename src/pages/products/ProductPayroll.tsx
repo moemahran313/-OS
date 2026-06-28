@@ -85,7 +85,7 @@ export default function ProductPayroll() {
             className="text-5xl md:text-7xl font-black tracking-tight leading-[1.1] max-w-5xl mx-auto mb-8"
           >
             إدارة رواتب الموظفين. <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-rose-400 to-pink-300 drop-shadow-[0_0_30px_rgba(244,63,94,0.2)]">بامتثال مطلق لقوى ومدد وتوطين.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-rose-400 to-pink-300">بامتثال مطلق لقوى ومدد وتوطين.</span>
           </motion.h1>
 
           <motion.p

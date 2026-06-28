@@ -105,20 +105,174 @@
 }
 
 .dark {
-  --color-zinc-50: #18181b;
-  --color-zinc-100: #27272a;
-  --color-zinc-200: #3f3f46;
-  --color-zinc-300: #52525b;
-  --color-zinc-400: #71717a;
-  --color-zinc-500: #a1a1aa;
-  --color-zinc-600: #d4d4d8;
-  --color-zinc-700: #e4e4e7;
-  --color-zinc-800: #f4f4f5;
-  --color-zinc-900: #fafafa;
-  --color-zinc-950: #ffffff;
-  --color-white: #09090b;
-  --color-black: #fafafa;
+  /* Rich, premium cosmic space palette for variables */
+  --color-zinc-50: #0c0e12;     /* Obsidian background */
+  --color-zinc-100: #13161c;    /* Deep gray-blue card */
+  --color-zinc-200: #1e222b;    /* Mid charcoal */
+  --color-zinc-300: #2a2f3a;    /* Light-mid charcoal border/bg */
+  --color-zinc-400: #3f4654;    /* Cool gray-dark bg */
+  --color-zinc-500: #6b758d;    /* Cool gray-muted */
+  --color-zinc-600: #2a2f3a;    /* Dark background helper */
+  --color-zinc-700: #1e222b;    /* Dark background helper */
+  --color-zinc-800: #13161c;    /* Dark background helper */
+  --color-zinc-900: #0c0e12;    /* Dark background helper */
+  --color-zinc-950: #08090c;    /* Darkest obsidian */
+
+  /* Map other common tailwind frameworks color scales to the same premium dark palette */
+  --color-slate-50: #0c0e12;
+  --color-slate-100: #13161c;
+  --color-slate-200: #1e222b;
+  --color-slate-300: #2a2f3a;
+  --color-slate-400: #3f4654;
+  --color-slate-500: #6b758d;
+  --color-slate-600: #2a2f3a;
+  --color-slate-700: #1e222b;
+  --color-slate-800: #13161c;
+  --color-slate-900: #0c0e12;
+  --color-slate-950: #08090c;
+
+  --color-gray-50: #0c0e12;
+  --color-gray-100: #13161c;
+  --color-gray-200: #1e222b;
+  --color-gray-300: #2a2f3a;
+  --color-gray-400: #3f4654;
+  --color-gray-500: #6b758d;
+  --color-gray-600: #2a2f3a;
+  --color-gray-700: #1e222b;
+  --color-gray-800: #13161c;
+  --color-gray-900: #0c0e12;
+  --color-gray-950: #08090c;
+
+  /* Global background-color overrides for white panels/cards in dark mode */
+  .bg-white,
+  .bg-white\/100,
+  div.bg-white,
+  section.bg-white,
+  aside.bg-white {
+    background-color: #13161c !important;
+  }
+
+  /* Fix white gradients inside dark mode */
+  .from-white {
+    --tw-gradient-from: #13161c !important;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(19, 22, 28, 0)) !important;
+  }
+  .to-white {
+    --tw-gradient-to: #13161c !important;
+  }
+  .via-white {
+    --tw-gradient-to: #13161c !important;
+  }
+
+  /* Secondary light background components override */
+  .bg-zinc-50, .bg-gray-50, .bg-slate-50, .bg-neutral-50 {
+    background-color: #0c0e12 !important;
+  }
+  .bg-zinc-100, .bg-gray-100, .bg-slate-100, .bg-neutral-100 {
+    background-color: #1a1e26 !important;
+  }
+  .bg-zinc-200, .bg-gray-200, .bg-slate-200, .bg-neutral-200 {
+    background-color: #242936 !important;
+  }
+
+  /* Ensure tables look incredibly clean and dark */
+  .bg-gray-50\/50, .bg-zinc-50\/50, .bg-slate-50\/50 {
+    background-color: rgba(12, 14, 18, 0.4) !important;
+  }
+
+  /* Global high-end border color overrides in dark mode */
+  .border-zinc-100, .border-gray-100, .border-slate-100, .border-neutral-100,
+  .border-zinc-150, .border-gray-150, .border-slate-150,
+  .border-zinc-200, .border-gray-200, .border-slate-200, .border-neutral-200,
+  .border-zinc-250, .border-gray-250, .border-slate-250 {
+    border-color: #1f2532 !important;
+  }
+  .border-zinc-300, .border-gray-300, .border-slate-300, .border-neutral-300 {
+    border-color: #2c3345 !important;
+  }
+
+  /* Transparent overlay classes in dark mode */
+  .glass, .glass-premium {
+    background: rgba(19, 22, 28, 0.75) !important;
+    border-color: rgba(31, 37, 50, 0.5) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+  }
+
+  /* Multi-framework text colors - robust, high-contrast overrides */
+  .text-zinc-900, .text-slate-900, .text-gray-900, .text-neutral-900, .text-slate-950, .text-zinc-950, .text-black {
+    color: #f5f7fa !important;
+  }
+  .text-zinc-850, .text-slate-850, .text-gray-850 {
+    color: #eef2f6 !important;
+  }
+  .text-zinc-800, .text-slate-800, .text-gray-800, .text-neutral-800 {
+    color: #dde2ec !important;
+  }
+  .text-zinc-700, .text-slate-700, .text-gray-700, .text-neutral-700 {
+    color: #b8c1d3 !important;
+  }
+  .text-zinc-600, .text-slate-600, .text-gray-600, .text-neutral-600 {
+    color: #939db2 !important;
+  }
+  .text-zinc-550, .text-slate-550, .text-gray-550 {
+    color: #7b859b !important;
+  }
+  .text-zinc-500, .text-slate-500, .text-gray-500, .text-neutral-500 {
+    color: #6b758d !important;
+  }
+  .text-zinc-400, .text-slate-400, .text-gray-400, .text-neutral-400 {
+    color: #4a5264 !important;
+  }
+
+  /* Status badge aesthetic improvements in dark mode */
+  /* Emerald / Green */
+  .bg-emerald-50, .bg-green-50, .bg-emerald-500\/10 {
+    background-color: rgba(16, 185, 129, 0.12) !important;
+    border-color: rgba(16, 185, 129, 0.25) !important;
+  }
+  .text-emerald-700, .text-green-700, .text-emerald-600, .text-green-600 {
+    color: #34d399 !important;
+  }
+
+  /* Blue / Sky / Indigo */
+  .bg-blue-50, .bg-sky-50, .bg-indigo-50, .bg-blue-500\/10 {
+    background-color: rgba(59, 130, 246, 0.12) !important;
+    border-color: rgba(59, 130, 246, 0.25) !important;
+  }
+  .text-blue-700, .text-indigo-700, .text-sky-700, .text-blue-600, .text-indigo-600, .text-sky-600 {
+    color: #60a5fa !important;
+  }
+
+  /* Amber / Yellow */
+  .bg-amber-50, .bg-yellow-50, .bg-amber-500\/10 {
+    background-color: rgba(245, 158, 11, 0.12) !important;
+    border-color: rgba(245, 158, 11, 0.25) !important;
+  }
+  .text-amber-700, .text-yellow-700, .text-amber-600, .text-yellow-600 {
+    color: #fbbf24 !important;
+  }
+
+  /* Rose / Red */
+  .bg-rose-50, .bg-red-50, .bg-rose-500\/10 {
+    background-color: rgba(244, 63, 94, 0.12) !important;
+    border-color: rgba(244, 63, 94, 0.25) !important;
+  }
+  .text-rose-700, .text-red-700, .text-rose-600, .text-red-600 {
+    color: #f87171 !important;
+  }
+
+  /* Purple / Violet */
+  .bg-purple-50, .bg-violet-50, .bg-purple-500\/10 {
+    background-color: rgba(168, 85, 247, 0.12) !important;
+    border-color: rgba(168, 85, 247, 0.25) !important;
+  }
+  .text-purple-700, .text-violet-700, .text-purple-600, .text-violet-600 {
+    color: #c084fc !important;
+  }
 }
+
+/* Scope white and black overrides to the dashboard/app workspace only if necessary, but we should keep standard white/black to avoid making white text invisible */
 
 .glass-premium {
   background: rgba(255, 255, 255, 0.75);
