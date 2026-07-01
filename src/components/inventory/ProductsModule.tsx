@@ -1,22 +1,54 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { 
-  Package, Search, Filter, Plus, Edit3, Trash2, Tag, Layers, ExternalLink,
-  Barcode, QrCode, Grid, List, CheckCircle2, ChevronDown, Check, Printer, 
-  Settings, FolderTree, Bookmark, Weight, RefreshCw, Upload, Download, Copy, AlertCircle,
-  TrendingUp, ArrowRight, ChevronRight, Info, Calendar, History, User, Save, Archive,
-  X, HelpCircle
+import {
+  Package,
+  Search,
+  Filter,
+  Plus,
+  Edit3,
+  Trash2,
+  Tag,
+  Layers,
+  ExternalLink,
+  Barcode,
+  QrCode,
+  Grid,
+  List,
+  CheckCircle2,
+  ChevronDown,
+  Check,
+  Printer,
+  Settings,
+  FolderTree,
+  Bookmark,
+  Weight,
+  RefreshCw,
+  Upload,
+  Download,
+  Copy,
+  AlertCircle,
+  TrendingUp,
+  ArrowRight,
+  ChevronRight,
+  Info,
+  Calendar,
+  History,
+  User,
+  Save,
+  Archive,
+  X,
+  HelpCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
-import { 
-  useReactTable, 
-  getCoreRowModel, 
-  getSortedRowModel, 
-  getFilteredRowModel, 
-  getPaginationRowModel, 
-  flexRender, 
-  SortingState 
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  flexRender,
+  SortingState,
 } from "@tanstack/react-table";
 import { collection, query, where, onSnapshot, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../lib/firebase";
@@ -31,46 +63,119 @@ interface ProductsModuleProps {
 
 // Default Categories
 const INITIAL_CATEGORIES = [
-  { id: "cat-1", name: "أثاث مكتبي", nameEn: "Office Furniture", parentId: null, color: "#10b981", icon: "🪑" },
-  { id: "cat-1-1", name: "كراسي طبية", nameEn: "Orthopedic Chairs", parentId: "cat-1", color: "#3b82f6", icon: "♿" },
-  { id: "cat-1-2", name: "طاولات فخمة", nameEn: "Luxury Desks", parentId: "cat-1", color: "#4f46e5", icon: "🪵" },
-  { id: "cat-2", name: "إلكترونيات وشاشات", nameEn: "Electronics & Displays", parentId: null, color: "#ef4444", icon: "🖥️" },
-  { id: "cat-3", name: "مواد تعبئة وتغليف", nameEn: "Packaging Materials", parentId: null, color: "#f59e0b", icon: "📦" }
+  {
+    id: "cat-1",
+    name: "أثاث مكتبي",
+    nameEn: "Office Furniture",
+    parentId: null,
+    color: "#10b981",
+    icon: "🪑",
+  },
+  {
+    id: "cat-1-1",
+    name: "كراسي طبية",
+    nameEn: "Orthopedic Chairs",
+    parentId: "cat-1",
+    color: "#3b82f6",
+    icon: "♿",
+  },
+  {
+    id: "cat-1-2",
+    name: "طاولات فخمة",
+    nameEn: "Luxury Desks",
+    parentId: "cat-1",
+    color: "#4f46e5",
+    icon: "🪵",
+  },
+  {
+    id: "cat-2",
+    name: "إلكترونيات وشاشات",
+    nameEn: "Electronics & Displays",
+    parentId: null,
+    color: "#ef4444",
+    icon: "🖥️",
+  },
+  {
+    id: "cat-3",
+    name: "مواد تعبئة وتغليف",
+    nameEn: "Packaging Materials",
+    parentId: null,
+    color: "#f59e0b",
+    icon: "📦",
+  },
 ];
 
 // Default Brands
 const INITIAL_BRANDS = [
-  { id: "brand-1", name: "مجموعة الرياض للتأثيث", country: "المملكة العربية السعودية", website: "riyadhfurn.com", status: "Active" },
-  { id: "brand-2", name: "ديل تكنولوجيز (Dell)", country: "الولايات المتحدة الأمريكية", website: "dell.com", status: "Active" },
-  { id: "brand-3", name: "سابك للبتروكيماويات", country: "المملكة العربية السعودية", website: "sabic.com", status: "Active" }
+  {
+    id: "brand-1",
+    name: "مجموعة الرياض للتأثيث",
+    country: "المملكة العربية السعودية",
+    website: "riyadhfurn.com",
+    status: "Active",
+  },
+  {
+    id: "brand-2",
+    name: "ديل تكنولوجيز (Dell)",
+    country: "الولايات المتحدة الأمريكية",
+    website: "dell.com",
+    status: "Active",
+  },
+  {
+    id: "brand-3",
+    name: "سابك للبتروكيماويات",
+    country: "المملكة العربية السعودية",
+    website: "sabic.com",
+    status: "Active",
+  },
 ];
 
 // Default Units
 const INITIAL_UNITS = [
   { id: "unit-1", name: "حبة (Piece)", abbreviation: "Pcs", type: "Count", conversions: [] },
-  { id: "unit-2", name: "كرتون (Carton)", abbreviation: "Ctn", type: "Count", conversions: [{ targetUnitId: "unit-1", factor: 24, targetName: "حبة" }] },
-  { id: "unit-3", name: "صندوق (Box)", abbreviation: "Box", type: "Count", conversions: [{ targetUnitId: "unit-1", factor: 12, targetName: "حبة" }] },
-  { id: "unit-4", name: "كيلوغرام (Kilogram)", abbreviation: "Kg", type: "Weight", conversions: [{ targetUnitId: "unit-5", factor: 1000, targetName: "غرام" }] },
-  { id: "unit-5", name: "غرام (Gram)", abbreviation: "g", type: "Weight", conversions: [] }
+  {
+    id: "unit-2",
+    name: "كرتون (Carton)",
+    abbreviation: "Ctn",
+    type: "Count",
+    conversions: [{ targetUnitId: "unit-1", factor: 24, targetName: "حبة" }],
+  },
+  {
+    id: "unit-3",
+    name: "صندوق (Box)",
+    abbreviation: "Box",
+    type: "Count",
+    conversions: [{ targetUnitId: "unit-1", factor: 12, targetName: "حبة" }],
+  },
+  {
+    id: "unit-4",
+    name: "كيلوغرام (Kilogram)",
+    abbreviation: "Kg",
+    type: "Weight",
+    conversions: [{ targetUnitId: "unit-5", factor: 1000, targetName: "غرام" }],
+  },
+  { id: "unit-5", name: "غرام (Gram)", abbreviation: "g", type: "Weight", conversions: [] },
 ];
 
-export default function ProductsModule({ 
-  items, 
-  warehouses, 
-  onAddProduct, 
+export default function ProductsModule({
+  items,
+  warehouses,
+  onAddProduct,
   onDeleteProduct,
-  onUpdateProduct 
+  onUpdateProduct,
 }: ProductsModuleProps) {
-  const [subTab, setSubTab] = useState<"catalog" | "categories" | "brands" | "units" | "labels">("catalog");
+  const [subTab, setSubTab] = useState<"catalog" | "categories" | "brands" | "units" | "labels">(
+    "catalog"
+  );
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
-  
+
   // Searching, Filtering & Selection
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  
+
   // Custom definitions state
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
   const [brands, setBrands] = useState(INITIAL_BRANDS);
@@ -82,18 +187,28 @@ export default function ProductsModule({
 
   // New States for Advanced Features
   const [selectedProductForDrawer, setSelectedProductForDrawer] = useState<any | null>(null);
+  const handleRowClick = (e: React.MouseEvent, prod: any) => {
+    const target = e.target as HTMLElement;
+    if (target.closest(".checkbox-cell") || target.closest("button") || target.closest("input")) {
+      return;
+    }
+    setSelectedProductForDrawer(prod);
+  };
   const [drawerActiveTab, setDrawerActiveTab] = useState<"details" | "stock" | "logs">("details");
   const [drawerAuditLogs, setDrawerAuditLogs] = useState<any[]>([]);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-  const [editingCell, setEditingCell] = useState<{ productId: string, field: "costPriceHalalas" | "salePriceHalalas" } | null>(null);
+  const [editingCell, setEditingCell] = useState<{
+    productId: string;
+    field: "costPriceHalalas" | "salePriceHalalas";
+  } | null>(null);
   const [editingCellValue, setEditingCellValue] = useState<string>("");
   const [scannerMode, setScannerMode] = useState<"search" | "adjust" | "receive">("search");
   const [isScannerListening, setIsScannerListening] = useState(true);
   const [scannedItemsHistory, setScannedItemsHistory] = useState<any[]>([]);
   const [showBulkCategorySelect, setShowBulkCategorySelect] = useState(false);
   const [bulkSelectedCategory, setBulkSelectedCategory] = useState("");
-  
+
   // States for drawer warehouse custom adjustments
   const [adjustWhId, setAdjustWhId] = useState("");
   const [adjustQtyDiff, setAdjustQtyDiff] = useState("");
@@ -165,40 +280,46 @@ export default function ProductsModule({
 
   // Generate Variant combinations
   const handleGenerateVariants = () => {
-    const list1 = variantVals1.split(",").map(v => v.trim()).filter(Boolean);
-    const list2 = variantVals2.split(",").map(v => v.trim()).filter(Boolean);
-    
+    const list1 = variantVals1
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
+    const list2 = variantVals2
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
+
     if (list1.length === 0) {
       toast.error("يرجى إدخال قيم للخاصية الأولى على الأقل");
       return;
     }
 
     const combos: any[] = [];
-    
+
     if (list2.length === 0) {
       list1.forEach((val1, idx) => {
         combos.push({
           id: `var-${idx}-${Math.random()}`,
           name: `${val1}`,
-          sku: `${sku}-${val1.substring(0,3).toUpperCase()}`,
+          sku: `${sku}-${val1.substring(0, 3).toUpperCase()}`,
           barcode: `628${Math.floor(1000000000 + Math.random() * 9000000000)}`,
           cost: costPrice || "0",
           price: sellPrice || "0",
-          stock: 0
+          stock: 0,
         });
       });
     } else {
       let counter = 0;
-      list1.forEach(val1 => {
-        list2.forEach(val2 => {
+      list1.forEach((val1) => {
+        list2.forEach((val2) => {
           combos.push({
             id: `var-${counter++}-${Math.random()}`,
             name: `${val1} / ${val2}`,
-            sku: `${sku}-${val1.substring(0,2).toUpperCase()}-${val2.substring(0,2).toUpperCase()}`,
+            sku: `${sku}-${val1.substring(0, 2).toUpperCase()}-${val2.substring(0, 2).toUpperCase()}`,
             barcode: `628${Math.floor(1000000000 + Math.random() * 9000000000)}`,
             cost: costPrice || "0",
             price: sellPrice || "0",
-            stock: 0
+            stock: 0,
           });
         });
       });
@@ -212,11 +333,11 @@ export default function ProductsModule({
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const urls: string[] = [];
-      Array.from(e.target.files).forEach(file => {
+      Array.from(e.target.files).forEach((file) => {
         const url = URL.createObjectURL(file);
         urls.push(url);
       });
-      setProductImages(prev => [...prev, ...urls]);
+      setProductImages((prev) => [...prev, ...urls]);
       toast.success("تم رفع الصور بنجاح وضغطها تلقائياً");
     }
   };
@@ -235,7 +356,7 @@ export default function ProductsModule({
 
     // Prep warehouse quantities map
     const quantitiesMap: Record<string, number> = {};
-    warehouses.forEach(w => {
+    warehouses.forEach((w) => {
       quantitiesMap[w.id] = 0;
     });
 
@@ -261,9 +382,14 @@ export default function ProductsModule({
       supplier,
       warehouseQuantities: quantitiesMap,
       variants: hasVariants ? generatedVariants : null,
-      images: productImages.length > 0 ? productImages : ["https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=200&auto=format&fit=crop"],
+      images:
+        productImages.length > 0
+          ? productImages
+          : [
+              "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=200&auto=format&fit=crop",
+            ],
       primaryImageIdx,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     try {
@@ -292,8 +418,8 @@ export default function ProductsModule({
 
   // Filtering products
   const filteredProducts = useMemo(() => {
-    return items.filter(prod => {
-      const matchSearch = 
+    return items.filter((prod) => {
+      const matchSearch =
         prod.nameAr?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         prod.nameEn?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         prod.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -341,7 +467,8 @@ export default function ProductsModule({
       lastKeyTime = currentTime;
 
       const activeEl = document.activeElement;
-      const isInputFocused = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA");
+      const isInputFocused =
+        activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA");
 
       if (e.key === "Enter") {
         if (buffer.length >= 3) {
@@ -379,16 +506,21 @@ export default function ProductsModule({
     if (!code) return;
 
     const matchedProduct = items.find(
-      (prod) => 
-        prod.sku?.toLowerCase() === code.toLowerCase() || 
+      (prod) =>
+        prod.sku?.toLowerCase() === code.toLowerCase() ||
         prod.barcode?.toLowerCase() === code.toLowerCase()
     );
 
     if (matchedProduct) {
       playBeep();
-      setScannedItemsHistory(prev => [
-        { code, product: matchedProduct, time: new Date().toLocaleTimeString("ar-SA"), success: true },
-        ...prev.slice(0, 4)
+      setScannedItemsHistory((prev) => [
+        {
+          code,
+          product: matchedProduct,
+          time: new Date().toLocaleTimeString("ar-SA"),
+          success: true,
+        },
+        ...prev.slice(0, 4),
       ]);
       toast.success(`تم مسح الباركود بنجاح: ${matchedProduct.nameAr} (${matchedProduct.sku}) 🏷️`);
 
@@ -404,12 +536,12 @@ export default function ProductsModule({
         toast.info("تم فتح تفاصيل المخزون للتوريد المباشر");
       }
     } else {
-      setScannedItemsHistory(prev => [
+      setScannedItemsHistory((prev) => [
         { code, product: null, time: new Date().toLocaleTimeString("ar-SA"), success: false },
-        ...prev.slice(0, 4)
+        ...prev.slice(0, 4),
       ]);
       toast.error(`الباركود الممسوح غير مسجل: "${code}"`, {
-        description: "تأكد من إدراج هذا الباركود لمنتج مخزني."
+        description: "تأكد من إدراج هذا الباركود لمنتج مخزني.",
       });
     }
   };
@@ -427,21 +559,29 @@ export default function ProductsModule({
       where("itemId", "==", selectedProductForDrawer.id)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const logs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as any[];
-      // Sort client-side by timestamp in desc order
-      logs.sort((a, b) => {
-        const timeA = a.timestamp?.seconds ? a.timestamp.seconds * 1000 : new Date(a.date || a.timestamp || 0).getTime();
-        const timeB = b.timestamp?.seconds ? b.timestamp.seconds * 1000 : new Date(b.date || b.timestamp || 0).getTime();
-        return timeB - timeA;
-      });
-      setDrawerAuditLogs(logs);
-    }, (error) => {
-      console.error("Error loading drawer audit logs:", error);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const logs = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as any[];
+        // Sort client-side by timestamp in desc order
+        logs.sort((a, b) => {
+          const timeA = a.timestamp?.seconds
+            ? a.timestamp.seconds * 1000
+            : new Date(a.date || a.timestamp || 0).getTime();
+          const timeB = b.timestamp?.seconds
+            ? b.timestamp.seconds * 1000
+            : new Date(b.date || b.timestamp || 0).getTime();
+          return timeB - timeA;
+        });
+        setDrawerAuditLogs(logs);
+      },
+      (error) => {
+        console.error("Error loading drawer audit logs:", error);
+      }
+    );
 
     return () => unsubscribe();
   }, [selectedProductForDrawer]);
@@ -449,7 +589,7 @@ export default function ProductsModule({
   // Bulk actions handlers
   const handleBulkArchive = () => {
     if (selectedItems.length === 0) return;
-    selectedItems.forEach(id => {
+    selectedItems.forEach((id) => {
       if (onUpdateProduct) onUpdateProduct(id, { status: "Archived" });
     });
     setSelectedItems([]);
@@ -460,9 +600,9 @@ export default function ProductsModule({
     if (selectedItems.length === 0) return;
     const extraPrice = window.prompt("أدخل قيمة الزيادة المطلوبة لأسعار البيع (ر.س):", "10");
     if (extraPrice === null || isNaN(Number(extraPrice))) return;
-    
-    selectedItems.forEach(id => {
-      const prod = items.find(i => i.id === id);
+
+    selectedItems.forEach((id) => {
+      const prod = items.find((i) => i.id === id);
       if (prod && onUpdateProduct) {
         const curSale = prod.salePriceHalalas || 0;
         const newSale = curSale + Math.round(Number(extraPrice) * 100);
@@ -475,7 +615,7 @@ export default function ProductsModule({
 
   const handleBulkChangeCategory = (categoryId: string) => {
     if (selectedItems.length === 0) return;
-    selectedItems.forEach(id => {
+    selectedItems.forEach((id) => {
       if (onUpdateProduct) {
         onUpdateProduct(id, { category: categoryId });
       }
@@ -486,9 +626,10 @@ export default function ProductsModule({
   };
 
   const handleBulkExportData = () => {
-    const itemsToExport = selectedItems.length > 0 
-      ? items.filter(p => selectedItems.includes(p.id))
-      : filteredProducts;
+    const itemsToExport =
+      selectedItems.length > 0
+        ? items.filter((p) => selectedItems.includes(p.id))
+        : filteredProducts;
 
     if (itemsToExport.length === 0) {
       toast.error("لا توجد أصناف لتصديرها");
@@ -496,11 +637,24 @@ export default function ProductsModule({
     }
 
     // Generate CSV Content
-    const headers = ["الرمز (SKU)", "الاسم بالعربية", "الاسم بالإنجليزية", "الباركود", "التصنيف", "الماركة", "سعر التكلفة (ريال)", "سعر البيع (ريال)", "المخزون الكلي"];
-    const rows = itemsToExport.map(p => {
-      const matchingCat = categories.find(c => c.id === p.category)?.name || "غير مصنف";
-      const matchingBrand = brands.find(b => b.id === p.brand)?.name || "عام";
-      const totalStock = Object.values(p.warehouseQuantities || {}).reduce((a: any, b: any) => Number(a) + Number(b), 0);
+    const headers = [
+      "الرمز (SKU)",
+      "الاسم بالعربية",
+      "الاسم بالإنجليزية",
+      "الباركود",
+      "التصنيف",
+      "الماركة",
+      "سعر التكلفة (ريال)",
+      "سعر البيع (ريال)",
+      "المخزون الكلي",
+    ];
+    const rows = itemsToExport.map((p) => {
+      const matchingCat = categories.find((c) => c.id === p.category)?.name || "غير مصنف";
+      const matchingBrand = brands.find((b) => b.id === p.brand)?.name || "عام";
+      const totalStock = Object.values(p.warehouseQuantities || {}).reduce(
+        (a: any, b: any) => Number(a) + Number(b),
+        0
+      );
       return [
         p.sku || "",
         `"${(p.nameAr || "").replace(/"/g, '""')}"`,
@@ -510,16 +664,19 @@ export default function ProductsModule({
         matchingBrand,
         ((p.costPriceHalalas || 0) / 100).toFixed(2),
         ((p.salePriceHalalas || 0) / 100).toFixed(2),
-        totalStock
+        totalStock,
       ];
     });
 
-    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `madarij_inventory_export_${new Date().toISOString().slice(0,10)}.csv`);
+    link.setAttribute(
+      "download",
+      `madarij_inventory_export_${new Date().toISOString().slice(0, 10)}.csv`
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -536,7 +693,7 @@ export default function ProductsModule({
       nameEn: newCatNameEn || newCatName,
       parentId: newCatParent || null,
       color: newCatColor,
-      icon: "📁"
+      icon: "📁",
     };
     setCategories([...categories, newCat]);
     setNewCatName("");
@@ -554,7 +711,7 @@ export default function ProductsModule({
       name: newBrandName,
       country: newBrandCountry,
       website: newBrandWebsite,
-      status: "Active"
+      status: "Active",
     };
     setBrands([...brands, newBrand]);
     setNewBrandName("");
@@ -571,7 +728,7 @@ export default function ProductsModule({
       conversions.push({
         targetUnitId: newUnitConversionTarget,
         factor: Number(newUnitConversionFactor),
-        targetName: units.find(u => u.id === newUnitConversionTarget)?.name || "حبة"
+        targetName: units.find((u) => u.id === newUnitConversionTarget)?.name || "حبة",
       });
     }
     const newUnit = {
@@ -579,7 +736,7 @@ export default function ProductsModule({
       name: newUnitName,
       abbreviation: newUnitAbbr,
       type: "Count",
-      conversions
+      conversions,
     };
     setUnits([...units, newUnit]);
     setNewUnitName("");
@@ -600,7 +757,6 @@ export default function ProductsModule({
 
   return (
     <div className="space-y-6">
-      
       {/* Products Tab Switcher */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 pb-2">
         <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl border border-zinc-200/50 dark:border-zinc-700">
@@ -652,10 +808,8 @@ export default function ProductsModule({
       {/* --- SUBTAB 1: PRODUCTS CATALOG --- */}
       {subTab === "catalog" && (
         <div className="space-y-4">
-          
           {/* Filters Toolbar */}
           <div className="bg-white dark:bg-zinc-900 p-4 rounded-3xl border border-zinc-100 dark:border-zinc-800 flex flex-col md:flex-row gap-3 items-center justify-between shadow-sm">
-            
             {/* Search Input */}
             <div className="relative w-full md:w-80">
               <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
@@ -702,8 +856,10 @@ export default function ProductsModule({
                 className="bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-zinc-700 dark:text-zinc-300 outline-none cursor-pointer"
               >
                 <option value="all">كل الفئات (Category)</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
                 ))}
               </select>
 
@@ -733,14 +889,21 @@ export default function ProductsModule({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h4 className="font-black text-sm text-zinc-100">مساعد الباركود الذكي (Barcode Assistant)</h4>
-                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold flex items-center gap-1 ${isScannerListening ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-zinc-500/20 text-zinc-400"}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${isScannerListening ? "bg-emerald-400 animate-ping" : "bg-zinc-400"}`} />
+                  <h4 className="font-black text-sm text-zinc-100">
+                    مساعد الباركود الذكي (Barcode Assistant)
+                  </h4>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[9px] font-bold flex items-center gap-1 ${isScannerListening ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-zinc-500/20 text-zinc-400"}`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${isScannerListening ? "bg-emerald-400 animate-ping" : "bg-zinc-400"}`}
+                    />
                     {isScannerListening ? "نشط ومستعد" : "متوقف"}
                   </span>
                 </div>
                 <p className="text-[10px] text-zinc-400 mt-1">
-                  يقوم النظام بالتقاط القارئ اليدوي تلقائياً. حدد وضعية المسح للتحكم بالمنتج بمجرد توجيه الباركود.
+                  يقوم النظام بالتقاط القارئ اليدوي تلقائياً. حدد وضعية المسح للتحكم بالمنتج بمجرد
+                  توجيه الباركود.
                 </p>
               </div>
             </div>
@@ -748,7 +911,9 @@ export default function ProductsModule({
             <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
               {/* Scanner mode select */}
               <div className="flex flex-col gap-1">
-                <label className="text-[9px] text-zinc-400 font-bold">وضعية الإجراء عند المسح:</label>
+                <label className="text-[9px] text-zinc-400 font-bold">
+                  وضعية الإجراء عند المسح:
+                </label>
                 <select
                   value={scannerMode}
                   onChange={(e) => setScannerMode(e.target.value as any)}
@@ -762,11 +927,15 @@ export default function ProductsModule({
 
               {/* Manual/Simulated Scanner Input */}
               <div className="flex flex-col gap-1 flex-1 md:flex-none">
-                <label className="text-[9px] text-zinc-400 font-bold">محاكاة مسح يدوية (للتجربة بدون قارئ):</label>
+                <label className="text-[9px] text-zinc-400 font-bold">
+                  محاكاة مسح يدوية (للتجربة بدون قارئ):
+                </label>
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
-                    const inputEl = e.currentTarget.elements.namedItem("simulatedBarcode") as HTMLInputElement;
+                    const inputEl = e.currentTarget.elements.namedItem(
+                      "simulatedBarcode"
+                    ) as HTMLInputElement;
                     if (inputEl.value) {
                       processBarcode(inputEl.value);
                       inputEl.value = "";
@@ -794,7 +963,9 @@ export default function ProductsModule({
           {/* Last Scanned History Overlay */}
           {scannedItemsHistory.length > 0 && (
             <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3 rounded-2xl flex items-center gap-2 overflow-x-auto text-xs font-bold">
-              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wide shrink-0">آخر الممسوحات:</span>
+              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wide shrink-0">
+                آخر الممسوحات:
+              </span>
               <div className="flex gap-2">
                 {scannedItemsHistory.map((h, idx) => (
                   <button
@@ -808,7 +979,9 @@ export default function ProductsModule({
                     className={`px-2.5 py-1 rounded-xl border flex items-center gap-1.5 text-[10px] transition-all hover:-translate-y-0.5 ${h.success ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 text-emerald-800 dark:text-emerald-400" : "bg-red-50 dark:bg-red-950/20 border-red-200 text-red-800 dark:text-red-400"}`}
                   >
                     <span>{h.code}</span>
-                    {h.product && <span className="text-zinc-400 font-normal">| {h.product.nameAr}</span>}
+                    {h.product && (
+                      <span className="text-zinc-400 font-normal">| {h.product.nameAr}</span>
+                    )}
                     <span className="text-[8px] opacity-60 font-mono font-normal">({h.time})</span>
                   </button>
                 ))}
@@ -826,55 +999,76 @@ export default function ProductsModule({
                       <th className="p-4 w-10 text-center checkbox-cell">
                         <input
                           type="checkbox"
-                          checked={selectedItems.length === filteredProducts.length && filteredProducts.length > 0}
+                          checked={
+                            selectedItems.length === filteredProducts.length &&
+                            filteredProducts.length > 0
+                          }
                           onChange={(e) => {
-                            if (e.target.checked) setSelectedItems(filteredProducts.map(p => p.id));
+                            if (e.target.checked)
+                              setSelectedItems(filteredProducts.map((p) => p.id));
                             else setSelectedItems([]);
                           }}
                           className="rounded"
                         />
                       </th>
-                      <th className="p-4 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors" onClick={() => {
-                        const isSorted = sorting[0]?.id === "nameAr" && !sorting[0]?.desc;
-                        setSorting([{ id: "nameAr", desc: isSorted }]);
-                      }}>
+                      <th
+                        className="p-4 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        onClick={() => {
+                          const isSorted = sorting[0]?.id === "nameAr" && !sorting[0]?.desc;
+                          setSorting([{ id: "nameAr", desc: isSorted }]);
+                        }}
+                      >
                         <div className="flex items-center gap-1">
                           <span>الصنف والمواصفات</span>
                           <ChevronDown className="w-3 h-3 text-zinc-400" />
                         </div>
                       </th>
-                      <th className="p-4 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors" onClick={() => {
-                        const isSorted = sorting[0]?.id === "sku" && !sorting[0]?.desc;
-                        setSorting([{ id: "sku", desc: isSorted }]);
-                      }}>
+                      <th
+                        className="p-4 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        onClick={() => {
+                          const isSorted = sorting[0]?.id === "sku" && !sorting[0]?.desc;
+                          setSorting([{ id: "sku", desc: isSorted }]);
+                        }}
+                      >
                         <div className="flex items-center gap-1">
                           <span>رمز SKU / باركود</span>
                           <ChevronDown className="w-3 h-3 text-zinc-400" />
                         </div>
                       </th>
                       <th className="p-4">التصنيف والماركة</th>
-                      <th className="p-4 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors" onClick={() => {
-                        const isSorted = sorting[0]?.id === "costPriceHalalas" && !sorting[0]?.desc;
-                        setSorting([{ id: "costPriceHalalas", desc: isSorted }]);
-                      }}>
+                      <th
+                        className="p-4 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        onClick={() => {
+                          const isSorted =
+                            sorting[0]?.id === "costPriceHalalas" && !sorting[0]?.desc;
+                          setSorting([{ id: "costPriceHalalas", desc: isSorted }]);
+                        }}
+                      >
                         <div className="flex items-center gap-1">
                           <span>سعر التكلفة (انقر مرتين للتعديل)</span>
                           <ChevronDown className="w-3 h-3 text-zinc-400" />
                         </div>
                       </th>
-                      <th className="p-4 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors" onClick={() => {
-                        const isSorted = sorting[0]?.id === "salePriceHalalas" && !sorting[0]?.desc;
-                        setSorting([{ id: "salePriceHalalas", desc: isSorted }]);
-                      }}>
+                      <th
+                        className="p-4 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        onClick={() => {
+                          const isSorted =
+                            sorting[0]?.id === "salePriceHalalas" && !sorting[0]?.desc;
+                          setSorting([{ id: "salePriceHalalas", desc: isSorted }]);
+                        }}
+                      >
                         <div className="flex items-center gap-1">
                           <span>سعر البيع الأساسي (نقرتين للتعديل)</span>
                           <ChevronDown className="w-3 h-3 text-zinc-400" />
                         </div>
                       </th>
-                      <th className="p-4 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors" onClick={() => {
-                        const isSorted = sorting[0]?.id === "totalStock" && !sorting[0]?.desc;
-                        setSorting([{ id: "totalStock", desc: isSorted }]);
-                      }}>
+                      <th
+                        className="p-4 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        onClick={() => {
+                          const isSorted = sorting[0]?.id === "totalStock" && !sorting[0]?.desc;
+                          setSorting([{ id: "totalStock", desc: isSorted }]);
+                        }}
+                      >
                         <div className="flex items-center gap-1">
                           <span>مؤشر المخزون الكلي vs رصيد الأمان</span>
                           <ChevronDown className="w-3 h-3 text-zinc-400" />
@@ -888,7 +1082,8 @@ export default function ProductsModule({
                     {filteredProducts.length === 0 ? (
                       <tr>
                         <td colSpan={9} className="p-12 text-center text-zinc-400 font-bold">
-                          لا توجد أصناف تطابق فلاتر البحث الحالية. يمكنك إضافة صنف جديد متقدم أو تعديل البحث.
+                          لا توجد أصناف تطابق فلاتر البحث الحالية. يمكنك إضافة صنف جديد متقدم أو
+                          تعديل البحث.
                         </td>
                       </tr>
                     ) : (
@@ -901,13 +1096,21 @@ export default function ProductsModule({
                             let valA = a[id];
                             let valB = b[id];
                             if (id === "totalStock") {
-                              valA = Object.values(a.warehouseQuantities || {}).reduce((x: any, y: any) => Number(x) + Number(y), 0);
-                              valB = Object.values(b.warehouseQuantities || {}).reduce((x: any, y: any) => Number(x) + Number(y), 0);
+                              valA = Object.values(a.warehouseQuantities || {}).reduce(
+                                (x: any, y: any) => Number(x) + Number(y),
+                                0
+                              );
+                              valB = Object.values(b.warehouseQuantities || {}).reduce(
+                                (x: any, y: any) => Number(x) + Number(y),
+                                0
+                              );
                             }
                             if (typeof valA === "string") {
                               return desc ? valB.localeCompare(valA) : valA.localeCompare(valB);
                             }
-                            return desc ? Number(valB || 0) - Number(valA || 0) : Number(valA || 0) - Number(valB || 0);
+                            return desc
+                              ? Number(valB || 0) - Number(valA || 0)
+                              : Number(valA || 0) - Number(valB || 0);
                           });
                         }
 
@@ -915,43 +1118,59 @@ export default function ProductsModule({
                         const totalCount = displayProducts.length;
                         const totalPages = Math.ceil(totalCount / pagination.pageSize);
                         const startIndex = pagination.pageIndex * pagination.pageSize;
-                        const paginatedProducts = displayProducts.slice(startIndex, startIndex + pagination.pageSize);
+                        const paginatedProducts = displayProducts.slice(
+                          startIndex,
+                          startIndex + pagination.pageSize
+                        );
 
                         return paginatedProducts.map((prod) => {
-                          const totalStock = Object.values(prod.warehouseQuantities || {}).reduce((a: any, b: any) => Number(a) + Number(b), 0) as number;
+                          const totalStock = Object.values(prod.warehouseQuantities || {}).reduce(
+                            (a: any, b: any) => Number(a) + Number(b),
+                            0
+                          ) as number;
                           const reorderPoint = Number(prod.minStock) || 15;
-                          
+
                           // Determine stock health
                           let health: "critical" | "low" | "healthy" = "healthy";
                           let healthLabel = "سليم (Healthy)";
                           let barColor = "bg-emerald-500";
-                          let badgeBg = "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30";
+                          let badgeBg =
+                            "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30";
 
                           if (totalStock === 0 || totalStock <= reorderPoint * 0.3) {
                             health = "critical";
                             healthLabel = "حرِج (Critical)";
                             barColor = "bg-rose-500 animate-pulse";
-                            badgeBg = "bg-rose-50 text-rose-700 dark:bg-rose-950/20 dark:text-rose-400 border border-rose-100 dark:border-rose-900/30";
+                            badgeBg =
+                              "bg-rose-50 text-rose-700 dark:bg-rose-950/20 dark:text-rose-400 border border-rose-100 dark:border-rose-900/30";
                           } else if (totalStock <= reorderPoint) {
                             health = "low";
                             healthLabel = "منخفض (Low)";
                             barColor = "bg-amber-500";
-                            badgeBg = "bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30";
+                            badgeBg =
+                              "bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30";
                           }
 
                           // Calculate progress ratio (max cap at 100%)
-                          const maxTarget = Number(prod.maxStock) || (reorderPoint * 2.5);
-                          const stockRatio = Math.min(100, Math.round((totalStock / maxTarget) * 100));
+                          const maxTarget = Number(prod.maxStock) || reorderPoint * 2.5;
+                          const stockRatio = Math.min(
+                            100,
+                            Math.round((totalStock / maxTarget) * 100)
+                          );
 
                           const statusColors: Record<string, string> = {
-                            Active: "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100",
-                            Draft: "bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200",
-                            Archived: "bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border border-amber-100",
-                            Discontinued: "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border border-red-100"
+                            Active:
+                              "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border border-emerald-100",
+                            Draft:
+                              "bg-zinc-50 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 border border-zinc-200",
+                            Archived:
+                              "bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 border border-amber-100",
+                            Discontinued:
+                              "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border border-red-100",
                           };
 
-                          const matchingCat = categories.find(c => c.id === prod.category);
-                          const matchingBrand = brands.find(b => b.id === prod.brand);
+                          const matchingCat = categories.find((c) => c.id === prod.category);
+                          const matchingBrand = brands.find((b) => b.id === prod.brand);
 
                           return (
                             <tr
@@ -964,8 +1183,12 @@ export default function ProductsModule({
                                   type="checkbox"
                                   checked={selectedItems.includes(prod.id)}
                                   onChange={(e) => {
-                                    if (e.target.checked) setSelectedItems([...selectedItems, prod.id]);
-                                    else setSelectedItems(selectedItems.filter(id => id !== prod.id));
+                                    if (e.target.checked)
+                                      setSelectedItems([...selectedItems, prod.id]);
+                                    else
+                                      setSelectedItems(
+                                        selectedItems.filter((id) => id !== prod.id)
+                                      );
                                   }}
                                   className="rounded"
                                 />
@@ -973,33 +1196,57 @@ export default function ProductsModule({
                               <td className="p-4">
                                 <div className="flex items-center gap-3">
                                   <img
-                                    src={prod.images?.[0] || "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=200"}
+                                    src={
+                                      prod.images?.[0] ||
+                                      "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=200"
+                                    }
                                     alt={prod.nameAr}
                                     referrerPolicy="no-referrer"
                                     className="w-10 h-10 object-cover rounded-xl border border-zinc-100 dark:border-zinc-800 shrink-0"
                                   />
                                   <div>
-                                    <span className="font-black text-zinc-900 dark:text-zinc-100 block">{prod.nameAr}</span>
-                                    <span className="text-[10px] text-zinc-400 font-mono block">{prod.nameEn}</span>
+                                    <span className="font-black text-zinc-900 dark:text-zinc-100 block">
+                                      {prod.nameAr}
+                                    </span>
+                                    <span className="text-[10px] text-zinc-400 font-mono block">
+                                      {prod.nameEn}
+                                    </span>
                                   </div>
                                 </div>
                               </td>
                               <td className="p-4 font-mono">
-                                <span className="block font-bold text-zinc-700 dark:text-zinc-300">{prod.sku}</span>
-                                <span className="text-[10px] text-zinc-400 block">{prod.barcode}</span>
+                                <span className="block font-bold text-zinc-700 dark:text-zinc-300">
+                                  {prod.sku}
+                                </span>
+                                <span className="text-[10px] text-zinc-400 block">
+                                  {prod.barcode}
+                                </span>
                               </td>
                               <td className="p-4">
-                                <span className="block text-zinc-700 dark:text-zinc-300">{matchingCat ? matchingCat.name : "غير مصنف"}</span>
-                                <span className="text-[10px] text-zinc-400 block">{matchingBrand ? matchingBrand.name : "عام"}</span>
+                                <span className="block text-zinc-700 dark:text-zinc-300">
+                                  {matchingCat ? matchingCat.name : "غير مصنف"}
+                                </span>
+                                <span className="text-[10px] text-zinc-400 block">
+                                  {matchingBrand ? matchingBrand.name : "عام"}
+                                </span>
                               </td>
 
                               {/* Cost Price with Inline Editing */}
-                              <td className="p-4 font-mono text-zinc-700 dark:text-zinc-300" onDoubleClick={() => {
-                                setEditingCell({ productId: prod.id, field: "costPriceHalalas" });
-                                setEditingCellValue(((prod.costPriceHalalas || 0) / 100).toFixed(2));
-                              }}>
-                                {editingCell?.productId === prod.id && editingCell?.field === "costPriceHalalas" ? (
-                                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                              <td
+                                className="p-4 font-mono text-zinc-700 dark:text-zinc-300"
+                                onDoubleClick={() => {
+                                  setEditingCell({ productId: prod.id, field: "costPriceHalalas" });
+                                  setEditingCellValue(
+                                    ((prod.costPriceHalalas || 0) / 100).toFixed(2)
+                                  );
+                                }}
+                              >
+                                {editingCell?.productId === prod.id &&
+                                editingCell?.field === "costPriceHalalas" ? (
+                                  <div
+                                    className="flex items-center gap-1"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
                                     <input
                                       type="text"
                                       value={editingCellValue}
@@ -1016,7 +1263,7 @@ export default function ProductsModule({
                                               sku: prod.sku,
                                               action: "تعديل سعر التكلفة",
                                               details: `تعديل سعر التكلفة للمنتج من الجدول مباشرة إلى ${num} ر.س`,
-                                              timestamp: serverTimestamp()
+                                              timestamp: serverTimestamp(),
                                             });
                                             toast.success("تم تحديث سعر التكلفة بنجاح");
                                           }
@@ -1037,7 +1284,7 @@ export default function ProductsModule({
                                             sku: prod.sku,
                                             action: "تعديل سعر التكلفة",
                                             details: `تعديل سعر التكلفة للمنتج من الجدول مباشرة إلى ${num} ر.س`,
-                                            timestamp: serverTimestamp()
+                                            timestamp: serverTimestamp(),
                                           });
                                           toast.success("تم تحديث سعر التكلفة");
                                         }
@@ -1056,12 +1303,21 @@ export default function ProductsModule({
                               </td>
 
                               {/* Sale Price with Inline Editing */}
-                              <td className="p-4 font-mono text-indigo-600 dark:text-indigo-400 font-black" onDoubleClick={() => {
-                                setEditingCell({ productId: prod.id, field: "salePriceHalalas" });
-                                setEditingCellValue(((prod.salePriceHalalas || 0) / 100).toFixed(2));
-                              }}>
-                                {editingCell?.productId === prod.id && editingCell?.field === "salePriceHalalas" ? (
-                                  <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                              <td
+                                className="p-4 font-mono text-indigo-600 dark:text-indigo-400 font-black"
+                                onDoubleClick={() => {
+                                  setEditingCell({ productId: prod.id, field: "salePriceHalalas" });
+                                  setEditingCellValue(
+                                    ((prod.salePriceHalalas || 0) / 100).toFixed(2)
+                                  );
+                                }}
+                              >
+                                {editingCell?.productId === prod.id &&
+                                editingCell?.field === "salePriceHalalas" ? (
+                                  <div
+                                    className="flex items-center gap-1"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
                                     <input
                                       type="text"
                                       value={editingCellValue}
@@ -1078,7 +1334,7 @@ export default function ProductsModule({
                                               sku: prod.sku,
                                               action: "تعديل سعر البيع",
                                               details: `تعديل سعر البيع للمنتج من الجدول مباشرة إلى ${num} ر.س`,
-                                              timestamp: serverTimestamp()
+                                              timestamp: serverTimestamp(),
                                             });
                                             toast.success("تم تحديث سعر البيع بنجاح");
                                           }
@@ -1099,7 +1355,7 @@ export default function ProductsModule({
                                             sku: prod.sku,
                                             action: "تعديل سعر البيع",
                                             details: `تعديل سعر البيع للمنتج من الجدول مباشرة إلى ${num} ر.س`,
-                                            timestamp: serverTimestamp()
+                                            timestamp: serverTimestamp(),
                                           });
                                           toast.success("تم تحديث سعر البيع");
                                         }
@@ -1124,7 +1380,9 @@ export default function ProductsModule({
                                     <span className="font-mono text-zinc-900 dark:text-zinc-100 font-black">
                                       {totalStock} / {maxTarget} حبة
                                     </span>
-                                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md ${badgeBg}`}>
+                                    <span
+                                      className={`text-[8px] font-black px-1.5 py-0.5 rounded-md ${badgeBg}`}
+                                    >
                                       {healthLabel}
                                     </span>
                                   </div>
@@ -1141,7 +1399,9 @@ export default function ProductsModule({
                               </td>
 
                               <td className="p-4 space-y-1">
-                                <span className={`px-2 py-0.5 rounded-md text-[9px] font-black inline-block ${statusColors[prod.status || "Active"]}`}>
+                                <span
+                                  className={`px-2 py-0.5 rounded-md text-[9px] font-black inline-block ${statusColors[prod.status || "Active"]}`}
+                                >
                                   {prod.status || "Active"}
                                 </span>
                                 <span className="block text-[9px] text-zinc-400">
@@ -1149,7 +1409,10 @@ export default function ProductsModule({
                                 </span>
                               </td>
                               <td className="p-4 text-center actions-cell">
-                                <div className="flex items-center justify-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                <div
+                                  className="flex items-center justify-center gap-1.5"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
                                   <button
                                     onClick={() => setShowBarcodePrint(prod)}
                                     className="p-1.5 text-zinc-500 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
@@ -1182,7 +1445,13 @@ export default function ProductsModule({
                     <span>عرض الأسطر لكل صفحة:</span>
                     <select
                       value={pagination.pageSize}
-                      onChange={(e) => setPagination(prev => ({ ...prev, pageSize: Number(e.target.value), pageIndex: 0 }))}
+                      onChange={(e) =>
+                        setPagination((prev) => ({
+                          ...prev,
+                          pageSize: Number(e.target.value),
+                          pageIndex: 0,
+                        }))
+                      }
                       className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1 rounded-xl outline-none"
                     >
                       <option value="10">10 أصناف</option>
@@ -1194,32 +1463,63 @@ export default function ProductsModule({
 
                   <div className="flex items-center gap-1.5">
                     <button
-                      onClick={() => setPagination(prev => ({ ...prev, pageIndex: 0 }))}
+                      onClick={() => setPagination((prev) => ({ ...prev, pageIndex: 0 }))}
                       disabled={pagination.pageIndex === 0}
                       className="px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl disabled:opacity-40"
                     >
                       الأولى
                     </button>
                     <button
-                      onClick={() => setPagination(prev => ({ ...prev, pageIndex: Math.max(0, prev.pageIndex - 1) }))}
+                      onClick={() =>
+                        setPagination((prev) => ({
+                          ...prev,
+                          pageIndex: Math.max(0, prev.pageIndex - 1),
+                        }))
+                      }
                       disabled={pagination.pageIndex === 0}
                       className="px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl disabled:opacity-40"
                     >
                       السابق
                     </button>
                     <span className="mx-2">
-                      صفحة <strong className="text-zinc-900 dark:text-white font-black">{pagination.pageIndex + 1}</strong> من <strong className="text-zinc-900 dark:text-white font-black">{Math.ceil(filteredProducts.length / pagination.pageSize)}</strong>
+                      صفحة{" "}
+                      <strong className="text-zinc-900 dark:text-white font-black">
+                        {pagination.pageIndex + 1}
+                      </strong>{" "}
+                      من{" "}
+                      <strong className="text-zinc-900 dark:text-white font-black">
+                        {Math.ceil(filteredProducts.length / pagination.pageSize)}
+                      </strong>
                     </span>
                     <button
-                      onClick={() => setPagination(prev => ({ ...prev, pageIndex: Math.min(Math.ceil(filteredProducts.length / prev.pageSize) - 1, prev.pageIndex + 1) }))}
-                      disabled={pagination.pageIndex >= Math.ceil(filteredProducts.length / pagination.pageSize) - 1}
+                      onClick={() =>
+                        setPagination((prev) => ({
+                          ...prev,
+                          pageIndex: Math.min(
+                            Math.ceil(filteredProducts.length / prev.pageSize) - 1,
+                            prev.pageIndex + 1
+                          ),
+                        }))
+                      }
+                      disabled={
+                        pagination.pageIndex >=
+                        Math.ceil(filteredProducts.length / pagination.pageSize) - 1
+                      }
                       className="px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl disabled:opacity-40"
                     >
                       التالي
                     </button>
                     <button
-                      onClick={() => setPagination(prev => ({ ...prev, pageIndex: Math.ceil(filteredProducts.length / prev.pageSize) - 1 }))}
-                      disabled={pagination.pageIndex >= Math.ceil(filteredProducts.length / pagination.pageSize) - 1}
+                      onClick={() =>
+                        setPagination((prev) => ({
+                          ...prev,
+                          pageIndex: Math.ceil(filteredProducts.length / prev.pageSize) - 1,
+                        }))
+                      }
+                      disabled={
+                        pagination.pageIndex >=
+                        Math.ceil(filteredProducts.length / pagination.pageSize) - 1
+                      }
                       className="px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl disabled:opacity-40"
                     >
                       الأخيرة
@@ -1231,10 +1531,13 @@ export default function ProductsModule({
           ) : (
             /* GRID VIEW WITH REORDER BADGES */
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filteredProducts.map(prod => {
-                const totalStock = Object.values(prod.warehouseQuantities || {}).reduce((a: any, b: any) => Number(a) + Number(b), 0) as number;
+              {filteredProducts.map((prod) => {
+                const totalStock = Object.values(prod.warehouseQuantities || {}).reduce(
+                  (a: any, b: any) => Number(a) + Number(b),
+                  0
+                ) as number;
                 const reorderPoint = Number(prod.minStock) || 15;
-                
+
                 let healthLabel = "سليم (Healthy)";
                 let badgeClass = "bg-emerald-50 text-emerald-700 border-emerald-100";
                 if (totalStock === 0 || totalStock <= reorderPoint * 0.3) {
@@ -1254,7 +1557,10 @@ export default function ProductsModule({
                     <div>
                       <div className="relative">
                         <img
-                          src={prod.images?.[0] || "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=200"}
+                          src={
+                            prod.images?.[0] ||
+                            "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=200"
+                          }
                           alt={prod.nameAr}
                           referrerPolicy="no-referrer"
                           className="w-full h-36 object-cover rounded-2xl border border-zinc-50 dark:border-zinc-800 mb-3"
@@ -1262,23 +1568,32 @@ export default function ProductsModule({
                         <span className="absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-mono font-black px-2 py-0.5 rounded-lg">
                           {prod.sku}
                         </span>
-                        <span className={`absolute bottom-2 right-2 border text-[8px] font-black px-2 py-0.5 rounded-lg ${badgeClass}`}>
+                        <span
+                          className={`absolute bottom-2 right-2 border text-[8px] font-black px-2 py-0.5 rounded-lg ${badgeClass}`}
+                        >
                           {healthLabel}
                         </span>
                       </div>
-                      <h4 className="font-black text-zinc-900 dark:text-zinc-100 text-xs mb-1 line-clamp-1">{prod.nameAr}</h4>
+                      <h4 className="font-black text-zinc-900 dark:text-zinc-100 text-xs mb-1 line-clamp-1">
+                        {prod.nameAr}
+                      </h4>
                       <p className="text-[10px] text-zinc-400 font-mono mb-2">{prod.nameEn}</p>
-                      
+
                       <div className="flex justify-between items-center bg-zinc-50 dark:bg-zinc-800/50 p-2.5 rounded-xl text-[10px] font-bold mb-3">
                         <div className="text-zinc-500">سعر البيع:</div>
                         <div className="text-indigo-600 dark:text-indigo-400 font-black font-mono">
-                          {((prod.salePriceHalalas || 0)/100).toFixed(2)} ر.س
+                          {((prod.salePriceHalalas || 0) / 100).toFixed(2)} ر.س
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800 pt-3" onClick={(e) => e.stopPropagation()}>
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-black ${totalStock === 0 ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}>
+                    <div
+                      className="flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800 pt-3"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <span
+                        className={`px-2 py-0.5 rounded text-[9px] font-black ${totalStock === 0 ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}
+                      >
                         مخزون: {totalStock} (الحد: {reorderPoint})
                       </span>
                       <div className="flex gap-1.5">
@@ -1316,7 +1631,9 @@ export default function ProductsModule({
                     <div className="w-3 h-3 bg-indigo-500 rounded-full animate-ping shrink-0" />
                     <div>
                       <span className="text-xs font-black block">إجراءات التحكم الجماعية</span>
-                      <span className="text-[10px] text-zinc-400">تم تظليل {selectedItems.length} منتجات من الكتالوج الحالي</span>
+                      <span className="text-[10px] text-zinc-400">
+                        تم تظليل {selectedItems.length} منتجات من الكتالوج الحالي
+                      </span>
                     </div>
                   </div>
 
@@ -1330,8 +1647,10 @@ export default function ProductsModule({
                           className="bg-transparent text-white text-[10px] px-2 outline-none font-bold"
                         >
                           <option value="">-- اختر التصنيف المخزني --</option>
-                          {categories.map(c => (
-                            <option key={c.id} value={c.id} className="text-zinc-900">{c.name}</option>
+                          {categories.map((c) => (
+                            <option key={c.id} value={c.id} className="text-zinc-900">
+                              {c.name}
+                            </option>
                           ))}
                         </select>
                         <button
@@ -1418,14 +1737,22 @@ export default function ProductsModule({
                     <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <img
-                          src={selectedProductForDrawer.images?.[0] || "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=200"}
+                          src={
+                            selectedProductForDrawer.images?.[0] ||
+                            "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=200"
+                          }
                           alt={selectedProductForDrawer.nameAr}
                           referrerPolicy="no-referrer"
                           className="w-12 h-12 object-cover rounded-2xl border border-zinc-200 dark:border-zinc-700"
                         />
                         <div>
-                          <h3 className="font-black text-sm text-zinc-900 dark:text-zinc-100">{selectedProductForDrawer.nameAr}</h3>
-                          <span className="text-[10px] text-zinc-400 font-mono block">SKU: {selectedProductForDrawer.sku} | Barcode: {selectedProductForDrawer.barcode}</span>
+                          <h3 className="font-black text-sm text-zinc-900 dark:text-zinc-100">
+                            {selectedProductForDrawer.nameAr}
+                          </h3>
+                          <span className="text-[10px] text-zinc-400 font-mono block">
+                            SKU: {selectedProductForDrawer.sku} | Barcode:{" "}
+                            {selectedProductForDrawer.barcode}
+                          </span>
                         </div>
                       </div>
 
@@ -1451,7 +1778,14 @@ export default function ProductsModule({
                         className={`py-3 text-xs font-black border-b-2 transition-all flex items-center gap-1.5 ${drawerActiveTab === "stock" ? "border-indigo-600 text-indigo-600" : "border-transparent text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"}`}
                       >
                         <Layers className="w-4 h-4" />
-                        مستويات ومخزون الفروع ({Object.values(selectedProductForDrawer.warehouseQuantities || {}).reduce((x: any, y: any) => Number(x) + Number(y), 0) as number})
+                        مستويات ومخزون الفروع (
+                        {
+                          Object.values(selectedProductForDrawer.warehouseQuantities || {}).reduce(
+                            (x: any, y: any) => Number(x) + Number(y),
+                            0
+                          ) as number
+                        }
+                        )
                       </button>
                       <button
                         onClick={() => setDrawerActiveTab("logs")}
@@ -1464,7 +1798,6 @@ export default function ProductsModule({
 
                     {/* Drawer Content Area */}
                     <div className="flex-1 overflow-y-auto p-6 space-y-6 text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                      
                       {/* CARD DETAIL TAB */}
                       {drawerActiveTab === "details" && (
                         <form
@@ -1476,8 +1809,12 @@ export default function ProductsModule({
                               nameEn: formData.get("drawerNameEn") as string,
                               sku: formData.get("drawerSku") as string,
                               barcode: formData.get("drawerBarcode") as string,
-                              costPriceHalalas: Math.round(Number(formData.get("drawerCost")) * 100),
-                              salePriceHalalas: Math.round(Number(formData.get("drawerPrice")) * 100),
+                              costPriceHalalas: Math.round(
+                                Number(formData.get("drawerCost")) * 100
+                              ),
+                              salePriceHalalas: Math.round(
+                                Number(formData.get("drawerPrice")) * 100
+                              ),
                               minStock: Number(formData.get("drawerMinStock")),
                               maxStock: Number(formData.get("drawerMaxStock")),
                               weight: Number(formData.get("drawerWeight")),
@@ -1485,7 +1822,7 @@ export default function ProductsModule({
                               description: formData.get("drawerDescription") as string,
                               category: formData.get("drawerCategory") as string,
                               brand: formData.get("drawerBrand") as string,
-                              status: formData.get("drawerStatus") as string
+                              status: formData.get("drawerStatus") as string,
                             };
 
                             if (onUpdateProduct) {
@@ -1496,13 +1833,13 @@ export default function ProductsModule({
                                 sku: selectedProductForDrawer.sku,
                                 action: "تحديث بطاقة المنتج",
                                 details: `تم تحديث حقول تفاصيل المنتج بنجاح من لوحة التحكم التفاعلية الجانبية.`,
-                                timestamp: serverTimestamp()
+                                timestamp: serverTimestamp(),
                               });
                               toast.success("تم حفظ تفاصيل المنتج والخصائص بنجاح 💾");
                               // Update selected state client side
                               setSelectedProductForDrawer({
                                 ...selectedProductForDrawer,
-                                ...updatedFields
+                                ...updatedFields,
                               });
                             }
                           }}
@@ -1533,7 +1870,9 @@ export default function ProductsModule({
 
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-zinc-400 mb-1">رمز SKU (الرقم المرجعي)</label>
+                              <label className="block text-zinc-400 mb-1">
+                                رمز SKU (الرقم المرجعي)
+                              </label>
                               <input
                                 type="text"
                                 name="drawerSku"
@@ -1561,18 +1900,24 @@ export default function ProductsModule({
                                 type="number"
                                 step="0.01"
                                 name="drawerCost"
-                                defaultValue={((selectedProductForDrawer.costPriceHalalas || 0) / 100).toFixed(2)}
+                                defaultValue={(
+                                  (selectedProductForDrawer.costPriceHalalas || 0) / 100
+                                ).toFixed(2)}
                                 required
                                 className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none font-mono"
                               />
                             </div>
                             <div>
-                              <label className="block text-zinc-400 mb-1">سعر البيع الأساسي (ريال)</label>
+                              <label className="block text-zinc-400 mb-1">
+                                سعر البيع الأساسي (ريال)
+                              </label>
                               <input
                                 type="number"
                                 step="0.01"
                                 name="drawerPrice"
-                                defaultValue={((selectedProductForDrawer.salePriceHalalas || 0) / 100).toFixed(2)}
+                                defaultValue={(
+                                  (selectedProductForDrawer.salePriceHalalas || 0) / 100
+                                ).toFixed(2)}
                                 required
                                 className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none font-mono"
                               />
@@ -1581,7 +1926,9 @@ export default function ProductsModule({
 
                           <div className="grid grid-cols-3 gap-4">
                             <div>
-                              <label className="block text-zinc-400 mb-1">حد إعادة الطلب (Min)</label>
+                              <label className="block text-zinc-400 mb-1">
+                                حد إعادة الطلب (Min)
+                              </label>
                               <input
                                 type="number"
                                 name="drawerMinStock"
@@ -1591,7 +1938,9 @@ export default function ProductsModule({
                               />
                             </div>
                             <div>
-                              <label className="block text-zinc-400 mb-1">الرصيد الأقصى (Max)</label>
+                              <label className="block text-zinc-400 mb-1">
+                                الرصيد الأقصى (Max)
+                              </label>
                               <input
                                 type="number"
                                 name="drawerMaxStock"
@@ -1620,7 +1969,11 @@ export default function ProductsModule({
                                 className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none"
                               >
                                 <option value="">بدون تصنيف</option>
-                                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                {categories.map((c) => (
+                                  <option key={c.id} value={c.id}>
+                                    {c.name}
+                                  </option>
+                                ))}
                               </select>
                             </div>
                             <div>
@@ -1631,7 +1984,11 @@ export default function ProductsModule({
                                 className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none"
                               >
                                 <option value="">بدون ماركة</option>
-                                {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                                {brands.map((b) => (
+                                  <option key={b.id} value={b.id}>
+                                    {b.name}
+                                  </option>
+                                ))}
                               </select>
                             </div>
                             <div>
@@ -1690,13 +2047,21 @@ export default function ProductsModule({
                               مستويات الكمية الحالية في المستودعات
                             </h4>
                             <div className="space-y-3">
-                              {warehouses.map(wh => {
-                                const qty = selectedProductForDrawer.warehouseQuantities?.[wh.id] || 0;
+                              {warehouses.map((wh) => {
+                                const qty =
+                                  selectedProductForDrawer.warehouseQuantities?.[wh.id] || 0;
                                 return (
-                                  <div key={wh.id} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border rounded-xl shadow-sm text-xs">
+                                  <div
+                                    key={wh.id}
+                                    className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border rounded-xl shadow-sm text-xs"
+                                  >
                                     <div>
-                                      <span className="font-black text-zinc-900 dark:text-zinc-100 block">{wh.name}</span>
-                                      <span className="text-[10px] text-zinc-400 font-mono block">الرمز المرجعي: {wh.id} | الموقع: {wh.location || "السعودية"}</span>
+                                      <span className="font-black text-zinc-900 dark:text-zinc-100 block">
+                                        {wh.name}
+                                      </span>
+                                      <span className="text-[10px] text-zinc-400 font-mono block">
+                                        الرمز المرجعي: {wh.id} | الموقع: {wh.location || "السعودية"}
+                                      </span>
                                     </div>
                                     <div className="text-left font-mono font-black text-sm text-indigo-600 dark:text-indigo-400">
                                       {qty} حبة
@@ -1710,23 +2075,34 @@ export default function ProductsModule({
                           {/* Dynamic Instant stock adjustment tool */}
                           <div className="bg-indigo-50/50 dark:bg-indigo-950/10 p-5 rounded-2xl border border-indigo-100 dark:border-indigo-900/30 space-y-4">
                             <h4 className="font-black text-xs text-indigo-900 dark:text-indigo-400 flex items-center gap-1.5">
-                              <RefreshCw className="w-4 h-4 text-indigo-600 animate-spin" style={{ animationDuration: '4s' }} />
+                              <RefreshCw
+                                className="w-4 h-4 text-indigo-600 animate-spin"
+                                style={{ animationDuration: "4s" }}
+                              />
                               أداة التسوية والتوريد المباشر (Adjustment & Receive Engine)
                             </h4>
                             <div className="grid grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-zinc-500 text-[10px] mb-1">المستودع المستهدف</label>
+                                <label className="block text-zinc-500 text-[10px] mb-1">
+                                  المستودع المستهدف
+                                </label>
                                 <select
                                   value={adjustWhId}
                                   onChange={(e) => setAdjustWhId(e.target.value)}
                                   className="w-full p-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none"
                                 >
                                   <option value="">-- اختر مستودع --</option>
-                                  {warehouses.map(wh => <option key={wh.id} value={wh.id}>{wh.name}</option>)}
+                                  {warehouses.map((wh) => (
+                                    <option key={wh.id} value={wh.id}>
+                                      {wh.name}
+                                    </option>
+                                  ))}
                                 </select>
                               </div>
                               <div>
-                                <label className="block text-zinc-500 text-[10px] mb-1">التغيير (مثال: 10 أو -5)</label>
+                                <label className="block text-zinc-500 text-[10px] mb-1">
+                                  التغيير (مثال: 10 أو -5)
+                                </label>
                                 <input
                                   type="number"
                                   placeholder="فارق الكمية..."
@@ -1738,7 +2114,9 @@ export default function ProductsModule({
                             </div>
 
                             <div>
-                              <label className="block text-zinc-500 text-[10px] mb-1">السبب أو رقم مستند الحركة</label>
+                              <label className="block text-zinc-500 text-[10px] mb-1">
+                                السبب أو رقم مستند الحركة
+                              </label>
                               <input
                                 type="text"
                                 value={adjustReason}
@@ -1760,18 +2138,22 @@ export default function ProductsModule({
                                   return;
                                 }
 
-                                const whObj = warehouses.find(w => w.id === adjustWhId);
-                                const currentQty = Number(selectedProductForDrawer.warehouseQuantities?.[adjustWhId] || 0);
+                                const whObj = warehouses.find((w) => w.id === adjustWhId);
+                                const currentQty = Number(
+                                  selectedProductForDrawer.warehouseQuantities?.[adjustWhId] || 0
+                                );
                                 const newQty = Math.max(0, currentQty + diff);
 
                                 const updatedQuantities = {
                                   ...(selectedProductForDrawer.warehouseQuantities || {}),
-                                  [adjustWhId]: newQty
+                                  [adjustWhId]: newQty,
                                 };
 
                                 if (onUpdateProduct) {
-                                  onUpdateProduct(selectedProductForDrawer.id, { warehouseQuantities: updatedQuantities });
-                                  
+                                  onUpdateProduct(selectedProductForDrawer.id, {
+                                    warehouseQuantities: updatedQuantities,
+                                  });
+
                                   // Log to stock_adjustments in firestore
                                   await addDoc(collection(db, "stock_adjustments"), {
                                     itemId: selectedProductForDrawer.id,
@@ -1783,7 +2165,7 @@ export default function ProductsModule({
                                     newQty: newQty,
                                     difference: diff,
                                     reason: adjustReason,
-                                    date: new Date().toISOString()
+                                    date: new Date().toISOString(),
                                   });
 
                                   // Log to audit_logs
@@ -1791,18 +2173,18 @@ export default function ProductsModule({
                                     itemId: selectedProductForDrawer.id,
                                     sku: selectedProductForDrawer.sku,
                                     action: diff > 0 ? "توريد استلام مباشر" : "تسوية صرف مباشر",
-                                    details: `تعديل مخزون المستودع (${whObj?.name || adjustWhId}) بمقدار ${diff > 0 ? '+' : ''}${diff}. الكمية من ${currentQty} إلى ${newQty}. السبب: ${adjustReason}`,
-                                    timestamp: serverTimestamp()
+                                    details: `تعديل مخزون المستودع (${whObj?.name || adjustWhId}) بمقدار ${diff > 0 ? "+" : ""}${diff}. الكمية من ${currentQty} إلى ${newQty}. السبب: ${adjustReason}`,
+                                    timestamp: serverTimestamp(),
                                   });
 
                                   // Play beep sound effect
                                   playBeep();
                                   toast.success("تم تحديث المخزون وتسجيل الحركة بنجاح");
-                                  
+
                                   // Update client-side selected state
                                   setSelectedProductForDrawer({
                                     ...selectedProductForDrawer,
-                                    warehouseQuantities: updatedQuantities
+                                    warehouseQuantities: updatedQuantities,
                                   });
 
                                   // Reset adjustment states
@@ -1828,20 +2210,21 @@ export default function ProductsModule({
 
                           {drawerAuditLogs.length === 0 ? (
                             <div className="p-8 text-center text-zinc-400 bg-zinc-50 dark:bg-zinc-800/10 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800">
-                              لا توجد سجلات تدقيق سابقة للمنتج {selectedProductForDrawer.sku}. سيتم تسجيل التعديلات والتسويات هنا تلقائياً.
+                              لا توجد سجلات تدقيق سابقة للمنتج {selectedProductForDrawer.sku}. سيتم
+                              تسجيل التعديلات والتسويات هنا تلقائياً.
                             </div>
                           ) : (
                             <div className="relative border-r-2 border-indigo-200 dark:border-indigo-900 pr-4 space-y-4">
                               {drawerAuditLogs.map((log) => {
-                                const logDate = log.timestamp?.seconds 
-                                  ? new Date(log.timestamp.seconds * 1000) 
+                                const logDate = log.timestamp?.seconds
+                                  ? new Date(log.timestamp.seconds * 1000)
                                   : new Date(log.date || 0);
 
                                 return (
                                   <div key={log.id} className="relative text-xs">
                                     {/* Timeline bullet */}
                                     <div className="absolute right-[-21px] top-1 w-2.5 h-2.5 rounded-full bg-indigo-600 border border-white dark:border-zinc-900" />
-                                    
+
                                     <div className="bg-zinc-50 dark:bg-zinc-800/30 p-3.5 rounded-xl border border-zinc-100 dark:border-zinc-800 space-y-1 hover:shadow-md transition-all">
                                       <div className="flex items-center justify-between text-[10px]">
                                         <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 rounded-md font-black">
@@ -1849,7 +2232,11 @@ export default function ProductsModule({
                                         </span>
                                         <span className="font-mono text-zinc-400 flex items-center gap-1">
                                           <Calendar className="w-3 h-3" />
-                                          {logDate.toLocaleDateString("ar-SA")} - {logDate.toLocaleTimeString("ar-SA", { hour: '2-digit', minute: '2-digit' })}
+                                          {logDate.toLocaleDateString("ar-SA")} -{" "}
+                                          {logDate.toLocaleTimeString("ar-SA", {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          })}
                                         </span>
                                       </div>
                                       <p className="text-[11px] text-zinc-800 dark:text-zinc-200 font-bold leading-relaxed pt-1.5">
@@ -1869,14 +2256,12 @@ export default function ProductsModule({
                           )}
                         </div>
                       )}
-
                     </div>
                   </motion.div>
                 </div>
               </div>
             )}
           </AnimatePresence>
-
         </div>
       )}
 
@@ -1918,9 +2303,13 @@ export default function ProductsModule({
                   className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none cursor-pointer"
                 >
                   <option value="">-- فئة رئيسية (لا يوجد أب) --</option>
-                  {categories.filter(c => !c.parentId).map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
+                  {categories
+                    .filter((c) => !c.parentId)
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
                 </select>
               </div>
               <div>
@@ -1945,37 +2334,58 @@ export default function ProductsModule({
           </div>
 
           <div className="md:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
-            <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-4 border-b pb-2">هيكلية الفئات المعتمدة (Hierarchy tree)</h3>
+            <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-4 border-b pb-2">
+              هيكلية الفئات المعتمدة (Hierarchy tree)
+            </h3>
             <div className="space-y-4">
-              {categories.filter(c => !c.parentId).map(parent => {
-                const children = categories.filter(c => c.parentId === parent.id);
-                return (
-                  <div key={parent.id} className="border border-zinc-100 dark:border-zinc-800/80 rounded-2xl p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{parent.icon}</span>
-                        <span className="font-black text-zinc-950 dark:text-zinc-100">{parent.name}</span>
-                        <span className="text-[10px] text-zinc-400 font-mono">({parent.nameEn})</span>
+              {categories
+                .filter((c) => !c.parentId)
+                .map((parent) => {
+                  const children = categories.filter((c) => c.parentId === parent.id);
+                  return (
+                    <div
+                      key={parent.id}
+                      className="border border-zinc-100 dark:border-zinc-800/80 rounded-2xl p-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{parent.icon}</span>
+                          <span className="font-black text-zinc-950 dark:text-zinc-100">
+                            {parent.name}
+                          </span>
+                          <span className="text-[10px] text-zinc-400 font-mono">
+                            ({parent.nameEn})
+                          </span>
+                        </div>
+                        <span
+                          className="w-3.5 h-3.5 rounded-full"
+                          style={{ backgroundColor: parent.color }}
+                        />
                       </div>
-                      <span className="w-3.5 h-3.5 rounded-full" style={{ backgroundColor: parent.color }} />
-                    </div>
-                    {children.length > 0 && (
-                      <div className="mr-8 mt-3 border-r-2 border-indigo-100 pr-4 space-y-2">
-                        {children.map(child => (
-                          <div key={child.id} className="flex items-center justify-between text-xs font-bold text-zinc-600 dark:text-zinc-400">
-                            <div className="flex items-center gap-1.5">
-                              <span>{child.icon}</span>
-                              <span>{child.name}</span>
-                              <span className="text-[10px] text-zinc-400 font-mono">({child.nameEn})</span>
+                      {children.length > 0 && (
+                        <div className="mr-8 mt-3 border-r-2 border-indigo-100 pr-4 space-y-2">
+                          {children.map((child) => (
+                            <div
+                              key={child.id}
+                              className="flex items-center justify-between text-xs font-bold text-zinc-600 dark:text-zinc-400"
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <span>{child.icon}</span>
+                                <span>{child.name}</span>
+                                <span className="text-[10px] text-zinc-400 font-mono">
+                                  ({child.nameEn})
+                                </span>
+                              </div>
+                              <span className="text-[10px] bg-zinc-50 dark:bg-zinc-800 px-2 py-0.5 rounded">
+                                فئة تابعة
+                              </span>
                             </div>
-                            <span className="text-[10px] bg-zinc-50 dark:bg-zinc-800 px-2 py-0.5 rounded">فئة تابعة</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
           </div>
         </div>
@@ -2030,20 +2440,36 @@ export default function ProductsModule({
           </div>
 
           <div className="md:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
-            <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-4 border-b pb-2">قائمة الماركات المسجلة</h3>
+            <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-4 border-b pb-2">
+              قائمة الماركات المسجلة
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {brands.map(brand => (
-                <div key={brand.id} className="p-4 border border-zinc-50 dark:border-zinc-800 rounded-2xl flex items-center justify-between">
+              {brands.map((brand) => (
+                <div
+                  key={brand.id}
+                  className="p-4 border border-zinc-50 dark:border-zinc-800 rounded-2xl flex items-center justify-between"
+                >
                   <div>
-                    <span className="font-black text-zinc-900 dark:text-zinc-100 block">{brand.name}</span>
-                    <span className="text-[10px] text-zinc-400 block">بلد المنشأ: {brand.country}</span>
+                    <span className="font-black text-zinc-900 dark:text-zinc-100 block">
+                      {brand.name}
+                    </span>
+                    <span className="text-[10px] text-zinc-400 block">
+                      بلد المنشأ: {brand.country}
+                    </span>
                     {brand.website && (
-                      <a href={`https://${brand.website}`} target="_blank" rel="noreferrer" className="text-[10px] text-indigo-500 hover:underline inline-flex items-center gap-1 mt-1 font-mono">
+                      <a
+                        href={`https://${brand.website}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[10px] text-indigo-500 hover:underline inline-flex items-center gap-1 mt-1 font-mono"
+                      >
                         {brand.website} <ExternalLink className="w-2.5 h-2.5" />
                       </a>
                     )}
                   </div>
-                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-black rounded">نشط</span>
+                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-black rounded">
+                    نشط
+                  </span>
                 </div>
               ))}
             </div>
@@ -2082,9 +2508,11 @@ export default function ProductsModule({
                   className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none font-mono text-right"
                 />
               </div>
-              
+
               <div className="border border-indigo-100 p-3 rounded-2xl bg-indigo-50/20 space-y-3">
-                <h4 className="text-[10px] font-black text-indigo-600">معامل التحويل الرياضي (اختياري)</h4>
+                <h4 className="text-[10px] font-black text-indigo-600">
+                  معامل التحويل الرياضي (اختياري)
+                </h4>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-[9px] text-zinc-400 mb-1">المعامل</label>
@@ -2104,13 +2532,17 @@ export default function ProductsModule({
                       className="w-full p-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg outline-none text-xs"
                     >
                       <option value="">-- اختر الوحدة --</option>
-                      {units.map(u => (
-                        <option key={u.id} value={u.id}>{u.name}</option>
+                      {units.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name}
+                        </option>
                       ))}
                     </select>
                   </div>
                 </div>
-                <p className="text-[9px] text-indigo-500 font-bold">مثال: 1 كرتون يحتوي على 24 حبة</p>
+                <p className="text-[9px] text-indigo-500 font-bold">
+                  مثال: 1 كرتون يحتوي على 24 حبة
+                </p>
               </div>
 
               <button
@@ -2123,18 +2555,28 @@ export default function ProductsModule({
           </div>
 
           <div className="md:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
-            <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-4 border-b pb-2">جدول وحدات القياس الحسابية والتحويل البيني</h3>
+            <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-4 border-b pb-2">
+              جدول وحدات القياس الحسابية والتحويل البيني
+            </h3>
             <div className="space-y-4">
-              {units.map(unit => (
-                <div key={unit.id} className="p-4 border border-zinc-50 dark:border-zinc-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              {units.map((unit) => (
+                <div
+                  key={unit.id}
+                  className="p-4 border border-zinc-50 dark:border-zinc-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                >
                   <div>
-                    <span className="font-black text-zinc-900 dark:text-zinc-100 block">{unit.name} ({unit.abbreviation})</span>
+                    <span className="font-black text-zinc-900 dark:text-zinc-100 block">
+                      {unit.name} ({unit.abbreviation})
+                    </span>
                     <span className="text-[10px] text-zinc-400 block">نوع البعد: {unit.type}</span>
                   </div>
                   {unit.conversions.length > 0 ? (
                     <div className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/20 px-3 py-1.5 rounded-xl border border-indigo-100 text-xs text-indigo-700 dark:text-indigo-400">
                       <RefreshCw className="w-3.5 h-3.5" />
-                      <span>كل 1 {unit.name.split(" ")[0]} = {unit.conversions[0].factor} {unit.conversions[0].targetName}</span>
+                      <span>
+                        كل 1 {unit.name.split(" ")[0]} = {unit.conversions[0].factor}{" "}
+                        {unit.conversions[0].targetName}
+                      </span>
                     </div>
                   ) : (
                     <span className="text-[10px] text-zinc-400 font-bold">وحدة أساسية</span>
@@ -2155,7 +2597,9 @@ export default function ProductsModule({
                 <Barcode className="w-5 h-5 text-indigo-600" />
                 توليد وإعداد ملصقات الباركود ورمز الـ QR الموحدة (Label Generator)
               </h3>
-              <p className="text-xs text-zinc-400 font-bold">تم اختيار {selectedItems.length} صنف لطباعة ملصقات الباركود والـ QR بالجملة.</p>
+              <p className="text-xs text-zinc-400 font-bold">
+                تم اختيار {selectedItems.length} صنف لطباعة ملصقات الباركود والـ QR بالجملة.
+              </p>
             </div>
             {selectedItems.length > 0 && (
               <button
@@ -2171,43 +2615,58 @@ export default function ProductsModule({
           {selectedItems.length === 0 ? (
             <div className="p-12 text-center text-zinc-400 font-bold flex flex-col items-center justify-center gap-2">
               <Printer className="w-8 h-8 text-zinc-300" />
-              يرجى تحديد صنف واحد أو أكثر من "دليل الصنف العام" لتوليد ملصقات الباركود والـ QR القابلة للطباعة.
+              يرجى تحديد صنف واحد أو أكثر من "دليل الصنف العام" لتوليد ملصقات الباركود والـ QR
+              القابلة للطباعة.
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 p-4 border border-dashed rounded-2xl bg-zinc-50/50 dark:bg-zinc-800/20" id="print-labels-container">
-              {items.filter(i => selectedItems.includes(i.id)).map(prod => (
-                <div key={prod.id} className="bg-white dark:bg-zinc-900 p-4 rounded-xl border shadow-sm flex flex-col items-center justify-between space-y-3 relative overflow-hidden group">
-                  <div className="text-center">
-                    <span className="text-[10px] font-black text-indigo-600 font-mono block">{prod.sku}</span>
-                    <span className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 block line-clamp-1">{prod.nameAr}</span>
-                  </div>
-                  
-                  {/* QR code containing SKU, name and seller */}
-                  <div className="p-1 bg-white border rounded">
-                    <QRCodeSVG 
-                      value={`SKU: ${prod.sku}\nName: ${prod.nameEn}\nSeller: Madarij OS`} 
-                      size={80} 
-                      level="M" 
-                    />
-                  </div>
+            <div
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 p-4 border border-dashed rounded-2xl bg-zinc-50/50 dark:bg-zinc-800/20"
+              id="print-labels-container"
+            >
+              {items
+                .filter((i) => selectedItems.includes(i.id))
+                .map((prod) => (
+                  <div
+                    key={prod.id}
+                    className="bg-white dark:bg-zinc-900 p-4 rounded-xl border shadow-sm flex flex-col items-center justify-between space-y-3 relative overflow-hidden group"
+                  >
+                    <div className="text-center">
+                      <span className="text-[10px] font-black text-indigo-600 font-mono block">
+                        {prod.sku}
+                      </span>
+                      <span className="text-[11px] font-bold text-zinc-900 dark:text-zinc-100 block line-clamp-1">
+                        {prod.nameAr}
+                      </span>
+                    </div>
 
-                  <div className="text-center w-full">
-                    {/* Simulated standard Code128 bar code */}
-                    <div className="flex flex-col items-center">
-                      <div className="h-6 w-32 bg-zinc-900 dark:bg-white flex items-center justify-around gap-[1px] px-1">
-                        {Array.from({ length: 15 }).map((_, idx) => (
-                          <div 
-                            key={idx} 
-                            className="bg-white dark:bg-zinc-900 h-full" 
-                            style={{ width: `${(idx % 3 === 0) ? '3px' : '1px'}` }} 
-                          />
-                        ))}
+                    {/* QR code containing SKU, name and seller */}
+                    <div className="p-1 bg-white border rounded">
+                      <QRCodeSVG
+                        value={`SKU: ${prod.sku}\nName: ${prod.nameEn}\nSeller: Madarij OS`}
+                        size={80}
+                        level="M"
+                      />
+                    </div>
+
+                    <div className="text-center w-full">
+                      {/* Simulated standard Code128 bar code */}
+                      <div className="flex flex-col items-center">
+                        <div className="h-6 w-32 bg-zinc-900 dark:bg-white flex items-center justify-around gap-[1px] px-1">
+                          {Array.from({ length: 15 }).map((_, idx) => (
+                            <div
+                              key={idx}
+                              className="bg-white dark:bg-zinc-900 h-full"
+                              style={{ width: `${idx % 3 === 0 ? "3px" : "1px"}` }}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-[9px] font-mono font-bold text-zinc-500 mt-1 block">
+                          {prod.barcode}
+                        </span>
                       </div>
-                      <span className="text-[9px] font-mono font-bold text-zinc-500 mt-1 block">{prod.barcode}</span>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
           )}
         </div>
@@ -2216,7 +2675,10 @@ export default function ProductsModule({
       {/* --- ADD ADVANCED PRODUCT MODAL --- */}
       <AnimatePresence>
         {showAddForm && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]" dir="rtl">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
+            dir="rtl"
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -2224,9 +2686,11 @@ export default function ProductsModule({
               className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 w-full max-w-3xl overflow-hidden flex flex-col p-6 space-y-4 max-h-[90vh] overflow-y-auto"
             >
               <div className="flex items-center justify-between border-b dark:border-zinc-800 pb-3">
-                <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">تعريف صنف مخزني متقدم مع المتغيرات والمستودعات</h3>
-                <button 
-                  onClick={generateSkuAndBarcode} 
+                <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
+                  تعريف صنف مخزني متقدم مع المتغيرات والمستودعات
+                </h3>
+                <button
+                  onClick={generateSkuAndBarcode}
                   type="button"
                   className="px-2.5 py-1.5 bg-indigo-50 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-400 rounded-lg text-[10px] font-black border border-indigo-100"
                 >
@@ -2235,35 +2699,37 @@ export default function ProductsModule({
               </div>
 
               <form onSubmit={handleCreateProductSubmit} className="space-y-4 text-xs font-bold">
-                
                 {/* Image Upload Row */}
                 <div>
                   <label className="block text-zinc-400 mb-1">صور المنتج ( drag & drop )</label>
                   <div className="flex gap-2 flex-wrap items-center">
-                    <div 
+                    <div
                       onClick={() => fileInputRef.current?.click()}
                       className="w-16 h-16 border border-dashed border-zinc-300 dark:border-zinc-700 rounded-2xl flex flex-col items-center justify-center cursor-pointer text-zinc-400 hover:bg-zinc-50"
                     >
                       <Upload className="w-4 h-4" />
                       <span className="text-[8px] mt-1">ارفع صورة</span>
                     </div>
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      multiple 
-                      onChange={handleImageUpload} 
-                      className="hidden" 
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      multiple
+                      onChange={handleImageUpload}
+                      className="hidden"
                     />
-                    
+
                     {productImages.map((img, idx) => (
-                      <div key={idx} className="relative w-16 h-16 rounded-2xl overflow-hidden border border-zinc-200">
+                      <div
+                        key={idx}
+                        className="relative w-16 h-16 rounded-2xl overflow-hidden border border-zinc-200"
+                      >
                         <img src={img} alt="Product" className="w-full h-full object-cover" />
-                        <button 
+                        <button
                           type="button"
                           onClick={() => setPrimaryImageIdx(idx)}
-                          className={`absolute bottom-0 inset-x-0 text-center text-[8px] py-0.5 text-white ${primaryImageIdx === idx ? 'bg-emerald-600 font-bold' : 'bg-black/60'}`}
+                          className={`absolute bottom-0 inset-x-0 text-center text-[8px] py-0.5 text-white ${primaryImageIdx === idx ? "bg-emerald-600 font-bold" : "bg-black/60"}`}
                         >
-                          {primaryImageIdx === idx ? 'الرئيسية' : 'تعيين رئيسية'}
+                          {primaryImageIdx === idx ? "الرئيسية" : "تعيين رئيسية"}
                         </button>
                       </div>
                     ))}
@@ -2393,8 +2859,10 @@ export default function ProductsModule({
                       className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none cursor-pointer"
                     >
                       <option value="">-- اختر الفئة --</option>
-                      {categories.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -2406,8 +2874,10 @@ export default function ProductsModule({
                       className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none cursor-pointer"
                     >
                       <option value="">-- اختر الماركة --</option>
-                      {brands.map(b => (
-                        <option key={b.id} value={b.id}>{b.name}</option>
+                      {brands.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.name}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -2418,8 +2888,10 @@ export default function ProductsModule({
                       onChange={(e) => setItemUnit(e.target.value)}
                       className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none cursor-pointer"
                     >
-                      {units.map(u => (
-                        <option key={u.id} value={u.id}>{u.name}</option>
+                      {units.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -2481,7 +2953,9 @@ export default function ProductsModule({
                         onChange={(e) => setHasVariants(e.target.checked)}
                         className="rounded"
                       />
-                      <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">هذا المنتج يحتوي على متغيرات (مقاسات، ألوان، إلخ)</span>
+                      <span className="text-xs font-black text-zinc-900 dark:text-zinc-100">
+                        هذا المنتج يحتوي على متغيرات (مقاسات، ألوان، إلخ)
+                      </span>
                     </label>
                   </div>
 
@@ -2496,7 +2970,9 @@ export default function ProductsModule({
                             onChange={(e) => setVariantAttr1(e.target.value)}
                             className="w-full p-2.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg outline-none text-[11px]"
                           />
-                          <label className="block text-[10px] text-zinc-400 mt-1">القيم مفصولة بفاصلة</label>
+                          <label className="block text-[10px] text-zinc-400 mt-1">
+                            القيم مفصولة بفاصلة
+                          </label>
                           <input
                             type="text"
                             value={variantVals1}
@@ -2514,7 +2990,9 @@ export default function ProductsModule({
                             onChange={(e) => setVariantAttr2(e.target.value)}
                             className="w-full p-2.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg outline-none text-[11px]"
                           />
-                          <label className="block text-[10px] text-zinc-400 mt-1">القيم مفصولة بفاصلة</label>
+                          <label className="block text-[10px] text-zinc-400 mt-1">
+                            القيم مفصولة بفاصلة
+                          </label>
                           <input
                             type="text"
                             value={variantVals2}
@@ -2536,7 +3014,10 @@ export default function ProductsModule({
                       {generatedVariants.length > 0 && (
                         <div className="max-h-44 overflow-y-auto border border-zinc-200 rounded-xl bg-white dark:bg-zinc-900 p-2 text-[10px] space-y-1.5">
                           {generatedVariants.map((v, i) => (
-                            <div key={i} className="flex items-center justify-between border-b pb-1 last:border-0 last:pb-0">
+                            <div
+                              key={i}
+                              className="flex items-center justify-between border-b pb-1 last:border-0 last:pb-0"
+                            >
                               <span>{v.name}</span>
                               <div className="flex gap-2">
                                 <input
@@ -2584,7 +3065,6 @@ export default function ProductsModule({
                     حفظ وتعريف الصنف المخزني 📦
                   </button>
                 </div>
-
               </form>
             </motion.div>
           </div>
@@ -2594,33 +3074,47 @@ export default function ProductsModule({
       {/* Barcode and Label detailed popup */}
       <AnimatePresence>
         {showBarcodePrint && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]" dir="rtl">
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
+            dir="rtl"
+          >
             <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 w-full max-w-sm p-6 flex flex-col items-center space-y-4">
-              <h4 className="font-black text-xs text-zinc-900 dark:text-zinc-100 border-b pb-2 w-full text-center">طباعة ملصق الصنف المعتمد</h4>
-              
-              <div className="bg-white p-6 border rounded-2xl flex flex-col items-center space-y-4 w-full" id="label-print-single">
+              <h4 className="font-black text-xs text-zinc-900 dark:text-zinc-100 border-b pb-2 w-full text-center">
+                طباعة ملصق الصنف المعتمد
+              </h4>
+
+              <div
+                className="bg-white p-6 border rounded-2xl flex flex-col items-center space-y-4 w-full"
+                id="label-print-single"
+              >
                 <div className="text-center">
-                  <span className="text-[10px] font-black text-indigo-600 font-mono block">{showBarcodePrint.sku}</span>
-                  <span className="text-[12px] font-bold text-zinc-900 block">{showBarcodePrint.nameAr}</span>
+                  <span className="text-[10px] font-black text-indigo-600 font-mono block">
+                    {showBarcodePrint.sku}
+                  </span>
+                  <span className="text-[12px] font-bold text-zinc-900 block">
+                    {showBarcodePrint.nameAr}
+                  </span>
                 </div>
 
-                <QRCodeSVG 
-                  value={`SKU: ${showBarcodePrint.sku}\nBarcode: ${showBarcodePrint.barcode}`} 
-                  size={120} 
-                  level="H" 
+                <QRCodeSVG
+                  value={`SKU: ${showBarcodePrint.sku}\nBarcode: ${showBarcodePrint.barcode}`}
+                  size={120}
+                  level="H"
                 />
 
                 <div className="flex flex-col items-center w-full">
                   <div className="h-8 w-44 bg-zinc-900 flex items-center justify-around gap-[1px] px-2">
                     {Array.from({ length: 22 }).map((_, idx) => (
-                      <div 
-                        key={idx} 
-                        className="bg-white h-full" 
-                        style={{ width: `${(idx % 4 === 0) ? '3px' : '1px'}` }} 
+                      <div
+                        key={idx}
+                        className="bg-white h-full"
+                        style={{ width: `${idx % 4 === 0 ? "3px" : "1px"}` }}
                       />
                     ))}
                   </div>
-                  <span className="text-[10px] font-mono font-bold text-zinc-500 mt-1 block">{showBarcodePrint.barcode}</span>
+                  <span className="text-[10px] font-mono font-bold text-zinc-500 mt-1 block">
+                    {showBarcodePrint.barcode}
+                  </span>
                 </div>
               </div>
 
@@ -2643,7 +3137,6 @@ export default function ProductsModule({
           </div>
         )}
       </AnimatePresence>
-
     </div>
   );
 }

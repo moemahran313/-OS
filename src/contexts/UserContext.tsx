@@ -1,9 +1,26 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-import { onIdTokenChanged, signInWithPopup, signOut, User as FirebaseUser, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile as updateAuthProfile } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import {
+  onIdTokenChanged,
+  signInWithPopup,
+  signOut,
+  User as FirebaseUser,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile as updateAuthProfile,
+} from "firebase/auth";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+  onSnapshot,
+  collection,
+  addDoc,
+  updateDoc,
+} from "firebase/firestore";
 import { auth, googleProvider, db } from "../lib/firebase";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 
 export interface User {
   id: string;
@@ -12,6 +29,10 @@ export interface User {
   email: string;
   role: "Administrator" | "Manager" | "Employee";
   avatar?: string | null;
+  organizations?: string[];
+  activeOrganizationId?: string;
+  activeCompanyId?: string;
+  activeBranchId?: string;
   companyName?: string;
   crNumber?: string;
   city?: string;
@@ -27,11 +48,19 @@ interface UserContextType {
   loading: boolean;
   loginWithGoogle: (referredBy?: string) => Promise<boolean>;
   loginWithEmail: (email: string, pass: string) => Promise<boolean>;
-  registerWithEmail: (email: string, pass: string, name?: string, avatar?: string, referredBy?: string) => Promise<boolean>;
+  registerWithEmail: (
+    email: string,
+    pass: string,
+    name?: string,
+    avatar?: string,
+    referredBy?: string
+  ) => Promise<boolean>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
   hasPermission: (module: string) => boolean;
   loginDemoOffline: () => void;
+  refreshUser: () => Promise<void>;
+  currentSessionId: string | null;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -49,6 +78,26 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number = 1000): Pr
   });
 }
 
+// User Agent Parser
+const parseUserAgent = () => {
+  const ua = navigator.userAgent;
+  let browser = "Other Browser";
+  let os = "Other OS";
+
+  if (ua.includes("Firefox")) browser = "Firefox";
+  else if (ua.includes("Chrome")) browser = "Chrome";
+  else if (ua.includes("Safari")) browser = "Safari";
+  else if (ua.includes("Edge")) browser = "Edge";
+
+  if (ua.includes("Windows")) os = "Windows PC";
+  else if (ua.includes("Macintosh")) os = "macOS";
+  else if (ua.includes("Linux")) os = "Linux PC";
+  else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS Device";
+  else if (ua.includes("Android")) os = "Android Device";
+
+  return { browser, os, deviceName: `${os} (${browser})` };
+};
+
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
     try {
@@ -59,6 +108,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   });
   const [loading, setLoading] = useState(true);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(() => {
+    return sessionStorage.getItem("mudarij_session_id");
+  });
 
   const setUserAndCache = (val: User | null | ((prev: User | null) => User | null)) => {
     setUser((prev) => {
@@ -85,15 +137,87 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         // Clear old local token if it exists
         localStorage.removeItem("auth_token");
         await syncUser(firebaseUser);
+        await registerActiveSession(firebaseUser.uid);
       } else {
         document.cookie = "mudarij_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         setUserAndCache(null);
         setLoading(false);
+        setCurrentSessionId(null);
+        sessionStorage.removeItem("mudarij_session_id");
       }
     });
 
     return () => unsubscribe();
   }, []);
+
+  // Real-time Session listener for immediate revocation
+  useEffect(() => {
+    if (!currentSessionId || !user) return;
+
+    const sessionDocRef = doc(db, "user_sessions", currentSessionId);
+    const unsubSession = onSnapshot(sessionDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.status === "Revoked") {
+          toast.warn("تم إنهاء جلستك الحالية بطلب من الإدارة أو من جهاز آخر.");
+          logout();
+        }
+      } else if (user.id !== "demo-admin-uid") {
+        // Session document was deleted
+        toast.warn("انتهت صلاحية الجلسة الحالية. يرجى تسجيل الدخول مجدداً.");
+        logout();
+      }
+    });
+
+    return () => unsubSession();
+  }, [currentSessionId, user]);
+
+  const registerActiveSession = async (userId: string) => {
+    // If we already have a session registered in this tab, skip
+    if (sessionStorage.getItem("mudarij_session_id")) return;
+
+    try {
+      const { browser, os, deviceName } = parseUserAgent();
+
+      // Determine approximate location based on timezone
+      let loc = "الرياض، السعودية";
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz.includes("Dubai")) loc = "دبي، الإمارات";
+      else if (tz.includes("Kuwait")) loc = "الكويت";
+
+      const sessionData = {
+        userId,
+        deviceName,
+        browser,
+        os,
+        ipAddress: "192.168.1.1", // fallback/mock local client IP
+        location: loc,
+        loginTime: new Date().toISOString(),
+        lastActivity: new Date().toISOString(),
+        status: "Active",
+        userAgent: navigator.userAgent,
+      };
+
+      const sessionCollection = collection(db, "user_sessions");
+      const docRef = await addDoc(sessionCollection, sessionData);
+
+      // Save ID to session storage
+      sessionStorage.setItem("mudarij_session_id", docRef.id);
+      setCurrentSessionId(docRef.id);
+
+      // Log Security Audit Event
+      await addDoc(collection(db, "audit_logs"), {
+        userId,
+        module: "AUTHENTICATION",
+        action: "UserLoggedIn",
+        payload: JSON.stringify({ deviceName, browser, os }),
+        result: "Success",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn("Could not register session in Firestore:", err);
+    }
+  };
 
   const syncUser = async (firebaseUser: FirebaseUser) => {
     try {
@@ -111,32 +235,48 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           email: firebaseUser.email || "",
           name: firebaseUser.displayName || "",
           role: "Administrator", // Default role
-          avatar: firebaseUser.photoURL || null
+          avatar: firebaseUser.photoURL || null,
         };
         try {
-          await withTimeout(setDoc(userDocRef, {
-            ...newUser,
-            uid: firebaseUser.uid,
-            createdAt: serverTimestamp(),
-          }), 15000);
+          await withTimeout(
+            setDoc(userDocRef, {
+              ...newUser,
+              uid: firebaseUser.uid,
+              createdAt: serverTimestamp(),
+            }),
+            15000
+          );
         } catch (writeErr) {
           console.warn("Could not write initial profile to Firestore:", writeErr);
         }
         setUserAndCache({ ...newUser, uid: firebaseUser.uid });
       }
     } catch (e) {
-      console.warn("User sync failed (offline or permission issue), using fallback local profile:", e);
+      console.warn(
+        "User sync failed (offline or permission issue), using fallback local profile:",
+        e
+      );
       // Construct a valid local fallback user in memory so the application does not break
-      setUserAndCache((prev) => prev || ({
-        id: firebaseUser.uid,
-        uid: firebaseUser.uid,
-        email: firebaseUser.email || "",
-        name: firebaseUser.displayName || "Administrator",
-        role: "Administrator",
-        avatar: firebaseUser.photoURL || null
-      } as User));
+      setUserAndCache(
+        (prev) =>
+          prev ||
+          ({
+            id: firebaseUser.uid,
+            uid: firebaseUser.uid,
+            email: firebaseUser.email || "",
+            name: firebaseUser.displayName || "Administrator",
+            role: "Administrator",
+            avatar: firebaseUser.photoURL || null,
+          } as User)
+      );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const refreshUser = async () => {
+    if (auth.currentUser) {
+      await syncUser(auth.currentUser);
     }
   };
 
@@ -144,18 +284,25 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       const result = await signInWithPopup(auth, googleProvider);
-      
+
       try {
         const userDocRef = doc(db, "users", result.user.uid);
         const userDoc = await withTimeout(getDoc(userDocRef), 15000);
         if (!userDoc.exists()) {
-           await withTimeout(setDoc(userDocRef, {
-             email: result.user.email || "",
-             role: "Administrator",
-             name: result.user.displayName || "",
-             avatar: result.user.photoURL || null,
-             referredBy: referredBy || null
-           }, { merge: true }), 15000);
+          await withTimeout(
+            setDoc(
+              userDocRef,
+              {
+                email: result.user.email || "",
+                role: "Administrator",
+                name: result.user.displayName || "",
+                avatar: result.user.photoURL || null,
+                referredBy: referredBy || null,
+              },
+              { merge: true }
+            ),
+            15000
+          );
         }
       } catch (dbErr) {
         console.warn("Could not save Google user record to Firestore:", dbErr);
@@ -181,35 +328,51 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const registerWithEmail = async (email: string, pass: string, name?: string, avatar?: string, referredBy?: string) => {
+  const registerWithEmail = async (
+    email: string,
+    pass: string,
+    name?: string,
+    avatar?: string,
+    referredBy?: string
+  ) => {
     try {
       setLoading(true);
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-      
+
       if (name || avatar) {
         try {
           await updateAuthProfile(userCredential.user, {
             displayName: name || null,
-            photoURL: avatar || null
+            photoURL: avatar || null,
           });
         } catch (profileErr) {
           console.warn("Could not update auth profile", profileErr);
         }
       }
-      
-      // Update the user document explicitly since syncUser might have written an empty name/avatar 
+
+      // Update the user document explicitly since syncUser might have written an empty name/avatar
       // if it fired before updateAuthProfile completed.
       try {
         const userDocRef = doc(db, "users", userCredential.user.uid);
-        await withTimeout(setDoc(userDocRef, {
-          email: userCredential.user.email || "",
-          role: "Administrator",
-          name: name || "",
-          avatar: avatar || null,
-          referredBy: referredBy || null
-        }, { merge: true }), 15000);
+        await withTimeout(
+          setDoc(
+            userDocRef,
+            {
+              email: userCredential.user.email || "",
+              role: "Administrator",
+              name: name || "",
+              avatar: avatar || null,
+              referredBy: referredBy || null,
+            },
+            { merge: true }
+          ),
+          15000
+        );
       } catch (dbErr) {
-        console.warn("Could not write user record to Firestore, proceeding with client sign-up:", dbErr);
+        console.warn(
+          "Could not write user record to Firestore, proceeding with client sign-up:",
+          dbErr
+        );
       }
 
       return true;
@@ -222,13 +385,42 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
+      const activeSessId = sessionStorage.getItem("mudarij_session_id");
+      if (activeSessId && user && user.id !== "demo-admin-uid") {
+        try {
+          // Update status of session to terminated
+          const sessionDocRef = doc(db, "user_sessions", activeSessId);
+          await updateDoc(sessionDocRef, {
+            status: "LoggedOut",
+            lastActivity: new Date().toISOString(),
+          });
+
+          // Log security event
+          await addDoc(collection(db, "audit_logs"), {
+            userId: user.id,
+            module: "AUTHENTICATION",
+            action: "UserLoggedOut",
+            payload: JSON.stringify({ sessionId: activeSessId }),
+            result: "Success",
+            timestamp: new Date().toISOString(),
+          });
+        } catch (sessErr) {
+          console.warn("Session clean up failed:", sessErr);
+        }
+      }
+
       await signOut(auth);
       setUserAndCache(null);
+      setCurrentSessionId(null);
+      sessionStorage.removeItem("mudarij_session_id");
+
       document.cookie.split(";").forEach((c) => {
         document.cookie = c
           .replace(/^ +/, "")
           .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
       });
+
+      // Refresh browser to login page
       window.location.href = "/login";
     } catch (e) {
       console.error("Logout error", e);
@@ -237,7 +429,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const updateProfile = async (updates: Partial<User>) => {
     if (!user) return;
-    
+
     // Remove undefined fields
     const cleanUpdates = Object.fromEntries(
       Object.entries(updates).filter(([_, v]) => v !== undefined)
@@ -245,12 +437,19 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const userDocRef = doc(db, "users", user.id);
-      await withTimeout(setDoc(userDocRef, { ...cleanUpdates, updatedAt: serverTimestamp() }, { merge: true }), 15000);
-      setUserAndCache(prev => prev ? { ...prev, ...cleanUpdates, id: prev.id, uid: prev.uid || prev.id } : null);
+      await withTimeout(
+        setDoc(userDocRef, { ...cleanUpdates, updatedAt: serverTimestamp() }, { merge: true }),
+        15000
+      );
+      setUserAndCache((prev) =>
+        prev ? { ...prev, ...cleanUpdates, id: prev.id, uid: prev.uid || prev.id } : null
+      );
       toast.success("تم تحديث الملف الشخصي بنجاح");
     } catch (e) {
       console.warn("Profile update failed on backend (offline/unreachable), updating locally:", e);
-      setUserAndCache(prev => prev ? { ...prev, ...cleanUpdates, id: prev.id, uid: prev.uid || prev.id } : null);
+      setUserAndCache((prev) =>
+        prev ? { ...prev, ...cleanUpdates, id: prev.id, uid: prev.uid || prev.id } : null
+      );
       toast.success("تم تحديث الملف الشخصي محلياً");
     }
   };
@@ -258,7 +457,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const hasPermission = (module: string) => {
     if (!user) return false;
     if (user.role === "Administrator") return true;
-    
+
     const permissions: Record<string, string[]> = {
       Manager: ["Dashboard", "CRM", "Invoices", "Analytics", "Settings", "Simulator", "Inventory"],
       Employee: ["Dashboard", "CRM", "Inventory"],
@@ -274,7 +473,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       name: "مدير النظام التجريبي",
       email: "demo@mudarij.com",
       role: "Administrator",
-      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256"
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256",
     };
     setUserAndCache(demoUser);
     setLoading(false);
@@ -282,7 +481,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, loading, loginWithGoogle, loginWithEmail, registerWithEmail, logout, updateProfile, hasPermission, loginDemoOffline }}>
+    <UserContext.Provider
+      value={{
+        user,
+        loading,
+        loginWithGoogle,
+        loginWithEmail,
+        registerWithEmail,
+        logout,
+        updateProfile,
+        hasPermission,
+        loginDemoOffline,
+        refreshUser,
+        currentSessionId,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );

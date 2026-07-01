@@ -1,4 +1,4 @@
-import { toPng } from 'html-to-image';
+import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
 
 /**
@@ -20,7 +20,7 @@ export async function downloadElementAsPdf(elementId: string, fileName: string =
       pixelRatio: 2, // Higher scale for better quality
       backgroundColor: "#ffffff",
     });
-    
+
     // Create jsPDF instance
     // A4 size: 210mm x 297mm
     const pdf = new jsPDF({

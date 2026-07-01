@@ -45,6 +45,9 @@ export interface Settings {
   notifyUnusualLoginWhatsapp?: boolean;
   dataResidency?: "saudi_arabia" | "global";
   pdplComplianceMode?: boolean;
+  openwaUrl?: string;
+  openwaApiKey?: string;
+  openwaEnabled?: boolean;
 }
 
 const defaultSettings: Settings = {
@@ -74,6 +77,9 @@ const defaultSettings: Settings = {
   notifyUnusualLoginWhatsapp: false,
   dataResidency: "saudi_arabia",
   pdplComplianceMode: true,
+  openwaUrl: "http://localhost:8080",
+  openwaApiKey: "",
+  openwaEnabled: false,
 };
 
 interface SettingsContextType {
@@ -104,7 +110,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   // Sync settings with user data from Prisma database
   useEffect(() => {
     if (user) {
-      setSettings(prev => ({
+      setSettings((prev) => ({
         ...prev,
         companyName: user.companyName || prev.companyName,
         crNumber: user.crNumber || prev.crNumber,
@@ -139,14 +145,25 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
           }
         } catch (error: any) {
           if (error.message?.includes("insufficient permissions")) {
-            console.warn("Settings document doesn't exist or permission denied. Trying to initialize defaults.");
+            console.warn(
+              "Settings document doesn't exist or permission denied. Trying to initialize defaults."
+            );
             try {
-              await withTimeout(setDoc(doc(db, "settings", user.uid), defaultSettings, { merge: true }), 1000);
+              await withTimeout(
+                setDoc(doc(db, "settings", user.uid), defaultSettings, { merge: true }),
+                1000
+              );
             } catch (innerErr) {
-              console.warn("Could not write default settings to Firebase (possibly offline or read-only):", innerErr);
+              console.warn(
+                "Could not write default settings to Firebase (possibly offline or read-only):",
+                innerErr
+              );
             }
           } else {
-            console.warn("Failed to load settings from Firebase (offline or unreachable):", error.message);
+            console.warn(
+              "Failed to load settings from Firebase (offline or unreachable):",
+              error.message
+            );
           }
         }
       } else {
@@ -159,12 +176,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem("madarij_settings", JSON.stringify(settings));
-    
+
     // Sync to Firebase if logged in
     if (userId) {
       const timer = setTimeout(() => {
-        setDoc(doc(db, "settings", userId), settings, { merge: true })
-          .catch((error) => console.error("Failed to save settings to Firebase:", error));
+        setDoc(doc(db, "settings", userId), settings, { merge: true }).catch((error) =>
+          console.error("Failed to save settings to Firebase:", error)
+        );
       }, 1000); // debounce
       return () => clearTimeout(timer);
     }
@@ -176,19 +194,22 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Apply primary color to document
-    document.documentElement.style.setProperty('--color-primary', settings.primaryColor);
-    
+    document.documentElement.style.setProperty("--color-primary", settings.primaryColor);
+
     // Apply theme
-    if (settings.theme === 'dark' || (settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
+    if (
+      settings.theme === "dark" ||
+      (settings.theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
+    ) {
+      document.documentElement.classList.add("dark");
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove("dark");
     }
 
     // Apply language and direction
     if (settings.language) {
       i18n.changeLanguage(settings.language);
-      document.documentElement.dir = settings.language === 'ar' ? 'rtl' : 'ltr';
+      document.documentElement.dir = settings.language === "ar" ? "rtl" : "ltr";
       document.documentElement.lang = settings.language;
     }
   }, [settings.theme, settings.primaryColor, settings.language]);

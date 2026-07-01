@@ -1,14 +1,39 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { 
-  Warehouse, Plus, ArrowRightLeft, Layers, Package, Search, Filter, 
-  Trash2, FileText, CheckCircle2, TrendingUp, AlertTriangle, ArrowRight,
-  Eye, CornerDownLeft, ClipboardList, Info, Landmark, ShieldAlert, Settings
+import {
+  Warehouse,
+  Plus,
+  ArrowRightLeft,
+  Layers,
+  Package,
+  Search,
+  Filter,
+  Trash2,
+  FileText,
+  CheckCircle2,
+  TrendingUp,
+  AlertTriangle,
+  ArrowRight,
+  Eye,
+  CornerDownLeft,
+  ClipboardList,
+  Info,
+  Landmark,
+  ShieldAlert,
+  Settings,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { db } from "../lib/firebase";
-import { 
-  collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, doc, 
-  serverTimestamp, writeBatch 
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
+  writeBatch,
 } from "firebase/firestore";
 import { useUser } from "../contexts/UserContext";
 import { toast } from "sonner";
@@ -32,7 +57,7 @@ interface WarehouseDoc {
   code: string;
   location: string;
   accountCode: string; // Linked asset account
-  accountId?: string;  // chart_of_accounts doc ID
+  accountId?: string; // chart_of_accounts doc ID
   authorUid: string;
 }
 
@@ -47,7 +72,7 @@ interface InventoryItem {
   warehouseQuantities: Record<string, number>; // warehouseId -> stock
   bomComponents?: { itemId: string; quantity: number }[]; // components for assembled items
   authorUid: string;
-  
+
   // Advanced added fields
   barcode?: string;
   category?: string;
@@ -99,38 +124,50 @@ export default function InventoryDashboard() {
 
     const qWh = query(collection(db, "warehouses"), where("authorUid", "==", user.uid));
     const unsubWh = onSnapshot(qWh, (snap) => {
-      setWarehouses(snap.docs.map(d => ({ id: d.id, ...d.data() } as WarehouseDoc)));
+      setWarehouses(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as WarehouseDoc));
     });
 
     const qItems = query(collection(db, "inventory_items"), where("authorUid", "==", user.uid));
     const unsubItems = onSnapshot(qItems, (snap) => {
-      setItems(snap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItem)));
+      setItems(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as InventoryItem));
     });
 
-    const qTransfers = query(collection(db, "inventory_transfers"), where("authorUid", "==", user.uid));
+    const qTransfers = query(
+      collection(db, "inventory_transfers"),
+      where("authorUid", "==", user.uid)
+    );
     const unsubTransfers = onSnapshot(qTransfers, (snap) => {
-      const sorted = snap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+      const sorted = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as any[];
       sorted.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setTransfers(sorted);
     });
 
-    const qAssemblies = query(collection(db, "assembly_orders"), where("authorUid", "==", user.uid));
+    const qAssemblies = query(
+      collection(db, "assembly_orders"),
+      where("authorUid", "==", user.uid)
+    );
     const unsubAssemblies = onSnapshot(qAssemblies, (snap) => {
-      const sorted = snap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+      const sorted = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as any[];
       sorted.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setAssemblies(sorted);
     });
 
-    const qAdjustments = query(collection(db, "stock_adjustments"), where("authorUid", "==", user.uid));
+    const qAdjustments = query(
+      collection(db, "stock_adjustments"),
+      where("authorUid", "==", user.uid)
+    );
     const unsubAdjustments = onSnapshot(qAdjustments, (snap) => {
-      const sorted = snap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+      const sorted = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as any[];
       sorted.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setAdjustments(sorted);
     });
 
-    const qAccounts = query(collection(db, "chart_of_accounts"), where("authorUid", "==", user.uid));
+    const qAccounts = query(
+      collection(db, "chart_of_accounts"),
+      where("authorUid", "==", user.uid)
+    );
     const unsubAccounts = onSnapshot(qAccounts, (snap) => {
-      setAccounts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setAccounts(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
       setLoading(false);
     });
 
@@ -147,7 +184,7 @@ export default function InventoryDashboard() {
   // Map account codes to IDs for manual lookup
   const accountIdMap = useMemo(() => {
     const m: Record<string, string> = {};
-    accounts.forEach(acc => {
+    accounts.forEach((acc) => {
       m[acc.accountCode] = acc.id;
     });
     return m;
@@ -162,9 +199,27 @@ export default function InventoryDashboard() {
 
       // 1. Bootstrap standard warehouses
       const whsDemo = [
-        { nameAr: "المستودع الرئيسي - الرياض", nameEn: "Main Riyadh Warehouse", code: "MW-01", location: "الرياض - السلي", accountCode: "110301" },
-        { nameAr: "مستودع فرع المنطقة الغربية", nameEn: "Western Branch Warehouse", code: "WW-02", location: "جدة - حي الأندلس", accountCode: "110302" },
-        { nameAr: "مستودع المنطقة الشرقية", nameEn: "Eastern Branch Warehouse", code: "EW-03", location: "الدمام - المدينة الصناعية", accountCode: "110303" }
+        {
+          nameAr: "المستودع الرئيسي - الرياض",
+          nameEn: "Main Riyadh Warehouse",
+          code: "MW-01",
+          location: "الرياض - السلي",
+          accountCode: "110301",
+        },
+        {
+          nameAr: "مستودع فرع المنطقة الغربية",
+          nameEn: "Western Branch Warehouse",
+          code: "WW-02",
+          location: "جدة - حي الأندلس",
+          accountCode: "110302",
+        },
+        {
+          nameAr: "مستودع المنطقة الشرقية",
+          nameEn: "Eastern Branch Warehouse",
+          code: "EW-03",
+          location: "الدمام - المدينة الصناعية",
+          accountCode: "110303",
+        },
       ];
 
       const createdWhs: any[] = [];
@@ -177,13 +232,13 @@ export default function InventoryDashboard() {
           location: wh.location,
           accountCode: wh.accountCode,
           authorUid: user.uid,
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
         });
         createdWhs.push({ id: whRef.id, ...wh });
       });
 
       // 2. Add Corresponding Chart of Accounts if not exist
-      whsDemo.forEach(wh => {
+      whsDemo.forEach((wh) => {
         if (!accountIdMap[wh.accountCode]) {
           const accRef = doc(collection(db, "chart_of_accounts"));
           batch.set(accRef, {
@@ -193,7 +248,7 @@ export default function InventoryDashboard() {
             type: "Asset",
             balanceHalalas: 25000000, // starting with 250,000 SAR demo inventory value
             authorUid: user.uid,
-            createdAt: serverTimestamp()
+            createdAt: serverTimestamp(),
           });
         }
       });
@@ -228,7 +283,7 @@ export default function InventoryDashboard() {
         maxStock: 500,
         safetyStock: 10,
         authorUid: user.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
 
       batch.set(raw2Ref, {
@@ -250,7 +305,7 @@ export default function InventoryDashboard() {
         maxStock: 600,
         safetyStock: 15,
         authorUid: user.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
 
       batch.set(raw3Ref, {
@@ -272,7 +327,7 @@ export default function InventoryDashboard() {
         maxStock: 2000,
         safetyStock: 50,
         authorUid: user.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
 
       // Assembled Product (Complete Office Bundle)
@@ -293,10 +348,10 @@ export default function InventoryDashboard() {
         bomComponents: [
           { itemId: raw1Ref.id, quantity: 1 },
           { itemId: raw2Ref.id, quantity: 2 },
-          { itemId: raw3Ref.id, quantity: 4 }
+          { itemId: raw3Ref.id, quantity: 4 },
         ],
         authorUid: user.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
 
       await batch.commit();
@@ -331,7 +386,7 @@ export default function InventoryDashboard() {
         type: "Asset",
         balanceHalalas: 0,
         authorUid: user.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
 
       // Add Warehouse
@@ -343,7 +398,7 @@ export default function InventoryDashboard() {
         accountCode,
         accountId: accRef.id,
         authorUid: user.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
 
       // Audit Log
@@ -358,7 +413,7 @@ export default function InventoryDashboard() {
         timestamp: new Date().toISOString(),
         details: { nameAr: newWhNameAr, code: newWhCode, accountCode },
         authorUid: user.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
 
       toast.success("تم إنشاء المستودع وتأسيس حسابه المالي تلقائياً بنجاح 🏛️");
@@ -377,10 +432,10 @@ export default function InventoryDashboard() {
   // 2. PRODUCT SAVE WRAPPERS FOR NEW COMPLEX MODULAR FORMS
   const handleAddProductWrapper = async (prodData: any) => {
     if (!user) return;
-    
+
     // Auto-create initial quantities map if not present
     const quantitiesMap: Record<string, number> = {};
-    warehouses.forEach(w => {
+    warehouses.forEach((w) => {
       quantitiesMap[w.id] = 0;
     });
 
@@ -388,7 +443,7 @@ export default function InventoryDashboard() {
       ...prodData,
       warehouseQuantities: prodData.warehouseQuantities || quantitiesMap,
       authorUid: user.uid,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
 
     // Save audit log
@@ -402,7 +457,7 @@ export default function InventoryDashboard() {
       ipAddress: "192.168.10.5",
       timestamp: new Date().toISOString(),
       authorUid: user.uid,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
 
     return docRef;
@@ -433,7 +488,7 @@ export default function InventoryDashboard() {
         timestamp: new Date().toISOString(),
         details: { id, col, name },
         authorUid: user?.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
 
       await batch.commit();
@@ -446,9 +501,9 @@ export default function InventoryDashboard() {
   // 3. WAREHOUSE OPERATIONS & TRANSFERS WRAPPERS
   const handleAddTransferWrapper = async (transferData: any) => {
     if (!user) return;
-    
-    const sourceWh = warehouses.find(w => w.id === transferData.sourceWarehouseId)!;
-    const destWh = warehouses.find(w => w.id === transferData.destWarehouseId)!;
+
+    const sourceWh = warehouses.find((w) => w.id === transferData.sourceWarehouseId)!;
+    const destWh = warehouses.find((w) => w.id === transferData.destWarehouseId)!;
     const sourceAccId = accountIdMap[sourceWh.accountCode];
     const destAccId = accountIdMap[destWh.accountCode];
 
@@ -467,13 +522,23 @@ export default function InventoryDashboard() {
       descriptionAr: descAr,
       descriptionEn: descEn,
       lines: [
-        { accountId: destAccId, debitHalalas: transferData.totalCostHalalas, creditHalalas: 0, costCenter: destWh.nameAr },
-        { accountId: sourceAccId, debitHalalas: 0, creditHalalas: transferData.totalCostHalalas, costCenter: sourceWh.nameAr }
+        {
+          accountId: destAccId,
+          debitHalalas: transferData.totalCostHalalas,
+          creditHalalas: 0,
+          costCenter: destWh.nameAr,
+        },
+        {
+          accountId: sourceAccId,
+          debitHalalas: 0,
+          creditHalalas: transferData.totalCostHalalas,
+          costCenter: sourceWh.nameAr,
+        },
       ],
       isBalanced: true,
       sourceDoc: `Transfer Note ${entryNumber}`,
       authorUid: user.uid,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
 
     const docRef = await addDoc(collection(db, "inventory_transfers"), {
@@ -481,7 +546,7 @@ export default function InventoryDashboard() {
       transferNumber: entryNumber,
       journalEntryId: journalRef.id,
       authorUid: user.uid,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
 
     // Save audit log
@@ -495,7 +560,7 @@ export default function InventoryDashboard() {
       ipAddress: "192.168.10.22",
       timestamp: new Date().toISOString(),
       authorUid: user.uid,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
 
     return docRef;
@@ -503,8 +568,8 @@ export default function InventoryDashboard() {
 
   const handleAddAdjustmentWrapper = async (adjustmentData: any) => {
     if (!user) return;
-    
-    const wh = warehouses.find(w => w.id === adjustmentData.warehouseId)!;
+
+    const wh = warehouses.find((w) => w.id === adjustmentData.warehouseId)!;
     const whAccId = accountIdMap[wh.accountCode];
 
     if (!whAccId) {
@@ -526,7 +591,7 @@ export default function InventoryDashboard() {
         type: "Expense",
         balanceHalalas: 0,
         authorUid: user.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
       shortageAccId = accRef.id;
     }
@@ -540,7 +605,7 @@ export default function InventoryDashboard() {
         type: "Revenue",
         balanceHalalas: 0,
         authorUid: user.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
       surplusAccId = accRef.id;
     }
@@ -554,12 +619,32 @@ export default function InventoryDashboard() {
 
     if (adjustmentData.totalImpactHalalas < 0) {
       // Shortage: Debit expense, Credit asset
-      lines.push({ accountId: shortageAccId || "510501", debitHalalas: absoluteImpact, creditHalalas: 0, costCenter: wh.nameAr });
-      lines.push({ accountId: whAccId, debitHalalas: 0, creditHalalas: absoluteImpact, costCenter: wh.nameAr });
+      lines.push({
+        accountId: shortageAccId || "510501",
+        debitHalalas: absoluteImpact,
+        creditHalalas: 0,
+        costCenter: wh.nameAr,
+      });
+      lines.push({
+        accountId: whAccId,
+        debitHalalas: 0,
+        creditHalalas: absoluteImpact,
+        costCenter: wh.nameAr,
+      });
     } else {
       // Surplus: Debit asset, Credit revenue
-      lines.push({ accountId: whAccId, debitHalalas: absoluteImpact, creditHalalas: 0, costCenter: wh.nameAr });
-      lines.push({ accountId: surplusAccId || "410301", debitHalalas: 0, creditHalalas: absoluteImpact, costCenter: wh.nameAr });
+      lines.push({
+        accountId: whAccId,
+        debitHalalas: absoluteImpact,
+        creditHalalas: 0,
+        costCenter: wh.nameAr,
+      });
+      lines.push({
+        accountId: surplusAccId || "410301",
+        debitHalalas: 0,
+        creditHalalas: absoluteImpact,
+        costCenter: wh.nameAr,
+      });
     }
 
     // Post journal entry doc
@@ -573,7 +658,7 @@ export default function InventoryDashboard() {
       isBalanced: true,
       sourceDoc: `Adjustment ${entryNumber}`,
       authorUid: user.uid,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
 
     const adjRef = doc(collection(db, "stock_adjustments"));
@@ -582,7 +667,7 @@ export default function InventoryDashboard() {
       adjustmentNumber: entryNumber,
       journalEntryId: journalRef.id,
       authorUid: user.uid,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
 
     // Save audit log
@@ -597,7 +682,7 @@ export default function InventoryDashboard() {
       ipAddress: "192.168.1.105",
       timestamp: new Date().toISOString(),
       authorUid: user.uid,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
 
     await batch.commit();
@@ -608,7 +693,7 @@ export default function InventoryDashboard() {
   const handleAddAssemblyWrapper = async (assemblyData: any) => {
     if (!user) return;
 
-    const wh = warehouses.find(w => w.id === assemblyData.warehouseId)!;
+    const wh = warehouses.find((w) => w.id === assemblyData.warehouseId)!;
     const whAccId = accountIdMap[wh.accountCode];
 
     if (!whAccId) {
@@ -626,13 +711,23 @@ export default function InventoryDashboard() {
       descriptionAr: descAr,
       descriptionEn: descEn,
       lines: [
-        { accountId: whAccId, debitHalalas: assemblyData.totalCostHalalas, creditHalalas: 0, costCenter: wh.nameAr },
-        { accountId: whAccId, debitHalalas: 0, creditHalalas: assemblyData.totalCostHalalas, costCenter: wh.nameAr }
+        {
+          accountId: whAccId,
+          debitHalalas: assemblyData.totalCostHalalas,
+          creditHalalas: 0,
+          costCenter: wh.nameAr,
+        },
+        {
+          accountId: whAccId,
+          debitHalalas: 0,
+          creditHalalas: assemblyData.totalCostHalalas,
+          costCenter: wh.nameAr,
+        },
       ],
       isBalanced: true,
       sourceDoc: `Assembly Order ${entryNumber}`,
       authorUid: user.uid,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
 
     await addDoc(collection(db, "assembly_orders"), {
@@ -640,7 +735,7 @@ export default function InventoryDashboard() {
       assemblyNumber: entryNumber,
       journalEntryId: journalRef.id,
       authorUid: user.uid,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
 
     // Save audit log
@@ -654,13 +749,12 @@ export default function InventoryDashboard() {
       ipAddress: "192.168.1.102",
       timestamp: new Date().toISOString(),
       authorUid: user.uid,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
     });
   };
 
   return (
     <div className="space-y-6 pb-12 font-sans text-zinc-900" dir="rtl">
-      
       {/* Dynamic Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-6 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
         <div>
@@ -669,7 +763,8 @@ export default function InventoryDashboard() {
             إدارة المنتجات والمخزون المتعدد • Madarij OS
           </h2>
           <p className="text-xs text-zinc-500 font-bold mt-1">
-            مستودعات غير محدودة، أتمتة تجميع المواد (BOM)، باركود، ومتابعة جردية متوافقة محاسبياً مع معايير الهيئة السعودية للمحاسبين القانونيين (SOCPA).
+            مستودعات غير محدودة، أتمتة تجميع المواد (BOM)، باركود، ومتابعة جردية متوافقة محاسبياً مع
+            معايير الهيئة السعودية للمحاسبين القانونيين (SOCPA).
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -699,7 +794,9 @@ export default function InventoryDashboard() {
           onClick={() => setActiveTab("overview")}
           className={cn(
             "flex-1 md:flex-none px-4 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer",
-            activeTab === "overview" ? "bg-zinc-900 dark:bg-zinc-800 text-white shadow-md" : "text-zinc-500 hover:bg-zinc-50"
+            activeTab === "overview"
+              ? "bg-zinc-900 dark:bg-zinc-800 text-white shadow-md"
+              : "text-zinc-500 hover:bg-zinc-50"
           )}
         >
           📊 لوحة التحكم والإحصائيات
@@ -708,7 +805,9 @@ export default function InventoryDashboard() {
           onClick={() => setActiveTab("products")}
           className={cn(
             "flex-1 md:flex-none px-4 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer",
-            activeTab === "products" ? "bg-zinc-900 dark:bg-zinc-800 text-white shadow-md" : "text-zinc-500 hover:bg-zinc-50"
+            activeTab === "products"
+              ? "bg-zinc-900 dark:bg-zinc-800 text-white shadow-md"
+              : "text-zinc-500 hover:bg-zinc-50"
           )}
         >
           📦 كشاف المواد والباركود والماركات
@@ -717,7 +816,9 @@ export default function InventoryDashboard() {
           onClick={() => setActiveTab("stocks")}
           className={cn(
             "flex-1 md:flex-none px-4 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer",
-            activeTab === "stocks" ? "bg-zinc-900 dark:bg-zinc-800 text-white shadow-md" : "text-zinc-500 hover:bg-zinc-50"
+            activeTab === "stocks"
+              ? "bg-zinc-900 dark:bg-zinc-800 text-white shadow-md"
+              : "text-zinc-500 hover:bg-zinc-50"
           )}
         >
           📍 الأرصدة والرفوف وصلاحيات الـ FEFO
@@ -726,7 +827,9 @@ export default function InventoryDashboard() {
           onClick={() => setActiveTab("operations")}
           className={cn(
             "flex-1 md:flex-none px-4 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer",
-            activeTab === "operations" ? "bg-zinc-900 dark:bg-zinc-800 text-white shadow-md" : "text-zinc-500 hover:bg-zinc-50"
+            activeTab === "operations"
+              ? "bg-zinc-900 dark:bg-zinc-800 text-white shadow-md"
+              : "text-zinc-500 hover:bg-zinc-50"
           )}
         >
           🛠️ التحويل والتسوية وأوامر التجميع (BOM)
@@ -735,7 +838,9 @@ export default function InventoryDashboard() {
           onClick={() => setActiveTab("fulfillment")}
           className={cn(
             "flex-1 md:flex-none px-4 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer",
-            activeTab === "fulfillment" ? "bg-zinc-900 dark:bg-zinc-800 text-white shadow-md" : "text-zinc-500 hover:bg-zinc-50"
+            activeTab === "fulfillment"
+              ? "bg-zinc-900 dark:bg-zinc-800 text-white shadow-md"
+              : "text-zinc-500 hover:bg-zinc-50"
           )}
         >
           📥 الاستلام وتلبية شحنات المبيعات (POs & SOs)
@@ -744,7 +849,9 @@ export default function InventoryDashboard() {
           onClick={() => setActiveTab("reports")}
           className={cn(
             "flex-1 md:flex-none px-4 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer",
-            activeTab === "reports" ? "bg-zinc-900 dark:bg-zinc-800 text-white shadow-md" : "text-zinc-500 hover:bg-zinc-50"
+            activeTab === "reports"
+              ? "bg-zinc-900 dark:bg-zinc-800 text-white shadow-md"
+              : "text-zinc-500 hover:bg-zinc-50"
           )}
         >
           📈 تحليل دوران المخزون والتقارير المالية
@@ -753,7 +860,9 @@ export default function InventoryDashboard() {
           onClick={() => setActiveTab("warehouses")}
           className={cn(
             "flex-1 md:flex-none px-4 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer",
-            activeTab === "warehouses" ? "bg-zinc-900 dark:bg-zinc-800 text-white shadow-md" : "text-zinc-500 hover:bg-zinc-50"
+            activeTab === "warehouses"
+              ? "bg-zinc-900 dark:bg-zinc-800 text-white shadow-md"
+              : "text-zinc-500 hover:bg-zinc-50"
           )}
         >
           🏛️ تهيئة الفروع والمواقع المادية ({warehouses.length})
@@ -771,68 +880,67 @@ export default function InventoryDashboard() {
       {!loading && (
         <div className="animate-in fade-in duration-300">
           {activeTab === "overview" && (
-            <DashboardOverview 
-              items={items} 
-              warehouses={warehouses} 
-              transfers={transfers} 
-              adjustments={adjustments} 
+            <DashboardOverview
+              items={items}
+              warehouses={warehouses}
+              transfers={transfers}
+              adjustments={adjustments}
               onTabChange={(tab: any) => setActiveTab(tab)}
             />
           )}
 
           {activeTab === "products" && (
-            <ProductsModule 
-              items={items} 
-              warehouses={warehouses} 
-              onAddProduct={handleAddProductWrapper} 
-              onDeleteProduct={(id, name) => handleDeleteItem("inventory_items", id, name)} 
+            <ProductsModule
+              items={items}
+              warehouses={warehouses}
+              onAddProduct={handleAddProductWrapper}
+              onDeleteProduct={(id, name) => handleDeleteItem("inventory_items", id, name)}
               onUpdateProduct={handleUpdateProductWrapper}
             />
           )}
 
           {activeTab === "stocks" && (
-            <StocksAndLots 
-              items={items} 
-              warehouses={warehouses} 
+            <StocksAndLots
+              items={items}
+              warehouses={warehouses}
               onUpdateProduct={handleUpdateProductWrapper}
             />
           )}
 
           {activeTab === "operations" && (
-            <OperationsAndTransfers 
-              items={items} 
-              warehouses={warehouses} 
-              transfers={transfers} 
-              adjustments={adjustments} 
-              onAddTransfer={handleAddTransferWrapper} 
-              onAddAdjustment={handleAddAdjustmentWrapper} 
+            <OperationsAndTransfers
+              items={items}
+              warehouses={warehouses}
+              transfers={transfers}
+              adjustments={adjustments}
+              onAddTransfer={handleAddTransferWrapper}
+              onAddAdjustment={handleAddAdjustmentWrapper}
               onUpdateProduct={handleUpdateProductWrapper}
             />
           )}
 
           {activeTab === "fulfillment" && (
-            <ReceivingFulfillment 
-              items={items} 
-              warehouses={warehouses} 
-              onAddAdjustment={handleAddAdjustmentWrapper} 
+            <ReceivingFulfillment
+              items={items}
+              warehouses={warehouses}
+              onAddAdjustment={handleAddAdjustmentWrapper}
               onUpdateProduct={handleUpdateProductWrapper}
             />
           )}
 
-          {activeTab === "reports" && (
-            <AdvancedReports 
-              items={items} 
-              warehouses={warehouses} 
-            />
-          )}
+          {activeTab === "reports" && <AdvancedReports items={items} warehouses={warehouses} />}
 
           {/* Simple physical warehouses config tab */}
           {activeTab === "warehouses" && (
             <div className="bg-white dark:bg-zinc-900 p-6 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-sm font-black text-zinc-900 dark:text-zinc-100">هيكلة المستودعات ومواقع التخزين</h3>
-                  <p className="text-xs text-zinc-400 font-bold mt-0.5">تهيئة الفروع وربطها مع الحسابات المالية المقابلة لترحيل القيود أوتوماتيكياً.</p>
+                  <h3 className="text-sm font-black text-zinc-900 dark:text-zinc-100">
+                    هيكلة المستودعات ومواقع التخزين
+                  </h3>
+                  <p className="text-xs text-zinc-400 font-bold mt-0.5">
+                    تهيئة الفروع وربطها مع الحسابات المالية المقابلة لترحيل القيود أوتوماتيكياً.
+                  </p>
                 </div>
                 <button
                   onClick={() => setShowAddWarehouse(true)}
@@ -854,9 +962,14 @@ export default function InventoryDashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-150 dark:divide-zinc-800 bg-white dark:bg-zinc-900">
-                    {warehouses.map(wh => (
-                      <tr key={wh.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition text-zinc-800 dark:text-zinc-300">
-                        <td className="p-4 font-mono font-black text-zinc-900 dark:text-zinc-100">{wh.code}</td>
+                    {warehouses.map((wh) => (
+                      <tr
+                        key={wh.id}
+                        className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition text-zinc-800 dark:text-zinc-300"
+                      >
+                        <td className="p-4 font-mono font-black text-zinc-900 dark:text-zinc-100">
+                          {wh.code}
+                        </td>
                         <td className="p-4 font-black">{wh.nameAr}</td>
                         <td className="p-4 font-mono text-zinc-500">{wh.nameEn}</td>
                         <td className="p-4">{wh.location || "غير محدد"}</td>
@@ -877,7 +990,10 @@ export default function InventoryDashboard() {
       {/* WAREHOUSE CREATION MODAL */}
       <AnimatePresence>
         {showAddWarehouse && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]" dir="rtl">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
+            dir="rtl"
+          >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -938,7 +1054,8 @@ export default function InventoryDashboard() {
                 <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/30 p-3 rounded-xl flex gap-2">
                   <Info className="w-5 h-5 text-amber-600 shrink-0" />
                   <p className="text-[10px] text-amber-850 dark:text-amber-400 leading-relaxed">
-                    سيقوم النظام آلياً بإنشاء حساب أصول متداول مطابق في شجرة الحسابات (دليل الحسابات) تحت كود <strong>1103xx</strong> لربطه بالقوائم المالية المعتمدة فوراً.
+                    سيقوم النظام آلياً بإنشاء حساب أصول متداول مطابق في شجرة الحسابات (دليل
+                    الحسابات) تحت كود <strong>1103xx</strong> لربطه بالقوائم المالية المعتمدة فوراً.
                   </p>
                 </div>
 
@@ -963,7 +1080,6 @@ export default function InventoryDashboard() {
           </div>
         )}
       </AnimatePresence>
-
     </div>
   );
 }

@@ -38,7 +38,7 @@ export function generateZatcaQR(data: ZatcaData): string {
     toTLV(4, data.totalWithVat),
     toTLV(5, data.vatAmount),
   ];
-  
+
   // Phase 2 specific tags (Simulated tags since real signing needs private key)
   if (data.xmlHash) tags.push(toTLV(6, data.xmlHash));
   if (data.signature) tags.push(toTLV(7, data.signature));
@@ -54,7 +54,7 @@ export function generateZatcaQR(data: ZatcaData): string {
   }
 
   // Convert to Base64 safely avoiding Maximum call stack size exceeded
-  let binary = '';
+  let binary = "";
   for (let i = 0; i < combined.length; i++) {
     binary += String.fromCharCode(combined[i]);
   }
@@ -66,8 +66,18 @@ export function generateZatcaQR(data: ZatcaData): string {
  * Note: Real UBL 2.1 is very complex, this is a structure for compliance verification.
  */
 export function generateUBL21(invoice: any): string {
-  const { number, issueDate, clientName, lineItems, subtotal, vatAmount, totalAmount, currency, zatcaConfig } = invoice;
-  
+  const {
+    number,
+    issueDate,
+    clientName,
+    lineItems,
+    subtotal,
+    vatAmount,
+    totalAmount,
+    currency,
+    zatcaConfig,
+  } = invoice;
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" 
          xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" 
@@ -78,9 +88,9 @@ export function generateUBL21(invoice: any): string {
   <cbc:DocumentCurrencyCode>${currency}</cbc:DocumentCurrencyCode>
   <cac:AccountingSupplierParty>
     <cac:Party>
-      <cac:PartyName><cbc:Name>${zatcaConfig?.sellerName || 'My Company'}</cbc:Name></cac:PartyName>
+      <cac:PartyName><cbc:Name>${zatcaConfig?.sellerName || "My Company"}</cbc:Name></cac:PartyName>
       <cac:PartyTaxScheme>
-        <cbc:CompanyID>${zatcaConfig?.sellerVat || '3000XXXXXXXX003'}</cbc:CompanyID>
+        <cbc:CompanyID>${zatcaConfig?.sellerVat || "3000XXXXXXXX003"}</cbc:CompanyID>
         <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
       </cac:PartyTaxScheme>
     </cac:Party>
@@ -99,12 +109,16 @@ export function generateUBL21(invoice: any): string {
     <cbc:TaxInclusiveAmount currencyID="${currency}">${totalAmount}</cbc:TaxInclusiveAmount>
     <cbc:PayableAmount currencyID="${currency}">${totalAmount}</cbc:PayableAmount>
   </cac:LegalMonetaryTotal>
-  ${lineItems.map((item: any) => `
+  ${lineItems
+    .map(
+      (item: any) => `
   <cac:InvoiceLine>
     <cbc:ID>${item.id}</cbc:ID>
     <cbc:InvoicedQuantity unitCode="PCE">${item.quantity}</cbc:InvoicedQuantity>
     <cbc:LineExtensionAmount currencyID="${currency}">${item.quantity * item.unitPrice}</cbc:LineExtensionAmount>
     <cac:Item><cbc:Name>${item.name}</cbc:Name></cac:Item>
-  </cac:InvoiceLine>`).join('')}
+  </cac:InvoiceLine>`
+    )
+    .join("")}
 </Invoice>`;
 }

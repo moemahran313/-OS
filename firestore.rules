@@ -327,6 +327,13 @@ service cloud.firestore {
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
+    // WhatsApp Queue Rules
+    match /whatsapp_queue/{queueId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().userId == existing().userId;
+    }
+
     match /tenants/{tenantId} { allow read: if isSignedIn(); }
   }
 }

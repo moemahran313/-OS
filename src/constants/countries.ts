@@ -1,3 +1,1 @@
-export const countries = [
-  "المملكة العربية السعودية"
-];
+export const countries = ["المملكة العربية السعودية"];

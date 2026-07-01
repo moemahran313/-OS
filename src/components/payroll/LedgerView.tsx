@@ -1,48 +1,154 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { 
-  BookOpen, Search, Filter, ArrowUpRight, ArrowDownRight, Plus, Trash2, CheckCircle2, 
-  AlertTriangle, TrendingUp, Coins, Scale, FileText, Lock, Unlock, Printer, 
-  RefreshCw, Sliders, Sparkles, Percent, Shield, FileCheck, Landmark, Check, X, Eye, FileSpreadsheet,
-  Target, Compass, Activity
+import {
+  BookOpen,
+  Search,
+  Filter,
+  ArrowUpRight,
+  ArrowDownRight,
+  Plus,
+  Trash2,
+  CheckCircle2,
+  AlertTriangle,
+  TrendingUp,
+  Coins,
+  Scale,
+  FileText,
+  Lock,
+  Unlock,
+  Printer,
+  RefreshCw,
+  Sliders,
+  Sparkles,
+  Percent,
+  Shield,
+  FileCheck,
+  Landmark,
+  Check,
+  X,
+  Eye,
+  FileSpreadsheet,
+  Target,
+  Compass,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
-import { 
-  collection, 
-  query, 
-  where, 
-  onSnapshot, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  serverTimestamp, 
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
   getDocs,
-  writeBatch
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, 
-  CartesianGrid, LineChart, Line, Cell 
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  LineChart,
+  Line,
+  Cell,
 } from "recharts";
 
 // Standard Saudi/ZATCA/SOCPA compliant accounts
 const STANDARD_ACCOUNTS = [
-  { accountCode: "110101", nameAr: "نقدية في البنك", nameEn: "Cash in Bank", type: "Asset", balanceHalalas: 15000000 },
-  { accountCode: "110201", nameAr: "ذمم مدينة (عملاء)", nameEn: "Accounts Receivable", type: "Asset", balanceHalalas: 4500000 },
-  { accountCode: "120101", nameAr: "ضريبة المدخلات (المدفوعة)", nameEn: "VAT Input Tax (Paid)", type: "Asset", balanceHalalas: 225000 },
-  { accountCode: "210101", nameAr: "ذمم دائنة (موردين)", nameEn: "Accounts Payable", type: "Liability", balanceHalalas: 3000000 },
-  { accountCode: "210201", nameAr: "ضريبة المخرجات (المحصلة)", nameEn: "VAT Output Tax (Collected)", type: "Liability", balanceHalalas: 675000 },
-  { accountCode: "210301", nameAr: "رواتب مستحقة الدفع", nameEn: "Salaries Payable", type: "Liability", balanceHalalas: 0 },
-  { accountCode: "210401", nameAr: "مستحقات التأمينات الاجتماعية (GOSI)", nameEn: "GOSI Payable", type: "Liability", balanceHalalas: 0 },
-  { accountCode: "310101", nameAr: "رأس المال / الأرباح المبقاة", nameEn: "Capital / Retained Earnings", type: "Equity", balanceHalalas: 15750000 },
-  { accountCode: "410101", nameAr: "إيرادات المبيعات", nameEn: "Sales Revenue", type: "Revenue", balanceHalalas: 0 },
-  { accountCode: "510101", nameAr: "تكلفة المبيعات (COGS)", nameEn: "Cost of Goods Sold", type: "Expense", balanceHalalas: 0 },
-  { accountCode: "510201", nameAr: "مصاريف الرواتب والأجور", nameEn: "Salaries & Wages Expense", type: "Expense", balanceHalalas: 0 },
-  { accountCode: "510301", nameAr: "مصاريف عمومية وإدارية", nameEn: "General & Admin Expenses", type: "Expense", balanceHalalas: 0 }
+  {
+    accountCode: "110101",
+    nameAr: "نقدية في البنك",
+    nameEn: "Cash in Bank",
+    type: "Asset",
+    balanceHalalas: 0,
+  },
+  {
+    accountCode: "110201",
+    nameAr: "ذمم مدينة (عملاء)",
+    nameEn: "Accounts Receivable",
+    type: "Asset",
+    balanceHalalas: 0,
+  },
+  {
+    accountCode: "120101",
+    nameAr: "ضريبة المدخلات (المدفوعة)",
+    nameEn: "VAT Input Tax (Paid)",
+    type: "Asset",
+    balanceHalalas: 0,
+  },
+  {
+    accountCode: "210101",
+    nameAr: "ذمم دائنة (موردين)",
+    nameEn: "Accounts Payable",
+    type: "Liability",
+    balanceHalalas: 0,
+  },
+  {
+    accountCode: "210201",
+    nameAr: "ضريبة المخرجات (المحصلة)",
+    nameEn: "VAT Output Tax (Collected)",
+    type: "Liability",
+    balanceHalalas: 0,
+  },
+  {
+    accountCode: "210301",
+    nameAr: "رواتب مستحقة الدفع",
+    nameEn: "Salaries Payable",
+    type: "Liability",
+    balanceHalalas: 0,
+  },
+  {
+    accountCode: "210401",
+    nameAr: "مستحقات التأمينات الاجتماعية (GOSI)",
+    nameEn: "GOSI Payable",
+    type: "Liability",
+    balanceHalalas: 0,
+  },
+  {
+    accountCode: "310101",
+    nameAr: "رأس المال / الأرباح المبقاة",
+    nameEn: "Capital / Retained Earnings",
+    type: "Equity",
+    balanceHalalas: 0,
+  },
+  {
+    accountCode: "410101",
+    nameAr: "إيرادات المبيعات",
+    nameEn: "Sales Revenue",
+    type: "Revenue",
+    balanceHalalas: 0,
+  },
+  {
+    accountCode: "510101",
+    nameAr: "تكلفة المبيعات (COGS)",
+    nameEn: "Cost of Goods Sold",
+    type: "Expense",
+    balanceHalalas: 0,
+  },
+  {
+    accountCode: "510201",
+    nameAr: "مصاريف الرواتب والأجور",
+    nameEn: "Salaries & Wages Expense",
+    type: "Expense",
+    balanceHalalas: 0,
+  },
+  {
+    accountCode: "510301",
+    nameAr: "مصاريف عمومية وإدارية",
+    nameEn: "General & Admin Expenses",
+    type: "Expense",
+    balanceHalalas: 0,
+  },
 ];
 
 interface LedgerViewProps {
@@ -52,7 +158,18 @@ interface LedgerViewProps {
 export default function LedgerView({ runs = [] }: LedgerViewProps) {
   const { user } = useUser();
   const [profile, setProfile] = useState<"owner" | "accountant">("owner");
-  const [accountantTab, setAccountantTab] = useState<"journal" | "accounts" | "cost_centers" | "fixed_assets" | "vouchers" | "bank_reconciliation" | "trial" | "statements" | "vat" | "audit">("journal");
+  const [accountantTab, setAccountantTab] = useState<
+    | "journal"
+    | "accounts"
+    | "cost_centers"
+    | "fixed_assets"
+    | "vouchers"
+    | "bank_reconciliation"
+    | "trial"
+    | "statements"
+    | "vat"
+    | "audit"
+  >("journal");
   const [statementType, setStatementType] = useState<"pl" | "bs">("pl");
 
   // Collections state
@@ -89,7 +206,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
   const [entryDescEn, setEntryDescEn] = useState("");
   const [entryLines, setEntryLines] = useState<any[]>([
     { accountId: "", debit: 0, credit: 0 },
-    { accountId: "", debit: 0, credit: 0 }
+    { accountId: "", debit: 0, credit: 0 },
   ]);
   const [savingEntry, setSavingEntry] = useState(false);
 
@@ -123,7 +240,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
   const [assetPurchaseDate, setAssetPurchaseDate] = useState("");
   const [assetValue, setAssetValue] = useState("");
   const [assetDepRate, setAssetDepRate] = useState("");
-  const [assetDepMethod, setAssetDepMethod] = useState<"straight_line" | "diminishing_balance">("straight_line");
+  const [assetDepMethod, setAssetDepMethod] = useState<"straight_line" | "diminishing_balance">(
+    "straight_line"
+  );
   const [isDepreciating, setIsDepreciating] = useState(false);
 
   // VAT Period Lock State
@@ -163,10 +282,12 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
   const [reconDiffAccId, setReconDiffAccId] = useState("");
 
   // Direct Bank API integration states
-  const [reconciliationUploadMethod, setReconciliationUploadMethod] = useState<'manual' | 'direct_api'>('manual');
-  const [selectedLocalBank, setSelectedLocalBank] = useState('rajhi');
-  const [bankClientKey, setBankClientKey] = useState('');
-  const [bankSecretKey, setBankSecretKey] = useState('');
+  const [reconciliationUploadMethod, setReconciliationUploadMethod] = useState<
+    "manual" | "direct_api"
+  >("manual");
+  const [selectedLocalBank, setSelectedLocalBank] = useState("rajhi");
+  const [bankClientKey, setBankClientKey] = useState("");
+  const [bankSecretKey, setBankSecretKey] = useState("");
   const [bankCredentialsSaved, setBankCredentialsSaved] = useState(false);
   const [isSyncingBank, setIsSyncingBank] = useState(false);
 
@@ -175,53 +296,57 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
   const handleDirectBankSync = () => {
     if (bankCredentialsSaved && (!bankClientKey || !bankSecretKey)) {
-      toast.error("يرجى إدخال مفتاح ربط الواجهة البنكية (API Key) والرمز السري أولاً لتفويض الاتصال الآمن");
+      toast.error(
+        "يرجى إدخال مفتاح ربط الواجهة البنكية (API Key) والرمز السري أولاً لتفويض الاتصال الآمن"
+      );
       return;
     }
     setIsSyncingBank(true);
     setTimeout(() => {
       setIsSyncingBank(false);
-      
+
       const sampleBankTx = [
         {
           id: "bank-api-tx-1",
           date: new Date().toISOString().slice(0, 10),
           description: "حوالة واردة - العميل شركة مكنون المحدودة",
-          amount: 25000.00,
-          isReconciled: false
+          amount: 25000.0,
+          isReconciled: false,
         },
         {
           id: "bank-api-tx-2",
           date: new Date(Date.now() - 86400000).toISOString().slice(0, 10),
           description: "فاتورة مشتريات مسددة - مؤسسة جرير للتسويق",
-          amount: -850.50,
-          isReconciled: false
+          amount: -850.5,
+          isReconciled: false,
         },
         {
           id: "bank-api-tx-3",
           date: new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10),
           description: "سداد رسوم رخصة تجارية - بلدي / أمانة الرياض",
-          amount: -1200.00,
-          isReconciled: false
+          amount: -1200.0,
+          isReconciled: false,
         },
         {
           id: "bank-api-tx-4",
           date: new Date(Date.now() - 3 * 86400000).toISOString().slice(0, 10),
           description: "تمويل رأس مال إضافي للمنشأة",
-          amount: 150000.00,
-          isReconciled: false
+          amount: 150000.0,
+          isReconciled: false,
         },
         {
           id: "bank-api-tx-5",
           date: new Date(Date.now() - 4 * 86400000).toISOString().slice(0, 10),
           description: "حوالة صادرة - مسير رواتب شهرية - شركة مدارج لتقنية المعلومات",
-          amount: -45000.00,
-          isReconciled: false
-        }
+          amount: -45000.0,
+          isReconciled: false,
+        },
       ];
-      
+
       setBankTxList(sampleBankTx);
-      toast.success("🎉 تم بنجاح جلب ومزامنة 5 عمليات لحظية مباشرة عبر واجهة البنك المحلي المفتوحة (Open Banking API)!");
+      toast.success(
+        "🎉 تم بنجاح جلب ومزامنة 5 عمليات لحظية مباشرة عبر واجهة البنك المحلي المفتوحة (Open Banking API)!"
+      );
     }, 1500);
   };
 
@@ -239,12 +364,12 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         const valueBytes = textEncoder.encode(value);
         const lengthBytes = new Uint8Array([valueBytes.length]);
         const tagBytes = new Uint8Array([tag]);
-        
+
         const tlv = new Uint8Array(tagBytes.length + lengthBytes.length + valueBytes.length);
         tlv.set(tagBytes, 0);
         tlv.set(lengthBytes, 1);
         tlv.set(valueBytes, 2);
-        
+
         return tlv;
       };
 
@@ -274,31 +399,33 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
       const base64 = btoa(binary);
 
       // Convert to Hex
-      const hex = Array.prototype.map.call(combinedTLV, (x: number) => ("0" + x.toString(16)).slice(-2)).join("");
+      const hex = Array.prototype.map
+        .call(combinedTLV, (x: number) => ("0" + x.toString(16)).slice(-2))
+        .join("");
 
       return {
         base64,
         hex,
         isValid: true,
-        error: null
+        error: null,
       };
     } catch (err: any) {
       return {
         base64: "",
         hex: "",
         isValid: false,
-        error: err.message
+        error: err.message,
       };
     }
   }, [zatcaSellerName, zatcaSellerVat, zatcaTimestamp, zatcaTotalWithVat, zatcaVatAmount]);
 
   // 1. Audit Trail Logging Utility
   const logAuditEvent = async (
-    action: string, 
-    actionEn: string, 
-    targetType: string, 
-    targetId: string, 
-    details: any, 
+    action: string,
+    actionEn: string,
+    targetType: string,
+    targetId: string,
+    details: any,
     riskLevel: "Low" | "Medium" | "High" = "Low"
   ) => {
     if (!user) return;
@@ -317,7 +444,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         timestamp: new Date().toISOString(),
         details,
         authorUid: user.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
     } catch (err) {
       console.error("Failed to save audit log:", err);
@@ -330,20 +457,23 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
     setLoading(true);
 
-    const qAccounts = query(collection(db, "chart_of_accounts"), where("authorUid", "==", user.uid));
+    const qAccounts = query(
+      collection(db, "chart_of_accounts"),
+      where("authorUid", "==", user.uid)
+    );
     const unsubAccounts = onSnapshot(qAccounts, async (snapshot) => {
-      let docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
+      let docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
       // Bootstrap accounts if empty
       if (docs.length === 0) {
         try {
           const batch = writeBatch(db);
-          STANDARD_ACCOUNTS.forEach(acc => {
+          STANDARD_ACCOUNTS.forEach((acc) => {
             const docRef = doc(collection(db, "chart_of_accounts"));
             batch.set(docRef, {
               ...acc,
               authorUid: user.uid,
-              createdAt: serverTimestamp()
+              createdAt: serverTimestamp(),
             });
           });
           await batch.commit();
@@ -358,7 +488,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
     const qJournals = query(collection(db, "journal_entries"), where("authorUid", "==", user.uid));
     const unsubJournals = onSnapshot(qJournals, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       // Sort journals descending by date
       docs.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setJournalEntries(docs);
@@ -367,14 +497,14 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
     const qTax = query(collection(db, "tax_filings"), where("authorUid", "==", user.uid));
     const unsubTax = onSnapshot(qTax, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       setTaxFilings(docs);
     });
 
     const qAudit = query(collection(db, "audit_logs"), where("authorUid", "==", user.uid));
     const unsubAudit = onSnapshot(qAudit, async (snapshot) => {
-      let docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
+      let docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
       // Bootstrap audit logs if empty
       if (docs.length === 0) {
         try {
@@ -388,62 +518,20 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
               riskLevel: "Low",
               user: user.email || "moemahran@gmail.com",
               ipAddress: "192.168.10.45",
-              timestamp: new Date(Date.now() - 4 * 3600000).toISOString(),
+              timestamp: new Date().toISOString(),
               details: {
                 before: null,
-                after: { status: "initialized", standard: "SOCPA", defaultAccounts: 5 }
-              }
+                after: { status: "initialized", standard: "SOCPA", defaultAccounts: 5 },
+              },
             },
-            {
-              action: "توليد مصفوفة ZATCA QR لفاتورة مبيعات رقم #INV-2026-0012",
-              actionEn: "Generated ZATCA QR for Invoice #INV-2026-0012",
-              targetType: "فاتورة ضريبية",
-              targetId: "INV-2026-0012",
-              riskLevel: "Low",
-              user: user.email || "moemahran@gmail.com",
-              ipAddress: "93.168.2.109",
-              timestamp: new Date(Date.now() - 3 * 3600000).toISOString(),
-              details: {
-                before: null,
-                after: { invoiceId: "INV-2026-0012", total: "1,150.00 SAR", tlvLength: 104 }
-              }
-            },
-            {
-              action: "محاولة تعديل غير مصرح بها على فترة ضريبية مغلقة",
-              actionEn: "Unauthorized modification attempt on locked VAT period",
-              targetType: "إقرار ضريبي",
-              targetId: "VAT-Q1-2026",
-              riskLevel: "High",
-              user: "مستخدم مجهول / Unknown Guest",
-              ipAddress: "185.220.101.4",
-              timestamp: new Date(Date.now() - 2 * 3600000).toISOString(),
-              details: {
-                before: { locked: true },
-                after: { locked: true, modificationBlocked: true, attempt: "DELETE_ENTRY" }
-              }
-            },
-            {
-              action: "ترحيل قيد رواتب موظفي الربع الثاني بنجاح",
-              actionEn: "Payroll journal entry posted successfully",
-              targetType: "قيد يومية",
-              targetId: "JV-2026-Payroll",
-              riskLevel: "Medium",
-              user: user.email || "moemahran@gmail.com",
-              ipAddress: "192.168.10.45",
-              timestamp: new Date(Date.now() - 1 * 3600000).toISOString(),
-              details: {
-                before: null,
-                after: { amount: "142,500.00 SAR", entryType: "Wages & Benefits" }
-              }
-            }
           ];
 
-          initialLogs.forEach(log => {
+          initialLogs.forEach((log) => {
             const docRef = doc(collection(db, "audit_logs"));
             batch.set(docRef, {
               ...log,
               authorUid: user.uid,
-              createdAt: serverTimestamp()
+              createdAt: serverTimestamp(),
             });
           });
           await batch.commit();
@@ -452,31 +540,69 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         }
       } else {
         // Sort descending by timestamp
-        docs.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        docs.sort(
+          (a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
         setAuditLogs(docs);
       }
     });
 
     const qCostCenters = query(collection(db, "cost_centers"), where("userId", "==", user.uid));
     const unsubCostCenters = onSnapshot(qCostCenters, async (snapshot) => {
-      let docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      let docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       if (docs.length === 0) {
         try {
           const batch = writeBatch(db);
           const defaultCCs = [
-            { code: "CC-101", nameAr: "فرع المنطقة الوسطى (الرياض)", nameEn: "Central Region Branch (Riyadh)", type: "Branch", parentId: null },
-            { code: "CC-102", nameAr: "فرع المنطقة الغربية (جدة)", nameEn: "Western Region Branch (Jeddah)", type: "Branch", parentId: null },
-            { code: "CC-201", nameAr: "مشروع نيوم السكني", nameEn: "NEOM Residential Project", type: "Project", parentId: null },
-            { code: "CC-202", nameAr: "مشروع تطوير الدرعية", nameEn: "Diriyah Gate Project", type: "Project", parentId: null },
-            { code: "CC-301", nameAr: "إدارة تطوير البرمجيات", nameEn: "Software Development Dept", type: "Department", parentId: null },
-            { code: "CC-302", nameAr: "إدارة التسويق الرقمي", nameEn: "Digital Marketing Dept", type: "Department", parentId: null },
+            {
+              code: "CC-101",
+              nameAr: "فرع المنطقة الوسطى (الرياض)",
+              nameEn: "Central Region Branch (Riyadh)",
+              type: "Branch",
+              parentId: null,
+            },
+            {
+              code: "CC-102",
+              nameAr: "فرع المنطقة الغربية (جدة)",
+              nameEn: "Western Region Branch (Jeddah)",
+              type: "Branch",
+              parentId: null,
+            },
+            {
+              code: "CC-201",
+              nameAr: "مشروع نيوم السكني",
+              nameEn: "NEOM Residential Project",
+              type: "Project",
+              parentId: null,
+            },
+            {
+              code: "CC-202",
+              nameAr: "مشروع تطوير الدرعية",
+              nameEn: "Diriyah Gate Project",
+              type: "Project",
+              parentId: null,
+            },
+            {
+              code: "CC-301",
+              nameAr: "إدارة تطوير البرمجيات",
+              nameEn: "Software Development Dept",
+              type: "Department",
+              parentId: null,
+            },
+            {
+              code: "CC-302",
+              nameAr: "إدارة التسويق الرقمي",
+              nameEn: "Digital Marketing Dept",
+              type: "Department",
+              parentId: null,
+            },
           ];
-          defaultCCs.forEach(cc => {
+          defaultCCs.forEach((cc) => {
             const docRef = doc(collection(db, "cost_centers"));
             batch.set(docRef, {
               ...cc,
               userId: user.uid,
-              createdAt: new Date().toISOString()
+              createdAt: new Date().toISOString(),
             });
           });
           await batch.commit();
@@ -490,21 +616,17 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
     const qFixedAssets = query(collection(db, "fixed_assets"), where("userId", "==", user.uid));
     const unsubFixedAssets = onSnapshot(qFixedAssets, async (snapshot) => {
-      let docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      let docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       if (docs.length === 0) {
         try {
           const batch = writeBatch(db);
-          const defaultAssets = [
-            { assetCode: "AST-001", name: "مبنى الإدارة الرئيسي", purchaseDate: "2024-01-01", historicalValueHalalas: 120000000, depreciationRate: 5, depreciationMethod: "straight_line", accumulatedDepreciationHalalas: 12000000, currentBookValueHalalas: 108000000, status: "active", createdAt: new Date().toISOString() },
-            { assetCode: "AST-002", name: "سيارات توزيع البضائع (فليت)", purchaseDate: "2025-06-15", historicalValueHalalas: 45000000, depreciationRate: 20, depreciationMethod: "diminishing_balance", accumulatedDepreciationHalalas: 9000000, currentBookValueHalalas: 36000000, status: "active", createdAt: new Date().toISOString() },
-            { assetCode: "AST-003", name: "سيرفرات الحوسبة السحابية والأجهزة", purchaseDate: "2026-01-10", historicalValueHalalas: 15000000, depreciationRate: 33.3, depreciationMethod: "straight_line", accumulatedDepreciationHalalas: 2500000, currentBookValueHalalas: 12500000, status: "active", createdAt: new Date().toISOString() }
-          ];
-          defaultAssets.forEach(asset => {
+          const defaultAssets: any[] = [];
+          defaultAssets.forEach((asset) => {
             const docRef = doc(collection(db, "fixed_assets"));
             batch.set(docRef, {
               ...asset,
               userId: user.uid,
-              createdAt: new Date().toISOString()
+              createdAt: new Date().toISOString(),
             });
           });
           await batch.commit();
@@ -518,47 +640,18 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
     const qVouchers = query(collection(db, "vouchers"), where("userId", "==", user.uid));
     const unsubVouchers = onSnapshot(qVouchers, async (snapshot) => {
-      let docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      let docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       if (docs.length === 0) {
         try {
           const batch = writeBatch(db);
-          const defaultVouchers = [
-            {
-              number: "VOU-2026-001",
-              type: "receipt",
-              date: "2026-06-20",
-              amount: 5000,
-              currency: "USD",
-              exchangeRate: 3.75,
-              amountSar: 18750,
-              accountFromId: "default_bank_id_placeholder", // we will resolve dynamically or write standard codes
-              accountToId: "default_sales_id_placeholder",
-              descriptionAr: "دفعة مقدمة من عميل خارجي بالدولار لتنفيذ تراخيص برمجيات",
-              descriptionEn: "Advance payment from external client in USD for software licenses",
-              status: "draft"
-            },
-            {
-              number: "VOU-2026-002",
-              type: "payment",
-              date: "2026-06-22",
-              amount: 2500,
-              currency: "EUR",
-              exchangeRate: 4.05,
-              amountSar: 10125,
-              accountFromId: "default_supplier_placeholder",
-              accountToId: "default_bank_id_placeholder",
-              descriptionAr: "سداد مستحقات شركة الاستضافة الأوروبية لخدمات السيرفرات",
-              descriptionEn: "Settlement of European hosting servers invoice - June 2026",
-              status: "draft"
-            }
-          ];
+          const defaultVouchers: any[] = [];
 
-          defaultVouchers.forEach(v => {
+          defaultVouchers.forEach((v) => {
             const docRef = doc(collection(db, "vouchers"));
             batch.set(docRef, {
               ...v,
               userId: user.uid,
-              createdAt: new Date().toISOString()
+              createdAt: new Date().toISOString(),
             });
           });
           await batch.commit();
@@ -585,17 +678,17 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
   const calculatedAccounts = useMemo(() => {
     // Start with a map of base accounts and their opening balances
     const accMap: Record<string, any> = {};
-    accounts.forEach(acc => {
+    accounts.forEach((acc) => {
       accMap[acc.id] = {
         ...acc,
         debitTotal: 0,
         creditTotal: 0,
-        currentBalance: acc.balanceHalalas || 0
+        currentBalance: acc.balanceHalalas || 0,
       };
     });
 
     // Run through balanced journal entries to compute dynamic adjustments
-    journalEntries.forEach(entry => {
+    journalEntries.forEach((entry) => {
       if (entry.lines) {
         entry.lines.forEach((line: any) => {
           const acc = accMap[line.accountId];
@@ -607,10 +700,10 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
             // Accounting balance conventions
             if (acc.type === "Asset" || acc.type === "Expense") {
-              acc.currentBalance += (deb - cred);
+              acc.currentBalance += deb - cred;
             } else {
               // Liability, Equity, Revenue
-              acc.currentBalance += (cred - deb);
+              acc.currentBalance += cred - deb;
             }
           }
         });
@@ -623,7 +716,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
   // Accounts mapping dictionaries
   const accountIdMap = useMemo(() => {
     const map: Record<string, any> = {};
-    calculatedAccounts.forEach(acc => {
+    calculatedAccounts.forEach((acc) => {
       map[acc.id] = acc;
     });
     return map;
@@ -631,7 +724,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
   const accountCodeMap = useMemo(() => {
     const map: Record<string, any> = {};
-    calculatedAccounts.forEach(acc => {
+    calculatedAccounts.forEach((acc) => {
       map[acc.accountCode] = acc;
     });
     return map;
@@ -639,7 +732,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
   // 2.5 Computed Trial Balance Report (Opening, Period Movements, Closing per Account with filters)
   const trialBalanceData = useMemo(() => {
-    return accounts.map(acc => {
+    return accounts.map((acc) => {
       let openingDebit = 0;
       let openingCredit = 0;
 
@@ -656,18 +749,19 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
       let periodCredit = 0;
 
       // Loop through journal entries
-      journalEntries.forEach(entry => {
+      journalEntries.forEach((entry) => {
         const entryDateObj = new Date(entry.date);
-        
+
         // Date boundaries
-        const isBeforeStart = trialStartDate ? (entryDateObj < new Date(trialStartDate)) : false;
-        const isAfterEnd = trialEndDate ? (entryDateObj > new Date(trialEndDate)) : false;
+        const isBeforeStart = trialStartDate ? entryDateObj < new Date(trialStartDate) : false;
+        const isAfterEnd = trialEndDate ? entryDateObj > new Date(trialEndDate) : false;
         const isInPeriod = !isBeforeStart && !isAfterEnd;
 
         if (entry.lines) {
           entry.lines.forEach((line: any) => {
             if (line.accountId === acc.id) {
-              const costCenterMatch = trialCostCenter === "all" || line.costCenter === trialCostCenter;
+              const costCenterMatch =
+                trialCostCenter === "all" || line.costCenter === trialCostCenter;
               if (costCenterMatch) {
                 const deb = Number(line.debitHalalas || 0);
                 const cred = Number(line.creditHalalas || 0);
@@ -693,7 +787,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
       });
 
       // Calculate Net Opening Balance
-      let openingBalance = isDebitType ? (openingDebit - openingCredit) : (openingCredit - openingDebit);
+      let openingBalance = isDebitType
+        ? openingDebit - openingCredit
+        : openingCredit - openingDebit;
 
       // Calculate Net Closing Balance
       let closingBalance = 0;
@@ -708,7 +804,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         openingBalance,
         periodDebit,
         periodCredit,
-        closingBalance
+        closingBalance,
       };
     });
   }, [accounts, journalEntries, trialStartDate, trialEndDate, trialCostCenter]);
@@ -716,39 +812,42 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
   // 2.6 Drill-Down General Ledger Transactions list for the active clicked account
   const drillDownTransactions = useMemo(() => {
     if (!selectedDrillDownAccount) return [];
-    
+
     const list: any[] = [];
-    const isDebitType = selectedDrillDownAccount.type === "Asset" || selectedDrillDownAccount.type === "Expense";
-    
+    const isDebitType =
+      selectedDrillDownAccount.type === "Asset" || selectedDrillDownAccount.type === "Expense";
+
     // Sort journals ascending to accurately calculate the running ledger balance
-    const sortedJournals = [...journalEntries].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    
+    const sortedJournals = [...journalEntries].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
     let runningBalance = selectedDrillDownAccount.balanceHalalas || 0; // base opening balance
-    
+
     // Add opening balance as the initial entry line item
     list.push({
       date: "الرصيد الافتتاحي",
       reference: "SYS-OPENING",
       descriptionAr: "الرصيد الافتتاحي المعتمد في دليل الحسابات",
       costCenter: "-",
-      debit: isDebitType ? (selectedDrillDownAccount.balanceHalalas || 0) : 0,
-      credit: !isDebitType ? (selectedDrillDownAccount.balanceHalalas || 0) : 0,
-      balance: runningBalance
+      debit: isDebitType ? selectedDrillDownAccount.balanceHalalas || 0 : 0,
+      credit: !isDebitType ? selectedDrillDownAccount.balanceHalalas || 0 : 0,
+      balance: runningBalance,
     });
 
-    sortedJournals.forEach(entry => {
+    sortedJournals.forEach((entry) => {
       if (entry.lines) {
         entry.lines.forEach((line: any) => {
           if (line.accountId === selectedDrillDownAccount.id) {
             const deb = Number(line.debitHalalas || 0);
             const cred = Number(line.creditHalalas || 0);
-            
+
             if (isDebitType) {
-              runningBalance += (deb - cred);
+              runningBalance += deb - cred;
             } else {
-              runningBalance += (cred - deb);
+              runningBalance += cred - deb;
             }
-            
+
             list.push({
               date: entry.date,
               reference: entry.entryNumber,
@@ -756,7 +855,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
               costCenter: line.costCenter || "-",
               debit: deb,
               credit: cred,
-              balance: runningBalance
+              balance: runningBalance,
             });
           }
         });
@@ -769,8 +868,8 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
   // 2.7 Filtered Audit Logs list
   const filteredAuditLogs = useMemo(() => {
-    return auditLogs.filter(log => {
-      const matchesSearch = 
+    return auditLogs.filter((log) => {
+      const matchesSearch =
         (log.action && log.action.toLowerCase().includes(auditSearchQuery.toLowerCase())) ||
         (log.actionEn && log.actionEn.toLowerCase().includes(auditSearchQuery.toLowerCase())) ||
         (log.user && log.user.toLowerCase().includes(auditSearchQuery.toLowerCase())) ||
@@ -791,7 +890,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
     let totalRevenue = 0;
     let totalExpense = 0;
 
-    calculatedAccounts.forEach(acc => {
+    calculatedAccounts.forEach((acc) => {
       const bal = acc.currentBalance;
       if (acc.type === "Asset") totalAssets += bal;
       else if (acc.type === "Liability") totalLiabilities += bal;
@@ -801,12 +900,14 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
     });
 
     // Real-time cashflow proxy (Cash in Bank + Cash Accounts)
-    const cashInBankAcc = calculatedAccounts.find(a => a.accountCode === "110101");
-    const netCashflow = cashInBankAcc ? cashInBankAcc.currentBalance : (totalAssets - totalLiabilities);
+    const cashInBankAcc = calculatedAccounts.find((a) => a.accountCode === "110101");
+    const netCashflow = cashInBankAcc
+      ? cashInBankAcc.currentBalance
+      : totalAssets - totalLiabilities;
 
     // VAT paid (Asset) vs VAT collected (Liability)
-    const vatPaidAcc = calculatedAccounts.find(a => a.accountCode === "120101");
-    const vatCollectedAcc = calculatedAccounts.find(a => a.accountCode === "210201");
+    const vatPaidAcc = calculatedAccounts.find((a) => a.accountCode === "120101");
+    const vatCollectedAcc = calculatedAccounts.find((a) => a.accountCode === "210201");
 
     const vatPaid = vatPaidAcc ? vatPaidAcc.currentBalance : 0;
     const vatCollected = vatCollectedAcc ? vatCollectedAcc.currentBalance : 0;
@@ -826,7 +927,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
       vatCollected,
       netVatLiability,
       operatingProfit,
-      margin
+      margin,
     };
   }, [calculatedAccounts]);
 
@@ -858,9 +959,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         // Debit: Cash in Bank (110101) with full amount + VAT
         // Credit: Sales Revenue (410101) with pure sale amount
         // Credit: VAT Output Tax (210201) with VAT amount
-        const bankAcc = calculatedAccounts.find(a => a.accountCode === "110101");
-        const revAcc = calculatedAccounts.find(a => a.accountCode === "410101");
-        const vatAcc = calculatedAccounts.find(a => a.accountCode === "210201");
+        const bankAcc = calculatedAccounts.find((a) => a.accountCode === "110101");
+        const revAcc = calculatedAccounts.find((a) => a.accountCode === "410101");
+        const vatAcc = calculatedAccounts.find((a) => a.accountCode === "210201");
 
         if (!bankAcc || !revAcc || !vatAcc) throw new Error("تعذر العثور على الحسابات الافتراضية");
 
@@ -877,9 +978,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         // Debit: General & Admin Expenses (510301) with pure expense amount
         // Debit: VAT Input Tax (120101) with VAT amount
         // Credit: Cash in Bank (110101) with total amount
-        const expAcc = calculatedAccounts.find(a => a.accountCode === "510301");
-        const vatAcc = calculatedAccounts.find(a => a.accountCode === "120101");
-        const bankAcc = calculatedAccounts.find(a => a.accountCode === "110101");
+        const expAcc = calculatedAccounts.find((a) => a.accountCode === "510301");
+        const vatAcc = calculatedAccounts.find((a) => a.accountCode === "120101");
+        const bankAcc = calculatedAccounts.find((a) => a.accountCode === "110101");
 
         if (!expAcc || !vatAcc || !bankAcc) throw new Error("تعذر العثور على الحسابات الافتراضية");
 
@@ -904,7 +1005,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         isBalanced: true,
         sourceDoc: "Quick Billing Module",
         authorUid: user.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
 
       await logAuditEvent(
@@ -919,8 +1020,8 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
             pureAmount: Number(quickAmount).toFixed(2) + " SAR",
             vatAmount: (vatHalalas / 100).toFixed(2) + " SAR",
             totalWithVat: (totalWithVatHalalas / 100).toFixed(2) + " SAR",
-            source: "Quick Billing"
-          }
+            source: "Quick Billing",
+          },
         },
         "Low"
       );
@@ -938,35 +1039,37 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
   // 5. Manual entry line adjustments
   const handleAddEntryLine = () => {
-    setEntryLines(prev => [...prev, { accountId: "", debit: 0, credit: 0, costCenter: "" }]);
+    setEntryLines((prev) => [...prev, { accountId: "", debit: 0, credit: 0, costCenter: "" }]);
   };
 
   const handleRemoveEntryLine = (index: number) => {
     if (entryLines.length <= 2) return;
-    setEntryLines(prev => prev.filter((_, idx) => idx !== index));
+    setEntryLines((prev) => prev.filter((_, idx) => idx !== index));
   };
 
   const updateEntryLine = (index: number, field: string, value: any) => {
-    setEntryLines(prev => prev.map((line, idx) => {
-      if (idx !== index) return line;
-      let updated = { ...line, [field]: value };
-      if (field === "debit" && Number(value) > 0) updated.credit = 0;
-      if (field === "credit" && Number(value) > 0) updated.debit = 0;
-      return updated;
-    }));
+    setEntryLines((prev) =>
+      prev.map((line, idx) => {
+        if (idx !== index) return line;
+        let updated = { ...line, [field]: value };
+        if (field === "debit" && Number(value) > 0) updated.credit = 0;
+        if (field === "credit" && Number(value) > 0) updated.debit = 0;
+        return updated;
+      })
+    );
   };
 
   const entryTotals = useMemo(() => {
     let debits = 0;
     let credits = 0;
-    entryLines.forEach(line => {
+    entryLines.forEach((line) => {
       debits += Number(line.debit || 0);
       credits += Number(line.credit || 0);
     });
     return {
       debits: Math.round(debits * 100) / 100,
       credits: Math.round(credits * 100) / 100,
-      isBalanced: Math.round(debits * 100) === Math.round(credits * 100) && debits > 0
+      isBalanced: Math.round(debits * 100) === Math.round(credits * 100) && debits > 0,
     };
   }, [entryLines]);
 
@@ -983,11 +1086,11 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
     setSavingEntry(true);
     try {
-      const formattedLines = entryLines.map(line => ({
+      const formattedLines = entryLines.map((line) => ({
         accountId: line.accountId,
         debitHalalas: Math.round(Number(line.debit || 0) * 100),
         creditHalalas: Math.round(Number(line.credit || 0) * 100),
-        costCenter: line.costCenter || ""
+        costCenter: line.costCenter || "",
       }));
 
       const entryNumber = `JV-${new Date(entryDate).getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -1001,7 +1104,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         isBalanced: true,
         sourceDoc: "Manual Entry (CPA Portal)",
         authorUid: user.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
 
       await logAuditEvent(
@@ -1016,8 +1119,8 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
             descriptionAr: entryDescAr,
             linesCount: formattedLines.length,
             totals: entryTotals.debits.toFixed(2) + " SAR",
-            source: "Manual Entry Builder"
-          }
+            source: "Manual Entry Builder",
+          },
         },
         "Medium"
       );
@@ -1027,7 +1130,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
       setEntryDescEn("");
       setEntryLines([
         { accountId: "", debit: 0, credit: 0, costCenter: "" },
-        { accountId: "", debit: 0, credit: 0, costCenter: "" }
+        { accountId: "", debit: 0, credit: 0, costCenter: "" },
       ]);
     } catch (err: any) {
       toast.error("فشل ترحيل القيد المالي: " + err.message);
@@ -1045,7 +1148,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
     if (!user) return;
 
     try {
-      const codeExists = calculatedAccounts.some(a => a.accountCode === newAccCode);
+      const codeExists = calculatedAccounts.some((a) => a.accountCode === newAccCode);
       if (codeExists) {
         toast.error("رقم أو رمز هذا الحساب مكرر بالفعل");
         return;
@@ -1058,7 +1161,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         type: newAccType,
         balanceHalalas: Math.round(Number(newAccBal || 0) * 100),
         authorUid: user.uid,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
       });
 
       await logAuditEvent(
@@ -1073,8 +1176,8 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
             nameAr: newAccNameAr,
             nameEn: newAccNameEn || newAccNameAr,
             type: newAccType,
-            balance: Number(newAccBal || 0).toFixed(2) + " SAR"
-          }
+            balance: Number(newAccBal || 0).toFixed(2) + " SAR",
+          },
         },
         "Low"
       );
@@ -1095,26 +1198,28 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
       toast.error("لا يمكن حذف حسابات النظام الأساسية");
       return;
     }
-    const targetAcc = calculatedAccounts.find(a => a.id === id);
+    const targetAcc = calculatedAccounts.find((a) => a.id === id);
     if (!confirm("هل أنت متأكد من رغبتك في حذف هذا الحساب؟")) return;
 
     try {
       await deleteDoc(doc(db, "chart_of_accounts", id));
-      
+
       await logAuditEvent(
         `حذف حساب مالي من دليل الحسابات: ${code} - ${targetAcc?.nameAr || ""}`,
         `Deleted chart of account: ${code} - ${targetAcc?.nameEn || ""}`,
         "دليل الحسابات",
         code,
         {
-          before: targetAcc ? {
-            accountCode: targetAcc.accountCode,
-            nameAr: targetAcc.nameAr,
-            nameEn: targetAcc.nameEn,
-            type: targetAcc.type,
-            balance: (targetAcc.currentBalance / 100).toFixed(2) + " SAR"
-          } : null,
-          after: null
+          before: targetAcc
+            ? {
+                accountCode: targetAcc.accountCode,
+                nameAr: targetAcc.nameAr,
+                nameEn: targetAcc.nameEn,
+                type: targetAcc.type,
+                balance: (targetAcc.currentBalance / 100).toFixed(2) + " SAR",
+              }
+            : null,
+          after: null,
         },
         "High"
       );
@@ -1134,7 +1239,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
     if (!user) return;
 
     try {
-      const codeExists = costCenters.some(cc => cc.code === ccCode);
+      const codeExists = costCenters.some((cc) => cc.code === ccCode);
       if (codeExists) {
         toast.error("كود مركز التكلفة مكرر بالفعل");
         return;
@@ -1147,7 +1252,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         type: ccType,
         parentId: ccParentId || null,
         userId: user.uid,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
 
       toast.success("تم إنشاء مركز التكلفة بنجاح 🎉");
@@ -1180,7 +1285,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
     if (!user) return;
 
     try {
-      const codeExists = fixedAssets.some(a => a.assetCode === assetCodeInput);
+      const codeExists = fixedAssets.some((a) => a.assetCode === assetCodeInput);
       if (codeExists) {
         toast.error("رمز الأصل الثابت هذا مسجل بالفعل");
         return;
@@ -1198,7 +1303,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         currentBookValueHalalas: historicalValueHalalas,
         status: "active",
         userId: user.uid,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
 
       toast.success("تم تسجيل الأصل الثابت وتثبيته بالدفاتر بنجاح 🚗");
@@ -1236,7 +1341,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
       const assetsToUpdate: any[] = [];
       let totalDepreciationHalalas = 0;
 
-      fixedAssets.forEach(asset => {
+      fixedAssets.forEach((asset) => {
         if (asset.status !== "active") return;
 
         let depAmountHalalas = 0;
@@ -1265,7 +1370,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
             id: asset.id,
             accumulated: accumDep + depAmountHalalas,
             bookValue: remainingBookValue - depAmountHalalas,
-            assetName: asset.name
+            assetName: asset.name,
           });
         }
       });
@@ -1277,7 +1382,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
       }
 
       // 2. Ensure standard Accounts exist: Expense & Accumulated Depreciation
-      let depExpRef = calculatedAccounts.find(a => a.accountCode === "510302");
+      let depExpRef = calculatedAccounts.find((a) => a.accountCode === "510302");
       if (!depExpRef) {
         const docRef = await addDoc(collection(db, "chart_of_accounts"), {
           accountCode: "510302",
@@ -1286,12 +1391,18 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
           type: "Expense",
           balanceHalalas: 0,
           authorUid: user.uid,
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
         });
-        depExpRef = { id: docRef.id, accountCode: "510302", nameAr: "مصروف إهلاك الأصول الثابتة", nameEn: "Depreciation Expense - Fixed Assets", type: "Expense" };
+        depExpRef = {
+          id: docRef.id,
+          accountCode: "510302",
+          nameAr: "مصروف إهلاك الأصول الثابتة",
+          nameEn: "Depreciation Expense - Fixed Assets",
+          type: "Expense",
+        };
       }
 
-      let accumDepRef = calculatedAccounts.find(a => a.accountCode === "120201");
+      let accumDepRef = calculatedAccounts.find((a) => a.accountCode === "120201");
       if (!accumDepRef) {
         const docRef = await addDoc(collection(db, "chart_of_accounts"), {
           accountCode: "120201",
@@ -1300,13 +1411,20 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
           type: "Asset",
           balanceHalalas: 0,
           authorUid: user.uid,
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
         });
-        accumDepRef = { id: docRef.id, accountCode: "120201", nameAr: "مجمع إهلاك الأصول الثابتة المتراكم", nameEn: "Accumulated Depreciation - Fixed Assets", type: "Asset" };
+        accumDepRef = {
+          id: docRef.id,
+          accountCode: "120201",
+          nameAr: "مجمع إهلاك الأصول الثابتة المتراكم",
+          nameEn: "Accumulated Depreciation - Fixed Assets",
+          type: "Asset",
+        };
       }
 
       // 3. Post a balanced General Journal Entry
-      const currentMonthName = new Date().toLocaleString("ar-SA", { month: "long" }) + " " + new Date().getFullYear();
+      const currentMonthName =
+        new Date().toLocaleString("ar-SA", { month: "long" }) + " " + new Date().getFullYear();
       const newEntryRef = await addDoc(collection(db, "journal_entries"), {
         date: new Date().toISOString().split("T")[0],
         descriptionAr: `إثبات قيود إهلاك الأصول الثابتة الدورية لشهر ${currentMonthName}`,
@@ -1319,42 +1437,46 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
             accountId: depExpRef.id,
             costCenter: "",
             debitHalalas: totalDepreciationHalalas,
-            creditHalalas: 0
+            creditHalalas: 0,
           },
           {
             accountId: accumDepRef.id,
             costCenter: "",
             debitHalalas: 0,
-            creditHalalas: totalDepreciationHalalas
-          }
-        ]
+            creditHalalas: totalDepreciationHalalas,
+          },
+        ],
       });
 
       // 4. Update asset documents
       const batch = writeBatch(db);
-      assetsToUpdate.forEach(upd => {
+      assetsToUpdate.forEach((upd) => {
         const docRef = doc(db, "fixed_assets", upd.id);
         batch.update(docRef, {
           accumulatedDepreciationHalalas: upd.accumulated,
           currentBookValueHalalas: upd.bookValue,
-          lastDepreciationDate: new Date().toISOString().split("T")[0]
+          lastDepreciationDate: new Date().toISOString().split("T")[0],
         });
       });
       await batch.commit();
 
       // Log audit
       await logAuditEvent(
-        `تشغيل الإهلاك التلقائي للأصول: إهلاك قيمة ${(totalDepreciationHalalas/100).toLocaleString()} ر.س`,
-        `Executed automated fixed asset depreciation: ${(totalDepreciationHalalas/100).toLocaleString()} SAR`,
+        `تشغيل الإهلاك التلقائي للأصول: إهلاك قيمة ${(totalDepreciationHalalas / 100).toLocaleString()} ر.س`,
+        `Executed automated fixed asset depreciation: ${(totalDepreciationHalalas / 100).toLocaleString()} SAR`,
         "الأصول الثابتة",
         newEntryRef.id,
         {
-          depreciatedAssets: assetsToUpdate.map(a => `${a.assetName}: ${(a.accumulated/100).toLocaleString()}`)
+          depreciatedAssets: assetsToUpdate.map(
+            (a) => `${a.assetName}: ${(a.accumulated / 100).toLocaleString()}`
+          ),
         },
         "Medium"
       );
 
-      toast.success(`تم تشغيل محرك الاحتساب بنجاح! تم ترحيل قيد إهلاك بقيمة ${(totalDepreciationHalalas/100).toLocaleString()} ر.س وتحديث القيمة الدفترية لـ ${assetsToUpdate.length} أصول ثنائياً.`);
+      toast.success(
+        `تم تشغيل محرك الاحتساب بنجاح! تم ترحيل قيد إهلاك بقيمة ${(totalDepreciationHalalas / 100).toLocaleString()} ر.س وتحديث القيمة الدفترية لـ ${assetsToUpdate.length} أصول ثنائياً.`
+      );
     } catch (err: any) {
       toast.error("فشل تشغيل محرك الإهلاك: " + err.message);
     } finally {
@@ -1372,7 +1494,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
     setVSaving(true);
     try {
-      const numExists = vouchers.some(v => v.number === vNum);
+      const numExists = vouchers.some((v) => v.number === vNum);
       if (numExists) {
         toast.error("رقم السند مسجل مسبقاً، يرجى استخدام رقم فريد");
         setVSaving(false);
@@ -1397,7 +1519,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         descriptionEn: vDescEn || vDescAr,
         status: "draft",
         userId: user.uid,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
 
       toast.success("تم إنشاء السند وحفظه كمسودة بنجاح 📝");
@@ -1449,25 +1571,25 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
             accountId: debitAccId,
             costCenter: "",
             debitHalalas: halalas,
-            creditHalalas: 0
+            creditHalalas: 0,
           },
           {
             accountId: creditAccId,
             costCenter: "",
             debitHalalas: 0,
-            creditHalalas: halalas
-          }
-        ]
+            creditHalalas: halalas,
+          },
+        ],
       });
 
       // 3. Update Voucher Status
       await updateDoc(doc(db, "vouchers", voucher.id), {
-        status: "posted"
+        status: "posted",
       });
 
       // Audit Log
       await logAuditEvent(
-        `ترحيل سند مالي بالعملة: ${voucher.type === 'receipt' ? 'قبض' : 'صرف'} رقم ${voucher.number} بقيمة ${voucher.amount.toLocaleString()} ${voucher.currency}`,
+        `ترحيل سند مالي بالعملة: ${voucher.type === "receipt" ? "قبض" : "صرف"} رقم ${voucher.number} بقيمة ${voucher.amount.toLocaleString()} ${voucher.currency}`,
         `Posted voucher: ${voucher.type} #${voucher.number} with amount ${voucher.amount.toLocaleString()} ${voucher.currency}`,
         "سندات القبض والصرف",
         entryRef.id,
@@ -1501,7 +1623,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
     setSettleSaving(true);
     try {
       // Find foreign gain/loss account code "510303", create if missing
-      let forexGainLossAcc = calculatedAccounts.find(a => a.accountCode === "510303");
+      let forexGainLossAcc = calculatedAccounts.find((a) => a.accountCode === "510303");
       if (!forexGainLossAcc) {
         const docRef = await addDoc(collection(db, "chart_of_accounts"), {
           accountCode: "510303",
@@ -1510,14 +1632,20 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
           type: "Expense",
           balanceHalalas: 0,
           authorUid: user.uid,
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
         });
-        forexGainLossAcc = { id: docRef.id, accountCode: "510303", nameAr: "أرباح وخسائر فروقات أسعار العملات الأجنبية", nameEn: "Foreign Exchange Gains and Losses", type: "Expense" };
+        forexGainLossAcc = {
+          id: docRef.id,
+          accountCode: "510303",
+          nameAr: "أرباح وخسائر فروقات أسعار العملات الأجنبية",
+          nameEn: "Foreign Exchange Gains and Losses",
+          type: "Expense",
+        };
       }
 
       // Default Bank and Receivable accounts
-      const bankAcc = calculatedAccounts.find(a => a.accountCode === "110101");
-      const arAcc = calculatedAccounts.find(a => a.accountCode === "110201");
+      const bankAcc = calculatedAccounts.find((a) => a.accountCode === "110101");
+      const arAcc = calculatedAccounts.find((a) => a.accountCode === "110201");
 
       if (!bankAcc || !arAcc) {
         toast.error("يجب وجود حساب البنك وحساب الذمم المدينة أولاً لتسجيل فروق العملة");
@@ -1548,14 +1676,14 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
           accountId: bankAcc.id,
           debitHalalas: actualHalalas,
           creditHalalas: 0,
-          costCenter: ""
+          costCenter: "",
         },
         {
           accountId: arAcc.id,
           debitHalalas: 0,
           creditHalalas: originalHalalas,
-          costCenter: ""
-        }
+          costCenter: "",
+        },
       ];
 
       if (diffSar > 0) {
@@ -1564,7 +1692,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
           accountId: forexGainLossAcc.id,
           debitHalalas: 0,
           creditHalalas: diffHalalas,
-          costCenter: ""
+          costCenter: "",
         });
       } else if (diffSar < 0) {
         // Loss (Debit Forex Gain/Loss)
@@ -1572,7 +1700,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
           accountId: forexGainLossAcc.id,
           debitHalalas: diffHalalas,
           creditHalalas: 0,
-          costCenter: ""
+          costCenter: "",
         });
       }
 
@@ -1583,7 +1711,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         authorUid: user.uid,
         createdAt: serverTimestamp(),
         isLocked: false,
-        lines
+        lines,
       });
 
       // Log Audit Event
@@ -1596,7 +1724,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         "Medium"
       );
 
-      toast.success(`تمت التسوية بنجاح! تم قيد فروق أسعار العملات بقيمة ${Math.abs(diffSar).toLocaleString()} ر.س وتوليد قيود تسوية العملة بالدفاتر.`);
+      toast.success(
+        `تمت التسوية بنجاح! تم قيد فروق أسعار العملات بقيمة ${Math.abs(diffSar).toLocaleString()} ر.س وتوليد قيود تسوية العملة بالدفاتر.`
+      );
       setShowSettleForeign(false);
       setSettleInvoiceId("");
       setSettlePaymentAmount("");
@@ -1619,9 +1749,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
       if (!text) return;
 
       try {
-        const rows = text.split("\n").map(line => line.split(","));
+        const rows = text.split("\n").map((line) => line.split(","));
         const parsedTx: any[] = [];
-        
+
         // Skip header if looks like text
         const startIndex = isNaN(Number(rows[0][2])) ? 1 : 0;
 
@@ -1639,18 +1769,22 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
               date: date.includes("/") ? date.split("/").reverse().join("-") : date, // handle standard formats
               description: desc,
               amount,
-              isReconciled: false
+              isReconciled: false,
             });
           }
         }
 
         if (parsedTx.length === 0) {
-          toast.error("لم يتم العثور على حركات صالحة في ملف كشف الحساب. يرجى التأكد من التنسيق: التاريخ,البيان,المبلغ");
+          toast.error(
+            "لم يتم العثور على حركات صالحة في ملف كشف الحساب. يرجى التأكد من التنسيق: التاريخ,البيان,المبلغ"
+          );
           return;
         }
 
         setBankTxList(parsedTx);
-        toast.success(`تم رفع وقراءة ملف كشف الحساب البنكي بنجاح! جاري عرض ${parsedTx.length} حركات بنكية.`);
+        toast.success(
+          `تم رفع وقراءة ملف كشف الحساب البنكي بنجاح! جاري عرض ${parsedTx.length} حركات بنكية.`
+        );
       } catch (err) {
         toast.error("فشل قراءة الملف، يرجى التأكد أنه بصيغة CSV صحيحة.");
       }
@@ -1661,11 +1795,41 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
   const handleLoadSampleBankData = () => {
     const today = new Date().toISOString().split("T")[0];
     const sampleData = [
-      { id: "sample-1", date: "2026-06-20", description: "إيداع نقدي - دفعة رخصة العميل الأمريكي", amount: 18750, isReconciled: false },
-      { id: "sample-2", date: "2026-06-22", description: "حوالة صادرة - سداد شركة الاستضافة الأوروبية", amount: -10125, isReconciled: false },
-      { id: "sample-3", date: "2026-06-24", description: "رسوم الخدمات المصرفية والتحويل الدولي", amount: -15, isReconciled: false },
-      { id: "sample-4", date: "2026-06-25", description: "أرباح عوائد بنكية / فوائد دائنة للمحفظة", amount: 350, isReconciled: false },
-      { id: "sample-5", date: "2026-06-25", description: "سحب صراف آلي - مصروفات عاجلة للفرع الرئيسي", amount: -500, isReconciled: false }
+      {
+        id: "sample-1",
+        date: "2026-06-20",
+        description: "إيداع نقدي - دفعة رخصة العميل الأمريكي",
+        amount: 18750,
+        isReconciled: false,
+      },
+      {
+        id: "sample-2",
+        date: "2026-06-22",
+        description: "حوالة صادرة - سداد شركة الاستضافة الأوروبية",
+        amount: -10125,
+        isReconciled: false,
+      },
+      {
+        id: "sample-3",
+        date: "2026-06-24",
+        description: "رسوم الخدمات المصرفية والتحويل الدولي",
+        amount: -15,
+        isReconciled: false,
+      },
+      {
+        id: "sample-4",
+        date: "2026-06-25",
+        description: "أرباح عوائد بنكية / فوائد دائنة للمحفظة",
+        amount: 350,
+        isReconciled: false,
+      },
+      {
+        id: "sample-5",
+        date: "2026-06-25",
+        description: "سحب صراف آلي - مصروفات عاجلة للفرع الرئيسي",
+        amount: -500,
+        isReconciled: false,
+      },
     ];
     setBankTxList(sampleData);
     toast.success("تم تحميل بيانات كشف الحساب البنكي التجريبية لمطابقتها مع حركات النظام 🏦");
@@ -1673,11 +1837,11 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
   // Dynamic system transactions computed directly from Bank ledger movements
   const systemBankTransactions = useMemo(() => {
-    const bankAcc = calculatedAccounts.find(a => a.accountCode === "110101");
+    const bankAcc = calculatedAccounts.find((a) => a.accountCode === "110101");
     if (!bankAcc) return [];
 
     const list: any[] = [];
-    journalEntries.forEach(entry => {
+    journalEntries.forEach((entry) => {
       if (entry.lines) {
         entry.lines.forEach((line: any) => {
           if (line.accountId === bankAcc.id) {
@@ -1691,7 +1855,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
               date: entry.date,
               description: entry.descriptionAr,
               amount: netAmount,
-              isReconciled: false // we will match them in state
+              isReconciled: false, // we will match them in state
             });
           }
         });
@@ -1710,11 +1874,11 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
     let matchCount = 0;
 
     // Perform date and amount matching
-    const updatedBankList = bankTxList.map(bankTx => {
+    const updatedBankList = bankTxList.map((bankTx) => {
       if (bankTx.isReconciled) return bankTx;
 
       // Find system bank transaction matching amount and within close date (±3 days)
-      const matchingSysTx = systemBankTransactions.find(sysTx => {
+      const matchingSysTx = systemBankTransactions.find((sysTx) => {
         const amtMatches = Math.abs(sysTx.amount - bankTx.amount) < 0.01;
         if (!amtMatches) return false;
 
@@ -1730,7 +1894,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         return {
           ...bankTx,
           isReconciled: true,
-          reconciledWithId: matchingSysTx.id
+          reconciledWithId: matchingSysTx.id,
         };
       }
       return bankTx;
@@ -1740,33 +1904,43 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
     setIsMatching(false);
 
     if (matchCount > 0) {
-      toast.success(`🎉 نجح محرك المطابقة التلقائي الذكي في تسوية ومطابقة ${matchCount} عمليات بنكية ثنائياً مع حركات دفاتر النظام!`);
+      toast.success(
+        `🎉 نجح محرك المطابقة التلقائي الذكي في تسوية ومطابقة ${matchCount} عمليات بنكية ثنائياً مع حركات دفاتر النظام!`
+      );
     } else {
-      toast.info("لم يعثر محرك المطابقة على عمليات تتوافق بدقة بالتاريخ والمبلغ. يمكنك مطابقتها يدوياً.");
+      toast.info(
+        "لم يعثر محرك المطابقة على عمليات تتوافق بدقة بالتاريخ والمبلغ. يمكنك مطابقتها يدوياً."
+      );
     }
   };
 
   const handleManualMatchSubmit = () => {
     if (!selectedBankTxId || !selectedSysTxId) {
-      toast.error("يرجى اختيار حركة من كشف الحساب (اليمين) وحركة من حركات النظام (اليسار) لمطابقتهما");
+      toast.error(
+        "يرجى اختيار حركة من كشف الحساب (اليمين) وحركة من حركات النظام (اليسار) لمطابقتهما"
+      );
       return;
     }
 
-    const bankTx = bankTxList.find(b => b.id === selectedBankTxId);
-    const sysTx = systemBankTransactions.find(s => s.id === selectedSysTxId);
+    const bankTx = bankTxList.find((b) => b.id === selectedBankTxId);
+    const sysTx = systemBankTransactions.find((s) => s.id === selectedSysTxId);
 
     if (!bankTx || !sysTx) return;
 
     if (Math.abs(bankTx.amount - sysTx.amount) > 0.01) {
-      toast.error("تنبيه: يوجد اختلاف في المبالغ بين كشف الحساب والنظام، سيتم تأكيد المطابقة على مسؤوليتك.");
+      toast.error(
+        "تنبيه: يوجد اختلاف في المبالغ بين كشف الحساب والنظام، سيتم تأكيد المطابقة على مسؤوليتك."
+      );
     }
 
-    setBankTxList(prev => prev.map(item => {
-      if (item.id === selectedBankTxId) {
-        return { ...item, isReconciled: true, reconciledWithId: selectedSysTxId };
-      }
-      return item;
-    }));
+    setBankTxList((prev) =>
+      prev.map((item) => {
+        if (item.id === selectedBankTxId) {
+          return { ...item, isReconciled: true, reconciledWithId: selectedSysTxId };
+        }
+        return item;
+      })
+    );
 
     toast.success("تم تأكيد المطابقة اليدوية وتسوية الحركة بنجاح! 🤝");
     setSelectedBankTxId(null);
@@ -1780,7 +1954,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
     }
 
     try {
-      const bankAcc = calculatedAccounts.find(a => a.accountCode === "110101");
+      const bankAcc = calculatedAccounts.find((a) => a.accountCode === "110101");
       if (!bankAcc) return;
 
       const amtSar = Math.abs(reconDiffAmount);
@@ -1804,24 +1978,26 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
             accountId: debitAccId,
             costCenter: "",
             debitHalalas: halalas,
-            creditHalalas: 0
+            creditHalalas: 0,
           },
           {
             accountId: creditAccId,
             costCenter: "",
             debitHalalas: 0,
-            creditHalalas: halalas
-          }
-        ]
+            creditHalalas: halalas,
+          },
+        ],
       });
 
       // Update local state to show as matched
-      setBankTxList(prev => prev.map(item => {
-        if (item.description === reconDiffDesc) {
-          return { ...item, isReconciled: true, reconciledWithId: entryRef.id };
-        }
-        return item;
-      }));
+      setBankTxList((prev) =>
+        prev.map((item) => {
+          if (item.description === reconDiffDesc) {
+            return { ...item, isReconciled: true, reconciledWithId: entryRef.id };
+          }
+          return item;
+        })
+      );
 
       // Log Audit
       await logAuditEvent(
@@ -1843,7 +2019,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
   // 7. Dynamic Statements Logic
   const statementLines = useMemo(() => {
-    return calculatedAccounts.filter(acc => {
+    return calculatedAccounts.filter((acc) => {
       if (statementType === "pl") {
         return acc.type === "Revenue" || acc.type === "Expense";
       } else {
@@ -1855,14 +2031,14 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
   const plTotals = useMemo(() => {
     let rev = 0;
     let exp = 0;
-    calculatedAccounts.forEach(acc => {
+    calculatedAccounts.forEach((acc) => {
       if (acc.type === "Revenue") rev += acc.currentBalance;
       if (acc.type === "Expense") exp += acc.currentBalance;
     });
     return {
       rev,
       exp,
-      net: rev - exp
+      net: rev - exp,
     };
   }, [calculatedAccounts]);
 
@@ -1870,7 +2046,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
     let assets = 0;
     let liab = 0;
     let eq = 0;
-    calculatedAccounts.forEach(acc => {
+    calculatedAccounts.forEach((acc) => {
       if (acc.type === "Asset") assets += acc.currentBalance;
       if (acc.type === "Liability") liab += acc.currentBalance;
       if (acc.type === "Equity") eq += acc.currentBalance;
@@ -1885,21 +2061,21 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
       eq,
       retainedEarnings,
       totalLiabAndEquity,
-      balanced: Math.abs(assets - totalLiabAndEquity) < 100 // within 1 SAR rounding
+      balanced: Math.abs(assets - totalLiabAndEquity) < 100, // within 1 SAR rounding
     };
   }, [calculatedAccounts, plTotals]);
 
   // 7.5 Cost Center P&L and Expense mapping
   const costCentersFinancials = useMemo(() => {
     const ccFinMap: Record<string, { rev: number; cogs: number; exp: number; net: number }> = {};
-    
+
     // Initialize map
-    costCenters.forEach(cc => {
+    costCenters.forEach((cc) => {
       ccFinMap[cc.id] = { rev: 0, cogs: 0, exp: 0, net: 0 };
     });
-    
+
     // Loop balanced journal entries
-    journalEntries.forEach(entry => {
+    journalEntries.forEach((entry) => {
       if (entry.lines) {
         entry.lines.forEach((line: any) => {
           if (line.costCenter && ccFinMap[line.costCenter]) {
@@ -1907,14 +2083,14 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
             if (acc) {
               const deb = Number(line.debitHalalas || 0);
               const cred = Number(line.creditHalalas || 0);
-              
+
               if (acc.type === "Revenue") {
-                ccFinMap[line.costCenter].rev += (cred - deb);
+                ccFinMap[line.costCenter].rev += cred - deb;
               } else if (acc.type === "Expense") {
                 if (acc.accountCode === "510101") {
-                  ccFinMap[line.costCenter].cogs += (deb - cred);
+                  ccFinMap[line.costCenter].cogs += deb - cred;
                 } else {
-                  ccFinMap[line.costCenter].exp += (deb - cred);
+                  ccFinMap[line.costCenter].exp += deb - cred;
                 }
               }
             }
@@ -1922,13 +2098,13 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         });
       }
     });
-    
+
     // Compute net for all
-    Object.keys(ccFinMap).forEach(key => {
+    Object.keys(ccFinMap).forEach((key) => {
       const cc = ccFinMap[key];
       cc.net = cc.rev - (cc.cogs + cc.exp);
     });
-    
+
     return ccFinMap;
   }, [costCenters, journalEntries, accountIdMap]);
 
@@ -1937,18 +2113,18 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
     let standardRatedSales = 0;
     let standardRatedPurchases = 0;
 
-    journalEntries.forEach(entry => {
+    journalEntries.forEach((entry) => {
       if (entry.lines) {
         entry.lines.forEach((line: any) => {
           const acc = accountIdMap[line.accountId];
           if (acc) {
             // Revenue credits represent standard sales
             if (acc.accountCode === "410101") {
-              standardRatedSales += (line.creditHalalas || 0);
+              standardRatedSales += line.creditHalalas || 0;
             }
             // G&A or Sales expenses represent standard purchases
             if (acc.accountCode === "510301" || acc.accountCode === "510101") {
-              standardRatedPurchases += (line.debitHalalas || 0);
+              standardRatedPurchases += line.debitHalalas || 0;
             }
           }
         });
@@ -1964,7 +2140,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
       standardRatedPurchases,
       vatCollected,
       vatPaid,
-      netVatDue
+      netVatDue,
     };
   }, [journalEntries, accountIdMap]);
 
@@ -1985,7 +2161,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         netVatDueHalalas: calcs.netVatDue,
         status: "Filed",
         filedAt: new Date().toISOString(),
-        authorUid: user.uid
+        authorUid: user.uid,
       });
 
       await logAuditEvent(
@@ -2001,15 +2177,17 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
             vatCollected: (calcs.vatCollected / 100).toFixed(2) + " SAR",
             vatPaid: (calcs.vatPaid / 100).toFixed(2) + " SAR",
             netVatDue: (calcs.netVatDue / 100).toFixed(2) + " SAR",
-            status: "Filed & Sealed under ZATCA Phase 2"
-          }
+            status: "Filed & Sealed under ZATCA Phase 2",
+          },
         },
         "High"
       );
 
       // ZATCA Cryptographic Lock mechanism
       // Set emergency or locked flag on all journal entries up to now
-      toast.success(`تم تقديم الإقرار الضريبي للربع ${qNum} بنجاح! تم قفل الفترة وترحيل السجلات رسمياً مصلحة الزكاة والجمارك (ZATCA Phase 2). 🏛️`);
+      toast.success(
+        `تم تقديم الإقرار الضريبي للربع ${qNum} بنجاح! تم قفل الفترة وترحيل السجلات رسمياً مصلحة الزكاة والجمارك (ZATCA Phase 2). 🏛️`
+      );
     } catch (err: any) {
       toast.error("فشل تقديم الإقرار الضريبي: " + err.message);
     } finally {
@@ -2032,12 +2210,14 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
     try {
       for (const run of runs) {
         // Check if journal entry already exists for this run ID
-        const match = journalEntries.some(je => je.sourceDoc === `Payroll Run ${run.id || run.period}`);
+        const match = journalEntries.some(
+          (je) => je.sourceDoc === `Payroll Run ${run.id || run.period}`
+        );
         if (!match) {
-          const bankAcc = calculatedAccounts.find(a => a.accountCode === "110101");
-          const wageExpAcc = calculatedAccounts.find(a => a.accountCode === "510201");
-          const gosiPayableAcc = calculatedAccounts.find(a => a.accountCode === "210401");
-          const salPayableAcc = calculatedAccounts.find(a => a.accountCode === "210301");
+          const bankAcc = calculatedAccounts.find((a) => a.accountCode === "110101");
+          const wageExpAcc = calculatedAccounts.find((a) => a.accountCode === "510201");
+          const gosiPayableAcc = calculatedAccounts.find((a) => a.accountCode === "210401");
+          const salPayableAcc = calculatedAccounts.find((a) => a.accountCode === "210301");
 
           if (!bankAcc || !wageExpAcc || !gosiPayableAcc || !salPayableAcc) {
             toast.error("حسابات الرواتب والأجور ناقصة في دليل الحسابات");
@@ -2050,7 +2230,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
           const lines = [
             { accountId: wageExpAcc.id, debitHalalas: gross, creditHalalas: 0 },
-            { accountId: salPayableAcc.id, debitHalalas: 0, creditHalalas: net }
+            { accountId: salPayableAcc.id, debitHalalas: 0, creditHalalas: net },
           ];
 
           if (gosi > 0) {
@@ -2068,14 +2248,16 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
             isBalanced: true,
             sourceDoc: `Payroll Run ${run.id || run.period}`,
             authorUid: user.uid,
-            createdAt: serverTimestamp()
+            createdAt: serverTimestamp(),
           });
           count++;
         }
       }
 
       if (count > 0) {
-        toast.success(`تم دمج ومزامنة عدد ${count} من مسيرات الرواتب في القيود المحاسبية بنجاح! ⚡`);
+        toast.success(
+          `تم دمج ومزامنة عدد ${count} من مسيرات الرواتب في القيود المحاسبية بنجاح! ⚡`
+        );
       } else {
         toast.info("جميع مسيرات الرواتب تمت مزامنتها مسبقاً بالأستاذ العام.");
       }
@@ -2093,9 +2275,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
       const factor = (idx + 1) / 6;
       return {
         month: m,
-        Cashflow: Math.round((financials.netCashflow / 100) * factor * 1.1 + (idx * 1500)),
-        Revenue: Math.round((financials.totalRevenue / 100) * factor + (idx * 2000)),
-        Profit: Math.round((financials.operatingProfit / 100) * factor + (idx * 800))
+        Cashflow: Math.round((financials.netCashflow / 100) * factor * 1.1 + idx * 1500),
+        Revenue: Math.round((financials.totalRevenue / 100) * factor + idx * 2000),
+        Profit: Math.round((financials.operatingProfit / 100) * factor + idx * 800),
       };
     });
   }, [financials]);
@@ -2105,27 +2287,33 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
     return (
       <div className="flex flex-col items-center justify-center p-20 space-y-4">
         <RefreshCw className="w-10 h-10 animate-spin text-zinc-900" />
-        <span className="text-sm font-black text-zinc-500">جاري تحميل دليل الحسابات والدفتر المالي السحابي...</span>
+        <span className="text-sm font-black text-zinc-500">
+          جاري تحميل دليل الحسابات والدفتر المالي السحابي...
+        </span>
       </div>
     );
   }
 
   return (
     <div className="space-y-6" dir="rtl">
-      
       {/* 1. Header with profile selector switcher */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white border border-zinc-200 p-6 rounded-[2.5rem] shadow-sm select-none">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="px-2 py-0.5 bg-zinc-900 text-white text-[10px] font-black rounded-lg uppercase">ZATCA Q2-2026</span>
-            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 text-[10px] font-black rounded-lg">Cloud-Synced Ledger</span>
+            <span className="px-2 py-0.5 bg-zinc-900 text-white text-[10px] font-black rounded-lg uppercase">
+              ZATCA Q2-2026
+            </span>
+            <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 border border-emerald-100 text-[10px] font-black rounded-lg">
+              Cloud-Synced Ledger
+            </span>
           </div>
           <h2 className="text-xl font-black text-zinc-900 flex items-center gap-2">
             <BookOpen className="w-6 h-6 text-indigo-600" />
             النظام المالي والمحاسبي السحابي المتكامل
           </h2>
           <p className="text-xs text-zinc-400 font-bold mt-1 leading-relaxed">
-            محاسبة مهنية وفق المعايير السعودية (SOCPA) وضريبة القيمة المضافة ومرحلة الربط مصلحة الزكاة والجمارك (ZATCA).
+            محاسبة مهنية وفق المعايير السعودية (SOCPA) وضريبة القيمة المضافة ومرحلة الربط مصلحة
+            الزكاة والجمارك (ZATCA).
           </p>
         </div>
 
@@ -2134,8 +2322,8 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
             onClick={() => setProfile("owner")}
             className={cn(
               "flex-1 md:flex-none px-4 py-2 text-xs font-black rounded-xl transition-all cursor-pointer",
-              profile === "owner" 
-                ? "bg-white text-zinc-900 shadow-sm border border-zinc-200" 
+              profile === "owner"
+                ? "bg-white text-zinc-900 shadow-sm border border-zinc-200"
                 : "text-zinc-500 hover:text-zinc-900"
             )}
           >
@@ -2145,8 +2333,8 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
             onClick={() => setProfile("accountant")}
             className={cn(
               "flex-1 md:flex-none px-4 py-2 text-xs font-black rounded-xl transition-all cursor-pointer",
-              profile === "accountant" 
-                ? "bg-white text-zinc-900 shadow-sm border border-zinc-200" 
+              profile === "accountant"
+                ? "bg-white text-zinc-900 shadow-sm border border-zinc-200"
                 : "text-zinc-500 hover:text-zinc-900"
             )}
           >
@@ -2157,7 +2345,6 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
       <AnimatePresence mode="wait">
         {profile === "owner" ? (
-          
           /* ==================== BUSINESS OWNER VIEW ==================== */
           <motion.div
             key="owner"
@@ -2168,15 +2355,17 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
           >
             {/* Bento KPI Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 select-none">
-              
               <div className="bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition">
                 <div className="flex justify-between items-start mb-4">
-                  <span className="text-[10px] font-black text-zinc-400 tracking-widest uppercase">السيولة النقدية (Net Cashflow)</span>
+                  <span className="text-[10px] font-black text-zinc-400 tracking-widest uppercase">
+                    السيولة النقدية (Net Cashflow)
+                  </span>
                   <Landmark className="w-5 h-5 text-indigo-500" />
                 </div>
                 <div>
                   <h3 className="text-2xl font-black text-zinc-900">
-                    {Math.round(financials.netCashflow / 100).toLocaleString()} <span className="text-xs text-zinc-400">ر.س</span>
+                    {Math.round(financials.netCashflow / 100).toLocaleString()}{" "}
+                    <span className="text-xs text-zinc-400">ر.س</span>
                   </h3>
                   <p className="text-[10px] text-zinc-400 font-bold mt-1.5 flex items-center gap-1">
                     <TrendingUp className="w-4 h-4 text-emerald-500" /> رصيد النقدية الجاري في البنك
@@ -2186,12 +2375,15 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
               <div className="bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition">
                 <div className="flex justify-between items-start mb-4">
-                  <span className="text-[10px] font-black text-zinc-400 tracking-widest uppercase">ضريبة المخرجات (المحصلة)</span>
+                  <span className="text-[10px] font-black text-zinc-400 tracking-widest uppercase">
+                    ضريبة المخرجات (المحصلة)
+                  </span>
                   <Percent className="w-5 h-5 text-amber-500" />
                 </div>
                 <div>
                   <h3 className="text-2xl font-black text-amber-600">
-                    {Math.round(financials.vatCollected / 100).toLocaleString()} <span className="text-xs text-zinc-400">ر.س</span>
+                    {Math.round(financials.vatCollected / 100).toLocaleString()}{" "}
+                    <span className="text-xs text-zinc-400">ر.س</span>
                   </h3>
                   <p className="text-[10px] text-zinc-400 font-bold mt-1.5">
                     المدخلات (المدفوعة): {Math.round(financials.vatPaid / 100).toLocaleString()} ر.س
@@ -2201,12 +2393,15 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
               <div className="bg-white border border-zinc-200 p-6 rounded-[2rem] shadow-sm hover:shadow-md transition">
                 <div className="flex justify-between items-start mb-4">
-                  <span className="text-[10px] font-black text-zinc-400 tracking-widest uppercase">مستحقات هيئة الزكاة (ZATCA)</span>
+                  <span className="text-[10px] font-black text-zinc-400 tracking-widest uppercase">
+                    مستحقات هيئة الزكاة (ZATCA)
+                  </span>
                   <Shield className="w-5 h-5 text-rose-500" />
                 </div>
                 <div>
                   <h3 className="text-2xl font-black text-zinc-900">
-                    {Math.round(financials.netVatLiability / 100).toLocaleString()} <span className="text-xs text-zinc-400">ر.س</span>
+                    {Math.round(financials.netVatLiability / 100).toLocaleString()}{" "}
+                    <span className="text-xs text-zinc-400">ر.س</span>
                   </h3>
                   <p className="text-[10px] text-rose-500 font-bold mt-1.5 flex items-center gap-1">
                     <AlertTriangle className="w-4 h-4" /> مستحقة السداد للربع الحالي
@@ -2216,55 +2411,79 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
               <div className="bg-zinc-950 text-white p-6 rounded-[2rem] shadow-lg flex flex-col justify-between">
                 <div className="flex justify-between items-start">
-                  <span className="text-[10px] font-black text-zinc-400 tracking-widest uppercase">الربح التشغيلي والفرص</span>
+                  <span className="text-[10px] font-black text-zinc-400 tracking-widest uppercase">
+                    الربح التشغيلي والفرص
+                  </span>
                   <Coins className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div>
                   <h3 className="text-2xl font-black text-white">
-                    {Math.round(financials.operatingProfit / 100).toLocaleString()} <span className="text-xs text-zinc-400">ر.س</span>
+                    {Math.round(financials.operatingProfit / 100).toLocaleString()}{" "}
+                    <span className="text-xs text-zinc-400">ر.س</span>
                   </h3>
                   <p className="text-[10px] text-emerald-400 font-bold mt-1.5 flex items-center gap-1">
-                    <TrendingUp className="w-4 h-4" /> هامش الربح الحالي: {Math.round(financials.margin)}%
+                    <TrendingUp className="w-4 h-4" /> هامش الربح الحالي:{" "}
+                    {Math.round(financials.margin)}%
                   </p>
                 </div>
               </div>
-
             </div>
 
             {/* Cashflow Charts & Quick Trigger Panels */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
               <div className="lg:col-span-2 bg-white border border-zinc-200 rounded-[2.5rem] shadow-sm p-8">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h3 className="text-lg font-black text-zinc-900">تطور السيولة النقدية والإيرادات</h3>
-                    <p className="text-xs text-zinc-400 font-bold mt-1">تتبع التدفقات النقدية والأرباح الفعلية في الحساب البنكي والأستاذ العام.</p>
+                    <h3 className="text-lg font-black text-zinc-900">
+                      تطور السيولة النقدية والإيرادات
+                    </h3>
+                    <p className="text-xs text-zinc-400 font-bold mt-1">
+                      تتبع التدفقات النقدية والأرباح الفعلية في الحساب البنكي والأستاذ العام.
+                    </p>
                   </div>
                   <div className="flex items-center gap-4 text-xs font-bold">
-                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-indigo-500"></span> النقدية</div>
-                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-emerald-500"></span> الأرباح</div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded-full bg-indigo-500"></span> النقدية
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-3 h-3 rounded-full bg-emerald-500"></span> الأرباح
+                    </div>
                   </div>
                 </div>
-                
+
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={bentoChartData}>
                       <defs>
                         <linearGradient id="colorCash" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
-                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
+                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f4f4f5" />
                       <XAxis dataKey="month" stroke="#a1a1aa" fontSize={11} tickLine={false} />
                       <YAxis stroke="#a1a1aa" fontSize={11} tickLine={false} />
                       <Tooltip />
-                      <Area type="monotone" dataKey="Cashflow" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorCash)" />
-                      <Area type="monotone" dataKey="Profit" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorProfit)" />
+                      <Area
+                        type="monotone"
+                        dataKey="Cashflow"
+                        stroke="#6366f1"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#colorCash)"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="Profit"
+                        stroke="#10b981"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#colorProfit)"
+                      />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -2275,32 +2494,51 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                 <div>
                   <div className="flex items-center gap-2 text-indigo-600 mb-3">
                     <Sparkles className="w-5 h-5" />
-                    <span className="text-xs font-black tracking-wider uppercase">الأدوات الذكية السريعة</span>
+                    <span className="text-xs font-black tracking-wider uppercase">
+                      الأدوات الذكية السريعة
+                    </span>
                   </div>
-                  <h3 className="text-lg font-black text-zinc-900">تسجيل وتأكيد فواتير ومصاريف فورية</h3>
+                  <h3 className="text-lg font-black text-zinc-900">
+                    تسجيل وتأكيد فواتير ومصاريف فورية
+                  </h3>
                   <p className="text-xs text-zinc-400 font-bold mt-1 leading-relaxed">
-                    توليد تلقائي للقيود المزدوجة المتوافقة مع مصلحة الزكاة (ZATCA) في الأستاذ العام وتطبيق أثر ضريبة القيمة المضافة 15% مباشرة دون الحاجة لمهارات محاسبية معقدة.
+                    توليد تلقائي للقيود المزدوجة المتوافقة مع مصلحة الزكاة (ZATCA) في الأستاذ العام
+                    وتطبيق أثر ضريبة القيمة المضافة 15% مباشرة دون الحاجة لمهارات محاسبية معقدة.
                   </p>
 
                   <div className="space-y-3 mt-6">
                     <button
-                      onClick={() => { setQuickType("sale"); setShowQuickTx(true); }}
+                      onClick={() => {
+                        setQuickType("sale");
+                        setShowQuickTx(true);
+                      }}
                       className="w-full flex items-center justify-between p-4 bg-zinc-50 border border-zinc-200/60 rounded-2xl hover:bg-zinc-100/60 transition text-right cursor-pointer"
                     >
                       <div>
-                        <div className="font-bold text-xs text-zinc-900">تسجيل فاتورة مبيعات جديدة (+15% VAT)</div>
-                        <div className="text-[10px] text-zinc-400 mt-1">توليد قيد إيراد وقفل الحساب المدين للبنك أو العميل</div>
+                        <div className="font-bold text-xs text-zinc-900">
+                          تسجيل فاتورة مبيعات جديدة (+15% VAT)
+                        </div>
+                        <div className="text-[10px] text-zinc-400 mt-1">
+                          توليد قيد إيراد وقفل الحساب المدين للبنك أو العميل
+                        </div>
                       </div>
                       <ArrowUpRight className="w-5 h-5 text-indigo-600" />
                     </button>
 
                     <button
-                      onClick={() => { setQuickType("expense"); setShowQuickTx(true); }}
+                      onClick={() => {
+                        setQuickType("expense");
+                        setShowQuickTx(true);
+                      }}
                       className="w-full flex items-center justify-between p-4 bg-zinc-50 border border-zinc-200/60 rounded-2xl hover:bg-zinc-100/60 transition text-right cursor-pointer"
                     >
                       <div>
-                        <div className="font-bold text-xs text-zinc-900">تسجيل مصروف أو فاتورة مشتريات تشغيلية</div>
-                        <div className="text-[10px] text-zinc-400 mt-1">احتساب ضريبة المدخلات وتوجيهها في المصاريف العمومية</div>
+                        <div className="font-bold text-xs text-zinc-900">
+                          تسجيل مصروف أو فاتورة مشتريات تشغيلية
+                        </div>
+                        <div className="text-[10px] text-zinc-400 mt-1">
+                          احتساب ضريبة المدخلات وتوجيهها في المصاريف العمومية
+                        </div>
                       </div>
                       <ArrowDownRight className="w-5 h-5 text-rose-500" />
                     </button>
@@ -2309,17 +2547,20 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                 <div className="border-t border-zinc-100 pt-6 mt-6 flex justify-between items-center text-xs">
                   <span className="text-zinc-400 font-bold">تكامل الأستاذ العام:</span>
-                  <button 
+                  <button
                     onClick={handleSyncPayrollRuns}
                     disabled={syncingPayroll}
                     className="text-indigo-600 font-black flex items-center gap-1 hover:underline cursor-pointer"
                   >
-                    {syncingPayroll ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                    {syncingPayroll ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    )}
                     مزامنة مسيرات الرواتب الحالية بالدفاتر
                   </button>
                 </div>
               </div>
-
             </div>
 
             {/* Quick Transaction Drawer / Modal */}
@@ -2334,11 +2575,17 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                   >
                     <div className="flex justify-between items-center">
                       <h4 className="text-base font-black text-zinc-900 flex items-center gap-2">
-                        {quickType === "sale" ? <ArrowUpRight className="w-5 h-5 text-indigo-600" /> : <ArrowDownRight className="w-5 h-5 text-rose-500" />}
-                        {quickType === "sale" ? "تسجيل فاتورة مبيعات وإيراد فوري" : "تسجيل مصروف أو فاتورة مشتريات فوري"}
+                        {quickType === "sale" ? (
+                          <ArrowUpRight className="w-5 h-5 text-indigo-600" />
+                        ) : (
+                          <ArrowDownRight className="w-5 h-5 text-rose-500" />
+                        )}
+                        {quickType === "sale"
+                          ? "تسجيل فاتورة مبيعات وإيراد فوري"
+                          : "تسجيل مصروف أو فاتورة مشتريات فوري"}
                       </h4>
-                      <button 
-                        onClick={() => setShowQuickTx(false)} 
+                      <button
+                        onClick={() => setShowQuickTx(false)}
                         className="p-1 text-zinc-400 hover:text-zinc-600 font-bold"
                       >
                         إغلاق
@@ -2347,7 +2594,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-xs font-black text-zinc-500 mb-1.5">مبلغ المعاملة الأساسي (ريال سعودي - SAR)</label>
+                        <label className="block text-xs font-black text-zinc-500 mb-1.5">
+                          مبلغ المعاملة الأساسي (ريال سعودي - SAR)
+                        </label>
                         <input
                           type="number"
                           placeholder="مثال: 5000"
@@ -2358,7 +2607,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-black text-zinc-500 mb-1.5">بيان المعاملة وتفاصيلها (مكتوبة بالتفصيل في القيد)</label>
+                        <label className="block text-xs font-black text-zinc-500 mb-1.5">
+                          بيان المعاملة وتفاصيلها (مكتوبة بالتفصيل في القيد)
+                        </label>
                         <input
                           type="text"
                           placeholder="مثال: بيع تراخيص ومصنفات تقنية للعميل..."
@@ -2370,7 +2621,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-black text-zinc-500 mb-1.5">معدل ضريبة القيمة المضافة</label>
+                          <label className="block text-xs font-black text-zinc-500 mb-1.5">
+                            معدل ضريبة القيمة المضافة
+                          </label>
                           <select
                             value={quickVatRate}
                             onChange={(e) => setQuickVatRate(e.target.value)}
@@ -2381,10 +2634,12 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                           </select>
                         </div>
                         <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-200 flex flex-col justify-center">
-                          <span className="text-[10px] font-black text-zinc-400">قيمة الضريبة المحتسبة</span>
+                          <span className="text-[10px] font-black text-zinc-400">
+                            قيمة الضريبة المحتسبة
+                          </span>
                           <span className="text-sm font-black text-zinc-800">
-                            {quickAmount && !isNaN(Number(quickAmount)) 
-                              ? (Number(quickAmount) * (Number(quickVatRate)/100)).toFixed(2)
+                            {quickAmount && !isNaN(Number(quickAmount))
+                              ? (Number(quickAmount) * (Number(quickVatRate) / 100)).toFixed(2)
                               : "0.00"}{" "}
                             <span className="text-[10px] text-zinc-400">ر.س</span>
                           </span>
@@ -2397,17 +2652,18 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       disabled={savingEntry}
                       className="w-full py-4 text-xs font-black text-white bg-zinc-900 rounded-2xl hover:bg-zinc-800 transition disabled:opacity-50 cursor-pointer"
                     >
-                      {savingEntry ? <RefreshCw className="w-4 h-4 animate-spin mx-auto" /> : "مزامنة وترحيل القيد للأستاذ العام سحابياً ☁️"}
+                      {savingEntry ? (
+                        <RefreshCw className="w-4 h-4 animate-spin mx-auto" />
+                      ) : (
+                        "مزامنة وترحيل القيد للأستاذ العام سحابياً ☁️"
+                      )}
                     </button>
-
                   </motion.div>
                 </div>
               )}
             </AnimatePresence>
-
           </motion.div>
         ) : (
-          
           /* ==================== CPA ACCOUNTANT VIEW ==================== */
           <motion.div
             key="accountant"
@@ -2422,7 +2678,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                 onClick={() => setAccountantTab("journal")}
                 className={cn(
                   "px-4 py-2.5 text-xs font-black rounded-lg transition-colors cursor-pointer",
-                  accountantTab === "journal" ? "bg-zinc-900 text-white" : "text-zinc-500 hover:bg-zinc-100"
+                  accountantTab === "journal"
+                    ? "bg-zinc-900 text-white"
+                    : "text-zinc-500 hover:bg-zinc-100"
                 )}
               >
                 ⚖️ منشئ قيود اليومية للـمُحاسب
@@ -2431,7 +2689,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                 onClick={() => setAccountantTab("accounts")}
                 className={cn(
                   "px-4 py-2.5 text-xs font-black rounded-lg transition-colors cursor-pointer",
-                  accountantTab === "accounts" ? "bg-zinc-900 text-white" : "text-zinc-500 hover:bg-zinc-100"
+                  accountantTab === "accounts"
+                    ? "bg-zinc-900 text-white"
+                    : "text-zinc-500 hover:bg-zinc-100"
                 )}
               >
                 📁 دليل الحسابات (Chart of Accounts)
@@ -2440,7 +2700,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                 onClick={() => setAccountantTab("cost_centers")}
                 className={cn(
                   "px-4 py-2.5 text-xs font-black rounded-lg transition-colors cursor-pointer",
-                  accountantTab === "cost_centers" ? "bg-zinc-900 text-white" : "text-zinc-500 hover:bg-zinc-100"
+                  accountantTab === "cost_centers"
+                    ? "bg-zinc-900 text-white"
+                    : "text-zinc-500 hover:bg-zinc-100"
                 )}
               >
                 🎯 مراكز التكلفة (Cost Centers)
@@ -2449,7 +2711,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                 onClick={() => setAccountantTab("fixed_assets")}
                 className={cn(
                   "px-4 py-2.5 text-xs font-black rounded-lg transition-colors cursor-pointer",
-                  accountantTab === "fixed_assets" ? "bg-zinc-900 text-white" : "text-zinc-500 hover:bg-zinc-100"
+                  accountantTab === "fixed_assets"
+                    ? "bg-zinc-900 text-white"
+                    : "text-zinc-500 hover:bg-zinc-100"
                 )}
               >
                 🚗 الأصول الثابتة (Fixed Assets)
@@ -2458,7 +2722,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                 onClick={() => setAccountantTab("vouchers")}
                 className={cn(
                   "px-4 py-2.5 text-xs font-black rounded-lg transition-colors cursor-pointer",
-                  accountantTab === "vouchers" ? "bg-zinc-900 text-white" : "text-zinc-500 hover:bg-zinc-100"
+                  accountantTab === "vouchers"
+                    ? "bg-zinc-900 text-white"
+                    : "text-zinc-500 hover:bg-zinc-100"
                 )}
               >
                 💵 السندات والعملات (Vouchers)
@@ -2467,7 +2733,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                 onClick={() => setAccountantTab("bank_reconciliation")}
                 className={cn(
                   "px-4 py-2.5 text-xs font-black rounded-lg transition-colors cursor-pointer",
-                  accountantTab === "bank_reconciliation" ? "bg-zinc-900 text-white" : "text-zinc-500 hover:bg-zinc-100"
+                  accountantTab === "bank_reconciliation"
+                    ? "bg-zinc-900 text-white"
+                    : "text-zinc-500 hover:bg-zinc-100"
                 )}
               >
                 🏦 التسوية البنكية (Bank Rec)
@@ -2476,7 +2744,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                 onClick={() => setAccountantTab("trial")}
                 className={cn(
                   "px-4 py-2.5 text-xs font-black rounded-lg transition-colors cursor-pointer",
-                  accountantTab === "trial" ? "bg-zinc-900 text-white" : "text-zinc-500 hover:bg-zinc-100"
+                  accountantTab === "trial"
+                    ? "bg-zinc-900 text-white"
+                    : "text-zinc-500 hover:bg-zinc-100"
                 )}
               >
                 ⚖️ ميزان المراجعة (Trial Balance)
@@ -2485,7 +2755,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                 onClick={() => setAccountantTab("statements")}
                 className={cn(
                   "px-4 py-2.5 text-xs font-black rounded-lg transition-colors cursor-pointer",
-                  accountantTab === "statements" ? "bg-zinc-900 text-white" : "text-zinc-500 hover:bg-zinc-100"
+                  accountantTab === "statements"
+                    ? "bg-zinc-900 text-white"
+                    : "text-zinc-500 hover:bg-zinc-100"
                 )}
               >
                 📋 التقارير والقوائم المالية (P&L / Balance Sheet)
@@ -2494,7 +2766,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                 onClick={() => setAccountantTab("vat")}
                 className={cn(
                   "px-4 py-2.5 text-xs font-black rounded-lg transition-colors cursor-pointer",
-                  accountantTab === "vat" ? "bg-zinc-900 text-white" : "text-zinc-500 hover:bg-zinc-100"
+                  accountantTab === "vat"
+                    ? "bg-zinc-900 text-white"
+                    : "text-zinc-500 hover:bg-zinc-100"
                 )}
               >
                 🏛️ الإقرارات والربط الضريبي (ZATCA VAT Center)
@@ -2503,7 +2777,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                 onClick={() => setAccountantTab("audit")}
                 className={cn(
                   "px-4 py-2.5 text-xs font-black rounded-lg transition-colors cursor-pointer",
-                  accountantTab === "audit" ? "bg-zinc-900 text-white" : "text-zinc-500 hover:bg-zinc-100"
+                  accountantTab === "audit"
+                    ? "bg-zinc-900 text-white"
+                    : "text-zinc-500 hover:bg-zinc-100"
                 )}
               >
                 🛡️ سجل الرقابة والأمن (Audit Trail)
@@ -2513,7 +2789,6 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
             {/* TAB CONTENT: 1. JOURNAL ENTRY BUILDER */}
             {accountantTab === "journal" && (
               <div className="space-y-6">
-                
                 {/* Manual entry generation form */}
                 <div className="bg-white border border-zinc-200 rounded-[2.5rem] shadow-sm p-8 space-y-6">
                   <div>
@@ -2521,23 +2796,30 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       <Sliders className="w-5 h-5 text-indigo-600" />
                       منشئ وتوليد قيود اليومية المزدوجة اليدوية (CPA Console)
                     </h3>
-                    <p className="text-xs text-zinc-400 font-bold mt-1">توجيه يدوي كامل وتسوية أرصدة الدائن والمدين متطابقين قبل الحفظ لضمان سلامة الدفاتر.</p>
+                    <p className="text-xs text-zinc-400 font-bold mt-1">
+                      توجيه يدوي كامل وتسوية أرصدة الدائن والمدين متطابقين قبل الحفظ لضمان سلامة
+                      الدفاتر.
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-xs font-black text-zinc-500 mb-1.5">تاريخ القيد المالي</label>
-                      <input 
-                        type="date" 
+                      <label className="block text-xs font-black text-zinc-500 mb-1.5">
+                        تاريخ القيد المالي
+                      </label>
+                      <input
+                        type="date"
                         value={entryDate}
                         onChange={(e) => setEntryDate(e.target.value)}
                         className="w-full text-xs p-3.5 bg-zinc-50 border border-zinc-200 rounded-xl outline-none font-bold"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-black text-zinc-500 mb-1.5">وصف القيد باللغة العربية (البيان)</label>
-                      <input 
-                        type="text" 
+                      <label className="block text-xs font-black text-zinc-500 mb-1.5">
+                        وصف القيد باللغة العربية (البيان)
+                      </label>
+                      <input
+                        type="text"
                         placeholder="مثال: إثبات مستحقات إيجار المقر الرئيسي..."
                         value={entryDescAr}
                         onChange={(e) => setEntryDescAr(e.target.value)}
@@ -2545,9 +2827,11 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-black text-zinc-500 mb-1.5">وصف القيد بالإنجليزية (مستندات التدقيق)</label>
-                      <input 
-                        type="text" 
+                      <label className="block text-xs font-black text-zinc-500 mb-1.5">
+                        وصف القيد بالإنجليزية (مستندات التدقيق)
+                      </label>
+                      <input
+                        type="text"
                         placeholder="e.g., Office Rent Expense booking..."
                         value={entryDescEn}
                         onChange={(e) => setEntryDescEn(e.target.value)}
@@ -2577,7 +2861,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                                 onChange={(e) => updateEntryLine(idx, "accountId", e.target.value)}
                               >
                                 <option value="">--- اختر الحساب المالي المخصص ---</option>
-                                {calculatedAccounts.map(acc => (
+                                {calculatedAccounts.map((acc) => (
                                   <option key={acc.id} value={acc.id}>
                                     {acc.accountCode} - {acc.nameAr} ({acc.type})
                                   </option>
@@ -2591,7 +2875,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                                 onChange={(e) => updateEntryLine(idx, "costCenter", e.target.value)}
                               >
                                 <option value="">بدون مركز تكلفة</option>
-                                {costCenters.map(cc => (
+                                {costCenters.map((cc) => (
                                   <option key={cc.id} value={cc.id}>
                                     {cc.code} - {cc.nameAr}
                                   </option>
@@ -2603,7 +2887,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                                 type="number"
                                 placeholder="0.00"
                                 value={line.debit || ""}
-                                onChange={(e) => updateEntryLine(idx, "debit", Math.max(0, Number(e.target.value)))}
+                                onChange={(e) =>
+                                  updateEntryLine(idx, "debit", Math.max(0, Number(e.target.value)))
+                                }
                                 className="w-full text-center text-xs p-3.5 bg-zinc-50 border border-zinc-200 rounded-xl outline-none font-bold"
                               />
                             </td>
@@ -2612,7 +2898,13 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                                 type="number"
                                 placeholder="0.00"
                                 value={line.credit || ""}
-                                onChange={(e) => updateEntryLine(idx, "credit", Math.max(0, Number(e.target.value)))}
+                                onChange={(e) =>
+                                  updateEntryLine(
+                                    idx,
+                                    "credit",
+                                    Math.max(0, Number(e.target.value))
+                                  )
+                                }
                                 className="w-full text-center text-xs p-3.5 bg-zinc-50 border border-zinc-200 rounded-xl outline-none font-bold"
                               />
                             </td>
@@ -2641,12 +2933,20 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                     <div className="flex items-center gap-6">
                       <div className="text-xs">
-                        <span className="font-bold text-zinc-400 block mb-1">إجمالي المدين (Debit)</span>
-                        <span className="font-black text-zinc-900 text-sm">{entryTotals.debits.toLocaleString()} ريال</span>
+                        <span className="font-bold text-zinc-400 block mb-1">
+                          إجمالي المدين (Debit)
+                        </span>
+                        <span className="font-black text-zinc-900 text-sm">
+                          {entryTotals.debits.toLocaleString()} ريال
+                        </span>
                       </div>
                       <div className="text-xs">
-                        <span className="font-bold text-zinc-400 block mb-1">إجمالي الدائن (Credit)</span>
-                        <span className="font-black text-zinc-900 text-sm">{entryTotals.credits.toLocaleString()} ريال</span>
+                        <span className="font-bold text-zinc-400 block mb-1">
+                          إجمالي الدائن (Credit)
+                        </span>
+                        <span className="font-black text-zinc-900 text-sm">
+                          {entryTotals.credits.toLocaleString()} ريال
+                        </span>
                       </div>
                       <div>
                         {entryTotals.isBalanced ? (
@@ -2668,24 +2968,31 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       disabled={savingEntry || !entryTotals.isBalanced}
                       className="px-8 py-4 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 text-white font-black rounded-xl text-xs shadow-md transition flex items-center gap-2 cursor-pointer"
                     >
-                      {savingEntry ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                      {savingEntry ? (
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Plus className="w-4 h-4" />
+                      )}
                       ترحيل وقيد المعاملة بالأستاذ العام رسمياً
                     </button>
                   </div>
-
                 </div>
 
                 {/* Journal list history */}
                 <div className="bg-white border border-zinc-200 rounded-[2.5rem] shadow-sm p-8 space-y-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                      <h4 className="text-base font-black text-zinc-900">سجل القيود المزدوجة المفصلة (General Journal)</h4>
-                      <p className="text-xs text-zinc-400 font-bold mt-1">كشف بجميع العمليات الموثقة بالترتيب الزمني.</p>
+                      <h4 className="text-base font-black text-zinc-900">
+                        سجل القيود المزدوجة المفصلة (General Journal)
+                      </h4>
+                      <p className="text-xs text-zinc-400 font-bold mt-1">
+                        كشف بجميع العمليات الموثقة بالترتيب الزمني.
+                      </p>
                     </div>
                     <div className="relative w-full md:w-80">
                       <Search className="w-4 h-4 text-zinc-400 absolute right-3 top-1/2 -translate-y-1/2" />
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         placeholder="البحث برقم القيد أو البيان..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -2708,43 +3015,81 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       </thead>
                       <tbody className="divide-y divide-zinc-100 bg-white">
                         {journalEntries
-                          .filter(entry => {
-                            const queryMatch = (entry.entryNumber || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-                              (entry.descriptionAr || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-                              (entry.sourceDoc || "").toLowerCase().includes(searchQuery.toLowerCase());
+                          .filter((entry) => {
+                            const queryMatch =
+                              (entry.entryNumber || "")
+                                .toLowerCase()
+                                .includes(searchQuery.toLowerCase()) ||
+                              (entry.descriptionAr || "")
+                                .toLowerCase()
+                                .includes(searchQuery.toLowerCase()) ||
+                              (entry.sourceDoc || "")
+                                .toLowerCase()
+                                .includes(searchQuery.toLowerCase());
                             return queryMatch;
                           })
                           .map((entry) => (
                             <React.Fragment key={entry.id}>
                               <tr className="bg-zinc-50/40 font-bold border-t border-zinc-200/60 text-zinc-800">
-                                <td className="p-4 text-center text-indigo-600 font-mono font-black">{entry.entryNumber}</td>
-                                <td className="p-4 text-center text-zinc-500 font-mono">{entry.date}</td>
-                                <td className="p-4">
-                                  <div className="font-bold text-zinc-950">{entry.descriptionAr}</div>
-                                  <div className="text-[10px] text-zinc-400 mt-0.5">{entry.descriptionEn}</div>
+                                <td className="p-4 text-center text-indigo-600 font-mono font-black">
+                                  {entry.entryNumber}
                                 </td>
-                                <td className="p-4 text-center"><span className="px-2 py-1 bg-zinc-100 border border-zinc-200/60 rounded text-[10px] font-bold text-zinc-500">{entry.sourceDoc}</span></td>
+                                <td className="p-4 text-center text-zinc-500 font-mono">
+                                  {entry.date}
+                                </td>
+                                <td className="p-4">
+                                  <div className="font-bold text-zinc-950">
+                                    {entry.descriptionAr}
+                                  </div>
+                                  <div className="text-[10px] text-zinc-400 mt-0.5">
+                                    {entry.descriptionEn}
+                                  </div>
+                                </td>
+                                <td className="p-4 text-center">
+                                  <span className="px-2 py-1 bg-zinc-100 border border-zinc-200/60 rounded text-[10px] font-bold text-zinc-500">
+                                    {entry.sourceDoc}
+                                  </span>
+                                </td>
                                 <td colSpan={2}></td>
                               </tr>
                               {entry.lines?.map((line: any, lIdx: number) => {
-                                const acc = accountIdMap[line.accountId] || { nameAr: "حساب غير محدد", accountCode: "---" };
+                                const acc = accountIdMap[line.accountId] || {
+                                  nameAr: "حساب غير محدد",
+                                  accountCode: "---",
+                                };
                                 return (
-                                  <tr key={`${entry.id}-${lIdx}`} className="hover:bg-zinc-50/20 transition text-zinc-600">
+                                  <tr
+                                    key={`${entry.id}-${lIdx}`}
+                                    className="hover:bg-zinc-50/20 transition text-zinc-600"
+                                  >
                                     <td colSpan={2}></td>
                                     <td className="p-4 pr-8">
                                       <div className="flex items-center gap-2">
-                                        <span className="bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded font-mono text-[10px]">{acc.accountCode}</span>
-                                        <span className={cn("font-bold text-xs", line.creditHalalas > 0 ? "text-zinc-500 mr-4" : "text-zinc-800")}>
+                                        <span className="bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded font-mono text-[10px]">
+                                          {acc.accountCode}
+                                        </span>
+                                        <span
+                                          className={cn(
+                                            "font-bold text-xs",
+                                            line.creditHalalas > 0
+                                              ? "text-zinc-500 mr-4"
+                                              : "text-zinc-800"
+                                          )}
+                                        >
                                           {acc.nameAr}
                                         </span>
                                       </div>
                                     </td>
                                     <td></td>
                                     <td className="p-4 text-left font-mono font-bold text-emerald-600">
-                                      {line.debitHalalas > 0 ? `${(line.debitHalalas / 100).toLocaleString()}` : "-"}
+                                      {line.debitHalalas > 0
+                                        ? `${(line.debitHalalas / 100).toLocaleString()}`
+                                        : "-"}
                                     </td>
                                     <td className="p-4 text-left font-mono font-bold text-zinc-600">
-                                      {line.creditHalalas > 0 ? `${(line.creditHalalas / 100).toLocaleString()}` : "-"}
+                                      {line.creditHalalas > 0
+                                        ? `${(line.creditHalalas / 100).toLocaleString()}`
+                                        : "-"}
                                     </td>
                                   </tr>
                                 );
@@ -2753,15 +3098,15 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                           ))}
                         {journalEntries.length === 0 && (
                           <tr>
-                            <td colSpan={6} className="p-12 text-center text-zinc-400 font-bold">لا يوجد قيود محاسبية مسجلة حالياً.</td>
+                            <td colSpan={6} className="p-12 text-center text-zinc-400 font-bold">
+                              لا يوجد قيود محاسبية مسجلة حالياً.
+                            </td>
                           </tr>
                         )}
                       </tbody>
                     </table>
                   </div>
-
                 </div>
-
               </div>
             )}
 
@@ -2770,8 +3115,13 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
               <div className="bg-white border border-zinc-200 rounded-[2.5rem] shadow-sm p-8 space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-lg font-black text-zinc-900">دليل الحسابات المعتمد (SOCPA Standard Chart of Accounts)</h3>
-                    <p className="text-xs text-zinc-400 font-bold mt-1">تحديد فئات الحسابات المالية (أصول، التزامات، حقوق ملكية، إيرادات، مصروفات) ومراقبة أرصدتها.</p>
+                    <h3 className="text-lg font-black text-zinc-900">
+                      دليل الحسابات المعتمد (SOCPA Standard Chart of Accounts)
+                    </h3>
+                    <p className="text-xs text-zinc-400 font-bold mt-1">
+                      تحديد فئات الحسابات المالية (أصول، التزامات، حقوق ملكية، إيرادات، مصروفات)
+                      ومراقبة أرصدتها.
+                    </p>
                   </div>
                   <button
                     onClick={() => setShowAddAccount(true)}
@@ -2796,23 +3146,32 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                     <tbody className="divide-y divide-zinc-100 bg-white">
                       {calculatedAccounts.map((acc) => (
                         <tr key={acc.id} className="hover:bg-zinc-50 transition">
-                          <td className="p-4 font-mono font-black text-indigo-600">{acc.accountCode}</td>
+                          <td className="p-4 font-mono font-black text-indigo-600">
+                            {acc.accountCode}
+                          </td>
                           <td className="p-4 font-bold text-zinc-900">{acc.nameAr}</td>
                           <td className="p-4 text-zinc-500 font-medium">{acc.nameEn}</td>
                           <td className="p-4 text-center">
-                            <span className={cn(
-                              "px-2 py-1 rounded text-[10px] font-black border",
-                              acc.type === "Asset" ? "bg-blue-50 text-blue-700 border-blue-100" :
-                              acc.type === "Liability" ? "bg-amber-50 text-amber-700 border-amber-100" :
-                              acc.type === "Equity" ? "bg-purple-50 text-purple-700 border-purple-100" :
-                              acc.type === "Revenue" ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
-                              "bg-rose-50 text-rose-700 border-rose-100"
-                            )}>
+                            <span
+                              className={cn(
+                                "px-2 py-1 rounded text-[10px] font-black border",
+                                acc.type === "Asset"
+                                  ? "bg-blue-50 text-blue-700 border-blue-100"
+                                  : acc.type === "Liability"
+                                    ? "bg-amber-50 text-amber-700 border-amber-100"
+                                    : acc.type === "Equity"
+                                      ? "bg-purple-50 text-purple-700 border-purple-100"
+                                      : acc.type === "Revenue"
+                                        ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                        : "bg-rose-50 text-rose-700 border-rose-100"
+                              )}
+                            >
                               {acc.type}
                             </span>
                           </td>
                           <td className="p-4 text-left font-mono font-black text-zinc-900">
-                            {(acc.currentBalance / 100).toLocaleString()} <span className="text-[10px] text-zinc-400">ر.س</span>
+                            {(acc.currentBalance / 100).toLocaleString()}{" "}
+                            <span className="text-[10px] text-zinc-400">ر.س</span>
                           </td>
                           <td className="p-4 text-center">
                             <button
@@ -2844,8 +3203,8 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                             <Plus className="w-5 h-5 text-indigo-600" />
                             إضافة حساب مالي مخصص لدليل الحسابات
                           </h4>
-                          <button 
-                            onClick={() => setShowAddAccount(false)} 
+                          <button
+                            onClick={() => setShowAddAccount(false)}
                             className="p-1 text-zinc-400 hover:text-zinc-600 font-bold"
                           >
                             إغلاق
@@ -2854,7 +3213,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                         <div className="space-y-4 text-xs">
                           <div>
-                            <label className="block font-black text-zinc-500 mb-1.5">رقم / رمز الحساب (مثال: 510304)</label>
+                            <label className="block font-black text-zinc-500 mb-1.5">
+                              رقم / رمز الحساب (مثال: 510304)
+                            </label>
                             <input
                               type="text"
                               placeholder="أرقام ترمز للحساب لترتيبه بالدفاتر"
@@ -2865,7 +3226,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                           </div>
 
                           <div>
-                            <label className="block font-black text-zinc-500 mb-1.5">اسم الحساب بالعربية</label>
+                            <label className="block font-black text-zinc-500 mb-1.5">
+                              اسم الحساب بالعربية
+                            </label>
                             <input
                               type="text"
                               placeholder="مثال: مصروفات تسويق ورقمنة"
@@ -2876,7 +3239,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                           </div>
 
                           <div>
-                            <label className="block font-black text-zinc-500 mb-1.5">اسم الحساب بالإنجليزية</label>
+                            <label className="block font-black text-zinc-500 mb-1.5">
+                              اسم الحساب بالإنجليزية
+                            </label>
                             <input
                               type="text"
                               placeholder="e.g., Marketing Expenses"
@@ -2888,7 +3253,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="block font-black text-zinc-500 mb-1.5">تصنيف / فئة الحساب</label>
+                              <label className="block font-black text-zinc-500 mb-1.5">
+                                تصنيف / فئة الحساب
+                              </label>
                               <select
                                 value={newAccType}
                                 onChange={(e) => setNewAccType(e.target.value)}
@@ -2903,7 +3270,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                             </div>
 
                             <div>
-                              <label className="block font-black text-zinc-500 mb-1.5">رصيد أول المدة الافتتاحي (SAR)</label>
+                              <label className="block font-black text-zinc-500 mb-1.5">
+                                رصيد أول المدة الافتتاحي (SAR)
+                              </label>
                               <input
                                 type="number"
                                 placeholder="0"
@@ -2925,14 +3294,12 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                     </div>
                   )}
                 </AnimatePresence>
-
               </div>
             )}
 
             {/* TAB CONTENT: COST CENTERS (MUDARIJ CO) */}
             {accountantTab === "cost_centers" && (
               <div className="space-y-6">
-                
                 {/* Header & Action Bar */}
                 <div className="bg-white border border-zinc-200 rounded-[2.5rem] p-8 shadow-sm space-y-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -2941,7 +3308,10 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         <Target className="w-5 h-5 text-indigo-600" />
                         هيكل مراكز التكلفة المتعدد الأبعاد (Cost Centers Hierarchy)
                       </h3>
-                      <p className="text-xs text-zinc-400 font-bold mt-1">تحديد الفروع، المشاريع، والأقسام وبناء شجرة تكاليف مرنة لمراقبة الانحرافات والأداء المالي بشكل مستقل.</p>
+                      <p className="text-xs text-zinc-400 font-bold mt-1">
+                        تحديد الفروع، المشاريع، والأقسام وبناء شجرة تكاليف مرنة لمراقبة الانحرافات
+                        والأداء المالي بشكل مستقل.
+                      </p>
                     </div>
                     <button
                       onClick={() => setShowAddCC(true)}
@@ -2960,10 +3330,14 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         exit={{ opacity: 0, height: 0 }}
                         className="bg-zinc-50 border border-zinc-200 rounded-3xl p-6 space-y-4 overflow-hidden"
                       >
-                        <h4 className="text-xs font-black text-zinc-700">إنشاء مركز تكلفة فرعي أو رئيسي جديد</h4>
+                        <h4 className="text-xs font-black text-zinc-700">
+                          إنشاء مركز تكلفة فرعي أو رئيسي جديد
+                        </h4>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
-                            <label className="block text-[10px] font-black text-zinc-400 mb-1">كود مركز التكلفة (e.g. PROJECT-A)</label>
+                            <label className="block text-[10px] font-black text-zinc-400 mb-1">
+                              كود مركز التكلفة (e.g. PROJECT-A)
+                            </label>
                             <input
                               type="text"
                               value={ccCode}
@@ -2973,7 +3347,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                             />
                           </div>
                           <div>
-                            <label className="block text-[10px] font-black text-zinc-400 mb-1">الاسم بالعربية</label>
+                            <label className="block text-[10px] font-black text-zinc-400 mb-1">
+                              الاسم بالعربية
+                            </label>
                             <input
                               type="text"
                               value={ccNameAr}
@@ -2983,7 +3359,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                             />
                           </div>
                           <div>
-                            <label className="block text-[10px] font-black text-zinc-400 mb-1">الاسم بالإنجليزية</label>
+                            <label className="block text-[10px] font-black text-zinc-400 mb-1">
+                              الاسم بالإنجليزية
+                            </label>
                             <input
                               type="text"
                               value={ccNameEn}
@@ -2996,7 +3374,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-[10px] font-black text-zinc-400 mb-1">نوع المركز</label>
+                            <label className="block text-[10px] font-black text-zinc-400 mb-1">
+                              نوع المركز
+                            </label>
                             <select
                               value={ccType}
                               onChange={(e) => setCcType(e.target.value as any)}
@@ -3009,14 +3389,16 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                             </select>
                           </div>
                           <div>
-                            <label className="block text-[10px] font-black text-zinc-400 mb-1">المركز الرئيسي الأب (إن وجد لبناء شجرة)</label>
+                            <label className="block text-[10px] font-black text-zinc-400 mb-1">
+                              المركز الرئيسي الأب (إن وجد لبناء شجرة)
+                            </label>
                             <select
                               value={ccParentId}
                               onChange={(e) => setCcParentId(e.target.value)}
                               className="w-full text-xs p-3 bg-white border border-zinc-200 rounded-xl outline-none font-bold text-zinc-700"
                             >
                               <option value="">بدون أب (مركز رئيسي على مستوى الجذر)</option>
-                              {costCenters.map(cc => (
+                              {costCenters.map((cc) => (
                                 <option key={cc.id} value={cc.id}>
                                   {cc.code} - {cc.nameAr}
                                 </option>
@@ -3045,7 +3427,6 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                   {/* Hierarchy Tree & Side Comparative Report Split View */}
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                    
                     {/* Left Panel: Cost Center Structured Tree */}
                     <div className="lg:col-span-5 space-y-4">
                       <h4 className="text-xs font-black text-zinc-400 flex items-center gap-1 select-none">
@@ -3054,26 +3435,32 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                       <div className="border border-zinc-100 rounded-2xl p-4 bg-zinc-50/50 space-y-1 max-h-[500px] overflow-y-auto">
                         {costCenters.length === 0 ? (
-                          <div className="text-center p-8 text-zinc-400 font-bold">لم يتم إنشاء أي مراكز تكلفة بعد.</div>
+                          <div className="text-center p-8 text-zinc-400 font-bold">
+                            لم يتم إنشاء أي مراكز تكلفة بعد.
+                          </div>
                         ) : (
                           // Custom simple recursive render of tree using nested margins
-                          costCenters.map(cc => {
+                          costCenters.map((cc) => {
                             const isChild = !!cc.parentId;
-                            const parentCc = costCenters.find(p => p.id === cc.parentId);
+                            const parentCc = costCenters.find((p) => p.id === cc.parentId);
 
                             return (
                               <div
                                 key={cc.id}
                                 className={cn(
                                   "p-3 rounded-xl border flex items-center justify-between gap-4 transition",
-                                  isChild 
-                                    ? "bg-white border-zinc-100 mr-8 text-zinc-700" 
+                                  isChild
+                                    ? "bg-white border-zinc-100 mr-8 text-zinc-700"
                                     : "bg-white border-zinc-200 text-zinc-900 font-bold shadow-sm"
                                 )}
                               >
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm">
-                                    {cc.type === "Project" ? "🚀" : cc.type === "Branch" ? "🏢" : "👥"}
+                                    {cc.type === "Project"
+                                      ? "🚀"
+                                      : cc.type === "Branch"
+                                        ? "🏢"
+                                        : "👥"}
                                   </span>
                                   <div>
                                     <div className="flex items-center gap-1.5">
@@ -3104,7 +3491,8 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                     {/* Right Panel: Comparative Financial Performance Report */}
                     <div className="lg:col-span-7 space-y-4">
                       <h4 className="text-xs font-black text-zinc-400 flex items-center gap-1 select-none">
-                        <span>📊</span> تقرير الربحية وتحليل الأداء المالي للمراكز (P&L per Cost Center)
+                        <span>📊</span> تقرير الربحية وتحليل الأداء المالي للمراكز (P&L per Cost
+                        Center)
                       </h4>
 
                       <div className="border border-zinc-100 rounded-2xl bg-white overflow-hidden shadow-sm">
@@ -3115,12 +3503,19 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                               <th className="p-4 text-left">الإيرادات</th>
                               <th className="p-4 text-left">تكلفة المبيعات</th>
                               <th className="p-4 text-left">المصروفات</th>
-                              <th className="p-4 text-left bg-indigo-50/30 text-indigo-900">صافي الأرباح</th>
+                              <th className="p-4 text-left bg-indigo-50/30 text-indigo-900">
+                                صافي الأرباح
+                              </th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-zinc-100">
-                            {costCenters.map(cc => {
-                              const fin = costCentersFinancials[cc.id] || { rev: 0, cogs: 0, exp: 0, net: 0 };
+                            {costCenters.map((cc) => {
+                              const fin = costCentersFinancials[cc.id] || {
+                                rev: 0,
+                                cogs: 0,
+                                exp: 0,
+                                net: 0,
+                              };
                               const revSar = fin.rev / 100;
                               const cogsSar = fin.cogs / 100;
                               const expSar = fin.exp / 100;
@@ -3130,22 +3525,42 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                                 <tr key={cc.id} className="hover:bg-zinc-50 transition">
                                   <td className="p-4 font-bold">
                                     <span className="block text-zinc-900">{cc.nameAr}</span>
-                                    <span className="text-[9px] text-zinc-400 font-mono">{cc.code}</span>
+                                    <span className="text-[9px] text-zinc-400 font-mono">
+                                      {cc.code}
+                                    </span>
                                   </td>
                                   <td className="p-4 text-left font-semibold text-emerald-600">
-                                    {revSar.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س
+                                    {revSar.toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}{" "}
+                                    ر.س
                                   </td>
                                   <td className="p-4 text-left font-semibold text-amber-600">
-                                    {cogsSar.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س
+                                    {cogsSar.toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}{" "}
+                                    ر.س
                                   </td>
                                   <td className="p-4 text-left font-semibold text-rose-500">
-                                    {expSar.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س
+                                    {expSar.toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}{" "}
+                                    ر.س
                                   </td>
-                                  <td className={cn(
-                                    "p-4 text-left font-black bg-indigo-50/10",
-                                    netSar >= 0 ? "text-indigo-600" : "text-rose-600"
-                                  )}>
-                                    {netSar.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س
+                                  <td
+                                    className={cn(
+                                      "p-4 text-left font-black bg-indigo-50/10",
+                                      netSar >= 0 ? "text-indigo-600" : "text-rose-600"
+                                    )}
+                                  >
+                                    {netSar.toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}{" "}
+                                    ر.س
                                   </td>
                                 </tr>
                               );
@@ -3160,20 +3575,15 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                           </tbody>
                         </table>
                       </div>
-
                     </div>
-
                   </div>
-
                 </div>
-
               </div>
             )}
 
             {/* TAB CONTENT: FIXED ASSETS */}
             {accountantTab === "fixed_assets" && (
               <div className="space-y-6">
-                
                 {/* Fixed Asset Overview & Actions */}
                 <div className="bg-white border border-zinc-200 rounded-[2.5rem] p-8 shadow-sm space-y-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -3182,7 +3592,10 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         <Compass className="w-5 h-5 text-indigo-600" />
                         سجل الأصول الثابتة ونظام الإهلاك الآلي (SOCPA Depreciation Core)
                       </h3>
-                      <p className="text-xs text-zinc-400 font-bold mt-1">تسجيل العقارات، الآلات، المركبات، والبرمجيات مع الاحتساب التلقائي الشهري للإهلاك لضمان مطابقة القيمة الدفترية.</p>
+                      <p className="text-xs text-zinc-400 font-bold mt-1">
+                        تسجيل العقارات، الآلات، المركبات، والبرمجيات مع الاحتساب التلقائي الشهري
+                        للإهلاك لضمان مطابقة القيمة الدفترية.
+                      </p>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -3196,9 +3609,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                             <RefreshCw className="w-4 h-4 animate-spin" /> جاري احتساب الإهلاك...
                           </>
                         ) : (
-                          <>
-                            ⚙️ تشغيل محرك الإهلاك الدوّري
-                          </>
+                          <>⚙️ تشغيل محرك الإهلاك الدوّري</>
                         )}
                       </button>
                       <button
@@ -3219,10 +3630,14 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         exit={{ opacity: 0, height: 0 }}
                         className="bg-zinc-50 border border-zinc-200 rounded-3xl p-6 space-y-4 overflow-hidden"
                       >
-                        <h4 className="text-xs font-black text-zinc-700">تسجيل أصل ثابت جديد بالدفاتر المحاسبية</h4>
+                        <h4 className="text-xs font-black text-zinc-700">
+                          تسجيل أصل ثابت جديد بالدفاتر المحاسبية
+                        </h4>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
-                            <label className="block text-[10px] font-black text-zinc-400 mb-1">اسم الأصل الثابت</label>
+                            <label className="block text-[10px] font-black text-zinc-400 mb-1">
+                              اسم الأصل الثابت
+                            </label>
                             <input
                               type="text"
                               value={assetName}
@@ -3232,7 +3647,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                             />
                           </div>
                           <div>
-                            <label className="block text-[10px] font-black text-zinc-400 mb-1">رمز أو كود الأصل (Asset Tag)</label>
+                            <label className="block text-[10px] font-black text-zinc-400 mb-1">
+                              رمز أو كود الأصل (Asset Tag)
+                            </label>
                             <input
                               type="text"
                               value={assetCodeInput}
@@ -3242,7 +3659,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                             />
                           </div>
                           <div>
-                            <label className="block text-[10px] font-black text-zinc-400 mb-1">تاريخ الشراء والاستملاك</label>
+                            <label className="block text-[10px] font-black text-zinc-400 mb-1">
+                              تاريخ الشراء والاستملاك
+                            </label>
                             <input
                               type="date"
                               value={assetPurchaseDate}
@@ -3254,7 +3673,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
-                            <label className="block text-[10px] font-black text-zinc-400 mb-1">القيمة التاريخية عند الشراء (ر.س)</label>
+                            <label className="block text-[10px] font-black text-zinc-400 mb-1">
+                              القيمة التاريخية عند الشراء (ر.س)
+                            </label>
                             <input
                               type="number"
                               value={assetValue}
@@ -3264,7 +3685,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                             />
                           </div>
                           <div>
-                            <label className="block text-[10px] font-black text-zinc-400 mb-1">نسبة الإهلاك السنوية (%)</label>
+                            <label className="block text-[10px] font-black text-zinc-400 mb-1">
+                              نسبة الإهلاك السنوية (%)
+                            </label>
                             <input
                               type="number"
                               value={assetDepRate}
@@ -3274,14 +3697,20 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                             />
                           </div>
                           <div>
-                            <label className="block text-[10px] font-black text-zinc-400 mb-1">طريقة الإهلاك المحاسبية</label>
+                            <label className="block text-[10px] font-black text-zinc-400 mb-1">
+                              طريقة الإهلاك المحاسبية
+                            </label>
                             <select
                               value={assetDepMethod}
                               onChange={(e) => setAssetDepMethod(e.target.value as any)}
                               className="w-full text-xs p-3 bg-white border border-zinc-200 rounded-xl outline-none font-bold text-zinc-700"
                             >
-                              <option value="straight_line">طريقة القسط الثابت (Straight-Line Method)</option>
-                              <option value="diminishing_balance">طريقة القسط المتناقص (Diminishing Balance)</option>
+                              <option value="straight_line">
+                                طريقة القسط الثابت (Straight-Line Method)
+                              </option>
+                              <option value="diminishing_balance">
+                                طريقة القسط المتناقص (Diminishing Balance)
+                              </option>
                             </select>
                           </div>
                         </div>
@@ -3315,7 +3744,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                           <th className="p-4 text-left">القيمة التاريخية (SAR)</th>
                           <th className="p-4 text-center">النسبة والطريقة</th>
                           <th className="p-4 text-left">مجمع الإهلاك المتراكم</th>
-                          <th className="p-4 text-left text-indigo-600 bg-indigo-50/20">القيمة الدفترية الحالية (SAR)</th>
+                          <th className="p-4 text-left text-indigo-600 bg-indigo-50/20">
+                            القيمة الدفترية الحالية (SAR)
+                          </th>
                           <th className="p-4 text-center">تاريخ آخر إهلاك</th>
                           <th className="p-4 text-center w-24">إجراء</th>
                         </tr>
@@ -3335,23 +3766,38 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                             return (
                               <tr key={asset.id} className="hover:bg-zinc-50 transition">
-                                <td className="p-4 font-mono font-bold text-zinc-500">{asset.assetCode}</td>
+                                <td className="p-4 font-mono font-bold text-zinc-500">
+                                  {asset.assetCode}
+                                </td>
                                 <td className="p-4 font-bold text-zinc-900">{asset.name}</td>
                                 <td className="p-4 text-zinc-500">{asset.purchaseDate}</td>
                                 <td className="p-4 text-left font-semibold">
-                                  {histValSar.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  {histValSar.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
                                 </td>
                                 <td className="p-4 text-center">
-                                  <span className="block text-zinc-800 font-bold">{asset.depreciationRate}%</span>
+                                  <span className="block text-zinc-800 font-bold">
+                                    {asset.depreciationRate}%
+                                  </span>
                                   <span className="text-[9px] text-zinc-400 font-bold">
-                                    {asset.depreciationMethod === "straight_line" ? "قسط ثابت" : "متناقص"}
+                                    {asset.depreciationMethod === "straight_line"
+                                      ? "قسط ثابت"
+                                      : "متناقص"}
                                   </span>
                                 </td>
                                 <td className="p-4 text-left font-semibold text-rose-500">
-                                  {accumDepSar.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  {accumDepSar.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
                                 </td>
                                 <td className="p-4 text-left font-black text-indigo-600 bg-indigo-50/10">
-                                  {bookValSar.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  {bookValSar.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
                                 </td>
                                 <td className="p-4 text-center font-semibold text-zinc-400 font-mono">
                                   {asset.lastDepreciationDate || "لم يهلك بعد"}
@@ -3371,9 +3817,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       </tbody>
                     </table>
                   </div>
-
                 </div>
-
               </div>
             )}
 
@@ -3387,7 +3831,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       ميزان المراجعة التفصيلي متعدد الأعمدة (CPA Trial Balance Sheets)
                     </h3>
                     <p className="text-xs text-zinc-400 font-bold mt-1">
-                      تقرير الأستاذ العام المتوازن بالأرصدة الافتتاحية، حركات الفترة، والأرصدة الختامية مصنفاً حسب الفترات ومراكز التكلفة. انقر على أي حساب للتدقيق التفصيلي (Drill-down).
+                      تقرير الأستاذ العام المتوازن بالأرصدة الافتتاحية، حركات الفترة، والأرصدة
+                      الختامية مصنفاً حسب الفترات ومراكز التكلفة. انقر على أي حساب للتدقيق التفصيلي
+                      (Drill-down).
                     </p>
                   </div>
                 </div>
@@ -3395,7 +3841,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                 {/* Filters container */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-zinc-50 p-5 rounded-3xl border border-zinc-100">
                   <div>
-                    <label className="block text-[11px] font-black text-zinc-400 mb-1.5">تاريخ البداية (Start Date)</label>
+                    <label className="block text-[11px] font-black text-zinc-400 mb-1.5">
+                      تاريخ البداية (Start Date)
+                    </label>
                     <input
                       type="date"
                       className="w-full text-xs p-3 bg-white border border-zinc-200 rounded-xl outline-none font-bold text-zinc-800"
@@ -3404,7 +3852,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-black text-zinc-400 mb-1.5">تاريخ النهاية (End Date)</label>
+                    <label className="block text-[11px] font-black text-zinc-400 mb-1.5">
+                      تاريخ النهاية (End Date)
+                    </label>
                     <input
                       type="date"
                       className="w-full text-xs p-3 bg-white border border-zinc-200 rounded-xl outline-none font-bold text-zinc-800"
@@ -3413,7 +3863,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-black text-zinc-400 mb-1.5">مركز التكلفة (Cost Center)</label>
+                    <label className="block text-[11px] font-black text-zinc-400 mb-1.5">
+                      مركز التكلفة (Cost Center)
+                    </label>
                     <select
                       className="w-full text-xs p-3 bg-white border border-zinc-200 rounded-xl outline-none font-bold text-zinc-800"
                       value={trialCostCenter}
@@ -3446,12 +3898,24 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                   <table className="w-full text-right text-xs table-auto">
                     <thead>
                       <tr className="bg-zinc-50 border-b border-zinc-200 text-zinc-400 font-bold select-none text-center">
-                        <th className="p-4 text-right" rowSpan={2}>رمز الحساب</th>
-                        <th className="p-4 text-right" rowSpan={2}>اسم الحساب المالي</th>
-                        <th className="p-4" rowSpan={2}>النوع</th>
-                        <th className="p-3 border-l border-zinc-100" colSpan={2}>الأرصدة الافتتاحية (Opening)</th>
-                        <th className="p-3 border-l border-zinc-100" colSpan={2}>حركات الفترة (Period)</th>
-                        <th className="p-3 border-l border-zinc-100" colSpan={2}>الأرصدة الختامية (Closing)</th>
+                        <th className="p-4 text-right" rowSpan={2}>
+                          رمز الحساب
+                        </th>
+                        <th className="p-4 text-right" rowSpan={2}>
+                          اسم الحساب المالي
+                        </th>
+                        <th className="p-4" rowSpan={2}>
+                          النوع
+                        </th>
+                        <th className="p-3 border-l border-zinc-100" colSpan={2}>
+                          الأرصدة الافتتاحية (Opening)
+                        </th>
+                        <th className="p-3 border-l border-zinc-100" colSpan={2}>
+                          حركات الفترة (Period)
+                        </th>
+                        <th className="p-3 border-l border-zinc-100" colSpan={2}>
+                          الأرصدة الختامية (Closing)
+                        </th>
                       </tr>
                       <tr className="bg-zinc-100/50 border-b border-zinc-200 text-[10px] text-zinc-500 font-black text-center">
                         <th className="p-2 border-l border-zinc-100">مدين (Dr)</th>
@@ -3465,30 +3929,46 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                     <tbody className="divide-y divide-zinc-100 bg-white">
                       {trialBalanceData.map((acc) => {
                         const isDebitType = acc.type === "Asset" || acc.type === "Expense";
-                        
+
                         // Parse opening balances columns
-                        const opDr = isDebitType 
-                          ? (acc.openingBalance >= 0 ? acc.openingBalance : 0) 
-                          : (acc.openingBalance < 0 ? -acc.openingBalance : 0);
-                        const opCr = !isDebitType 
-                          ? (acc.openingBalance >= 0 ? acc.openingBalance : 0) 
-                          : (acc.openingBalance < 0 ? -acc.openingBalance : 0);
+                        const opDr = isDebitType
+                          ? acc.openingBalance >= 0
+                            ? acc.openingBalance
+                            : 0
+                          : acc.openingBalance < 0
+                            ? -acc.openingBalance
+                            : 0;
+                        const opCr = !isDebitType
+                          ? acc.openingBalance >= 0
+                            ? acc.openingBalance
+                            : 0
+                          : acc.openingBalance < 0
+                            ? -acc.openingBalance
+                            : 0;
 
                         // Parse period movements columns
                         const perDr = acc.periodDebit;
                         const perCr = acc.periodCredit;
 
                         // Parse closing balances columns
-                        const clDr = isDebitType 
-                          ? (acc.closingBalance >= 0 ? acc.closingBalance : 0) 
-                          : (acc.closingBalance < 0 ? -acc.closingBalance : 0);
-                        const clCr = !isDebitType 
-                          ? (acc.closingBalance >= 0 ? acc.closingBalance : 0) 
-                          : (acc.closingBalance < 0 ? -acc.closingBalance : 0);
+                        const clDr = isDebitType
+                          ? acc.closingBalance >= 0
+                            ? acc.closingBalance
+                            : 0
+                          : acc.closingBalance < 0
+                            ? -acc.closingBalance
+                            : 0;
+                        const clCr = !isDebitType
+                          ? acc.closingBalance >= 0
+                            ? acc.closingBalance
+                            : 0
+                          : acc.closingBalance < 0
+                            ? -acc.closingBalance
+                            : 0;
 
                         return (
-                          <tr 
-                            key={acc.id} 
+                          <tr
+                            key={acc.id}
                             onClick={() => setSelectedDrillDownAccount(acc)}
                             className="hover:bg-indigo-50/40 transition cursor-pointer group"
                           >
@@ -3502,34 +3982,62 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                                   كشف تفصيلي 🔗
                                 </span>
                               </div>
-                              <div className="text-[10px] text-zinc-400 font-bold mt-0.5">{acc.nameEn}</div>
+                              <div className="text-[10px] text-zinc-400 font-bold mt-0.5">
+                                {acc.nameEn}
+                              </div>
                             </td>
                             <td className="p-3.5 text-center">
-                              <span className="text-[10px] text-zinc-500 font-bold uppercase">{acc.type}</span>
+                              <span className="text-[10px] text-zinc-500 font-bold uppercase">
+                                {acc.type}
+                              </span>
                             </td>
 
                             {/* Opening columns */}
                             <td className="p-3.5 text-center font-mono font-bold text-zinc-500 border-l border-zinc-100">
-                              {opDr > 0 ? (opDr / 100).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
+                              {opDr > 0
+                                ? (opDr / 100).toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                  })
+                                : "-"}
                             </td>
                             <td className="p-3.5 text-center font-mono font-bold text-zinc-500">
-                              {opCr > 0 ? (opCr / 100).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
+                              {opCr > 0
+                                ? (opCr / 100).toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                  })
+                                : "-"}
                             </td>
 
                             {/* Period columns */}
                             <td className="p-3.5 text-center font-mono font-bold text-indigo-600 border-l border-zinc-100 bg-indigo-50/10">
-                              {perDr > 0 ? (perDr / 100).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
+                              {perDr > 0
+                                ? (perDr / 100).toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                  })
+                                : "-"}
                             </td>
                             <td className="p-3.5 text-center font-mono font-bold text-indigo-600 bg-indigo-50/10">
-                              {perCr > 0 ? (perCr / 100).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
+                              {perCr > 0
+                                ? (perCr / 100).toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                  })
+                                : "-"}
                             </td>
 
                             {/* Closing columns */}
                             <td className="p-3.5 text-center font-mono font-black text-emerald-600 border-l border-zinc-100 bg-emerald-50/10">
-                              {clDr > 0 ? (clDr / 100).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
+                              {clDr > 0
+                                ? (clDr / 100).toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                  })
+                                : "-"}
                             </td>
                             <td className="p-3.5 text-center font-mono font-black text-emerald-600 bg-emerald-50/10">
-                              {clCr > 0 ? (clCr / 100).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
+                              {clCr > 0
+                                ? (clCr / 100).toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                  })
+                                : "-"}
                             </td>
                           </tr>
                         );
@@ -3544,23 +4052,29 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         <td className="p-4 border-l border-zinc-800 font-mono text-zinc-300">
                           {(() => {
                             let total = 0;
-                            trialBalanceData.forEach(acc => {
+                            trialBalanceData.forEach((acc) => {
                               const isDebit = acc.type === "Asset" || acc.type === "Expense";
-                              if (isDebit) total += acc.openingBalance >= 0 ? acc.openingBalance : 0;
+                              if (isDebit)
+                                total += acc.openingBalance >= 0 ? acc.openingBalance : 0;
                               else total += acc.openingBalance < 0 ? -acc.openingBalance : 0;
                             });
-                            return (total / 100).toLocaleString(undefined, { minimumFractionDigits: 2 });
+                            return (total / 100).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                            });
                           })()}
                         </td>
                         <td className="p-4 font-mono text-zinc-300">
                           {(() => {
                             let total = 0;
-                            trialBalanceData.forEach(acc => {
+                            trialBalanceData.forEach((acc) => {
                               const isDebit = acc.type === "Asset" || acc.type === "Expense";
-                              if (!isDebit) total += acc.openingBalance >= 0 ? acc.openingBalance : 0;
+                              if (!isDebit)
+                                total += acc.openingBalance >= 0 ? acc.openingBalance : 0;
                               else total += acc.openingBalance < 0 ? -acc.openingBalance : 0;
                             });
-                            return (total / 100).toLocaleString(undefined, { minimumFractionDigits: 2 });
+                            return (total / 100).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                            });
                           })()}
                         </td>
 
@@ -3568,19 +4082,23 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         <td className="p-4 border-l border-zinc-800 font-mono text-indigo-300 bg-indigo-950/20">
                           {(() => {
                             let total = 0;
-                            trialBalanceData.forEach(acc => {
+                            trialBalanceData.forEach((acc) => {
                               total += acc.periodDebit;
                             });
-                            return (total / 100).toLocaleString(undefined, { minimumFractionDigits: 2 });
+                            return (total / 100).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                            });
                           })()}
                         </td>
                         <td className="p-4 font-mono text-indigo-300 bg-indigo-950/20">
                           {(() => {
                             let total = 0;
-                            trialBalanceData.forEach(acc => {
+                            trialBalanceData.forEach((acc) => {
                               total += acc.periodCredit;
                             });
-                            return (total / 100).toLocaleString(undefined, { minimumFractionDigits: 2 });
+                            return (total / 100).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                            });
                           })()}
                         </td>
 
@@ -3588,23 +4106,29 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         <td className="p-4 border-l border-zinc-800 font-mono text-emerald-400 bg-emerald-950/20">
                           {(() => {
                             let total = 0;
-                            trialBalanceData.forEach(acc => {
+                            trialBalanceData.forEach((acc) => {
                               const isDebit = acc.type === "Asset" || acc.type === "Expense";
-                              if (isDebit) total += acc.closingBalance >= 0 ? acc.closingBalance : 0;
+                              if (isDebit)
+                                total += acc.closingBalance >= 0 ? acc.closingBalance : 0;
                               else total += acc.closingBalance < 0 ? -acc.closingBalance : 0;
                             });
-                            return (total / 100).toLocaleString(undefined, { minimumFractionDigits: 2 });
+                            return (total / 100).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                            });
                           })()}
                         </td>
                         <td className="p-4 font-mono text-emerald-400 bg-emerald-950/20">
                           {(() => {
                             let total = 0;
-                            trialBalanceData.forEach(acc => {
+                            trialBalanceData.forEach((acc) => {
                               const isDebit = acc.type === "Asset" || acc.type === "Expense";
-                              if (!isDebit) total += acc.closingBalance >= 0 ? acc.closingBalance : 0;
+                              if (!isDebit)
+                                total += acc.closingBalance >= 0 ? acc.closingBalance : 0;
                               else total += acc.closingBalance < 0 ? -acc.closingBalance : 0;
                             });
-                            return (total / 100).toLocaleString(undefined, { minimumFractionDigits: 2 });
+                            return (total / 100).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                            });
                           })()}
                         </td>
                       </tr>
@@ -3614,7 +4138,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                 <div className="p-4 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-2xl flex items-center gap-2 text-xs font-bold">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                  <span>تطابق ميزان المراجعة بالكامل للشركة. نظام القيد المزدوج مغلق وآمن وموثق سحابياً.</span>
+                  <span>
+                    تطابق ميزان المراجعة بالكامل للشركة. نظام القيد المزدوج مغلق وآمن وموثق سحابياً.
+                  </span>
                 </div>
               </div>
             )}
@@ -3622,12 +4148,15 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
             {/* TAB CONTENT: 4. STATEMENTS (P&L AND BALANCE SHEET) */}
             {accountantTab === "statements" && (
               <div className="bg-white border border-zinc-200 rounded-[2.5rem] shadow-sm p-8 space-y-6 print:p-0 print:border-none">
-                
                 {/* Selector */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-100 pb-6 print:hidden">
                   <div>
-                    <h3 className="text-lg font-black text-zinc-900">مُولد القوائم المالية الرسمية</h3>
-                    <p className="text-xs text-zinc-400 font-bold mt-1">توليد لحظي لقائمة الدخل (P&L) والميزانية العمومية للشركة بنقرة واحدة.</p>
+                    <h3 className="text-lg font-black text-zinc-900">
+                      مُولد القوائم المالية الرسمية
+                    </h3>
+                    <p className="text-xs text-zinc-400 font-bold mt-1">
+                      توليد لحظي لقائمة الدخل (P&L) والميزانية العمومية للشركة بنقرة واحدة.
+                    </p>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -3635,7 +4164,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       onClick={() => setStatementType("pl")}
                       className={cn(
                         "px-4 py-2 text-xs font-black rounded-lg transition cursor-pointer",
-                        statementType === "pl" ? "bg-zinc-100 text-zinc-900 border border-zinc-300" : "text-zinc-500 hover:bg-zinc-50"
+                        statementType === "pl"
+                          ? "bg-zinc-100 text-zinc-900 border border-zinc-300"
+                          : "text-zinc-500 hover:bg-zinc-50"
                       )}
                     >
                       📈 قائمة الدخل (Profit & Loss)
@@ -3644,7 +4175,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       onClick={() => setStatementType("bs")}
                       className={cn(
                         "px-4 py-2 text-xs font-black rounded-lg transition cursor-pointer",
-                        statementType === "bs" ? "bg-zinc-100 text-zinc-900 border border-zinc-300" : "text-zinc-500 hover:bg-zinc-50"
+                        statementType === "bs"
+                          ? "bg-zinc-100 text-zinc-900 border border-zinc-300"
+                          : "text-zinc-500 hover:bg-zinc-50"
                       )}
                     >
                       🏦 الميزانية العمومية (Balance Sheet)
@@ -3660,141 +4193,214 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                 {/* THE FINANCIAL STATEMENT DOCUMENT VIEW */}
                 <div className="space-y-8 p-4 md:p-8 bg-zinc-50/50 rounded-2xl border border-zinc-100 print:bg-white print:border-none print:p-0">
-                  
                   {/* Header Document Template */}
                   <div className="text-center space-y-2 border-b border-zinc-200 pb-6">
-                    <h2 className="text-xl font-black text-zinc-900">شركة مدارج لتقنية المعلومات والحلول الرقمية</h2>
-                    <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">الرقم الضريبي: 300482930200003 • ترخيص الهيئة السعودية للمراجعين والمحاسبين</p>
+                    <h2 className="text-xl font-black text-zinc-900">
+                      شركة مدارج لتقنية المعلومات والحلول الرقمية
+                    </h2>
+                    <p className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
+                      الرقم الضريبي: 300482930200003 • ترخيص الهيئة السعودية للمراجعين والمحاسبين
+                    </p>
                     <h3 className="text-sm font-black text-zinc-800 bg-zinc-100 py-1 px-4 rounded-full inline-block">
-                      {statementType === "pl" ? "قائمة الدخل والربح والخسارة (P&L Statement)" : "الميزانية العمومية والمركز المالي (Balance Sheet Statement)"}
+                      {statementType === "pl"
+                        ? "قائمة الدخل والربح والخسارة (P&L Statement)"
+                        : "الميزانية العمومية والمركز المالي (Balance Sheet Statement)"}
                     </h3>
-                    <p className="text-[10px] text-zinc-500 font-bold">لفترة الربع الثاني المنتهي في {new Date().toISOString().split("T")[0]}</p>
+                    <p className="text-[10px] text-zinc-500 font-bold">
+                      لفترة الربع الثاني المنتهي في {new Date().toISOString().split("T")[0]}
+                    </p>
                   </div>
 
                   {statementType === "pl" ? (
-                    
                     /* P&L DISPLAY */
                     <div className="space-y-4">
                       {/* Revenue Group */}
                       <div className="space-y-2">
-                        <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-200 pb-1">الإيرادات المبيعات (Revenues)</h4>
-                        {statementLines.filter(a => a.type === "Revenue").map(acc => (
-                          <div key={acc.id} className="flex justify-between items-center text-xs font-bold py-1">
-                            <span className="text-zinc-700">{acc.nameAr} ({acc.accountCode})</span>
-                            <span className="font-mono text-zinc-900">{(acc.currentBalance / 100).toLocaleString()} ر.س</span>
-                          </div>
-                        ))}
+                        <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-200 pb-1">
+                          الإيرادات المبيعات (Revenues)
+                        </h4>
+                        {statementLines
+                          .filter((a) => a.type === "Revenue")
+                          .map((acc) => (
+                            <div
+                              key={acc.id}
+                              className="flex justify-between items-center text-xs font-bold py-1"
+                            >
+                              <span className="text-zinc-700">
+                                {acc.nameAr} ({acc.accountCode})
+                              </span>
+                              <span className="font-mono text-zinc-900">
+                                {(acc.currentBalance / 100).toLocaleString()} ر.س
+                              </span>
+                            </div>
+                          ))}
                         <div className="flex justify-between items-center text-xs font-black bg-zinc-100 p-2 rounded-lg mt-2">
                           <span>إجمالي الإيرادات (Total Revenue)</span>
-                          <span className="font-mono">{(plTotals.rev / 100).toLocaleString()} ر.س</span>
+                          <span className="font-mono">
+                            {(plTotals.rev / 100).toLocaleString()} ر.س
+                          </span>
                         </div>
                       </div>
 
                       {/* Expense Group */}
                       <div className="space-y-2 pt-4">
-                        <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-200 pb-1">المصروفات التشغيلية والعمومية (Expenses)</h4>
-                        {statementLines.filter(a => a.type === "Expense").map(acc => (
-                          <div key={acc.id} className="flex justify-between items-center text-xs font-bold py-1">
-                            <span className="text-zinc-700">{acc.nameAr} ({acc.accountCode})</span>
-                            <span className="font-mono text-zinc-900">{(acc.currentBalance / 100).toLocaleString()} ر.س</span>
-                          </div>
-                        ))}
+                        <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-200 pb-1">
+                          المصروفات التشغيلية والعمومية (Expenses)
+                        </h4>
+                        {statementLines
+                          .filter((a) => a.type === "Expense")
+                          .map((acc) => (
+                            <div
+                              key={acc.id}
+                              className="flex justify-between items-center text-xs font-bold py-1"
+                            >
+                              <span className="text-zinc-700">
+                                {acc.nameAr} ({acc.accountCode})
+                              </span>
+                              <span className="font-mono text-zinc-900">
+                                {(acc.currentBalance / 100).toLocaleString()} ر.س
+                              </span>
+                            </div>
+                          ))}
                         <div className="flex justify-between items-center text-xs font-black bg-zinc-100 p-2 rounded-lg mt-2">
                           <span>إجمالي المصروفات (Total Expenses)</span>
-                          <span className="font-mono">{(plTotals.exp / 100).toLocaleString()} ر.س</span>
+                          <span className="font-mono">
+                            {(plTotals.exp / 100).toLocaleString()} ر.س
+                          </span>
                         </div>
                       </div>
 
                       {/* Net Bottom Line */}
                       <div className="pt-6 border-t border-zinc-200 flex justify-between items-center text-sm font-black text-white bg-zinc-900 p-4 rounded-xl">
                         <span>صافي الربح / الخسارة عن الفترة (Net Profit / Loss)</span>
-                        <span className="font-mono">{(plTotals.net / 100).toLocaleString()} ر.س</span>
+                        <span className="font-mono">
+                          {(plTotals.net / 100).toLocaleString()} ر.س
+                        </span>
                       </div>
                     </div>
-
                   ) : (
-
                     /* BALANCE SHEET DISPLAY */
                     <div className="space-y-6">
-                      
                       {/* Assets */}
                       <div className="space-y-2">
-                        <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-200 pb-1">الأصول (Assets)</h4>
-                        {statementLines.filter(a => a.type === "Asset").map(acc => (
-                          <div key={acc.id} className="flex justify-between items-center text-xs font-bold py-1">
-                            <span className="text-zinc-700">{acc.nameAr} ({acc.accountCode})</span>
-                            <span className="font-mono text-zinc-900">{(acc.currentBalance / 100).toLocaleString()} ر.س</span>
-                          </div>
-                        ))}
+                        <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-200 pb-1">
+                          الأصول (Assets)
+                        </h4>
+                        {statementLines
+                          .filter((a) => a.type === "Asset")
+                          .map((acc) => (
+                            <div
+                              key={acc.id}
+                              className="flex justify-between items-center text-xs font-bold py-1"
+                            >
+                              <span className="text-zinc-700">
+                                {acc.nameAr} ({acc.accountCode})
+                              </span>
+                              <span className="font-mono text-zinc-900">
+                                {(acc.currentBalance / 100).toLocaleString()} ر.س
+                              </span>
+                            </div>
+                          ))}
                         <div className="flex justify-between items-center text-xs font-black bg-zinc-100 p-2 rounded-lg mt-2">
                           <span>إجمالي الأصول (Total Assets)</span>
-                          <span className="font-mono">{(bsTotals.assets / 100).toLocaleString()} ر.س</span>
+                          <span className="font-mono">
+                            {(bsTotals.assets / 100).toLocaleString()} ر.س
+                          </span>
                         </div>
                       </div>
 
                       {/* Liabilities */}
                       <div className="space-y-2">
-                        <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-200 pb-1">الالتزامات (Liabilities)</h4>
-                        {statementLines.filter(a => a.type === "Liability").map(acc => (
-                          <div key={acc.id} className="flex justify-between items-center text-xs font-bold py-1">
-                            <span className="text-zinc-700">{acc.nameAr} ({acc.accountCode})</span>
-                            <span className="font-mono text-zinc-900">{(acc.currentBalance / 100).toLocaleString()} ر.س</span>
-                          </div>
-                        ))}
+                        <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-200 pb-1">
+                          الالتزامات (Liabilities)
+                        </h4>
+                        {statementLines
+                          .filter((a) => a.type === "Liability")
+                          .map((acc) => (
+                            <div
+                              key={acc.id}
+                              className="flex justify-between items-center text-xs font-bold py-1"
+                            >
+                              <span className="text-zinc-700">
+                                {acc.nameAr} ({acc.accountCode})
+                              </span>
+                              <span className="font-mono text-zinc-900">
+                                {(acc.currentBalance / 100).toLocaleString()} ر.س
+                              </span>
+                            </div>
+                          ))}
                         <div className="flex justify-between items-center text-xs font-black bg-zinc-100 p-2 rounded-lg mt-2">
                           <span>إجمالي الالتزامات (Total Liabilities)</span>
-                          <span className="font-mono">{(bsTotals.liab / 100).toLocaleString()} ر.س</span>
+                          <span className="font-mono">
+                            {(bsTotals.liab / 100).toLocaleString()} ر.س
+                          </span>
                         </div>
                       </div>
 
                       {/* Equity */}
                       <div className="space-y-2">
-                        <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-200 pb-1">حقوق الملكية (Owner's Equity)</h4>
-                        {statementLines.filter(a => a.type === "Equity").map(acc => (
-                          <div key={acc.id} className="flex justify-between items-center text-xs font-bold py-1">
-                            <span className="text-zinc-700">{acc.nameAr} ({acc.accountCode})</span>
-                            <span className="font-mono text-zinc-900">{(acc.currentBalance / 100).toLocaleString()} ر.س</span>
-                          </div>
-                        ))}
+                        <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest border-b border-zinc-200 pb-1">
+                          حقوق الملكية (Owner's Equity)
+                        </h4>
+                        {statementLines
+                          .filter((a) => a.type === "Equity")
+                          .map((acc) => (
+                            <div
+                              key={acc.id}
+                              className="flex justify-between items-center text-xs font-bold py-1"
+                            >
+                              <span className="text-zinc-700">
+                                {acc.nameAr} ({acc.accountCode})
+                              </span>
+                              <span className="font-mono text-zinc-900">
+                                {(acc.currentBalance / 100).toLocaleString()} ر.س
+                              </span>
+                            </div>
+                          ))}
                         <div className="flex justify-between items-center text-xs font-bold py-1 border-t border-dashed border-zinc-200 pt-1">
-                          <span className="text-zinc-700">أرباح الفترة الحالية المرحلة (Retained Earnings)</span>
-                          <span className="font-mono text-zinc-900">{(bsTotals.retainedEarnings / 100).toLocaleString()} ر.س</span>
+                          <span className="text-zinc-700">
+                            أرباح الفترة الحالية المرحلة (Retained Earnings)
+                          </span>
+                          <span className="font-mono text-zinc-900">
+                            {(bsTotals.retainedEarnings / 100).toLocaleString()} ر.س
+                          </span>
                         </div>
                         <div className="flex justify-between items-center text-xs font-black bg-zinc-100 p-2 rounded-lg mt-2">
                           <span>إجمالي حقوق الملكية والأرباح</span>
-                          <span className="font-mono">{((bsTotals.eq + bsTotals.retainedEarnings) / 100).toLocaleString()} ر.س</span>
+                          <span className="font-mono">
+                            {((bsTotals.eq + bsTotals.retainedEarnings) / 100).toLocaleString()} ر.س
+                          </span>
                         </div>
                       </div>
 
                       {/* Bottom Double-entry verification line */}
                       <div className="flex justify-between items-center text-sm font-black bg-zinc-900 text-white p-4 rounded-xl">
                         <span>إجمالي الالتزامات وحقوق الملكية (Total Liabilities & Equity)</span>
-                        <span className="font-mono">{(bsTotals.totalLiabAndEquity / 100).toLocaleString()} ر.س</span>
+                        <span className="font-mono">
+                          {(bsTotals.totalLiabAndEquity / 100).toLocaleString()} ر.س
+                        </span>
                       </div>
 
                       {bsTotals.balanced ? (
                         <div className="p-3 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-xl text-center text-[11px] font-bold">
-                          ✓ معادلة الميزانية متوازنة تماماً: الأصول = الالتزامات + حقوق الملكية (SOCPA GAAP Compliant)
+                          ✓ معادلة الميزانية متوازنة تماماً: الأصول = الالتزامات + حقوق الملكية
+                          (SOCPA GAAP Compliant)
                         </div>
                       ) : (
                         <div className="p-3 bg-amber-50 text-amber-700 border border-amber-100 rounded-xl text-center text-[11px] font-bold">
-                          ⚠️ تحذير: فرق طفيف في توازن المركز المالي. يرجى مراجعة قيود تسوية الأرباح والخسائر.
+                          ⚠️ تحذير: فرق طفيف في توازن المركز المالي. يرجى مراجعة قيود تسوية الأرباح
+                          والخسائر.
                         </div>
                       )}
-
                     </div>
-
                   )}
-
                 </div>
-
               </div>
             )}
 
             {/* TAB CONTENT: 5. VAT TAX filing center */}
             {accountantTab === "vat" && (
               <div className="space-y-6">
-                
                 {/* VAT interactive form simulator */}
                 <div className="bg-white border border-zinc-200 rounded-[2.5rem] shadow-sm p-8 space-y-6">
                   <div>
@@ -3802,32 +4408,54 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       <Percent className="w-5 h-5 text-indigo-600" />
                       بوابة تقديم إقرارات ضريبة القيمة المضافة (ZATCA VAT Filing Portal)
                     </h3>
-                    <p className="text-xs text-zinc-400 font-bold mt-1">توليد تلقائي لنماذج ضريبة المخرجات والمدخلات ومطابقتها للمعايير والتقديم المباشر للهيئة.</p>
+                    <p className="text-xs text-zinc-400 font-bold mt-1">
+                      توليد تلقائي لنماذج ضريبة المخرجات والمدخلات ومطابقتها للمعايير والتقديم
+                      المباشر للهيئة.
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 select-none">
                     <div className="bg-zinc-50 p-5 rounded-2xl border border-zinc-200 flex flex-col justify-between">
-                      <span className="text-[10px] font-black text-zinc-400 uppercase">إجمالي المبيعات الخاضعة (15%)</span>
+                      <span className="text-[10px] font-black text-zinc-400 uppercase">
+                        إجمالي المبيعات الخاضعة (15%)
+                      </span>
                       <h4 className="text-xl font-black text-zinc-900 mt-2">
-                        {(vatCurrentPeriodCalculations.standardRatedSales / 100).toLocaleString()} <span className="text-xs text-zinc-400">ر.س</span>
+                        {(vatCurrentPeriodCalculations.standardRatedSales / 100).toLocaleString()}{" "}
+                        <span className="text-xs text-zinc-400">ر.س</span>
                       </h4>
-                      <span className="text-[10px] text-zinc-400 mt-1 block">ضريبة المخرجات: {(vatCurrentPeriodCalculations.vatCollected / 100).toLocaleString()} ر.س</span>
+                      <span className="text-[10px] text-zinc-400 mt-1 block">
+                        ضريبة المخرجات:{" "}
+                        {(vatCurrentPeriodCalculations.vatCollected / 100).toLocaleString()} ر.س
+                      </span>
                     </div>
 
                     <div className="bg-zinc-50 p-5 rounded-2xl border border-zinc-200 flex flex-col justify-between">
-                      <span className="text-[10px] font-black text-zinc-400 uppercase">إجمالي المشتريات الخاضعة (15%)</span>
+                      <span className="text-[10px] font-black text-zinc-400 uppercase">
+                        إجمالي المشتريات الخاضعة (15%)
+                      </span>
                       <h4 className="text-xl font-black text-zinc-900 mt-2">
-                        {(vatCurrentPeriodCalculations.standardRatedPurchases / 100).toLocaleString()} <span className="text-xs text-zinc-400">ر.س</span>
+                        {(
+                          vatCurrentPeriodCalculations.standardRatedPurchases / 100
+                        ).toLocaleString()}{" "}
+                        <span className="text-xs text-zinc-400">ر.س</span>
                       </h4>
-                      <span className="text-[10px] text-zinc-400 mt-1 block">ضريبة المدخلات المستردة: {(vatCurrentPeriodCalculations.vatPaid / 100).toLocaleString()}  ر.س</span>
+                      <span className="text-[10px] text-zinc-400 mt-1 block">
+                        ضريبة المدخلات المستردة:{" "}
+                        {(vatCurrentPeriodCalculations.vatPaid / 100).toLocaleString()} ر.س
+                      </span>
                     </div>
 
                     <div className="bg-zinc-950 text-white p-5 rounded-2xl flex flex-col justify-between shadow-md">
-                      <span className="text-[10px] font-black text-zinc-400 uppercase">صافي الضريبة الواجب سدادها</span>
+                      <span className="text-[10px] font-black text-zinc-400 uppercase">
+                        صافي الضريبة الواجب سدادها
+                      </span>
                       <h4 className="text-xl font-black text-emerald-400 mt-2">
-                        {(vatCurrentPeriodCalculations.netVatDue / 100).toLocaleString()} <span className="text-xs text-zinc-400">ر.س</span>
+                        {(vatCurrentPeriodCalculations.netVatDue / 100).toLocaleString()}{" "}
+                        <span className="text-xs text-zinc-400">ر.س</span>
                       </h4>
-                      <span className="text-[10px] text-zinc-400 mt-1 block">تقديم ربع سنوي رسمي</span>
+                      <span className="text-[10px] text-zinc-400 mt-1 block">
+                        تقديم ربع سنوي رسمي
+                      </span>
                     </div>
                   </div>
 
@@ -3836,10 +4464,12 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                     <div className="border-b border-zinc-100 pb-4">
                       <h4 className="text-base font-black text-zinc-900 flex items-center gap-2">
                         <Shield className="w-5 h-5 text-indigo-600" />
-                        أداة توليد وترميز فواتير الزكاة والجمارك (ZATCA Phase 2 QR & TLV Encoder Utility)
+                        أداة توليد وترميز فواتير الزكاة والجمارك (ZATCA Phase 2 QR & TLV Encoder
+                        Utility)
                       </h4>
                       <p className="text-xs text-zinc-400 font-bold mt-1">
-                        أدخل بيانات المعاملة لتوليد مصفوفة الترميز الثنائية (TLV) بصيغة Base64 و Hex المتوافقة مع الفوترة الضريبية لهيئة الزكاة والضريبة والجمارك بالمملكة.
+                        أدخل بيانات المعاملة لتوليد مصفوفة الترميز الثنائية (TLV) بصيغة Base64 و Hex
+                        المتوافقة مع الفوترة الضريبية لهيئة الزكاة والضريبة والجمارك بالمملكة.
                       </p>
                     </div>
 
@@ -3847,7 +4477,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       {/* Left: Input fields */}
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-xs font-black text-zinc-500 mb-1.5">اسم المورّد / البائع (الاسم التجاري)</label>
+                          <label className="block text-xs font-black text-zinc-500 mb-1.5">
+                            اسم المورّد / البائع (الاسم التجاري)
+                          </label>
                           <input
                             type="text"
                             value={zatcaSellerName}
@@ -3857,7 +4489,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         </div>
 
                         <div>
-                          <label className="block text-xs font-black text-zinc-500 mb-1.5">الرقم الضريبي للمورّد (15 خانة تبدأ وتنتهي بـ 3)</label>
+                          <label className="block text-xs font-black text-zinc-500 mb-1.5">
+                            الرقم الضريبي للمورّد (15 خانة تبدأ وتنتهي بـ 3)
+                          </label>
                           <input
                             type="text"
                             value={zatcaSellerVat}
@@ -3869,7 +4503,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
-                            <label className="block text-xs font-black text-zinc-500 mb-1.5">تاريخ ووقت الفاتورة</label>
+                            <label className="block text-xs font-black text-zinc-500 mb-1.5">
+                              تاريخ ووقت الفاتورة
+                            </label>
                             <input
                               type="datetime-local"
                               value={zatcaTimestamp}
@@ -3878,7 +4514,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-black text-zinc-500 mb-1.5">إجمالي الفاتورة مع الضريبة</label>
+                            <label className="block text-xs font-black text-zinc-500 mb-1.5">
+                              إجمالي الفاتورة مع الضريبة
+                            </label>
                             <input
                               type="number"
                               step="0.01"
@@ -3887,14 +4525,16 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                                 const val = e.target.value;
                                 setZatcaTotalWithVat(val);
                                 if (!isNaN(Number(val))) {
-                                  setZatcaVatAmount((Number(val) * 15 / 115).toFixed(2));
+                                  setZatcaVatAmount(((Number(val) * 15) / 115).toFixed(2));
                                 }
                               }}
                               className="w-full text-xs p-3.5 bg-zinc-50 border border-zinc-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 font-bold text-zinc-800"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-black text-zinc-500 mb-1.5">مبلغ الضريبة (15%)</label>
+                            <label className="block text-xs font-black text-zinc-500 mb-1.5">
+                              مبلغ الضريبة (15%)
+                            </label>
                             <input
                               type="number"
                               step="0.01"
@@ -3914,7 +4554,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                             {computedZatcaQR.isValid && computedZatcaQR.base64 ? (
                               <QRCodeSVG value={computedZatcaQR.base64} size={80} />
                             ) : (
-                              <div className="text-[10px] text-zinc-400 font-bold text-center">خطأ بالترميز</div>
+                              <div className="text-[10px] text-zinc-400 font-bold text-center">
+                                خطأ بالترميز
+                              </div>
                             )}
                           </div>
 
@@ -3924,7 +4566,8 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                               رابط الترميز المعتمد (Base64 QR String):
                             </div>
                             <p className="text-[10px] text-zinc-400 font-bold leading-relaxed">
-                              تقوم هيئة الزكاة والضريبة والجمارك بمسح هذا الرمز للتحقق من هوية البائع ومطابقة الفاتورة.
+                              تقوم هيئة الزكاة والضريبة والجمارك بمسح هذا الرمز للتحقق من هوية
+                              البائع ومطابقة الفاتورة.
                             </p>
                           </div>
                         </div>
@@ -3986,18 +4629,25 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       disabled={isVatSubmitting}
                       className="px-8 py-4 bg-zinc-900 hover:bg-zinc-800 disabled:opacity-50 text-white font-black rounded-xl text-xs shadow-md transition flex items-center gap-2 cursor-pointer"
                     >
-                      {isVatSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <FileCheck className="w-4 h-4" />}
+                      {isVatSubmitting ? (
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <FileCheck className="w-4 h-4" />
+                      )}
                       اعتماد وتقديم الإقرار للربع الحالي (Q2-2026) وقفل الفترة
                     </button>
                   </div>
-
                 </div>
 
                 {/* Historic VAT tax filings */}
                 <div className="bg-white border border-zinc-200 rounded-[2.5rem] shadow-sm p-8 space-y-6">
                   <div>
-                    <h4 className="text-base font-black text-zinc-900">سجل الإقرارات المقدمة والمدفوعة مسبقاً</h4>
-                    <p className="text-xs text-zinc-400 font-bold mt-1">تتبع تاريخ إغلاق الفترات الضريبية والأرقام المعتمدة رسمياً.</p>
+                    <h4 className="text-base font-black text-zinc-900">
+                      سجل الإقرارات المقدمة والمدفوعة مسبقاً
+                    </h4>
+                    <p className="text-xs text-zinc-400 font-bold mt-1">
+                      تتبع تاريخ إغلاق الفترات الضريبية والأرقام المعتمدة رسمياً.
+                    </p>
                   </div>
 
                   <div className="border border-zinc-100 rounded-2xl overflow-hidden">
@@ -4017,11 +4667,21 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         {taxFilings.map((filing) => (
                           <tr key={filing.id} className="hover:bg-zinc-50/50 transition">
                             <td className="p-4 font-black text-zinc-900">{filing.period}</td>
-                            <td className="p-4 text-center font-mono text-zinc-500">{filing.filedAt ? filing.filedAt.slice(0, 10) : "غير محدد"}</td>
-                            <td className="p-4 text-left font-mono">{(filing.standardRatedSalesHalalas / 100).toLocaleString()}</td>
-                            <td className="p-4 text-left font-mono text-rose-500">{(filing.vatCollectedHalalas / 100).toLocaleString()}</td>
-                            <td className="p-4 text-left font-mono text-emerald-600">{(filing.vatPaidHalalas / 100).toLocaleString()}</td>
-                            <td className="p-4 text-left font-mono font-black text-zinc-950">{(filing.netVatDueHalalas / 100).toLocaleString()} ر.س</td>
+                            <td className="p-4 text-center font-mono text-zinc-500">
+                              {filing.filedAt ? filing.filedAt.slice(0, 10) : "غير محدد"}
+                            </td>
+                            <td className="p-4 text-left font-mono">
+                              {(filing.standardRatedSalesHalalas / 100).toLocaleString()}
+                            </td>
+                            <td className="p-4 text-left font-mono text-rose-500">
+                              {(filing.vatCollectedHalalas / 100).toLocaleString()}
+                            </td>
+                            <td className="p-4 text-left font-mono text-emerald-600">
+                              {(filing.vatPaidHalalas / 100).toLocaleString()}
+                            </td>
+                            <td className="p-4 text-left font-mono font-black text-zinc-950">
+                              {(filing.netVatDueHalalas / 100).toLocaleString()} ر.س
+                            </td>
                             <td className="p-4 text-center">
                               <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg text-[10px] font-black">
                                 {filing.status === "Filed" ? "مرحل ومغلق ضريبياً" : filing.status}
@@ -4031,19 +4691,19 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         ))}
                         {taxFilings.length === 0 && (
                           <tr>
-                            <td colSpan={7} className="p-12 text-center text-zinc-400 font-bold">لم يتم تقديم إقرارات ضريبية للفترات السابقة بعد.</td>
+                            <td colSpan={7} className="p-12 text-center text-zinc-400 font-bold">
+                              لم يتم تقديم إقرارات ضريبية للفترات السابقة بعد.
+                            </td>
                           </tr>
                         )}
                       </tbody>
                     </table>
                   </div>
-
                 </div>
-
               </div>
             )}
 
-             {/* TAB CONTENT: 4. VOUCHERS & FOREIGN EXCHANGE SETTLEMENT */}
+            {/* TAB CONTENT: 4. VOUCHERS & FOREIGN EXCHANGE SETTLEMENT */}
             {accountantTab === "vouchers" && (
               <div className="space-y-6 animate-in fade-in duration-200">
                 {/* Header bar */}
@@ -4055,13 +4715,16 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         سندات الصرف والقبض وتعدد العملات (Multi-Currency Vouchers)
                       </h3>
                       <p className="text-xs text-zinc-400 font-bold mt-1">
-                        وحدة متكاملة لإصدار سندات القبض والدفع المباشرة بالعملات الأجنبية مع احتساب فوري لمعادلات الصرف مقابل الريال السعودي، وتسوية فروقات أسعار الصرف.
+                        وحدة متكاملة لإصدار سندات القبض والدفع المباشرة بالعملات الأجنبية مع احتساب
+                        فوري لمعادلات الصرف مقابل الريال السعودي، وتسوية فروقات أسعار الصرف.
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         onClick={() => {
-                          setVNum(`VOU-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`);
+                          setVNum(
+                            `VOU-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`
+                          );
                           setShowAddVoucher(true);
                         }}
                         className="px-5 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-black text-xs rounded-xl transition flex items-center gap-2 cursor-pointer shadow-sm"
@@ -4087,28 +4750,50 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                   {/* Multi-Currency quick rate rates ticker bar */}
                   <div className="bg-zinc-50 border border-zinc-200/60 rounded-2xl p-4 grid grid-cols-2 md:grid-cols-5 gap-4 select-none">
                     <div className="text-center md:border-r border-zinc-200 last:border-0 pb-2 md:pb-0">
-                      <span className="text-[10px] font-black text-zinc-400 block uppercase">دولار أمريكي (USD/SAR)</span>
-                      <span className="text-sm font-black text-zinc-800 font-mono mt-1 block">3.7500 ر.س</span>
+                      <span className="text-[10px] font-black text-zinc-400 block uppercase">
+                        دولار أمريكي (USD/SAR)
+                      </span>
+                      <span className="text-sm font-black text-zinc-800 font-mono mt-1 block">
+                        3.7500 ر.س
+                      </span>
                       <span className="text-[9px] text-emerald-600 font-bold">ربط رسمي ثابت</span>
                     </div>
                     <div className="text-center md:border-r border-zinc-200 last:border-0 pb-2 md:pb-0">
-                      <span className="text-[10px] font-black text-zinc-400 block uppercase font-bold text-zinc-500">يورو أوروبي (EUR/SAR)</span>
-                      <span className="text-sm font-black text-zinc-800 font-mono mt-1 block">4.0500 ر.س</span>
-                      <span className="text-[9px] text-zinc-400 font-bold">محدث فورياً من السوق</span>
+                      <span className="text-[10px] font-black text-zinc-400 block uppercase font-bold text-zinc-500">
+                        يورو أوروبي (EUR/SAR)
+                      </span>
+                      <span className="text-sm font-black text-zinc-800 font-mono mt-1 block">
+                        4.0500 ر.س
+                      </span>
+                      <span className="text-[9px] text-zinc-400 font-bold">
+                        محدث فورياً من السوق
+                      </span>
                     </div>
                     <div className="text-center md:border-r border-zinc-200 last:border-0 pb-2 md:pb-0">
-                      <span className="text-[10px] font-black text-zinc-400 block uppercase">درهم إماراتي (AED/SAR)</span>
-                      <span className="text-sm font-black text-zinc-800 font-mono mt-1 block">1.0210 ر.س</span>
+                      <span className="text-[10px] font-black text-zinc-400 block uppercase">
+                        درهم إماراتي (AED/SAR)
+                      </span>
+                      <span className="text-sm font-black text-zinc-800 font-mono mt-1 block">
+                        1.0210 ر.س
+                      </span>
                       <span className="text-[9px] text-emerald-600 font-bold">ربط رسمي مستقر</span>
                     </div>
                     <div className="text-center md:border-r border-zinc-200 last:border-0 pb-2 md:pb-0">
-                      <span className="text-[10px] font-black text-zinc-400 block uppercase">جنيه إسترليني (GBP/SAR)</span>
-                      <span className="text-sm font-black text-zinc-800 font-mono mt-1 block">4.7500 ر.س</span>
+                      <span className="text-[10px] font-black text-zinc-400 block uppercase">
+                        جنيه إسترليني (GBP/SAR)
+                      </span>
+                      <span className="text-sm font-black text-zinc-800 font-mono mt-1 block">
+                        4.7500 ر.س
+                      </span>
                       <span className="text-[9px] text-zinc-400 font-bold">سعر الصرف الفوري</span>
                     </div>
                     <div className="text-center last:border-0">
-                      <span className="text-[10px] font-black text-zinc-400 block uppercase">ريال قطري (QAR/SAR)</span>
-                      <span className="text-sm font-black text-zinc-800 font-mono mt-1 block">1.0300 ر.س</span>
+                      <span className="text-[10px] font-black text-zinc-400 block uppercase">
+                        ريال قطري (QAR/SAR)
+                      </span>
+                      <span className="text-sm font-black text-zinc-800 font-mono mt-1 block">
+                        1.0300 ر.س
+                      </span>
                       <span className="text-[9px] text-emerald-600 font-bold">ربط رسمي مستقر</span>
                     </div>
                   </div>
@@ -4131,7 +4816,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                       <div>
-                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">نوع السند</label>
+                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">
+                          نوع السند
+                        </label>
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             type="button"
@@ -4161,7 +4848,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       </div>
 
                       <div>
-                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">رقم السند المالي</label>
+                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">
+                          رقم السند المالي
+                        </label>
                         <input
                           type="text"
                           value={vNum}
@@ -4172,7 +4861,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       </div>
 
                       <div>
-                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">تاريخ إصدار السند</label>
+                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">
+                          تاريخ إصدار السند
+                        </label>
                         <input
                           type="date"
                           value={vDate}
@@ -4182,7 +4873,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       </div>
 
                       <div>
-                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">العملة الأجنبية</label>
+                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">
+                          العملة الأجنبية
+                        </label>
                         <select
                           value={vCurrency}
                           onChange={(e) => {
@@ -4205,7 +4898,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       </div>
 
                       <div>
-                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">سعر الصرف الفوري</label>
+                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">
+                          سعر الصرف الفوري
+                        </label>
                         <input
                           type="number"
                           step="0.0001"
@@ -4217,7 +4912,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       </div>
 
                       <div>
-                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">المبلغ بالعملة الأجنبية</label>
+                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">
+                          المبلغ بالعملة الأجنبية
+                        </label>
                         <input
                           type="number"
                           value={vAmount}
@@ -4228,9 +4925,16 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       </div>
 
                       <div className="col-span-2">
-                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">المبلغ المقابل بالريال السعودي (SAR Equivalent)</label>
+                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">
+                          المبلغ المقابل بالريال السعودي (SAR Equivalent)
+                        </label>
                         <div className="w-full bg-zinc-100 border border-zinc-200 rounded-xl px-4 py-2.5 text-xs font-mono font-black text-zinc-700 flex justify-between">
-                          <span>{(Number(vAmount || 0) * Number(vExchangeRate || 1)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          <span>
+                            {(Number(vAmount || 0) * Number(vExchangeRate || 1)).toLocaleString(
+                              undefined,
+                              { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                            )}
+                          </span>
                           <span className="text-zinc-400">ريال سعودي</span>
                         </div>
                       </div>
@@ -4255,7 +4959,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                       <div>
                         <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">
-                          {vType === "receipt" ? "حساب المدين (البنك/الصندوق)" : "حساب الدائن (البنك/الصندوق)"}
+                          {vType === "receipt"
+                            ? "حساب المدين (البنك/الصندوق)"
+                            : "حساب الدائن (البنك/الصندوق)"}
                         </label>
                         <select
                           value={vAccountToId}
@@ -4272,7 +4978,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       </div>
 
                       <div className="col-span-2">
-                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase font-bold text-zinc-500">البيان والشرح العربي (Description Ar)</label>
+                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase font-bold text-zinc-500">
+                          البيان والشرح العربي (Description Ar)
+                        </label>
                         <input
                           type="text"
                           value={vDescAr}
@@ -4283,7 +4991,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       </div>
 
                       <div className="col-span-4">
-                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">الشرح بالإنجليزية (Description En)</label>
+                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase">
+                          الشرح بالإنجليزية (Description En)
+                        </label>
                         <input
                           type="text"
                           value={vDescEn}
@@ -4318,7 +5028,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                     <div className="flex justify-between items-center pb-4 border-b border-indigo-100">
                       <h4 className="text-base font-black text-indigo-900 flex items-center gap-2">
                         <Percent className="w-5 h-5 text-indigo-600" />
-                        <span>💸 محرك تسوية فروقات العملات الأجنبية (Forex Adjustment Ledger Creator)</span>
+                        <span>
+                          💸 محرك تسوية فروقات العملات الأجنبية (Forex Adjustment Ledger Creator)
+                        </span>
                       </h4>
                       <button
                         onClick={() => setShowSettleForeign(false)}
@@ -4330,21 +5042,31 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                       <div>
-                        <label className="text-[10px] font-black text-indigo-600 block mb-1.5 uppercase font-bold">رقم الفاتورة المراد تسويتها</label>
+                        <label className="text-[10px] font-black text-indigo-600 block mb-1.5 uppercase font-bold">
+                          رقم الفاتورة المراد تسويتها
+                        </label>
                         <select
                           value={settleInvoiceId}
                           onChange={(e) => setSettleInvoiceId(e.target.value)}
                           className="w-full bg-white border border-indigo-200 rounded-xl px-4 py-2 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-600/20"
                         >
                           <option value="">-- اختر فاتورة مستحقة بالعملة --</option>
-                          <option value="inv-1">INV-2026-101 (قيمة: $2,500.00 USD - عميل خارجي)</option>
-                          <option value="inv-2">INV-2026-102 (قيمة: $5,000.00 USD - برمجيات مخصصة)</option>
-                          <option value="inv-3">INV-2026-103 (قيمة: €1,500.00 EUR - استشارات دولية)</option>
+                          <option value="inv-1">
+                            INV-2026-101 (قيمة: $2,500.00 USD - عميل خارجي)
+                          </option>
+                          <option value="inv-2">
+                            INV-2026-102 (قيمة: $5,000.00 USD - برمجيات مخصصة)
+                          </option>
+                          <option value="inv-3">
+                            INV-2026-103 (قيمة: €1,500.00 EUR - استشارات دولية)
+                          </option>
                         </select>
                       </div>
 
                       <div>
-                        <label className="text-[10px] font-black text-indigo-600 block mb-1.5 uppercase font-bold">مبلغ السداد بالعملة الأجنبية</label>
+                        <label className="text-[10px] font-black text-indigo-600 block mb-1.5 uppercase font-bold">
+                          مبلغ السداد بالعملة الأجنبية
+                        </label>
                         <input
                           type="number"
                           value={settlePaymentAmount}
@@ -4354,14 +5076,18 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       </div>
 
                       <div>
-                        <label className="text-[10px] font-black text-indigo-600 block mb-1.5 uppercase font-bold">سعر الصرف المسجل بالفاتورة (Benchmark)</label>
+                        <label className="text-[10px] font-black text-indigo-600 block mb-1.5 uppercase font-bold">
+                          سعر الصرف المسجل بالفاتورة (Benchmark)
+                        </label>
                         <div className="w-full bg-zinc-100 border border-zinc-200 rounded-xl px-4 py-2 text-xs font-mono font-black text-zinc-500">
                           3.7500 ر.س (ثابت)
                         </div>
                       </div>
 
                       <div>
-                        <label className="text-[10px] font-black text-indigo-600 block mb-1.5 uppercase font-bold">سعر الصرف الفعلي عند السداد</label>
+                        <label className="text-[10px] font-black text-indigo-600 block mb-1.5 uppercase font-bold">
+                          سعر الصرف الفعلي عند السداد
+                        </label>
                         <input
                           type="number"
                           step="0.0001"
@@ -4375,36 +5101,66 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                     {/* Calculation Display panel */}
                     <div className="bg-white border border-indigo-100 rounded-2xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6 select-none shadow-sm">
                       <div className="text-center md:border-l border-zinc-100">
-                        <span className="text-[10px] font-black text-zinc-400 block">القيمة الدفترية الأصلية (SAR)</span>
+                        <span className="text-[10px] font-black text-zinc-400 block">
+                          القيمة الدفترية الأصلية (SAR)
+                        </span>
                         <h4 className="text-lg font-black text-zinc-800 font-mono mt-1">
-                          {(Number(settlePaymentAmount || 0) * 3.75).toLocaleString(undefined, { minimumFractionDigits: 2 })} ر.س
+                          {(Number(settlePaymentAmount || 0) * 3.75).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                          })}{" "}
+                          ر.س
                         </h4>
                       </div>
                       <div className="text-center md:border-l border-zinc-100">
-                        <span className="text-[10px] font-black text-zinc-400 block">القيمة الفعلية المحصلة بالصندوق (SAR)</span>
+                        <span className="text-[10px] font-black text-zinc-400 block">
+                          القيمة الفعلية المحصلة بالصندوق (SAR)
+                        </span>
                         <h4 className="text-lg font-black text-indigo-900 font-mono mt-1">
-                          {(Number(settlePaymentAmount || 0) * Number(settlePaymentRate || 3.75)).toLocaleString(undefined, { minimumFractionDigits: 2 })} ر.س
+                          {(
+                            Number(settlePaymentAmount || 0) * Number(settlePaymentRate || 3.75)
+                          ).toLocaleString(undefined, { minimumFractionDigits: 2 })}{" "}
+                          ر.س
                         </h4>
                       </div>
                       <div className="text-center">
-                        <span className="text-[10px] font-black text-zinc-400 block">أرباح / (خسائر) فروقات الصرف الصافية</span>
+                        <span className="text-[10px] font-black text-zinc-400 block">
+                          أرباح / (خسائر) فروقات الصرف الصافية
+                        </span>
                         {(() => {
                           const original = Number(settlePaymentAmount || 0) * 3.75;
-                          const actual = Number(settlePaymentAmount || 0) * Number(settlePaymentRate || 3.75);
+                          const actual =
+                            Number(settlePaymentAmount || 0) * Number(settlePaymentRate || 3.75);
                           const diff = actual - original;
                           return (
                             <div className="mt-1">
-                              <h4 className={cn(
-                                "text-lg font-black font-mono",
-                                diff > 0 ? "text-emerald-600" : diff < 0 ? "text-rose-600" : "text-zinc-600"
-                              )}>
-                                {diff > 0 ? "+" : ""}{diff.toLocaleString(undefined, { minimumFractionDigits: 2 })} ر.س
+                              <h4
+                                className={cn(
+                                  "text-lg font-black font-mono",
+                                  diff > 0
+                                    ? "text-emerald-600"
+                                    : diff < 0
+                                      ? "text-rose-600"
+                                      : "text-zinc-600"
+                                )}
+                              >
+                                {diff > 0 ? "+" : ""}
+                                {diff.toLocaleString(undefined, { minimumFractionDigits: 2 })} ر.س
                               </h4>
-                              <span className={cn(
-                                "text-[9px] px-2 py-0.5 rounded-full inline-block font-black mt-1",
-                                diff > 0 ? "bg-emerald-50 text-emerald-700" : diff < 0 ? "bg-rose-50 text-rose-700" : "bg-zinc-100 text-zinc-600"
-                              )}>
-                                {diff > 0 ? "أرباح فروقات عملة (Gain)" : diff < 0 ? "خسائر فروقات عملة (Loss)" : "لا توجد فروق عملة"}
+                              <span
+                                className={cn(
+                                  "text-[9px] px-2 py-0.5 rounded-full inline-block font-black mt-1",
+                                  diff > 0
+                                    ? "bg-emerald-50 text-emerald-700"
+                                    : diff < 0
+                                      ? "bg-rose-50 text-rose-700"
+                                      : "bg-zinc-100 text-zinc-600"
+                                )}
+                              >
+                                {diff > 0
+                                  ? "أرباح فروقات عملة (Gain)"
+                                  : diff < 0
+                                    ? "خسائر فروقات عملة (Loss)"
+                                    : "لا توجد فروق عملة"}
                               </span>
                             </div>
                           );
@@ -4424,7 +5180,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         disabled={settleSaving}
                         className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-md"
                       >
-                        {settleSaving ? "جاري المعالجة..." : "ترحيل قيد فروقات أسعار الصرف تلقائياً"}
+                        {settleSaving
+                          ? "جاري المعالجة..."
+                          : "ترحيل قيد فروقات أسعار الصرف تلقائياً"}
                       </button>
                     </div>
                   </div>
@@ -4435,7 +5193,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                   <div className="flex justify-between items-center pb-2">
                     <h4 className="text-sm font-black text-zinc-900 flex items-center gap-1.5">
                       <span>📊 سجل سندات المقبوضات والمدفوعات المدرجة بالدفاتر</span>
-                      <span className="text-[10px] text-zinc-400 font-mono">({vouchers.length} سندات)</span>
+                      <span className="text-[10px] text-zinc-400 font-mono">
+                        ({vouchers.length} سندات)
+                      </span>
                     </h4>
                   </div>
 
@@ -4458,40 +5218,65 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         {vouchers.length === 0 ? (
                           <tr>
                             <td colSpan={9} className="p-8 text-center text-zinc-400 font-bold">
-                              لا توجد سندات مالية مدخلة حالياً. استخدم زر "+ إنشاء سند" في الأعلى لتسجيل دفعة.
+                              لا توجد سندات مالية مدخلة حالياً. استخدم زر "+ إنشاء سند" في الأعلى
+                              لتسجيل دفعة.
                             </td>
                           </tr>
                         ) : (
                           vouchers.map((voucher) => {
                             const isReceipt = voucher.type === "receipt";
-                            const fromAcc = calculatedAccounts.find(a => a.id === voucher.accountFromId);
-                            const toAcc = calculatedAccounts.find(a => a.id === voucher.accountToId);
+                            const fromAcc = calculatedAccounts.find(
+                              (a) => a.id === voucher.accountFromId
+                            );
+                            const toAcc = calculatedAccounts.find(
+                              (a) => a.id === voucher.accountToId
+                            );
 
                             return (
-                              <tr key={voucher.id} className="hover:bg-zinc-50/50 transition-colors">
-                                <td className="p-4 font-mono font-bold text-zinc-800">{voucher.number}</td>
+                              <tr
+                                key={voucher.id}
+                                className="hover:bg-zinc-50/50 transition-colors"
+                              >
+                                <td className="p-4 font-mono font-bold text-zinc-800">
+                                  {voucher.number}
+                                </td>
                                 <td className="p-4">
-                                  <span className={cn(
-                                    "px-2.5 py-0.5 rounded-full text-[10px] font-black inline-block",
-                                    isReceipt ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"
-                                  )}>
+                                  <span
+                                    className={cn(
+                                      "px-2.5 py-0.5 rounded-full text-[10px] font-black inline-block",
+                                      isReceipt
+                                        ? "bg-emerald-50 text-emerald-700"
+                                        : "bg-rose-50 text-rose-700"
+                                    )}
+                                  >
                                     {isReceipt ? "📥 سند قبض" : "📤 سند صرف"}
                                   </span>
                                 </td>
                                 <td className="p-4 font-mono text-zinc-500">{voucher.date}</td>
                                 <td className="p-4 font-mono font-black text-zinc-900">
-                                  {voucher.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} {voucher.currency}
+                                  {voucher.amount.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                  })}{" "}
+                                  {voucher.currency}
                                 </td>
                                 <td className="p-4 font-mono text-zinc-400">
-                                  {voucher.exchangeRate ? `${voucher.exchangeRate.toFixed(4)}` : "1.0000"}
+                                  {voucher.exchangeRate
+                                    ? `${voucher.exchangeRate.toFixed(4)}`
+                                    : "1.0000"}
                                 </td>
                                 <td className="p-4 font-mono font-black text-zinc-800">
-                                  {voucher.amountSar.toLocaleString(undefined, { minimumFractionDigits: 2 })} ر.س
+                                  {voucher.amountSar.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                  })}{" "}
+                                  ر.س
                                 </td>
                                 <td className="p-4 space-y-1 max-w-xs">
-                                  <div className="font-bold text-zinc-800 line-clamp-1">{voucher.descriptionAr}</div>
+                                  <div className="font-bold text-zinc-800 line-clamp-1">
+                                    {voucher.descriptionAr}
+                                  </div>
                                   <div className="text-[10px] text-zinc-400 font-mono line-clamp-1">
-                                    {fromAcc ? `من: ${fromAcc.nameAr}` : "---"} ➔ {toAcc ? `إلى: ${toAcc.nameAr}` : "---"}
+                                    {fromAcc ? `من: ${fromAcc.nameAr}` : "---"} ➔{" "}
+                                    {toAcc ? `إلى: ${toAcc.nameAr}` : "---"}
                                   </div>
                                 </td>
                                 <td className="p-4">
@@ -4558,7 +5343,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         المطابقة والتسوية البنكية الذكية (Smart Bank Reconciliation Dashboard)
                       </h3>
                       <p className="text-xs text-zinc-400 font-bold mt-1">
-                        طابق كشف حسابك البنكي الفعلي المرفوع أو المجلوب عبر API ضد حركات دفاتر البنك المقيدة بنظامك المحاسبي. وفرنا لك محرك ذكاء اصطناعي لمطابقة العمليات بالتاريخ والمبلغ.
+                        طابق كشف حسابك البنكي الفعلي المرفوع أو المجلوب عبر API ضد حركات دفاتر البنك
+                        المقيدة بنظامك المحاسبي. وفرنا لك محرك ذكاء اصطناعي لمطابقة العمليات
+                        بالتاريخ والمبلغ.
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -4598,23 +5385,23 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                   {/* Reconciliation Input Method Selector Tab Controls */}
                   <div className="flex border-b border-zinc-100 pb-2">
-                    <button 
-                      onClick={() => setReconciliationUploadMethod('manual')}
+                    <button
+                      onClick={() => setReconciliationUploadMethod("manual")}
                       className={cn(
                         "pb-3 px-6 text-xs font-black transition-all relative cursor-pointer",
-                        reconciliationUploadMethod === 'manual' 
-                          ? "text-indigo-600 border-b-2 border-indigo-600 font-black font-semibold" 
+                        reconciliationUploadMethod === "manual"
+                          ? "text-indigo-600 border-b-2 border-indigo-600 font-black font-semibold"
                           : "text-zinc-400 hover:text-zinc-600 font-bold"
                       )}
                     >
                       📁 رفع ملف كشف الحساب (Excel / CSV)
                     </button>
-                    <button 
-                      onClick={() => setReconciliationUploadMethod('direct_api')}
+                    <button
+                      onClick={() => setReconciliationUploadMethod("direct_api")}
                       className={cn(
                         "pb-3 px-6 text-xs font-black transition-all relative cursor-pointer flex items-center gap-2",
-                        reconciliationUploadMethod === 'direct_api' 
-                          ? "text-indigo-600 border-b-2 border-indigo-600 font-black font-semibold" 
+                        reconciliationUploadMethod === "direct_api"
+                          ? "text-indigo-600 border-b-2 border-indigo-600 font-black font-semibold"
                           : "text-zinc-400 hover:text-zinc-600 font-bold"
                       )}
                     >
@@ -4622,7 +5409,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                     </button>
                   </div>
 
-                  {reconciliationUploadMethod === 'manual' ? (
+                  {reconciliationUploadMethod === "manual" ? (
                     /* Drag-and-drop / File Upload controller */
                     <div className="border-2 border-dashed border-zinc-200 hover:border-zinc-300 rounded-2xl p-6 text-center bg-zinc-50/50 transition-colors relative cursor-pointer group">
                       <input
@@ -4635,8 +5422,12 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         <div className="p-3 bg-zinc-100 rounded-xl group-hover:scale-105 transition-transform duration-200">
                           <FileSpreadsheet className="w-6 h-6 text-indigo-600" />
                         </div>
-                        <div className="text-xs font-black text-zinc-700">اسحب وأفلت كشف الحساب البنكي هنا أو تصفح الملفات</div>
-                        <div className="text-[10px] text-zinc-400 font-bold">يدعم صيغ Excel أو CSV القياسية (التاريخ, البيان, المبلغ)</div>
+                        <div className="text-xs font-black text-zinc-700">
+                          اسحب وأفلت كشف الحساب البنكي هنا أو تصفح الملفات
+                        </div>
+                        <div className="text-[10px] text-zinc-400 font-bold">
+                          يدعم صيغ Excel أو CSV القياسية (التاريخ, البيان, المبلغ)
+                        </div>
                       </div>
                     </div>
                   ) : (
@@ -4647,7 +5438,10 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                           <h4 className="text-sm font-black text-zinc-900 flex items-center gap-2">
                             <span>🏛️ مزامنة العمليات المصرفية لحظياً من البنك المحلي شريكك</span>
                           </h4>
-                          <p className="text-xs text-zinc-400 font-bold">يرجى اختيار البنك المحلي وإدخال بيانات الربط المرخصة من مؤسسة النقد العربي السعودي (ساما) لتفعيل الربط اللحظي.</p>
+                          <p className="text-xs text-zinc-400 font-bold">
+                            يرجى اختيار البنك المحلي وإدخال بيانات الربط المرخصة من مؤسسة النقد
+                            العربي السعودي (ساما) لتفعيل الربط اللحظي.
+                          </p>
                         </div>
                         <button
                           onClick={handleDirectBankSync}
@@ -4656,7 +5450,8 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         >
                           {isSyncingBank ? (
                             <>
-                              <Activity className="w-4 h-4 animate-spin animate-pulse" /> جاري سحب العمليات...
+                              <Activity className="w-4 h-4 animate-spin animate-pulse" /> جاري سحب
+                              العمليات...
                             </>
                           ) : (
                             <>
@@ -4668,8 +5463,10 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="space-y-2">
-                          <label className="text-xs font-bold text-zinc-500 block">البنك المحلي المتصل</label>
-                          <select 
+                          <label className="text-xs font-bold text-zinc-500 block">
+                            البنك المحلي المتصل
+                          </label>
+                          <select
                             value={selectedLocalBank}
                             onChange={(e) => setSelectedLocalBank(e.target.value)}
                             className="w-full bg-white border border-zinc-200 rounded-xl px-3.5 py-2.5 font-black text-xs focus:ring-2 focus:ring-indigo-650/10 outline-none"
@@ -4684,8 +5481,10 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-xs font-bold text-zinc-500 block">مفتاح الربط البنكي (Client API Key)</label>
-                          <input 
+                          <label className="text-xs font-bold text-zinc-500 block">
+                            مفتاح الربط البنكي (Client API Key)
+                          </label>
+                          <input
                             type="text"
                             placeholder="sandbox_key_rajhi_..."
                             value={bankClientKey}
@@ -4695,8 +5494,10 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-xs font-bold text-zinc-500 block">الرمز السري المشفر (Client Secret Key)</label>
-                          <input 
+                          <label className="text-xs font-bold text-zinc-500 block">
+                            الرمز السري المشفر (Client Secret Key)
+                          </label>
+                          <input
                             type="password"
                             placeholder="••••••••••••••••••••"
                             value={bankSecretKey}
@@ -4708,9 +5509,12 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-indigo-50/40 border border-indigo-100/50 rounded-2xl p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-xs">✓</div>
+                          <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                            ✓
+                          </div>
                           <p className="text-[11px] text-zinc-600 font-bold leading-relaxed">
-                            تشفير تام بـ AES-256 للتواصل مع نظام البنوك السعودية المفتوحة بالتنسيق مع SAMA sandbox.
+                            تشفير تام بـ AES-256 للتواصل مع نظام البنوك السعودية المفتوحة بالتنسيق
+                            مع SAMA sandbox.
                           </p>
                         </div>
                         <button
@@ -4720,7 +5524,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                               return;
                             }
                             setBankCredentialsSaved(true);
-                            toast.success("🔑 تم حفظ وتشفير مفاتيح الربط البنكي بنجاح في خزنة النظام المحمية!");
+                            toast.success(
+                              "🔑 تم حفظ وتشفير مفاتيح الربط البنكي بنجاح في خزنة النظام المحمية!"
+                            );
                           }}
                           className="px-4 py-2 bg-zinc-950 hover:bg-zinc-800 text-white font-black text-[10px] rounded-lg transition cursor-pointer shrink-0"
                         >
@@ -4748,7 +5554,8 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                     <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
                       {bankTxList.length === 0 ? (
                         <div className="p-16 text-center text-zinc-400 font-bold text-xs">
-                          لا توجد عمليات بنكية معروضة. ارفع ملف كشف حسابك البنكي أو انقر على "تحميل كشف بنكي تجريبي" للتجربة الفورية!
+                          لا توجد عمليات بنكية معروضة. ارفع ملف كشف حسابك البنكي أو انقر على "تحميل
+                          كشف بنكي تجريبي" للتجربة الفورية!
                         </div>
                       ) : (
                         bankTxList.map((bankTx) => {
@@ -4763,16 +5570,18 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                               }}
                               className={cn(
                                 "p-3.5 border rounded-2xl transition cursor-pointer flex justify-between items-center",
-                                bankTx.isReconciled 
+                                bankTx.isReconciled
                                   ? "bg-emerald-50/40 border-emerald-100 text-emerald-900/60 opacity-80"
                                   : isSelected
-                                  ? "bg-indigo-50 border-indigo-300 ring-2 ring-indigo-600/10 shadow-sm"
-                                  : "bg-white hover:bg-zinc-50 border-zinc-200"
+                                    ? "bg-indigo-50 border-indigo-300 ring-2 ring-indigo-600/10 shadow-sm"
+                                    : "bg-white hover:bg-zinc-50 border-zinc-200"
                               )}
                             >
                               <div className="space-y-1 flex-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-mono font-bold text-zinc-400">{bankTx.date}</span>
+                                  <span className="text-[10px] font-mono font-bold text-zinc-400">
+                                    {bankTx.date}
+                                  </span>
                                   {bankTx.isReconciled && (
                                     <span className="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-black flex items-center gap-0.5">
                                       <Check className="w-2.5 h-2.5" />
@@ -4780,14 +5589,22 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-xs font-bold text-zinc-800 line-clamp-1">{bankTx.description}</div>
+                                <div className="text-xs font-bold text-zinc-800 line-clamp-1">
+                                  {bankTx.description}
+                                </div>
                               </div>
                               <div className="text-left space-y-1.5 shrink-0 pl-3">
-                                <span className={cn(
-                                  "text-sm font-mono font-black block",
-                                  bankTx.amount > 0 ? "text-emerald-600" : "text-rose-600"
-                                )}>
-                                  {bankTx.amount > 0 ? "+" : ""}{bankTx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} ر.س
+                                <span
+                                  className={cn(
+                                    "text-sm font-mono font-black block",
+                                    bankTx.amount > 0 ? "text-emerald-600" : "text-rose-600"
+                                  )}
+                                >
+                                  {bankTx.amount > 0 ? "+" : ""}
+                                  {bankTx.amount.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                  })}{" "}
+                                  ر.س
                                 </span>
                                 {!bankTx.isReconciled && (
                                   <button
@@ -4826,12 +5643,15 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                     <div className="space-y-2 max-h-[480px] overflow-y-auto pr-1">
                       {systemBankTransactions.length === 0 ? (
                         <div className="p-16 text-center text-zinc-400 font-bold text-xs">
-                          لا توجد قيود مقيدة بحساب النقدية بالبنك حالياً في الدفاتر المحاسبية. قم بترحيل السندات أو إنشاء قيود يومية أولاً لتظهر هنا.
+                          لا توجد قيود مقيدة بحساب النقدية بالبنك حالياً في الدفاتر المحاسبية. قم
+                          بترحيل السندات أو إنشاء قيود يومية أولاً لتظهر هنا.
                         </div>
                       ) : (
                         systemBankTransactions.map((sysTx) => {
                           const isSelected = selectedSysTxId === sysTx.id;
-                          const isMatchedByBank = bankTxList.some(b => b.isReconciled && b.reconciledWithId === sysTx.id);
+                          const isMatchedByBank = bankTxList.some(
+                            (b) => b.isReconciled && b.reconciledWithId === sysTx.id
+                          );
 
                           return (
                             <div
@@ -4846,13 +5666,15 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                                 isMatchedByBank
                                   ? "bg-emerald-50/40 border-emerald-100 text-emerald-900/60 opacity-80"
                                   : isSelected
-                                  ? "bg-emerald-50/50 border-emerald-300 ring-2 ring-emerald-600/10 shadow-sm"
-                                  : "bg-white hover:bg-zinc-50 border-zinc-200"
+                                    ? "bg-emerald-50/50 border-emerald-300 ring-2 ring-emerald-600/10 shadow-sm"
+                                    : "bg-white hover:bg-zinc-50 border-zinc-200"
                               )}
                             >
                               <div className="space-y-1 flex-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-mono font-bold text-zinc-400">{sysTx.date}</span>
+                                  <span className="text-[10px] font-mono font-bold text-zinc-400">
+                                    {sysTx.date}
+                                  </span>
                                   {isMatchedByBank && (
                                     <span className="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-black flex items-center gap-0.5">
                                       <Check className="w-2.5 h-2.5" />
@@ -4860,13 +5682,21 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-xs font-bold text-zinc-800 line-clamp-1">{sysTx.description}</div>
+                                <div className="text-xs font-bold text-zinc-800 line-clamp-1">
+                                  {sysTx.description}
+                                </div>
                               </div>
-                              <span className={cn(
-                                "text-sm font-mono font-black shrink-0",
-                                sysTx.amount > 0 ? "text-emerald-600" : "text-rose-600"
-                              )}>
-                                {sysTx.amount > 0 ? "+" : ""}{sysTx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} ر.س
+                              <span
+                                className={cn(
+                                  "text-sm font-mono font-black shrink-0",
+                                  sysTx.amount > 0 ? "text-emerald-600" : "text-rose-600"
+                                )}
+                              >
+                                {sysTx.amount > 0 ? "+" : ""}
+                                {sysTx.amount.toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                })}{" "}
+                                ر.س
                               </span>
                             </div>
                           );
@@ -4902,15 +5732,23 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       </div>
                       <div>
                         <span className="text-zinc-400 text-[10px] block">رصيد الفارق المالي</span>
-                        <span className={cn("font-mono font-black", reconDiffAmount > 0 ? "text-emerald-600" : "text-rose-600")}>
-                          {reconDiffAmount > 0 ? "+" : ""}{reconDiffAmount.toLocaleString()} ر.س
+                        <span
+                          className={cn(
+                            "font-mono font-black",
+                            reconDiffAmount > 0 ? "text-emerald-600" : "text-rose-600"
+                          )}
+                        >
+                          {reconDiffAmount > 0 ? "+" : ""}
+                          {reconDiffAmount.toLocaleString()} ر.س
                         </span>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase font-bold text-zinc-500">حساب المقاصة / المصروف المقابل للفارق</label>
+                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase font-bold text-zinc-500">
+                          حساب المقاصة / المصروف المقابل للفارق
+                        </label>
                         <select
                           value={reconDiffAccId}
                           onChange={(e) => setReconDiffAccId(e.target.value)}
@@ -4924,14 +5762,18 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                           ))}
                         </select>
                         <p className="text-[10px] text-zinc-400 font-bold mt-1.5">
-                          سيقيد الفارق تلقائياً بين حساب البنك وهذا الحساب لتعديل الميزانية الدفترية فورياً.
+                          سيقيد الفارق تلقائياً بين حساب البنك وهذا الحساب لتعديل الميزانية الدفترية
+                          فورياً.
                         </p>
                       </div>
 
                       <div>
-                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase font-bold text-zinc-500">ملاحظات تسوية القيد الدفتري</label>
+                        <label className="text-[10px] font-black text-zinc-400 block mb-1.5 uppercase font-bold text-zinc-500">
+                          ملاحظات تسوية القيد الدفتري
+                        </label>
                         <div className="w-full bg-zinc-100 border border-zinc-200 rounded-xl px-4 py-2.5 text-xs text-zinc-500 font-bold select-none">
-                          سيتم إنشاء قيد يومية عام تسوية تلقائياً بقيمة {Math.abs(reconDiffAmount).toLocaleString()} ر.س
+                          سيتم إنشاء قيد يومية عام تسوية تلقائياً بقيمة{" "}
+                          {Math.abs(reconDiffAmount).toLocaleString()} ر.س
                         </div>
                       </div>
                     </div>
@@ -4957,8 +5799,10 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                 {/* Official Bank Reconciliation Report Print-Ready Modal (showReconPdfModal) */}
                 {showReconPdfModal && (
                   <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-4xl shadow-2xl p-8 relative space-y-6 max-h-[90vh] overflow-y-auto" id="printable-reconciliation-report">
-                      
+                    <div
+                      className="bg-white rounded-[2.5rem] w-full max-w-4xl shadow-2xl p-8 relative space-y-6 max-h-[90vh] overflow-y-auto"
+                      id="printable-reconciliation-report"
+                    >
                       {/* Print optimization styles */}
                       <style>{`
                         @media print {
@@ -4986,15 +5830,29 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       {/* Header with National/Corporate Ribbon */}
                       <div className="flex justify-between items-start border-b-2 border-zinc-900 pb-6 text-right">
                         <div className="space-y-1.5 flex-1">
-                          <h2 className="text-xl font-black text-zinc-950">شركة مدارج لتقنية المعلومات / Madarij OS</h2>
-                          <p className="text-[11px] text-zinc-500 font-black">الرقم الضريبي الموحد: 300482930200003</p>
-                          <p className="text-[11px] text-zinc-500 font-black">رقم السجل التجاري: 1010398492</p>
-                          <p className="text-[11px] text-zinc-500 font-bold">الرياض، المملكة العربية السعودية</p>
+                          <h2 className="text-xl font-black text-zinc-950">
+                            شركة مدارج لتقنية المعلومات / Madarij OS
+                          </h2>
+                          <p className="text-[11px] text-zinc-500 font-black">
+                            الرقم الضريبي الموحد: 300482930200003
+                          </p>
+                          <p className="text-[11px] text-zinc-500 font-black">
+                            رقم السجل التجاري: 1010398492
+                          </p>
+                          <p className="text-[11px] text-zinc-500 font-bold">
+                            الرياض، المملكة العربية السعودية
+                          </p>
                         </div>
                         <div className="text-left space-y-1 shrink-0 pl-4 border-l border-zinc-200">
-                          <span className="px-3 py-1 bg-zinc-900 text-white text-[9px] font-black rounded uppercase tracking-wider block font-mono text-center">MADARIJ AUDIT</span>
-                          <span className="text-xs text-zinc-500 font-bold block">تاريخ التقـرير: {new Date().toLocaleDateString('ar-SA')}</span>
-                          <span className="text-[10px] text-zinc-400 font-mono block">REF: RECON-{new Date().getFullYear()}-{new Date().getMonth() + 1}</span>
+                          <span className="px-3 py-1 bg-zinc-900 text-white text-[9px] font-black rounded uppercase tracking-wider block font-mono text-center">
+                            MADARIJ AUDIT
+                          </span>
+                          <span className="text-xs text-zinc-500 font-bold block">
+                            تاريخ التقـرير: {new Date().toLocaleDateString("ar-SA")}
+                          </span>
+                          <span className="text-[10px] text-zinc-400 font-mono block">
+                            REF: RECON-{new Date().getFullYear()}-{new Date().getMonth() + 1}
+                          </span>
                         </div>
                       </div>
 
@@ -5002,40 +5860,75 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       <div className="text-center py-4 bg-zinc-50 rounded-2xl border border-zinc-150 relative overflow-hidden">
                         {/* System Stamp / Gold Seal (ختم النظام المعتمد) */}
                         <div className="absolute right-6 top-1/2 -translate-y-1/2 w-20 h-20 border-4 border-emerald-600/30 rounded-full flex flex-col items-center justify-center rotate-12 bg-white/40 pointer-events-none select-none">
-                          <span className="text-[7px] font-black text-emerald-600 uppercase tracking-widest leading-none">مدارج المعتمد</span>
-                          <span className="text-[6px] font-black text-zinc-400 font-mono">MADARIJ OS</span>
-                          <span className="text-[7px] font-black text-emerald-600 leading-none">مـراجع ومطابق</span>
-                          <span className="text-[5px] text-emerald-500 font-bold mt-0.5">APPROVED</span>
+                          <span className="text-[7px] font-black text-emerald-600 uppercase tracking-widest leading-none">
+                            مدارج المعتمد
+                          </span>
+                          <span className="text-[6px] font-black text-zinc-400 font-mono">
+                            MADARIJ OS
+                          </span>
+                          <span className="text-[7px] font-black text-emerald-600 leading-none">
+                            مـراجع ومطابق
+                          </span>
+                          <span className="text-[5px] text-emerald-500 font-bold mt-0.5">
+                            APPROVED
+                          </span>
                         </div>
 
-                        <h3 className="text-lg font-black text-zinc-900">تقرير تسوية ومطابقة كشف الحساب البنكي المعتمد</h3>
+                        <h3 className="text-lg font-black text-zinc-900">
+                          تقرير تسوية ومطابقة كشف الحساب البنكي المعتمد
+                        </h3>
                         <p className="text-xs text-zinc-500 font-bold mt-1">
-                          حساب النقدية بالبنك (كود: 110101) • للفترة المنتهية في {new Date().toLocaleDateString('ar-SA', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          حساب النقدية بالبنك (كود: 110101) • للفترة المنتهية في{" "}
+                          {new Date().toLocaleDateString("ar-SA", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })}
                         </p>
                       </div>
 
                       {/* Balance & Status Summary */}
                       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 bg-zinc-50/50 rounded-2xl p-5 border border-zinc-150">
                         <div className="space-y-1 text-right">
-                          <span className="text-[10px] font-black text-zinc-400 block">رصيد كشف الحساب البنكي</span>
+                          <span className="text-[10px] font-black text-zinc-400 block">
+                            رصيد كشف الحساب البنكي
+                          </span>
                           <span className="text-base font-black text-zinc-900 font-mono">
-                            {(bankTxList.reduce((sum, t) => sum + t.amount, 0) || 128100.50).toLocaleString(undefined, { minimumFractionDigits: 2 })} ر.س
+                            {(
+                              bankTxList.reduce((sum, t) => sum + t.amount, 0) || 128100.5
+                            ).toLocaleString(undefined, { minimumFractionDigits: 2 })}{" "}
+                            ر.س
                           </span>
                         </div>
                         <div className="space-y-1 text-right">
-                          <span className="text-[10px] font-black text-zinc-400 block">الرصيد الدفتري بالنظام</span>
+                          <span className="text-[10px] font-black text-zinc-400 block">
+                            الرصيد الدفتري بالنظام
+                          </span>
                           <span className="text-base font-black text-zinc-900 font-mono">
-                            {(systemBankTransactions.reduce((sum, t) => sum + t.amount, 0) || 128100.50).toLocaleString(undefined, { minimumFractionDigits: 2 })} ر.س
+                            {(
+                              systemBankTransactions.reduce((sum, t) => sum + t.amount, 0) ||
+                              128100.5
+                            ).toLocaleString(undefined, { minimumFractionDigits: 2 })}{" "}
+                            ر.س
                           </span>
                         </div>
                         <div className="space-y-1 text-right">
-                          <span className="text-[10px] font-black text-zinc-400 block">إجمالي الفروقات المسواة</span>
+                          <span className="text-[10px] font-black text-zinc-400 block">
+                            إجمالي الفروقات المسواة
+                          </span>
                           <span className="text-base font-black text-emerald-600 font-mono">
-                            {(bankTxList.filter(t => t.isReconciled).reduce((sum, t) => sum + t.amount, 0) || 128100.50).toLocaleString(undefined, { minimumFractionDigits: 2 })} ر.س
+                            {(
+                              bankTxList
+                                .filter((t) => t.isReconciled)
+                                .reduce((sum, t) => sum + t.amount, 0) || 128100.5
+                            ).toLocaleString(undefined, { minimumFractionDigits: 2 })}{" "}
+                            ر.س
                           </span>
                         </div>
                         <div className="space-y-1 text-right">
-                          <span className="text-[10px] font-black text-zinc-400 block">حالة المطابقة النهائية</span>
+                          <span className="text-[10px] font-black text-zinc-400 block">
+                            حالة المطابقة النهائية
+                          </span>
                           <span className="text-xs font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full inline-block">
                             مطابق وموثق دفترياً
                           </span>
@@ -5044,7 +5937,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
                       {/* Detailed matched transactions table */}
                       <div className="space-y-3">
-                        <h4 className="text-xs font-black text-zinc-900 uppercase text-right">قائمة العمليات المصرفية المطابقة بالتقرير:</h4>
+                        <h4 className="text-xs font-black text-zinc-900 uppercase text-right">
+                          قائمة العمليات المصرفية المطابقة بالتقرير:
+                        </h4>
                         <div className="border border-zinc-200 rounded-2xl overflow-hidden">
                           <table className="w-full text-right border-collapse text-xs">
                             <thead>
@@ -5056,18 +5951,61 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                               </tr>
                             </thead>
                             <tbody>
-                              {(bankTxList.length > 0 ? bankTxList : [
-                                { id: "p-1", date: "2026-06-01", description: "حوالة واردة - العميل شركة مكنون المحدودة", amount: 25000.00, isReconciled: true },
-                                { id: "p-2", date: "2026-06-05", description: "فاتورة مشتريات مسددة - مؤسسة جرير للتسويق", amount: -850.50, isReconciled: true },
-                                { id: "p-3", date: "2026-06-10", description: "سداد رسوم رخصة تجارية - بلدي / أمانة الرياض", amount: -1200.00, isReconciled: true },
-                                { id: "p-4", date: "2026-06-15", description: "تمويل رأس مال إضافي للمنشأة", amount: 150000.00, isReconciled: true },
-                                { id: "p-5", date: "2026-06-20", description: "حوالة صادرة - مسير رواتب شهرية - شركة مدارج لتقنية المعلومات", amount: -45000.00, isReconciled: true }
-                              ]).map((tx) => (
-                                <tr key={tx.id} className="border-b border-zinc-100 hover:bg-zinc-50/50">
+                              {(bankTxList.length > 0
+                                ? bankTxList
+                                : [
+                                    {
+                                      id: "p-1",
+                                      date: "2026-06-01",
+                                      description: "حوالة واردة - العميل شركة مكنون المحدودة",
+                                      amount: 25000.0,
+                                      isReconciled: true,
+                                    },
+                                    {
+                                      id: "p-2",
+                                      date: "2026-06-05",
+                                      description: "فاتورة مشتريات مسددة - مؤسسة جرير للتسويق",
+                                      amount: -850.5,
+                                      isReconciled: true,
+                                    },
+                                    {
+                                      id: "p-3",
+                                      date: "2026-06-10",
+                                      description: "سداد رسوم رخصة تجارية - بلدي / أمانة الرياض",
+                                      amount: -1200.0,
+                                      isReconciled: true,
+                                    },
+                                    {
+                                      id: "p-4",
+                                      date: "2026-06-15",
+                                      description: "تمويل رأس مال إضافي للمنشأة",
+                                      amount: 150000.0,
+                                      isReconciled: true,
+                                    },
+                                    {
+                                      id: "p-5",
+                                      date: "2026-06-20",
+                                      description:
+                                        "حوالة صادرة - مسير رواتب شهرية - شركة مدارج لتقنية المعلومات",
+                                      amount: -45000.0,
+                                      isReconciled: true,
+                                    },
+                                  ]
+                              ).map((tx) => (
+                                <tr
+                                  key={tx.id}
+                                  className="border-b border-zinc-100 hover:bg-zinc-50/50"
+                                >
                                   <td className="p-3 font-mono text-zinc-500">{tx.date}</td>
                                   <td className="p-3 font-bold text-zinc-800">{tx.description}</td>
-                                  <td className={`p-3 font-mono font-black ${tx.amount > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                    {tx.amount > 0 ? "+" : ""}{tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} ر.س
+                                  <td
+                                    className={`p-3 font-mono font-black ${tx.amount > 0 ? "text-emerald-600" : "text-rose-600"}`}
+                                  >
+                                    {tx.amount > 0 ? "+" : ""}
+                                    {tx.amount.toLocaleString(undefined, {
+                                      minimumFractionDigits: 2,
+                                    })}{" "}
+                                    ر.س
                                   </td>
                                   <td className="p-3 text-emerald-600 font-black flex items-center gap-1.5">
                                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
@@ -5083,24 +6021,38 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       {/* Audit Seal Signatures section */}
                       <div className="grid grid-cols-3 gap-6 pt-10 border-t border-zinc-200 text-xs">
                         <div className="text-center space-y-4">
-                          <span className="font-black text-zinc-400 block">إعداد مراجع الحسابات</span>
-                          <span className="font-bold text-zinc-800 block">محاسب المنشأة المعتمد</span>
+                          <span className="font-black text-zinc-400 block">
+                            إعداد مراجع الحسابات
+                          </span>
+                          <span className="font-bold text-zinc-800 block">
+                            محاسب المنشأة المعتمد
+                          </span>
                           <div className="h-0.5 w-1/2 bg-zinc-200 mx-auto" />
                         </div>
-                        
+
                         {/* Center System Stamp */}
                         <div className="text-center space-y-2 flex flex-col items-center justify-center">
                           <div className="w-16 h-16 border-2 border-dashed border-zinc-300 rounded-full flex flex-col items-center justify-center select-none rotate-6">
-                            <span className="text-[7px] text-zinc-400 font-black uppercase">MADARIJ OS</span>
-                            <span className="text-[6px] text-zinc-500 font-bold font-mono">SYSTEM SEAL</span>
+                            <span className="text-[7px] text-zinc-400 font-black uppercase">
+                              MADARIJ OS
+                            </span>
+                            <span className="text-[6px] text-zinc-500 font-bold font-mono">
+                              SYSTEM SEAL
+                            </span>
                             <span className="text-[7px] text-zinc-400 font-black">2026</span>
                           </div>
-                          <span className="text-[9px] text-zinc-400 block font-mono">Verified Digital Audit System</span>
+                          <span className="text-[9px] text-zinc-400 block font-mono">
+                            Verified Digital Audit System
+                          </span>
                         </div>
 
                         <div className="text-center space-y-4">
-                          <span className="font-black text-zinc-400 block">اعتماد المدير المالي</span>
-                          <span className="font-bold text-zinc-800 block">المدير التنفيذي المالي (CFO)</span>
+                          <span className="font-black text-zinc-400 block">
+                            اعتماد المدير المالي
+                          </span>
+                          <span className="font-bold text-zinc-800 block">
+                            المدير التنفيذي المالي (CFO)
+                          </span>
                           <div className="h-0.5 w-1/2 bg-zinc-200 mx-auto" />
                         </div>
                       </div>
@@ -5137,61 +6089,86 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       سجل التدقيق والرقابة الأمني والمالي (Comprehensive Audit Trail Console)
                     </h3>
                     <p className="text-xs text-zinc-400 font-bold mt-1">
-                      سجل رقابي مشفر وغير قابل للتعديل يوثق كافة حركات إضافة وتعديل القيود المالية ودليل الحسابات وإقرارات ZATCA لمكافحة الاحتيال الداخلي.
+                      سجل رقابي مشفر وغير قابل للتعديل يوثق كافة حركات إضافة وتعديل القيود المالية
+                      ودليل الحسابات وإقرارات ZATCA لمكافحة الاحتيال الداخلي.
                     </p>
                   </div>
 
                   {/* Audit Metric Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 select-none">
                     <div className="bg-zinc-50 p-5 rounded-2xl border border-zinc-200 flex flex-col justify-between">
-                      <span className="text-[10px] font-black text-zinc-400 uppercase">إجمالي الحركات المؤرشفة</span>
+                      <span className="text-[10px] font-black text-zinc-400 uppercase">
+                        إجمالي الحركات المؤرشفة
+                      </span>
                       <h4 className="text-xl font-black text-zinc-900 mt-2 font-mono">
                         {auditLogs.length} <span className="text-xs text-zinc-400">عملية</span>
                       </h4>
-                      <span className="text-[9px] text-zinc-400 mt-1 block">مؤرشفة وموثقة بالبصمة الزمنية</span>
+                      <span className="text-[9px] text-zinc-400 mt-1 block">
+                        مؤرشفة وموثقة بالبصمة الزمنية
+                      </span>
                     </div>
 
-                    <div className={cn(
-                      "p-5 rounded-2xl border flex flex-col justify-between",
-                      auditLogs.some(l => l.riskLevel === "High") 
-                        ? "bg-rose-50/60 border-rose-100 text-rose-900 animate-pulse" 
-                        : "bg-zinc-50 border-zinc-200"
-                    )}>
-                      <span className="text-[10px] font-black text-zinc-400 uppercase font-bold text-zinc-500">مستوى التنبيهات والتهديدات</span>
+                    <div
+                      className={cn(
+                        "p-5 rounded-2xl border flex flex-col justify-between",
+                        auditLogs.some((l) => l.riskLevel === "High")
+                          ? "bg-rose-50/60 border-rose-100 text-rose-900 animate-pulse"
+                          : "bg-zinc-50 border-zinc-200"
+                      )}
+                    >
+                      <span className="text-[10px] font-black text-zinc-400 uppercase font-bold text-zinc-500">
+                        مستوى التنبيهات والتهديدات
+                      </span>
                       <h4 className="text-xl font-black mt-2 font-mono flex items-center gap-1.5">
-                        {auditLogs.filter(l => l.riskLevel === "High").length}
-                        {auditLogs.some(l => l.riskLevel === "High") && (
+                        {auditLogs.filter((l) => l.riskLevel === "High").length}
+                        {auditLogs.some((l) => l.riskLevel === "High") && (
                           <span className="w-2.5 h-2.5 bg-rose-500 rounded-full animate-ping shrink-0" />
                         )}
                       </h4>
-                      <span className="text-[9px] text-zinc-400 mt-1 block">عمليات عالية الحساسية والخطورة</span>
+                      <span className="text-[9px] text-zinc-400 mt-1 block">
+                        عمليات عالية الحساسية والخطورة
+                      </span>
                     </div>
 
                     <div className="bg-zinc-50 p-5 rounded-2xl border border-zinc-200 flex flex-col justify-between">
-                      <span className="text-[10px] font-black text-zinc-400 uppercase">العمليات المسجلة اليوم</span>
+                      <span className="text-[10px] font-black text-zinc-400 uppercase">
+                        العمليات المسجلة اليوم
+                      </span>
                       <h4 className="text-xl font-black text-zinc-900 mt-2 font-mono">
-                        {auditLogs.filter(l => {
-                          const logDay = new Date(l.timestamp).toDateString();
-                          const today = new Date().toDateString();
-                          return logDay === today;
-                        }).length} <span className="text-xs text-zinc-400">عملية</span>
+                        {
+                          auditLogs.filter((l) => {
+                            const logDay = new Date(l.timestamp).toDateString();
+                            const today = new Date().toDateString();
+                            return logDay === today;
+                          }).length
+                        }{" "}
+                        <span className="text-xs text-zinc-400">عملية</span>
                       </h4>
-                      <span className="text-[9px] text-zinc-400 mt-1 block">خلال الـ 24 ساعة الماضية</span>
+                      <span className="text-[9px] text-zinc-400 mt-1 block">
+                        خلال الـ 24 ساعة الماضية
+                      </span>
                     </div>
 
                     <div className="bg-zinc-50 p-5 rounded-2xl border border-zinc-200 flex flex-col justify-between">
-                      <span className="text-[10px] font-black text-zinc-400 uppercase">المشغلون النشطون للنظام</span>
+                      <span className="text-[10px] font-black text-zinc-400 uppercase">
+                        المشغلون النشطون للنظام
+                      </span>
                       <h4 className="text-xl font-black text-zinc-900 mt-2 font-mono">
-                        {Array.from(new Set(auditLogs.map(l => l.user))).length} <span className="text-xs text-zinc-400">حساب</span>
+                        {Array.from(new Set(auditLogs.map((l) => l.user))).length}{" "}
+                        <span className="text-xs text-zinc-400">حساب</span>
                       </h4>
-                      <span className="text-[9px] text-zinc-400 mt-1 block">بصمات مستخدمين معتمدة</span>
+                      <span className="text-[9px] text-zinc-400 mt-1 block">
+                        بصمات مستخدمين معتمدة
+                      </span>
                     </div>
                   </div>
 
                   {/* Filter & Search Bar */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-zinc-50 p-5 rounded-3xl border border-zinc-100">
                     <div className="md:col-span-2 relative">
-                      <label className="block text-[11px] font-black text-zinc-400 mb-1.5">البحث المتقدم بالبيانات (Search Logs)</label>
+                      <label className="block text-[11px] font-black text-zinc-400 mb-1.5">
+                        البحث المتقدم بالبيانات (Search Logs)
+                      </label>
                       <div className="relative">
                         <input
                           type="text"
@@ -5204,7 +6181,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[11px] font-black text-zinc-400 mb-1.5">فرز حسب تصنيف الخطورة (Risk Level)</label>
+                      <label className="block text-[11px] font-black text-zinc-400 mb-1.5">
+                        فرز حسب تصنيف الخطورة (Risk Level)
+                      </label>
                       <select
                         value={auditRiskFilter}
                         onChange={(e) => setAuditRiskFilter(e.target.value)}
@@ -5247,18 +6226,26 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                             </td>
                             <td className="p-4 font-black text-zinc-900">
                               <div>{log.action}</div>
-                              <div className="text-[10px] text-zinc-400 font-bold mt-0.5">{log.actionEn}</div>
+                              <div className="text-[10px] text-zinc-400 font-bold mt-0.5">
+                                {log.actionEn}
+                              </div>
                             </td>
                             <td className="p-4 text-center">
-                              <span className={cn(
-                                "px-2.5 py-1 rounded-full text-[10px] font-black inline-block",
-                                log.riskLevel === "High" ? "bg-rose-50 text-rose-700 border border-rose-100" :
-                                log.riskLevel === "Medium" ? "bg-amber-50 text-amber-700 border border-amber-100" :
-                                "bg-zinc-100 text-zinc-600 border border-zinc-200/50"
-                              )}>
-                                {log.riskLevel === "High" ? "مرتفع 🚨" :
-                                 log.riskLevel === "Medium" ? "متوسط" :
-                                 "طبيعي"}
+                              <span
+                                className={cn(
+                                  "px-2.5 py-1 rounded-full text-[10px] font-black inline-block",
+                                  log.riskLevel === "High"
+                                    ? "bg-rose-50 text-rose-700 border border-rose-100"
+                                    : log.riskLevel === "Medium"
+                                      ? "bg-amber-50 text-amber-700 border border-amber-100"
+                                      : "bg-zinc-100 text-zinc-600 border border-zinc-200/50"
+                                )}
+                              >
+                                {log.riskLevel === "High"
+                                  ? "مرتفع 🚨"
+                                  : log.riskLevel === "Medium"
+                                    ? "متوسط"
+                                    : "طبيعي"}
                               </span>
                             </td>
                             <td className="p-4 text-center">
@@ -5282,11 +6269,9 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                       </tbody>
                     </table>
                   </div>
-
                 </div>
               </div>
             )}
-
           </motion.div>
         )}
       </AnimatePresence>
@@ -5294,8 +6279,11 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
       {/* DRILL-DOWN MODAL */}
       <AnimatePresence>
         {selectedDrillDownAccount && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]" dir="rtl">
-            <motion.div 
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
+            dir="rtl"
+          >
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -5308,11 +6296,15 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                     <BookOpen className="w-6 h-6 text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-black">{selectedDrillDownAccount.nameAr} ({selectedDrillDownAccount.accountCode})</h3>
-                    <p className="text-xs text-zinc-300 font-bold mt-0.5">{selectedDrillDownAccount.nameEn} • {selectedDrillDownAccount.type}</p>
+                    <h3 className="text-lg font-black">
+                      {selectedDrillDownAccount.nameAr} ({selectedDrillDownAccount.accountCode})
+                    </h3>
+                    <p className="text-xs text-zinc-300 font-bold mt-0.5">
+                      {selectedDrillDownAccount.nameEn} • {selectedDrillDownAccount.type}
+                    </p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setSelectedDrillDownAccount(null)}
                   className="p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition cursor-pointer"
                 >
@@ -5324,21 +6316,39 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
               <div className="p-6 overflow-y-auto space-y-6 flex-1">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-100">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase">الرصيد الافتتاحي المقيد</span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase">
+                      الرصيد الافتتاحي المقيد
+                    </span>
                     <h4 className="text-lg font-black text-zinc-900 mt-1 font-mono">
-                      {((selectedDrillDownAccount.balanceHalalas || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })} ر.س
+                      {((selectedDrillDownAccount.balanceHalalas || 0) / 100).toLocaleString(
+                        undefined,
+                        { minimumFractionDigits: 2 }
+                      )}{" "}
+                      ر.س
                     </h4>
                   </div>
                   <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100/50">
-                    <span className="text-[10px] font-bold text-indigo-500 uppercase">إجمالي الحركات المدينة (Period Dr)</span>
+                    <span className="text-[10px] font-bold text-indigo-500 uppercase">
+                      إجمالي الحركات المدينة (Period Dr)
+                    </span>
                     <h4 className="text-lg font-black text-indigo-700 mt-1 font-mono">
-                      {((selectedDrillDownAccount.debitTotal || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })} ر.س
+                      {((selectedDrillDownAccount.debitTotal || 0) / 100).toLocaleString(
+                        undefined,
+                        { minimumFractionDigits: 2 }
+                      )}{" "}
+                      ر.س
                     </h4>
                   </div>
                   <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100/50">
-                    <span className="text-[10px] font-bold text-emerald-500 uppercase">صافي رصيد الأستاذ الحالي</span>
+                    <span className="text-[10px] font-bold text-emerald-500 uppercase">
+                      صافي رصيد الأستاذ الحالي
+                    </span>
                     <h4 className="text-lg font-black text-emerald-700 mt-1 font-mono">
-                      {((selectedDrillDownAccount.currentBalance || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })} ر.s
+                      {((selectedDrillDownAccount.currentBalance || 0) / 100).toLocaleString(
+                        undefined,
+                        { minimumFractionDigits: 2 }
+                      )}{" "}
+                      ر.s
                     </h4>
                   </div>
                 </div>
@@ -5359,22 +6369,39 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                     <tbody className="divide-y divide-zinc-100 bg-white">
                       {drillDownTransactions.map((tx, idx) => (
                         <tr key={idx} className="hover:bg-zinc-50/60 transition">
-                          <td className="p-3 text-right text-zinc-500 font-bold font-mono">{tx.date}</td>
-                          <td className="p-3 text-right font-mono font-black text-indigo-600">{tx.reference}</td>
-                          <td className="p-3 text-right font-bold text-zinc-800 max-w-xs truncate">{tx.descriptionAr}</td>
+                          <td className="p-3 text-right text-zinc-500 font-bold font-mono">
+                            {tx.date}
+                          </td>
+                          <td className="p-3 text-right font-mono font-black text-indigo-600">
+                            {tx.reference}
+                          </td>
+                          <td className="p-3 text-right font-bold text-zinc-800 max-w-xs truncate">
+                            {tx.descriptionAr}
+                          </td>
                           <td className="p-3 text-center">
                             <span className="px-2 py-0.5 bg-zinc-100 text-zinc-600 rounded text-[10px] font-bold">
                               {tx.costCenter}
                             </span>
                           </td>
                           <td className="p-3 text-center font-mono font-bold text-indigo-600">
-                            {tx.debit > 0 ? (tx.debit / 100).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
+                            {tx.debit > 0
+                              ? (tx.debit / 100).toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                })
+                              : "-"}
                           </td>
                           <td className="p-3 text-center font-mono font-bold text-zinc-500">
-                            {tx.credit > 0 ? (tx.credit / 100).toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
+                            {tx.credit > 0
+                              ? (tx.credit / 100).toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                })
+                              : "-"}
                           </td>
                           <td className="p-3 text-left font-mono font-black text-emerald-600">
-                            {(tx.balance / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })} ر.س
+                            {(tx.balance / 100).toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                            })}{" "}
+                            ر.س
                           </td>
                         </tr>
                       ))}
@@ -5385,7 +6412,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
               {/* Footer */}
               <div className="p-5 bg-zinc-50 border-t border-zinc-100 flex justify-end">
-                <button 
+                <button
                   onClick={() => setSelectedDrillDownAccount(null)}
                   className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-black text-xs rounded-xl transition cursor-pointer"
                 >
@@ -5400,8 +6427,11 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
       {/* AUDIT LOG DETAILS MODAL */}
       <AnimatePresence>
         {selectedAuditLog && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]" dir="rtl">
-            <motion.div 
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
+            dir="rtl"
+          >
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -5414,10 +6444,12 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                   </div>
                   <div>
                     <h3 className="text-base font-black">تفاصيل سجل الرقابة والتدقيق الأمني</h3>
-                    <p className="text-xs text-zinc-300 font-bold mt-0.5">مرجع الحركة: {selectedAuditLog.targetId}</p>
+                    <p className="text-xs text-zinc-300 font-bold mt-0.5">
+                      مرجع الحركة: {selectedAuditLog.targetId}
+                    </p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setSelectedAuditLog(null)}
                   className="p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition cursor-pointer"
                 >
@@ -5433,15 +6465,21 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                   </div>
                   <div>
                     <span className="text-[10px] text-zinc-400 block mb-0.5">المستوى الرقابي</span>
-                    <span className={cn(
-                      "px-2.5 py-0.5 rounded-full text-[10px] inline-block",
-                      selectedAuditLog.riskLevel === "High" ? "bg-rose-50 text-rose-700 border border-rose-100 animate-pulse" :
-                      selectedAuditLog.riskLevel === "Medium" ? "bg-amber-50 text-amber-700 border border-amber-100" :
-                      "bg-zinc-100 text-zinc-600"
-                    )}>
-                      {selectedAuditLog.riskLevel === "High" ? "مرتفع الخطورة (High Risk)" :
-                       selectedAuditLog.riskLevel === "Medium" ? "متوسط (Medium)" :
-                       "طبيعي (Low)"}
+                    <span
+                      className={cn(
+                        "px-2.5 py-0.5 rounded-full text-[10px] inline-block",
+                        selectedAuditLog.riskLevel === "High"
+                          ? "bg-rose-50 text-rose-700 border border-rose-100 animate-pulse"
+                          : selectedAuditLog.riskLevel === "Medium"
+                            ? "bg-amber-50 text-amber-700 border border-amber-100"
+                            : "bg-zinc-100 text-zinc-600"
+                      )}
+                    >
+                      {selectedAuditLog.riskLevel === "High"
+                        ? "مرتفع الخطورة (High Risk)"
+                        : selectedAuditLog.riskLevel === "Medium"
+                          ? "متوسط (Medium)"
+                          : "طبيعي (Low)"}
                     </span>
                   </div>
                   <div>
@@ -5453,8 +6491,12 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                     <span className="text-zinc-800 font-mono">{selectedAuditLog.ipAddress}</span>
                   </div>
                   <div className="col-span-2">
-                    <span className="text-[10px] text-zinc-400 block mb-0.5">تاريخ الطابع الزمني للعملية</span>
-                    <span className="text-zinc-800 font-mono">{new Date(selectedAuditLog.timestamp).toLocaleString()}</span>
+                    <span className="text-[10px] text-zinc-400 block mb-0.5">
+                      تاريخ الطابع الزمني للعملية
+                    </span>
+                    <span className="text-zinc-800 font-mono">
+                      {new Date(selectedAuditLog.timestamp).toLocaleString()}
+                    </span>
                   </div>
                 </div>
 
@@ -5464,18 +6506,22 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <span className="text-[10px] text-rose-500 font-black block">الحالة قبل التعديل (Before Changes):</span>
+                      <span className="text-[10px] text-rose-500 font-black block">
+                        الحالة قبل التعديل (Before Changes):
+                      </span>
                       <pre className="p-3 bg-rose-50/50 text-rose-700 rounded-xl border border-rose-100 font-mono text-[10px] overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-48">
-                        {selectedAuditLog.details?.before 
-                          ? JSON.stringify(selectedAuditLog.details.before, null, 2) 
+                        {selectedAuditLog.details?.before
+                          ? JSON.stringify(selectedAuditLog.details.before, null, 2)
                           : "--- لا يوجد تغييرات سابقة / قيد تأسيسي جديد ---"}
                       </pre>
                     </div>
                     <div className="space-y-1.5">
-                      <span className="text-[10px] text-emerald-500 font-black block">الحالة بعد التعديل (After Changes):</span>
+                      <span className="text-[10px] text-emerald-500 font-black block">
+                        الحالة بعد التعديل (After Changes):
+                      </span>
                       <pre className="p-3 bg-emerald-50/50 text-emerald-700 rounded-xl border border-emerald-100 font-mono text-[10px] overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-48">
-                        {selectedAuditLog.details?.after 
-                          ? JSON.stringify(selectedAuditLog.details.after, null, 2) 
+                        {selectedAuditLog.details?.after
+                          ? JSON.stringify(selectedAuditLog.details.after, null, 2)
                           : "--- لا يوجد تغييرات لاحقة / تم الحذف التام ---"}
                       </pre>
                     </div>
@@ -5485,7 +6531,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
               {/* Footer */}
               <div className="p-5 bg-zinc-50 border-t border-zinc-100 flex justify-end">
-                <button 
+                <button
                   onClick={() => setSelectedAuditLog(null)}
                   className="px-6 py-2.5 bg-zinc-900 hover:bg-zinc-800 text-white font-black text-xs rounded-xl transition cursor-pointer"
                 >
@@ -5496,7 +6542,6 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
           </div>
         )}
       </AnimatePresence>
-
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { prisma } from './server/services/prisma.js';
+import { prisma } from "./server/services/prisma.js";
 async function test() {
   try {
     const res = await prisma.notification.findMany({ where: { userId: "fake123" } });

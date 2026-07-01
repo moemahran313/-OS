@@ -17,7 +17,7 @@ import {
   Gem,
   ArrowUpCircle,
   Receipt,
-  Percent
+  Percent,
 } from "lucide-react";
 
 import { cn } from "@/src/lib/utils";
@@ -28,8 +28,7 @@ type Language = "ar" | "en";
 const translations = {
   ar: {
     pageTitle: "أدوات الامتثال والحسابات",
-    pageDesc:
-      "أدوات مخصصة للتحقق من توافق المنشأة مع متطلبات وزارة الموارد البشرية.",
+    pageDesc: "أدوات مخصصة للتحقق من توافق المنشأة مع متطلبات وزارة الموارد البشرية.",
     btnTools: "أدوات الامتثال",
     tabs: {
       nitaqat: "حاسبة النطاقات",
@@ -54,7 +53,7 @@ const translations = {
       vatAmount: "إجمالي ضريبة القيمة المضافة (SAR)",
       totalAmount: "إجمالي المبلغ المستحق (SAR)",
       currency: "ر.س",
-      zatcaNote: "ملاحظة: النسبة الصفرية تنطبق على التصدير خارج المملكة و الأدوية المؤهلة."
+      zatcaNote: "ملاحظة: النسبة الصفرية تنطبق على التصدير خارج المملكة و الأدوية المؤهلة.",
     },
     nitaqat: {
       title: "حاسبة النطاقات",
@@ -144,8 +143,7 @@ const translations = {
   },
   en: {
     pageTitle: "Compliance & Calculations Tools",
-    pageDesc:
-      "Specialized tools to verify facility compliance with HRSD regulations.",
+    pageDesc: "Specialized tools to verify facility compliance with HRSD regulations.",
     btnTools: "Compliance Tools",
     tabs: {
       nitaqat: "Nitaqat Calculator",
@@ -170,7 +168,7 @@ const translations = {
       vatAmount: "Total Value Added Tax (SAR)",
       totalAmount: "Total Amount Due (SAR)",
       currency: "SAR",
-      zatcaNote: "Note: Zero-rate applies to exports and certain medicines per ZATCA."
+      zatcaNote: "Note: Zero-rate applies to exports and certain medicines per ZATCA.",
     },
     nitaqat: {
       title: "Nitaqat Calculator",
@@ -268,10 +266,7 @@ export default function Calculations() {
   const t = translations[lang];
 
   return (
-    <div
-      className="space-y-6 max-w-7xl mx-auto pb-20"
-      dir={lang === "ar" ? "rtl" : "ltr"}
-    >
+    <div className="space-y-6 max-w-7xl mx-auto pb-20" dir={lang === "ar" ? "rtl" : "ltr"}>
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-2">
@@ -279,9 +274,7 @@ export default function Calculations() {
               {t.btnTools}
             </span>
           </div>
-          <h1 className="text-3xl font-black text-zinc-900 tracking-tight">
-            {t.pageTitle}
-          </h1>
+          <h1 className="text-3xl font-black text-zinc-900 tracking-tight">{t.pageTitle}</h1>
           <p className="text-zinc-500 mt-1 text-sm font-medium">{t.pageDesc}</p>
         </div>
         <button
@@ -295,10 +288,7 @@ export default function Calculations() {
         </button>
       </header>
 
-      <div
-        className="flex flex-wrap gap-2 mb-8 border-b border-zinc-200 pb-4"
-        role="tablist"
-      >
+      <div className="flex flex-wrap gap-2 mb-8 border-b border-zinc-200 pb-4" role="tablist">
         {[
           { id: "nitaqat", label: t.tabs.nitaqat, icon: Calculator },
           { id: "certificate", label: t.tabs.certificate, icon: FileBadge },
@@ -317,7 +307,7 @@ export default function Calculations() {
               "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all",
               activeTab === tab.id
                 ? "bg-zinc-900 text-white shadow-md"
-                : "text-zinc-600 hover:bg-zinc-100 border border-transparent hover:border-zinc-200",
+                : "text-zinc-600 hover:bg-zinc-100 border border-transparent hover:border-zinc-200"
             )}
           >
             <tab.icon className="w-4 h-4" />
@@ -331,15 +321,9 @@ export default function Calculations() {
         role="tabpanel"
         id={`panel-${activeTab}`}
       >
-        {activeTab === "nitaqat" && (
-          <NitaqatCalculator t={t.nitaqat} lang={lang} />
-        )}
-        {activeTab === "certificate" && (
-          <CertificateValidator t={t.certificate} lang={lang} />
-        )}
-        {activeTab === "workpermit" && (
-          <WorkPermitCalculator t={t.workpermit} lang={lang} />
-        )}
+        {activeTab === "nitaqat" && <NitaqatCalculator t={t.nitaqat} lang={lang} />}
+        {activeTab === "certificate" && <CertificateValidator t={t.certificate} lang={lang} />}
+        {activeTab === "workpermit" && <WorkPermitCalculator t={t.workpermit} lang={lang} />}
         {activeTab === "isic4" && <Isic4Matcher t={t.isic4} lang={lang} />}
         {activeTab === "vatcalculator" && <VatCalculator t={t.vatcalculator} lang={lang} />}
         {activeTab === "eos" && <EosCalculator t={t.eos} lang={lang} />}
@@ -435,10 +419,7 @@ function NitaqatCalculator({ t, lang }: { t: any; lang: Language }) {
 
         <div className="space-y-4">
           <div className="space-y-1.5 flex flex-col">
-            <label
-              htmlFor="compSize"
-              className="text-sm font-bold text-zinc-700"
-            >
+            <label htmlFor="compSize" className="text-sm font-bold text-zinc-700">
               {t.companySize}
             </label>
             <select
@@ -470,10 +451,7 @@ function NitaqatCalculator({ t, lang }: { t: any; lang: Language }) {
             />
           </div>
           <div className="space-y-1.5 flex flex-col">
-            <label
-              htmlFor="saudiEmp"
-              className="text-sm font-bold text-zinc-700"
-            >
+            <label htmlFor="saudiEmp" className="text-sm font-bold text-zinc-700">
               {t.saudiEmployees}
             </label>
             <input
@@ -502,14 +480,12 @@ function NitaqatCalculator({ t, lang }: { t: any; lang: Language }) {
             className="space-y-6 relative z-10 w-full"
           >
             <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
-              <span className="text-sm font-bold text-zinc-500">
-                {t.resultText}
-              </span>
+              <span className="text-sm font-bold text-zinc-500">{t.resultText}</span>
               <div
                 className={cn(
                   "flex items-center gap-2 px-4 py-1.5 rounded-xl border border-zinc-200 shadow-sm font-black text-sm",
                   badgeProps.bg,
-                  badgeProps.text,
+                  badgeProps.text
                 )}
               >
                 <badgeProps.icon className="w-5 h-5" />
@@ -519,12 +495,8 @@ function NitaqatCalculator({ t, lang }: { t: any; lang: Language }) {
 
             <div className="mb-4">
               <div className="flex justify-between items-end mb-2">
-                <span className="text-4xl font-black tabular-nums">
-                  {result.score}%
-                </span>
-                <span className="text-xs font-bold text-zinc-400">
-                  {t.localizationRate}
-                </span>
+                <span className="text-4xl font-black tabular-nums">{result.score}%</span>
+                <span className="text-xs font-bold text-zinc-400">{t.localizationRate}</span>
               </div>
               <div
                 className="w-full h-3 bg-zinc-200 rounded-full overflow-hidden"
@@ -534,10 +506,7 @@ function NitaqatCalculator({ t, lang }: { t: any; lang: Language }) {
                 aria-valuemax={100}
               >
                 <div
-                  className={cn(
-                    "h-full transition-all duration-1000",
-                    badgeProps.barBg,
-                  )}
+                  className={cn("h-full transition-all duration-1000", badgeProps.barBg)}
                   style={{ width: `${Math.min(result.score, 100)}%` }}
                 />
               </div>
@@ -560,13 +529,8 @@ function NitaqatCalculator({ t, lang }: { t: any; lang: Language }) {
           </motion.div>
         ) : (
           <div className="text-center text-zinc-400">
-            <Calculator
-              className="w-12 h-12 mx-auto mb-3 opacity-20"
-              aria-hidden="true"
-            />
-            <p className="font-bold text-sm max-w-[200px] mx-auto">
-              {t.emptyState}
-            </p>
+            <Calculator className="w-12 h-12 mx-auto mb-3 opacity-20" aria-hidden="true" />
+            <p className="font-bold text-sm max-w-[200px] mx-auto">{t.emptyState}</p>
           </div>
         )}
       </div>
@@ -609,7 +573,11 @@ function CertificateValidator({ t, lang }: { t: any; lang: Language }) {
       const res = await fetch("/api/certificate/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ certificateNumber: certId, companyRegistrationNumber: crNumber, province }),
+        body: JSON.stringify({
+          certificateNumber: certId,
+          companyRegistrationNumber: crNumber,
+          province,
+        }),
       });
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
@@ -632,47 +600,53 @@ function CertificateValidator({ t, lang }: { t: any; lang: Language }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
-           <label className="text-xs font-bold text-zinc-500 mb-1.5 block" htmlFor="certId">{t.placeholder}</label>
-           <input
-             id="certId"
-             type="text"
-             aria-label="Certificate number input"
-             role="textbox"
-             placeholder={t.placeholder}
-             value={certId}
-             onChange={(e) => setCertId(e.target.value)}
-             onKeyDown={(e) => e.key === "Enter" && validate()}
-             className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-primary/20 outline-none text-center text-lg tracking-widest"
-           />
+          <label className="text-xs font-bold text-zinc-500 mb-1.5 block" htmlFor="certId">
+            {t.placeholder}
+          </label>
+          <input
+            id="certId"
+            type="text"
+            aria-label="Certificate number input"
+            role="textbox"
+            placeholder={t.placeholder}
+            value={certId}
+            onChange={(e) => setCertId(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && validate()}
+            className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-primary/20 outline-none text-center text-lg tracking-widest"
+          />
         </div>
         <div>
-           <label className="text-xs font-bold text-zinc-500 mb-1.5 block" htmlFor="crNumber">{t.crNumber}</label>
-           <input
-             id="crNumber"
-             type="text"
-             aria-label={t.crNumber}
-             role="textbox"
-             placeholder={t.crPlaceholder}
-             value={crNumber}
-             onChange={(e) => setCrNumber(e.target.value)}
-             className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-primary/20 outline-none text-center tracking-widest"
-           />
+          <label className="text-xs font-bold text-zinc-500 mb-1.5 block" htmlFor="crNumber">
+            {t.crNumber}
+          </label>
+          <input
+            id="crNumber"
+            type="text"
+            aria-label={t.crNumber}
+            role="textbox"
+            placeholder={t.crPlaceholder}
+            value={crNumber}
+            onChange={(e) => setCrNumber(e.target.value)}
+            className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-primary/20 outline-none text-center tracking-widest"
+          />
         </div>
         <div>
-           <label className="text-xs font-bold text-zinc-500 mb-1.5 block" htmlFor="province">{t.province}</label>
-           <input
-             id="province"
-             type="text"
-             aria-label={t.province}
-             role="textbox"
-             placeholder={t.province}
-             value={province}
-             onChange={(e) => setProvince(e.target.value)}
-             className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-primary/20 outline-none text-center"
-           />
+          <label className="text-xs font-bold text-zinc-500 mb-1.5 block" htmlFor="province">
+            {t.province}
+          </label>
+          <input
+            id="province"
+            type="text"
+            aria-label={t.province}
+            role="textbox"
+            placeholder={t.province}
+            value={province}
+            onChange={(e) => setProvince(e.target.value)}
+            className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-4 py-3 font-bold focus:ring-2 focus:ring-primary/20 outline-none text-center"
+          />
         </div>
       </div>
-      
+
       <div className="flex justify-center mt-6">
         <button
           onClick={validate}
@@ -705,7 +679,7 @@ function CertificateValidator({ t, lang }: { t: any; lang: Language }) {
                   {t.validatedAt}:{" "}
                   <span className="font-mono text-zinc-700 ml-1">
                     {new Date(result.timestamp).toLocaleDateString(
-                      lang === "ar" ? "ar-SA" : "en-US",
+                      lang === "ar" ? "ar-SA" : "en-US"
                     )}
                   </span>
                 </p>
@@ -723,33 +697,25 @@ function CertificateValidator({ t, lang }: { t: any; lang: Language }) {
               <span className="text-zinc-400 block mb-1 text-[10px] uppercase font-bold">
                 {t.companyName}
               </span>
-              <span className="text-zinc-900 font-bold text-base">
-                {result.companyName || "-"}
-              </span>
+              <span className="text-zinc-900 font-bold text-base">{result.companyName || "-"}</span>
             </div>
             <div>
               <span className="text-zinc-400 block mb-1 text-[10px] uppercase font-bold">
                 {t.issuer}
               </span>
-              <span className="text-zinc-900 font-bold">
-                {result.issuer || "-"}
-              </span>
+              <span className="text-zinc-900 font-bold">{result.issuer || "-"}</span>
             </div>
             <div>
               <span className="text-zinc-400 block mb-1 text-[10px] uppercase font-bold">
                 {t.expiry}
               </span>
-              <span className="text-zinc-900 font-bold font-mono">
-                {result.expiryDate || "-"}
-              </span>
+              <span className="text-zinc-900 font-bold font-mono">{result.expiryDate || "-"}</span>
             </div>
             <div>
               <span className="text-zinc-400 block mb-1 text-[10px] uppercase font-bold">
                 {t.cpraNumber}
               </span>
-              <span className="text-zinc-900 font-bold font-mono">
-                {result.cpraNumber || "-"}
-              </span>
+              <span className="text-zinc-900 font-bold font-mono">{result.cpraNumber || "-"}</span>
             </div>
             <div>
               <span className="text-zinc-400 block mb-1 text-[10px] uppercase font-bold">
@@ -760,20 +726,18 @@ function CertificateValidator({ t, lang }: { t: any; lang: Language }) {
               </span>
             </div>
             <div>
-               <span className="text-zinc-400 block mb-1 text-[10px] uppercase font-bold">
-                 {t.province}
-               </span>
-               <span className="text-zinc-900 font-bold">
-                 {result.province || "-"}
-               </span>
+              <span className="text-zinc-400 block mb-1 text-[10px] uppercase font-bold">
+                {t.province}
+              </span>
+              <span className="text-zinc-900 font-bold">{result.province || "-"}</span>
             </div>
           </div>
-          
+
           <div className="pt-4 border-t border-zinc-200 mt-2 flex justify-between items-center">
             <div className="bg-purple-100 text-purple-700 px-3 py-1 rounded text-xs font-bold font-mono">
               AUDIT LOG SAVED: {result.auditId}
             </div>
-            <button 
+            <button
               onClick={() => setShowLogs(!showLogs)}
               className="text-xs font-bold text-blue-600 hover:text-blue-700 underline"
             >
@@ -791,29 +755,57 @@ function CertificateValidator({ t, lang }: { t: any; lang: Language }) {
               <p className="text-sm font-medium text-zinc-500">No logs found.</p>
             ) : (
               logs.map((log) => (
-                <div key={log.id} className="bg-white border border-zinc-100 p-4 rounded-xl shadow-sm text-sm">
+                <div
+                  key={log.id}
+                  className="bg-white border border-zinc-100 p-4 rounded-xl shadow-sm text-sm"
+                >
                   <div className="flex justify-between items-start mb-2">
-                    <span className="font-mono font-bold text-xs text-zinc-500">{new Date(log.timestamp).toLocaleString()}</span>
-                    <span className={cn("px-2 py-0.5 rounded text-xs font-bold", log.result.valid ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700")}>
+                    <span className="font-mono font-bold text-xs text-zinc-500">
+                      {new Date(log.timestamp).toLocaleString()}
+                    </span>
+                    <span
+                      className={cn(
+                        "px-2 py-0.5 rounded text-xs font-bold",
+                        log.result.valid
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-rose-100 text-rose-700"
+                      )}
+                    >
                       {log.result.valid ? "VALID" : "INVALID"}
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 mt-3">
                     <div>
-                      <span className="text-[10px] uppercase font-bold text-zinc-400 block">Certificate</span>
-                      <span className="font-bold text-zinc-800">{log.payload.certificateNumber || "-"}</span>
+                      <span className="text-[10px] uppercase font-bold text-zinc-400 block">
+                        Certificate
+                      </span>
+                      <span className="font-bold text-zinc-800">
+                        {log.payload.certificateNumber || "-"}
+                      </span>
                     </div>
                     <div>
-                      <span className="text-[10px] uppercase font-bold text-zinc-400 block">CR Number</span>
-                      <span className="font-bold text-zinc-800">{log.payload.companyRegistrationNumber || "-"}</span>
+                      <span className="text-[10px] uppercase font-bold text-zinc-400 block">
+                        CR Number
+                      </span>
+                      <span className="font-bold text-zinc-800">
+                        {log.payload.companyRegistrationNumber || "-"}
+                      </span>
                     </div>
                     <div className="col-span-2">
-                      <span className="text-[10px] uppercase font-bold text-zinc-400 block">Company</span>
-                      <span className="font-bold text-zinc-800">{log.result.companyName || "-"} - {log.payload.province || "Riyadh"}</span>
+                      <span className="text-[10px] uppercase font-bold text-zinc-400 block">
+                        Company
+                      </span>
+                      <span className="font-bold text-zinc-800">
+                        {log.result.companyName || "-"} - {log.payload.province || "Riyadh"}
+                      </span>
                     </div>
                     <div className="col-span-2">
-                      <span className="text-[10px] uppercase font-bold text-zinc-400 block">Issuer Details</span>
-                      <span className="text-zinc-600 text-xs">{log.result.issuer} (Audit: {log.result.auditId})</span>
+                      <span className="text-[10px] uppercase font-bold text-zinc-400 block">
+                        Issuer Details
+                      </span>
+                      <span className="text-zinc-600 text-xs">
+                        {log.result.issuer} (Audit: {log.result.auditId})
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -864,10 +856,7 @@ function WorkPermitCalculator({ t, lang }: { t: any; lang: Language }) {
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col">
-              <label
-                htmlFor="industry"
-                className="text-xs font-bold text-zinc-500 mb-1.5"
-              >
+              <label htmlFor="industry" className="text-xs font-bold text-zinc-500 mb-1.5">
                 {t.industry}
               </label>
               <select
@@ -883,7 +872,7 @@ function WorkPermitCalculator({ t, lang }: { t: any; lang: Language }) {
                 <option value="agricultural">{t.industryAgri}</option>
               </select>
             </div>
-            
+
             <div className="flex flex-col">
               <label htmlFor="durationYears" className="text-xs font-bold text-zinc-500 mb-1.5">
                 {t.duration}
@@ -901,12 +890,9 @@ function WorkPermitCalculator({ t, lang }: { t: any; lang: Language }) {
               </select>
             </div>
           </div>
-          
+
           <div className="flex flex-col">
-            <label
-              htmlFor="wpTotEmp"
-              className="text-xs font-bold text-zinc-500 mb-1.5"
-            >
+            <label htmlFor="wpTotEmp" className="text-xs font-bold text-zinc-500 mb-1.5">
               {t.totalEmployees}
             </label>
             <input
@@ -921,10 +907,7 @@ function WorkPermitCalculator({ t, lang }: { t: any; lang: Language }) {
             />
           </div>
           <div className="flex flex-col">
-            <label
-              htmlFor="wpExpats"
-              className="text-xs font-bold text-zinc-500 mb-1.5"
-            >
+            <label htmlFor="wpExpats" className="text-xs font-bold text-zinc-500 mb-1.5">
               {t.expats}
             </label>
             <input
@@ -975,12 +958,15 @@ function WorkPermitCalculator({ t, lang }: { t: any; lang: Language }) {
               <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
               <span className="text-xs font-bold text-zinc-400 mt-2 relative z-10 flex items-center gap-2">
                 {durationYears > 1 ? (
-                   <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[10px] uppercase font-bold">{durationYears} Years</span>
+                  <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-[10px] uppercase font-bold">
+                    {durationYears} Years
+                  </span>
                 ) : null}
                 {t.totalAnnual}
               </span>
               <span className="text-4xl font-black tracking-tight relative z-10 tabular-nums">
-                {result.totalFees.toLocaleString()} <span className="text-sm text-zinc-500">{t.currency}</span>
+                {result.totalFees.toLocaleString()}{" "}
+                <span className="text-sm text-zinc-500">{t.currency}</span>
               </span>
             </div>
 
@@ -1002,13 +988,15 @@ function WorkPermitCalculator({ t, lang }: { t: any; lang: Language }) {
                 </span>
               </div>
               <div className="p-4 border border-zinc-100 rounded-xl bg-zinc-50 flex flex-col items-center justify-center text-center">
-                 <span className="text-[10px] uppercase font-bold text-zinc-500 mb-2">
-                   {t.baseFee}
-                 </span>
-                 <span className="text-lg font-black text-zinc-900 tabular-nums">
-                   {result.baseFee.toLocaleString()}
-                   <span className="text-[10px] text-zinc-400 block -mt-1 font-medium">{t.currency}</span>
-                 </span>
+                <span className="text-[10px] uppercase font-bold text-zinc-500 mb-2">
+                  {t.baseFee}
+                </span>
+                <span className="text-lg font-black text-zinc-900 tabular-nums">
+                  {result.baseFee.toLocaleString()}
+                  <span className="text-[10px] text-zinc-400 block -mt-1 font-medium">
+                    {t.currency}
+                  </span>
+                </span>
               </div>
               <div className="p-4 border border-zinc-100 rounded-xl bg-zinc-50 flex flex-col items-center justify-center text-center">
                 <span className="text-[10px] uppercase font-bold text-zinc-500 mb-2">
@@ -1016,7 +1004,9 @@ function WorkPermitCalculator({ t, lang }: { t: any; lang: Language }) {
                 </span>
                 <span className="text-lg font-black text-zinc-900 tabular-nums">
                   {Math.round(result.totalFees / (12 * durationYears)).toLocaleString()}
-                  <span className="text-[10px] text-zinc-400 block -mt-1 font-medium">{t.currency}</span>
+                  <span className="text-[10px] text-zinc-400 block -mt-1 font-medium">
+                    {t.currency}
+                  </span>
                 </span>
               </div>
             </div>
@@ -1024,14 +1014,9 @@ function WorkPermitCalculator({ t, lang }: { t: any; lang: Language }) {
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-zinc-300 gap-4 min-h-[300px]">
             <div className="w-20 h-20 rounded-full bg-zinc-50 flex items-center justify-center border border-zinc-100">
-              <Briefcase
-                className="w-10 h-10 text-zinc-300"
-                aria-hidden="true"
-              />
+              <Briefcase className="w-10 h-10 text-zinc-300" aria-hidden="true" />
             </div>
-            <p className="text-sm font-bold max-w-[200px] text-center text-zinc-400">
-              {t.results}
-            </p>
+            <p className="text-sm font-bold max-w-[200px] text-center text-zinc-400">{t.results}</p>
           </div>
         )}
       </div>
@@ -1143,10 +1128,7 @@ function Isic4Matcher({ t, lang }: { t: any; lang: Language }) {
               ))}
             </motion.div>
           ) : query && !loading ? (
-            <motion.div
-              key="no-results"
-              className="text-center py-10 text-zinc-500 font-bold"
-            >
+            <motion.div key="no-results" className="text-center py-10 text-zinc-500 font-bold">
               لم يتم العثور على نتائج. جرب كلمات مفتاحية أخرى.
             </motion.div>
           ) : (
@@ -1158,19 +1140,25 @@ function Isic4Matcher({ t, lang }: { t: any; lang: Language }) {
   );
 }
 
-const ExpandableIsic4Result: React.FC<{ result: any; t: any; lang: Language }> = ({ result, t, lang }) => {
+const ExpandableIsic4Result: React.FC<{ result: any; t: any; lang: Language }> = ({
+  result,
+  t,
+  lang,
+}) => {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(window.location.origin + window.location.pathname + "?isic=" + result.isicCode);
+    navigator.clipboard.writeText(
+      window.location.origin + window.location.pathname + "?isic=" + result.isicCode
+    );
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div 
+    <div
       className="p-5 border border-zinc-800 rounded-2xl bg-zinc-950 text-zinc-50 flex flex-col shadow-sm transition-all gap-4 cursor-pointer hover:border-zinc-700"
       onClick={() => setExpanded(!expanded)}
       role="button"
@@ -1179,41 +1167,54 @@ const ExpandableIsic4Result: React.FC<{ result: any; t: any; lang: Language }> =
     >
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex-1">
-          <h4 className="font-black text-zinc-100 text-base mb-1.5">{result.activityDescription}</h4>
+          <h4 className="font-black text-zinc-100 text-base mb-1.5">
+            {result.activityDescription}
+          </h4>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-bold border border-zinc-700 shadow-sm">ISIC4: {result.isicCode}</span>
-            <p className="text-[10px] text-zinc-500 font-medium hidden sm:block">• {t.source || 'Based on National Classification Guide'}</p>
+            <span className="font-mono text-xs bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-bold border border-zinc-700 shadow-sm">
+              ISIC4: {result.isicCode}
+            </span>
+            <p className="text-[10px] text-zinc-500 font-medium hidden sm:block">
+              • {t.source || "Based on National Classification Guide"}
+            </p>
           </div>
         </div>
         <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-emerald-950/50 text-emerald-400 sm:w-24 border border-emerald-900/50 self-start sm:self-auto w-full sm:w-auto transition-transform">
-           <span className="text-xl font-black">{result.confidence}%</span>
-           <span className="text-[9px] font-black uppercase tracking-widest">{t.matchScore || 'Match'}</span>
+          <span className="text-xl font-black">{result.confidence}%</span>
+          <span className="text-[9px] font-black uppercase tracking-widest">
+            {t.matchScore || "Match"}
+          </span>
         </div>
       </div>
 
       <AnimatePresence>
         {expanded && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }} 
-            animate={{ height: "auto", opacity: 1 }} 
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
             <div className="border-t border-zinc-800 pt-4 mt-2 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
               <p className="text-sm text-zinc-400">
-                Detailed matching data derived from local taxonomy. This category is fully compliant with external reporting systems.
+                Detailed matching data derived from local taxonomy. This category is fully compliant
+                with external reporting systems.
               </p>
               <div className="flex items-center gap-3 w-full sm:w-auto">
-                <button 
+                <button
                   onClick={handleShare}
                   aria-label="Share this result"
                   className="flex-1 sm:flex-none px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-xs font-bold transition-colors flex justify-center items-center gap-2 border border-zinc-700"
                 >
-                  {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <Download className="w-4 h-4" />}
-                  {copied ? 'Copied' : 'Share'}
+                  {copied ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                  {copied ? "Copied" : "Share"}
                 </button>
-                <a 
-                  href="#/details" 
+                <a
+                  href="#/details"
                   onClick={(e) => e.stopPropagation()}
                   className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-bold transition-colors flex justify-center items-center gap-2 text-white"
                 >
@@ -1226,7 +1227,7 @@ const ExpandableIsic4Result: React.FC<{ result: any; t: any; lang: Language }> =
       </AnimatePresence>
     </div>
   );
-}
+};
 
 // 5. VAT Calculator (ZATCA Compliant)
 function VatCalculator({ t, lang }: { t: any; lang: Language }) {
@@ -1247,7 +1248,7 @@ function VatCalculator({ t, lang }: { t: any; lang: Language }) {
       total = preTax + vatAmt;
     } else {
       total = parsedAmount;
-      preTax = total / (1 + (taxRate / 100));
+      preTax = total / (1 + taxRate / 100);
       vatAmt = total - preTax;
     }
 
@@ -1362,7 +1363,7 @@ function VatCalculator({ t, lang }: { t: any; lang: Language }) {
               {results.preTax}
             </span>
           </div>
-          
+
           <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-zinc-100 shadow-sm">
             <span className="text-sm font-bold text-zinc-500">{t.vatAmount}</span>
             <span className="text-xl font-black text-blue-600 tabular-nums font-mono">
@@ -1371,7 +1372,9 @@ function VatCalculator({ t, lang }: { t: any; lang: Language }) {
           </div>
 
           <div className="flex justify-between items-center bg-zinc-900 p-6 rounded-2xl border border-black shadow-lg mt-2 text-white">
-            <span className="text-sm font-black uppercase tracking-widest opacity-80">{t.totalAmount}</span>
+            <span className="text-sm font-black uppercase tracking-widest opacity-80">
+              {t.totalAmount}
+            </span>
             <span className="text-3xl font-black tabular-nums tracking-tight">
               {results.totalAmount}
             </span>
@@ -1408,7 +1411,7 @@ function EosCalculator({ t, lang }: { t: any; lang: Language }) {
     // 50% for first 5 years, 100% for subsequent years
     const firstPeriod = Math.min(y, 5);
     const secondPeriod = Math.max(0, y - 5);
-    const baseAward = (firstPeriod * 0.5 * s) + (secondPeriod * 1.0 * s);
+    const baseAward = firstPeriod * 0.5 * s + secondPeriod * 1.0 * s;
 
     let deductionPercent = 0;
 
@@ -1428,9 +1431,15 @@ function EosCalculator({ t, lang }: { t: any; lang: Language }) {
     const finalAward = baseAward * (entitlementPercent / 100);
 
     setResults({
-      baseAward: baseAward.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      baseAward: baseAward.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
       entitlementPercent: entitlementPercent.toFixed(2),
-      finalAward: finalAward.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      finalAward: finalAward.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
     });
   };
 
@@ -1446,7 +1455,12 @@ function EosCalculator({ t, lang }: { t: any; lang: Language }) {
             {t.salary}
           </label>
           <div className="relative">
-            <span className={cn("absolute inset-y-0 flex items-center text-zinc-400 font-bold select-none text-xs", lang === "ar" ? "right-4" : "left-4")}>
+            <span
+              className={cn(
+                "absolute inset-y-0 flex items-center text-zinc-400 font-bold select-none text-xs",
+                lang === "ar" ? "right-4" : "left-4"
+              )}
+            >
               {t.currency}
             </span>
             <input
@@ -1480,34 +1494,32 @@ function EosCalculator({ t, lang }: { t: any; lang: Language }) {
         </div>
 
         <div className="space-y-4">
-          <label className="block text-sm font-black text-zinc-900">
-            {t.endReason}
-          </label>
+          <label className="block text-sm font-black text-zinc-900">{t.endReason}</label>
           <div className="grid grid-cols-2 gap-3">
-             <button
-                type="button"
-                onClick={() => setEndReason("termination")}
-                className={cn(
-                  "px-4 py-3 rounded-xl text-xs font-bold border transition-all text-center",
-                  endReason === "termination"
-                    ? "bg-zinc-900 text-white border-zinc-900 shadow-md"
-                    : "bg-white text-zinc-500 border-zinc-200 hover:bg-zinc-50"
-                )}
-              >
-                {t.termination}
-              </button>
-              <button
-                type="button"
-                onClick={() => setEndReason("resignation")}
-                className={cn(
-                  "px-4 py-3 rounded-xl text-xs font-bold border transition-all text-center",
-                  endReason === "resignation"
-                    ? "bg-zinc-900 text-white border-zinc-900 shadow-md"
-                    : "bg-white text-zinc-500 border-zinc-200 hover:bg-zinc-50"
-                )}
-              >
-                {t.resignation}
-              </button>
+            <button
+              type="button"
+              onClick={() => setEndReason("termination")}
+              className={cn(
+                "px-4 py-3 rounded-xl text-xs font-bold border transition-all text-center",
+                endReason === "termination"
+                  ? "bg-zinc-900 text-white border-zinc-900 shadow-md"
+                  : "bg-white text-zinc-500 border-zinc-200 hover:bg-zinc-50"
+              )}
+            >
+              {t.termination}
+            </button>
+            <button
+              type="button"
+              onClick={() => setEndReason("resignation")}
+              className={cn(
+                "px-4 py-3 rounded-xl text-xs font-bold border transition-all text-center",
+                endReason === "resignation"
+                  ? "bg-zinc-900 text-white border-zinc-900 shadow-md"
+                  : "bg-white text-zinc-500 border-zinc-200 hover:bg-zinc-50"
+              )}
+            >
+              {t.resignation}
+            </button>
           </div>
         </div>
       </div>
@@ -1526,7 +1538,7 @@ function EosCalculator({ t, lang }: { t: any; lang: Language }) {
                 {results.baseAward}
               </span>
             </div>
-            
+
             <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-zinc-100 shadow-sm">
               <span className="text-sm font-bold text-zinc-500">{t.deduction}</span>
               <span className="text-xl font-black text-blue-600 tabular-nums font-mono">
@@ -1535,17 +1547,21 @@ function EosCalculator({ t, lang }: { t: any; lang: Language }) {
             </div>
 
             <div className="flex justify-between items-center bg-emerald-900 p-6 rounded-2xl border border-emerald-950 shadow-lg mt-2 text-white">
-              <span className="text-sm font-black uppercase tracking-widest opacity-80">{t.total}</span>
+              <span className="text-sm font-black uppercase tracking-widest opacity-80">
+                {t.total}
+              </span>
               <span className="text-3xl font-black tabular-nums tracking-tight">
                 {results.finalAward}
               </span>
             </div>
           </div>
         ) : (
-           <div className="flex flex-col items-center justify-center py-12 text-zinc-400">
-             <Calculator className="w-12 h-12 mb-4 opacity-20" />
-             <p className="font-medium text-sm text-center">أدخل بيانات الراتب والمدة لعرض النتيجة</p>
-           </div>
+          <div className="flex flex-col items-center justify-center py-12 text-zinc-400">
+            <Calculator className="w-12 h-12 mb-4 opacity-20" />
+            <p className="font-medium text-sm text-center">
+              أدخل بيانات الراتب والمدة لعرض النتيجة
+            </p>
+          </div>
         )}
 
         <div className="bg-blue-50 text-blue-800 border border-blue-200 p-4 rounded-xl flex items-start gap-3 mt-auto">
@@ -1556,4 +1572,3 @@ function EosCalculator({ t, lang }: { t: any; lang: Language }) {
     </div>
   );
 }
-

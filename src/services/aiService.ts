@@ -1,9 +1,8 @@
-
 import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-export async function processBusinessCommand(command: string, language: string = 'ar') {
+export async function processBusinessCommand(command: string, language: string = "ar") {
   try {
     // 1. Fetch real context from backend
     let contextData = null;
@@ -17,7 +16,7 @@ export async function processBusinessCommand(command: string, language: string =
     }
 
     // 2. Prepare prompt with real data
-    const contextStr = contextData 
+    const contextStr = contextData
       ? `User Context: Business: ${contextData.companyName}, City: ${contextData.city}. 
          Stats: ${contextData.leads} leads, ${contextData.invoices} invoices, ${contextData.employees} employees.`
       : "User Context: Local environment, no DB stats available.";
@@ -28,12 +27,12 @@ export async function processBusinessCommand(command: string, language: string =
         model: "gemini-3.5-flash",
         contents: command,
         config: {
-          systemInstruction: `You are the core AI operator for Mudarij OS (مدارج), a ${language === 'ar' ? 'Arabic' : 'English'} Business Operating System for GCC SMEs.
+          systemInstruction: `You are the core AI operator for Mudarij OS (مدارج), a ${language === "ar" ? "Arabic" : "English"} Business Operating System for GCC SMEs.
           ${contextStr}
           Your goal is to parse user commands and suggest actions based on their REAL data above.
           
           Available modules: CRM, Invoicing (VAT GCC), Payroll, Analytics.
-          Respond in a helpful, professional tone in the user's preferred language: ${language === 'ar' ? 'Arabic' : 'English'}. Be concise.`,
+          Respond in a helpful, professional tone in the user's preferred language: ${language === "ar" ? "Arabic" : "English"}. Be concise.`,
         },
       });
     } catch (err: any) {
@@ -42,19 +41,24 @@ export async function processBusinessCommand(command: string, language: string =
         model: "gemini-3.1-flash-lite",
         contents: command,
         config: {
-          systemInstruction: `You are the core AI operator for Mudarij OS (مدارج), a ${language === 'ar' ? 'Arabic' : 'English'} Business Operating System for GCC SMEs.
+          systemInstruction: `You are the core AI operator for Mudarij OS (مدارج), a ${language === "ar" ? "Arabic" : "English"} Business Operating System for GCC SMEs.
           ${contextStr}
           Your goal is to parse user commands and suggest actions based on their REAL data above.
           
           Available modules: CRM, Invoicing (VAT GCC), Payroll, Analytics.
-          Respond in a helpful, professional tone in the user's preferred language: ${language === 'ar' ? 'Arabic' : 'English'}. Be concise.`,
+          Respond in a helpful, professional tone in the user's preferred language: ${language === "ar" ? "Arabic" : "English"}. Be concise.`,
         },
       });
     }
-    
-    return response.text || (language === 'ar' ? "لم أتمكن من معالجة الطلب." : "I could not process the request.");
+
+    return (
+      response.text ||
+      (language === "ar" ? "لم أتمكن من معالجة الطلب." : "I could not process the request.")
+    );
   } catch (error) {
     console.error("AI Error:", error);
-    return language === 'ar' ? "عذراً، حدث خطأ في معالجة طلبك." : "Sorry, an error occurred while processing your request.";
+    return language === "ar"
+      ? "عذراً، حدث خطأ في معالجة طلبك."
+      : "Sorry, an error occurred while processing your request.";
   }
 }

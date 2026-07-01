@@ -1,8 +1,20 @@
 import React, { useState } from "react";
-import { 
-  Truck, ArrowUpRight, ArrowDownLeft, Search, Filter, Plus, FileText,
-  CheckCircle2, AlertTriangle, Eye, ShoppingCart, Users, Play, ShieldAlert,
-  ClipboardList
+import {
+  Truck,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Search,
+  Filter,
+  Plus,
+  FileText,
+  CheckCircle2,
+  AlertTriangle,
+  Eye,
+  ShoppingCart,
+  Users,
+  Play,
+  ShieldAlert,
+  ClipboardList,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -15,21 +27,55 @@ interface ReceivingFulfillmentProps {
 
 // Initial Purchase Orders List
 const INITIAL_PURCHASES = [
-  { id: "PO-26102", supplier: "مجموعة الرياض للتأثيث", orderDate: "2026-06-15", expectedDate: "2026-06-30", items: [{ itemId: "TAB-101", qty: 50, costPrice: 150 }], totalAmount: 7500, targetWarehouseId: "Main", status: "Pending" },
-  { id: "PO-26103", supplier: "مجموعة الرياض للتأثيث", orderDate: "2026-06-10", expectedDate: "2026-06-25", items: [{ itemId: "CHR-202", qty: 30, costPrice: 120 }], totalAmount: 3600, targetWarehouseId: "Riyadh", status: "Received" }
+  {
+    id: "PO-26102",
+    supplier: "مجموعة الرياض للتأثيث",
+    orderDate: "2026-06-15",
+    expectedDate: "2026-06-30",
+    items: [{ itemId: "TAB-101", qty: 50, costPrice: 150 }],
+    totalAmount: 7500,
+    targetWarehouseId: "Main",
+    status: "Pending",
+  },
+  {
+    id: "PO-26103",
+    supplier: "مجموعة الرياض للتأثيث",
+    orderDate: "2026-06-10",
+    expectedDate: "2026-06-25",
+    items: [{ itemId: "CHR-202", qty: 30, costPrice: 120 }],
+    totalAmount: 3600,
+    targetWarehouseId: "Riyadh",
+    status: "Received",
+  },
 ];
 
 // Initial Sales Orders List
 const INITIAL_SALES = [
-  { id: "SO-88301", customer: "الشركة الوطنية للحلول", orderDate: "2026-06-20", targetWarehouseId: "Main", items: [{ itemId: "TAB-101", qty: 15, salePrice: 320 }], totalAmount: 4800, status: "Pending" },
-  { id: "SO-88302", customer: "مؤسسة طويق اللوجستية", orderDate: "2026-06-18", targetWarehouseId: "Jeddah", items: [{ itemId: "CHR-202", qty: 8, salePrice: 280 }], totalAmount: 2240, status: "Shipped" }
+  {
+    id: "SO-88301",
+    customer: "الشركة الوطنية للحلول",
+    orderDate: "2026-06-20",
+    targetWarehouseId: "Main",
+    items: [{ itemId: "TAB-101", qty: 15, salePrice: 320 }],
+    totalAmount: 4800,
+    status: "Pending",
+  },
+  {
+    id: "SO-88302",
+    customer: "مؤسسة طويق اللوجستية",
+    orderDate: "2026-06-18",
+    targetWarehouseId: "Jeddah",
+    items: [{ itemId: "CHR-202", qty: 8, salePrice: 280 }],
+    totalAmount: 2240,
+    status: "Shipped",
+  },
 ];
 
 export default function ReceivingFulfillment({
   items,
   warehouses,
   onAddAdjustment,
-  onUpdateProduct
+  onUpdateProduct,
 }: ReceivingFulfillmentProps) {
   const [subTab, setSubTab] = useState<"purchases" | "sales">("purchases");
   const [purchases, setPurchases] = useState<any[]>(INITIAL_PURCHASES);
@@ -62,18 +108,18 @@ export default function ReceivingFulfillment({
 
     const qty = Number(newPoQty);
     const cost = Number(newPoCost);
-    const matchingProd = items.find(i => i.id === newPoItem);
+    const matchingProd = items.find((i) => i.id === newPoItem);
     if (!matchingProd) return;
 
     const newPO = {
       id: `PO-${Math.floor(10000 + Math.random() * 90000)}`,
       supplier: newPoSupplier,
-      orderDate: new Date().toISOString().split('T')[0],
-      expectedDate: new Date(Date.now() + 10 * 24 * 3600 * 1000).toISOString().split('T')[0], // 10 days out
+      orderDate: new Date().toISOString().split("T")[0],
+      expectedDate: new Date(Date.now() + 10 * 24 * 3600 * 1000).toISOString().split("T")[0], // 10 days out
       items: [{ itemId: newPoItem, qty, costPrice: cost }],
       totalAmount: qty * cost,
       targetWarehouseId: newPoWh,
-      status: "Pending"
+      status: "Pending",
     };
 
     setPurchases([newPO, ...purchases]);
@@ -92,24 +138,26 @@ export default function ReceivingFulfillment({
 
     const qty = Number(newSoQty);
     const price = Number(newSoPrice);
-    const matchingProd = items.find(i => i.id === newSoItem);
+    const matchingProd = items.find((i) => i.id === newSoItem);
     if (!matchingProd) return;
 
     const newSO = {
       id: `SO-${Math.floor(10000 + Math.random() * 90000)}`,
       customer: newSoCustomer,
-      orderDate: new Date().toISOString().split('T')[0],
+      orderDate: new Date().toISOString().split("T")[0],
       targetWarehouseId: newSoWh,
       items: [{ itemId: newSoItem, qty, salePrice: price }],
       totalAmount: qty * price,
-      status: "Pending"
+      status: "Pending",
     };
 
     setSales([newSO, ...sales]);
     setNewSoQty("");
     setNewSoPrice("");
     setNewSoCustomer("");
-    toast.success(`تم تسجيل طلب المبيعات للعميل (${newSO.id}) وبانتظار تأكيد الشحن والتفريغ المستودعي 🚛`);
+    toast.success(
+      `تم تسجيل طلب المبيعات للعميل (${newSO.id}) وبانتظار تأكيد الشحن والتفريغ المستودعي 🚛`
+    );
   };
 
   // Receive PO (Adds ordered quantity to stock)
@@ -119,7 +167,7 @@ export default function ReceivingFulfillment({
     try {
       // For each item in the PO, update warehouseQuantities
       po.items.forEach(async (poItem: any) => {
-        const prod = items.find(i => i.id === poItem.itemId || i.sku === poItem.itemId);
+        const prod = items.find((i) => i.id === poItem.itemId || i.sku === poItem.itemId);
         if (prod) {
           const currentWhStock = Number(prod.warehouseQuantities?.[po.targetWarehouseId] || 0);
           const updatedWhQuantities = { ...prod.warehouseQuantities };
@@ -138,14 +186,14 @@ export default function ReceivingFulfillment({
             notes: `استلام بضائع موردة ضمن أمر الشراء ${po.id}. تفتيش مطابق للمواصفات.`,
             glAccount: "120101",
             costCenter: "CC-101",
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
           };
           await onAddAdjustment(adjLog);
         }
       });
 
       // Update PO Status in state
-      setPurchases(purchases.map(p => p.id === po.id ? { ...p, status: "Received" } : p));
+      setPurchases(purchases.map((p) => (p.id === po.id ? { ...p, status: "Received" } : p)));
       toast.success(`تم استلام شحنة أمر الشراء ${po.id} وتفريغها في المستودع بنجاح! 📦✅`);
     } catch (err: any) {
       toast.error("حدث خطأ أثناء معالجة الاستلام المستودعي");
@@ -162,7 +210,7 @@ export default function ReceivingFulfillment({
 
       // Check stock sufficiency in target warehouse
       so.items.forEach((soItem: any) => {
-        const prod = items.find(i => i.id === soItem.itemId || i.sku === soItem.itemId);
+        const prod = items.find((i) => i.id === soItem.itemId || i.sku === soItem.itemId);
         if (!prod) {
           stockError = true;
           return;
@@ -175,13 +223,15 @@ export default function ReceivingFulfillment({
       });
 
       if (stockError) {
-        toast.error(`نقص حاد في المخزون: لا يمكن تأكيد شحن البضائع للعميل بسبب عدم كفاية الأرصدة! تفاصيل النقص: ${shortfalls.join(", ")} ⚠️`);
+        toast.error(
+          `نقص حاد في المخزون: لا يمكن تأكيد شحن البضائع للعميل بسبب عدم كفاية الأرصدة! تفاصيل النقص: ${shortfalls.join(", ")} ⚠️`
+        );
         return;
       }
 
       // If all products have enough stock, deplete and ship
       so.items.forEach(async (soItem: any) => {
-        const prod = items.find(i => i.id === soItem.itemId || i.sku === soItem.itemId);
+        const prod = items.find((i) => i.id === soItem.itemId || i.sku === soItem.itemId);
         if (prod) {
           const currentWhStock = Number(prod.warehouseQuantities?.[so.targetWarehouseId] || 0);
           const updatedWhQuantities = { ...prod.warehouseQuantities };
@@ -200,14 +250,14 @@ export default function ReceivingFulfillment({
             notes: `صرف وتأكيد خروج شحنة مبيعات للعميل بطلب مبيعات ${so.id}.`,
             glAccount: "510102", // Cost of Goods Sold
             costCenter: "CC-101",
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
           };
           await onAddAdjustment(adjLog);
         }
       });
 
       // Update SO Status in state
-      setSales(sales.map(s => s.id === so.id ? { ...s, status: "Shipped" } : s));
+      setSales(sales.map((s) => (s.id === so.id ? { ...s, status: "Shipped" } : s)));
       toast.success(`تم تأكيد الشحن وخصم الكميات من مستودع الصرف بطلب مبيعات ${so.id}! 🚚💨`);
     } catch (err: any) {
       toast.error("حدث خطأ أثناء معالجة تفريغ شحنة المبيعات");
@@ -216,7 +266,6 @@ export default function ReceivingFulfillment({
 
   return (
     <div className="space-y-6">
-      
       {/* Subtab Toggle */}
       <div className="flex border-b border-zinc-200 bg-zinc-50 dark:bg-zinc-800 p-1.5 rounded-2xl border gap-1">
         <button
@@ -236,7 +285,6 @@ export default function ReceivingFulfillment({
       {/* --- SUBTAB 1: PURCHASING (GOODS RECEPTION) --- */}
       {subTab === "purchases" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
-          
           {/* Create Purchase Order Form */}
           <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 border-b pb-2">
@@ -267,8 +315,10 @@ export default function ReceivingFulfillment({
                   className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none cursor-pointer"
                 >
                   <option value="">-- اختر الصنف --</option>
-                  {items.map(i => (
-                    <option key={i.id} value={i.id}>{i.nameAr} ({i.sku})</option>
+                  {items.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {i.nameAr} ({i.sku})
+                    </option>
                   ))}
                 </select>
               </div>
@@ -307,8 +357,10 @@ export default function ReceivingFulfillment({
                   className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none cursor-pointer"
                 >
                   <option value="">-- اختر مستودع الاستقبال --</option>
-                  {warehouses.map(w => (
-                    <option key={w.id} value={w.id}>{w.nameAr}</option>
+                  {warehouses.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.nameAr}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -332,37 +384,64 @@ export default function ReceivingFulfillment({
               </h3>
 
               <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
-                {purchases.map(po => {
-                  const targetWh = warehouses.find(w => w.id === po.targetWarehouseId)?.nameAr || po.targetWarehouseId;
-                  
+                {purchases.map((po) => {
+                  const targetWh =
+                    warehouses.find((w) => w.id === po.targetWarehouseId)?.nameAr ||
+                    po.targetWarehouseId;
+
                   return (
-                    <div key={po.id} className="p-4 border border-zinc-50 dark:border-zinc-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-all duration-300">
+                    <div
+                      key={po.id}
+                      className="p-4 border border-zinc-50 dark:border-zinc-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-all duration-300"
+                    >
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono font-black text-indigo-600">ID: {po.id}</span>
-                          <span className={`px-2 py-0.5 rounded text-[9px] font-black ${po.status === "Received" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700 animate-pulse"}`}>
+                          <span className="text-[10px] font-mono font-black text-indigo-600">
+                            ID: {po.id}
+                          </span>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[9px] font-black ${po.status === "Received" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700 animate-pulse"}`}
+                          >
                             {po.status === "Received" ? "مكتمل ومفرغ" : "في انتظار التوريد"}
                           </span>
                         </div>
-                        <h4 className="font-black text-zinc-900 dark:text-zinc-100 mt-1">المورد: {po.supplier}</h4>
-                        
+                        <h4 className="font-black text-zinc-900 dark:text-zinc-100 mt-1">
+                          المورد: {po.supplier}
+                        </h4>
+
                         <div className="space-y-1 mt-2 text-[10px] text-zinc-500 font-bold">
                           {po.items.map((item: any, idx: number) => {
-                            const matchingProd = items.find(i => i.id === item.itemId || i.sku === item.itemId);
+                            const matchingProd = items.find(
+                              (i) => i.id === item.itemId || i.sku === item.itemId
+                            );
                             return (
                               <div key={idx} className="flex gap-2">
-                                <span>الصنف: <strong className="text-zinc-700 dark:text-zinc-300">{matchingProd ? matchingProd.nameAr : "طاولة مكتبية فاخرة"}</strong></span>
+                                <span>
+                                  الصنف:{" "}
+                                  <strong className="text-zinc-700 dark:text-zinc-300">
+                                    {matchingProd ? matchingProd.nameAr : "طاولة مكتبية فاخرة"}
+                                  </strong>
+                                </span>
                                 <span>•</span>
-                                <span>الكمية: <strong className="text-zinc-700 dark:text-zinc-300">{item.qty} حبة</strong></span>
+                                <span>
+                                  الكمية:{" "}
+                                  <strong className="text-zinc-700 dark:text-zinc-300">
+                                    {item.qty} حبة
+                                  </strong>
+                                </span>
                               </div>
                             );
                           })}
-                          <p>المستودع المضيف: <strong className="text-indigo-600">{targetWh}</strong></p>
+                          <p>
+                            المستودع المضيف: <strong className="text-indigo-600">{targetWh}</strong>
+                          </p>
                         </div>
                       </div>
 
                       <div className="text-left font-bold space-y-2">
-                        <span className="text-xs text-indigo-600 font-mono block">إجمالي القيمة: {po.totalAmount} ر.س</span>
+                        <span className="text-xs text-indigo-600 font-mono block">
+                          إجمالي القيمة: {po.totalAmount} ر.س
+                        </span>
                         {po.status === "Pending" && (
                           <button
                             onClick={() => handleReceivePO(po)}
@@ -378,14 +457,12 @@ export default function ReceivingFulfillment({
               </div>
             </div>
           </div>
-
         </div>
       )}
 
       {/* --- SUBTAB 2: SALES SHIPMENTS (FULFILLMENT) --- */}
       {subTab === "sales" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
-          
           {/* Create Sales Order Form */}
           <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 border-b pb-2">
@@ -415,8 +492,10 @@ export default function ReceivingFulfillment({
                   className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none cursor-pointer"
                 >
                   <option value="">-- اختر الصنف --</option>
-                  {items.map(i => (
-                    <option key={i.id} value={i.id}>{i.nameAr} ({i.sku})</option>
+                  {items.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {i.nameAr} ({i.sku})
+                    </option>
                   ))}
                 </select>
               </div>
@@ -455,8 +534,10 @@ export default function ReceivingFulfillment({
                   className="w-full p-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none cursor-pointer"
                 >
                   <option value="">-- اختر مستودع الخروج --</option>
-                  {warehouses.map(w => (
-                    <option key={w.id} value={w.id}>{w.nameAr}</option>
+                  {warehouses.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.nameAr}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -480,37 +561,64 @@ export default function ReceivingFulfillment({
               </h3>
 
               <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
-                {sales.map(so => {
-                  const sourceWh = warehouses.find(w => w.id === so.targetWarehouseId)?.nameAr || so.targetWarehouseId;
-                  
+                {sales.map((so) => {
+                  const sourceWh =
+                    warehouses.find((w) => w.id === so.targetWarehouseId)?.nameAr ||
+                    so.targetWarehouseId;
+
                   return (
-                    <div key={so.id} className="p-4 border border-zinc-50 dark:border-zinc-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-all duration-300">
+                    <div
+                      key={so.id}
+                      className="p-4 border border-zinc-50 dark:border-zinc-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:shadow-md transition-all duration-300"
+                    >
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono font-black text-indigo-600">ID: {so.id}</span>
-                          <span className={`px-2 py-0.5 rounded text-[9px] font-black ${so.status === "Shipped" ? "bg-emerald-50 text-emerald-700" : "bg-zinc-50 text-zinc-600"}`}>
+                          <span className="text-[10px] font-mono font-black text-indigo-600">
+                            ID: {so.id}
+                          </span>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[9px] font-black ${so.status === "Shipped" ? "bg-emerald-50 text-emerald-700" : "bg-zinc-50 text-zinc-600"}`}
+                          >
                             {so.status === "Shipped" ? "تم الشحن والتسليم" : "بانتظار تجهيز الشحنة"}
                           </span>
                         </div>
-                        <h4 className="font-black text-zinc-900 dark:text-zinc-100 mt-1">العميل: {so.customer}</h4>
-                        
+                        <h4 className="font-black text-zinc-900 dark:text-zinc-100 mt-1">
+                          العميل: {so.customer}
+                        </h4>
+
                         <div className="space-y-1 mt-2 text-[10px] text-zinc-500 font-bold">
                           {so.items.map((item: any, idx: number) => {
-                            const matchingProd = items.find(i => i.id === item.itemId || i.sku === item.itemId);
+                            const matchingProd = items.find(
+                              (i) => i.id === item.itemId || i.sku === item.itemId
+                            );
                             return (
                               <div key={idx} className="flex gap-2">
-                                <span>الصنف: <strong className="text-zinc-700 dark:text-zinc-300">{matchingProd ? matchingProd.nameAr : "طاولة مكتبية فاخرة"}</strong></span>
+                                <span>
+                                  الصنف:{" "}
+                                  <strong className="text-zinc-700 dark:text-zinc-300">
+                                    {matchingProd ? matchingProd.nameAr : "طاولة مكتبية فاخرة"}
+                                  </strong>
+                                </span>
                                 <span>•</span>
-                                <span>الكمية المطلوبة: <strong className="text-zinc-700 dark:text-zinc-300">{item.qty} حبة</strong></span>
+                                <span>
+                                  الكمية المطلوبة:{" "}
+                                  <strong className="text-zinc-700 dark:text-zinc-300">
+                                    {item.qty} حبة
+                                  </strong>
+                                </span>
                               </div>
                             );
                           })}
-                          <p>مستودع الصرف: <strong className="text-indigo-600">{sourceWh}</strong></p>
+                          <p>
+                            مستودع الصرف: <strong className="text-indigo-600">{sourceWh}</strong>
+                          </p>
                         </div>
                       </div>
 
                       <div className="text-left font-bold space-y-2">
-                        <span className="text-xs text-indigo-600 font-mono block">قيمة العقد: {so.totalAmount} ر.س</span>
+                        <span className="text-xs text-indigo-600 font-mono block">
+                          قيمة العقد: {so.totalAmount} ر.س
+                        </span>
                         {so.status === "Pending" && (
                           <button
                             onClick={() => handleShipSO(so)}
@@ -526,10 +634,8 @@ export default function ReceivingFulfillment({
               </div>
             </div>
           </div>
-
         </div>
       )}
-
     </div>
   );
 }

@@ -1,17 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { 
-  Plus, Trash2, Edit3, Save, X, ClipboardList, Check, Info, Sparkles, Sliders
+import {
+  Plus,
+  Trash2,
+  Edit3,
+  Save,
+  X,
+  ClipboardList,
+  Check,
+  Info,
+  Sparkles,
+  Sliders,
 } from "lucide-react";
-import { 
-  collection, 
-  query, 
-  where, 
-  onSnapshot, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  serverTimestamp 
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
@@ -21,9 +30,9 @@ interface PayrollTemplate {
   id?: string;
   name: string;
   baseSalary: number;
-  housingType: 'fixed' | 'percent';
+  housingType: "fixed" | "percent";
   housingValue: number;
-  transportType: 'fixed' | 'percent';
+  transportType: "fixed" | "percent";
   transportValue: number;
   gosiSaudiPercent: number;
   gosiNonSaudiPercent: number;
@@ -42,9 +51,9 @@ export default function PayrollTemplates() {
   // Form State
   const [name, setName] = useState("");
   const [baseSalary, setBaseSalary] = useState(5000);
-  const [housingType, setHousingType] = useState<'fixed' | 'percent'>('percent');
+  const [housingType, setHousingType] = useState<"fixed" | "percent">("percent");
   const [housingValue, setHousingValue] = useState(25); // 25% of base salary is standard housing
-  const [transportType, setTransportType] = useState<'fixed' | 'percent'>('fixed');
+  const [transportType, setTransportType] = useState<"fixed" | "percent">("fixed");
   const [transportValue, setTransportValue] = useState(500); // 500 SAR standard transport
   const [gosiSaudiPercent, setGosiSaudiPercent] = useState(10); // Standard employee GOSI
   const [gosiNonSaudiPercent, setGosiNonSaudiPercent] = useState(2); // Standard hazard GOSI for expat
@@ -54,23 +63,24 @@ export default function PayrollTemplates() {
   useEffect(() => {
     if (!user?.uid) return;
 
-    const q = query(
-      collection(db, "payroll_templates"),
-      where("userId", "==", user.uid)
-    );
+    const q = query(collection(db, "payroll_templates"), where("userId", "==", user.uid));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const list: PayrollTemplate[] = [];
-      snapshot.forEach((doc) => {
-        list.push({ id: doc.id, ...doc.data() } as PayrollTemplate);
-      });
-      setTemplates(list);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching templates:", error);
-      toast.error("حدث خطأ أثناء تحميل قوالب مسير الرواتب");
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const list: PayrollTemplate[] = [];
+        snapshot.forEach((doc) => {
+          list.push({ id: doc.id, ...doc.data() } as PayrollTemplate);
+        });
+        setTemplates(list);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching templates:", error);
+        toast.error("حدث خطأ أثناء تحميل قوالب مسير الرواتب");
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
   }, [user]);
@@ -78,9 +88,9 @@ export default function PayrollTemplates() {
   const resetForm = () => {
     setName("");
     setBaseSalary(5000);
-    setHousingType('percent');
+    setHousingType("percent");
     setHousingValue(25);
-    setTransportType('fixed');
+    setTransportType("fixed");
     setTransportValue(500);
     setGosiSaudiPercent(10);
     setGosiNonSaudiPercent(2);
@@ -111,7 +121,7 @@ export default function PayrollTemplates() {
       absentDeductionRate: Number(absentDeductionRate),
       notes,
       userId: user.uid,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     };
 
     try {
@@ -121,7 +131,7 @@ export default function PayrollTemplates() {
       } else {
         await addDoc(collection(db, "payroll_templates"), {
           ...templateData,
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
         });
         toast.success("🎉 تم حفظ قالب الرواتب الجديد بنجاح!");
       }
@@ -161,9 +171,9 @@ export default function PayrollTemplates() {
   const loadSampleTemplate = () => {
     setName("الفئة التشغيلية والعمالة");
     setBaseSalary(3500);
-    setHousingType('fixed');
+    setHousingType("fixed");
     setHousingValue(1000);
-    setTransportType('fixed');
+    setTransportType("fixed");
     setTransportValue(300);
     setGosiSaudiPercent(10);
     setGosiNonSaudiPercent(2);
@@ -182,9 +192,14 @@ export default function PayrollTemplates() {
             <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
               <ClipboardList className="w-5 h-5 text-emerald-400" />
             </div>
-            <h2 className="text-2xl font-black tracking-tight">قوالب مسير الرواتب الذكية (Payroll Templates)</h2>
+            <h2 className="text-2xl font-black tracking-tight">
+              قوالب مسير الرواتب الذكية (Payroll Templates)
+            </h2>
           </div>
-          <p className="text-zinc-400 text-sm font-medium">قم بتعريف قوالب مسبقة لتحديد البدلات (السكن، النقل) ونسب التأمينات الاجتماعية (GOSI) لتسريع إعداد رواتب المجموعات.</p>
+          <p className="text-zinc-400 text-sm font-medium">
+            قم بتعريف قوالب مسبقة لتحديد البدلات (السكن، النقل) ونسب التأمينات الاجتماعية (GOSI)
+            لتسريع إعداد رواتب المجموعات.
+          </p>
         </div>
         {!isEditing && (
           <button
@@ -208,7 +223,7 @@ export default function PayrollTemplates() {
               </h3>
               <div className="flex items-center gap-1.5">
                 {!editingId && (
-                  <button 
+                  <button
                     type="button"
                     onClick={loadSampleTemplate}
                     className="px-2.5 py-1 bg-zinc-100 hover:bg-zinc-200 text-[10px] text-zinc-600 font-bold rounded"
@@ -216,7 +231,10 @@ export default function PayrollTemplates() {
                     نموذج تجريبي
                   </button>
                 )}
-                <button onClick={resetForm} className="text-zinc-400 hover:text-zinc-600 transition">
+                <button
+                  onClick={resetForm}
+                  className="text-zinc-400 hover:text-zinc-600 transition"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -225,8 +243,8 @@ export default function PayrollTemplates() {
             <form onSubmit={handleSave} className="space-y-4 text-xs">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-zinc-500">اسم قالب الرواتب</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="مثال: الإدارة التنفيذية، المهندسين الميدانيين..."
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -237,9 +255,11 @@ export default function PayrollTemplates() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-500">الراتب الأساسي المرجعي (SAR)</label>
-                  <input 
-                    type="number" 
+                  <label className="text-xs font-bold text-zinc-500">
+                    الراتب الأساسي المرجعي (SAR)
+                  </label>
+                  <input
+                    type="number"
                     value={baseSalary}
                     onChange={(e) => setBaseSalary(Number(e.target.value))}
                     className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2.5 font-mono font-bold focus:ring-2 focus:ring-emerald-500/10 outline-none"
@@ -248,8 +268,10 @@ export default function PayrollTemplates() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-500">معدل خصم غياب اليوم الواحد</label>
-                  <select 
+                  <label className="text-xs font-bold text-zinc-500">
+                    معدل خصم غياب اليوم الواحد
+                  </label>
+                  <select
                     value={absentDeductionRate}
                     onChange={(e) => setAbsentDeductionRate(Number(e.target.value))}
                     className="w-full bg-zinc-50 border border-zinc-200 rounded-xl px-3.5 py-2.5 font-bold focus:ring-2 focus:ring-emerald-500/10 outline-none"
@@ -266,31 +288,33 @@ export default function PayrollTemplates() {
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-zinc-700">🏠 بدل السكن المعتمد</span>
                   <div className="flex bg-white rounded-lg p-0.5 border border-zinc-200">
-                    <button 
+                    <button
                       type="button"
-                      onClick={() => setHousingType('percent')}
-                      className={`px-2 py-1 rounded text-[10px] font-bold transition ${housingType === 'percent' ? 'bg-zinc-900 text-white' : 'text-zinc-500'}`}
+                      onClick={() => setHousingType("percent")}
+                      className={`px-2 py-1 rounded text-[10px] font-bold transition ${housingType === "percent" ? "bg-zinc-900 text-white" : "text-zinc-500"}`}
                     >
                       نسبة مئوية (%)
                     </button>
-                    <button 
+                    <button
                       type="button"
-                      onClick={() => setHousingType('fixed')}
-                      className={`px-2 py-1 rounded text-[10px] font-bold transition ${housingType === 'fixed' ? 'bg-zinc-900 text-white' : 'text-zinc-500'}`}
+                      onClick={() => setHousingType("fixed")}
+                      className={`px-2 py-1 rounded text-[10px] font-bold transition ${housingType === "fixed" ? "bg-zinc-900 text-white" : "text-zinc-500"}`}
                     >
                       مبلغ مقطوع (SAR)
                     </button>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={housingValue}
                     onChange={(e) => setHousingValue(Number(e.target.value))}
                     className="bg-white border border-zinc-200 rounded-xl px-3 py-2 w-28 font-mono font-bold focus:outline-none"
                   />
                   <span className="text-zinc-400 font-semibold">
-                    {housingType === 'percent' ? "% من الراتب الأساسي (الافتراضي 25%)" : "ريال سعودي مقطوع"}
+                    {housingType === "percent"
+                      ? "% من الراتب الأساسي (الافتراضي 25%)"
+                      : "ريال سعودي مقطوع"}
                   </span>
                 </div>
               </div>
@@ -300,31 +324,33 @@ export default function PayrollTemplates() {
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-zinc-700">🚗 بدل النقل المعتمد</span>
                   <div className="flex bg-white rounded-lg p-0.5 border border-zinc-200">
-                    <button 
+                    <button
                       type="button"
-                      onClick={() => setTransportType('percent')}
-                      className={`px-2 py-1 rounded text-[10px] font-bold transition ${transportType === 'percent' ? 'bg-zinc-900 text-white' : 'text-zinc-500'}`}
+                      onClick={() => setTransportType("percent")}
+                      className={`px-2 py-1 rounded text-[10px] font-bold transition ${transportType === "percent" ? "bg-zinc-900 text-white" : "text-zinc-500"}`}
                     >
                       نسبة مئوية (%)
                     </button>
-                    <button 
+                    <button
                       type="button"
-                      onClick={() => setTransportType('fixed')}
-                      className={`px-2 py-1 rounded text-[10px] font-bold transition ${transportType === 'fixed' ? 'bg-zinc-900 text-white' : 'text-zinc-500'}`}
+                      onClick={() => setTransportType("fixed")}
+                      className={`px-2 py-1 rounded text-[10px] font-bold transition ${transportType === "fixed" ? "bg-zinc-900 text-white" : "text-zinc-500"}`}
                     >
                       مبلغ مقطوع (SAR)
                     </button>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={transportValue}
                     onChange={(e) => setTransportValue(Number(e.target.value))}
                     className="bg-white border border-zinc-200 rounded-xl px-3 py-2 w-28 font-mono font-bold focus:outline-none"
                   />
                   <span className="text-zinc-400 font-semibold">
-                    {transportType === 'percent' ? "% من الراتب الأساسي" : "ريال سعودي مقطوع (الافتراضي 500)"}
+                    {transportType === "percent"
+                      ? "% من الراتب الأساسي"
+                      : "ريال سعودي مقطوع (الافتراضي 500)"}
                   </span>
                 </div>
               </div>
@@ -332,10 +358,12 @@ export default function PayrollTemplates() {
               {/* GOSI Parameters */}
               <div className="grid grid-cols-2 gap-4 bg-zinc-50 p-4 rounded-2xl border border-zinc-150">
                 <div className="space-y-1">
-                  <span className="font-bold text-zinc-750 block">🛡️ استقطاع التأمينات (السعوديين)</span>
+                  <span className="font-bold text-zinc-750 block">
+                    🛡️ استقطاع التأمينات (السعوديين)
+                  </span>
                   <div className="flex items-center gap-1.5 mt-1">
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       value={gosiSaudiPercent}
                       onChange={(e) => setGosiSaudiPercent(Number(e.target.value))}
                       className="bg-white border border-zinc-200 rounded-xl px-2.5 py-1.5 w-16 font-mono font-bold text-center focus:outline-none"
@@ -345,10 +373,12 @@ export default function PayrollTemplates() {
                 </div>
 
                 <div className="space-y-1">
-                  <span className="font-bold text-zinc-750 block">🛡️ استقطاع التأمينات (الأجانب)</span>
+                  <span className="font-bold text-zinc-750 block">
+                    🛡️ استقطاع التأمينات (الأجانب)
+                  </span>
                   <div className="flex items-center gap-1.5 mt-1">
-                    <input 
-                      type="number" 
+                    <input
+                      type="number"
                       value={gosiNonSaudiPercent}
                       onChange={(e) => setGosiNonSaudiPercent(Number(e.target.value))}
                       className="bg-white border border-zinc-200 rounded-xl px-2.5 py-1.5 w-16 font-mono font-bold text-center focus:outline-none"
@@ -359,8 +389,10 @@ export default function PayrollTemplates() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-zinc-500">ملاحظات توضيحية أو الفئات المستهدفة</label>
-                <textarea 
+                <label className="text-xs font-bold text-zinc-500">
+                  ملاحظات توضيحية أو الفئات المستهدفة
+                </label>
+                <textarea
                   rows={2}
                   placeholder="ملاحظات تظهر للمدقق عند إسناد هذا القالب..."
                   value={notes}
@@ -395,19 +427,26 @@ export default function PayrollTemplates() {
               <h3 className="text-sm font-black text-zinc-800">
                 القوالب المتاحة بالنظام حالياً ({templates.length})
               </h3>
-              <span className="text-[10px] font-bold text-zinc-400 font-mono">DURABLE CLOUD SYNC</span>
+              <span className="text-[10px] font-bold text-zinc-400 font-mono">
+                DURABLE CLOUD SYNC
+              </span>
             </div>
 
             {loading ? (
-              <div className="p-16 text-center text-zinc-400 font-bold text-xs">جاري تحميل القوالب...</div>
+              <div className="p-16 text-center text-zinc-400 font-bold text-xs">
+                جاري تحميل القوالب...
+              </div>
             ) : templates.length === 0 ? (
               <div className="p-16 text-center text-zinc-400 space-y-3">
                 <ClipboardList className="w-8 h-8 text-zinc-300 mx-auto" />
-                <p className="text-xs font-black text-zinc-500">لا توجد قوالب رواتب معرفة حالياً.</p>
-                <p className="text-[10px] text-zinc-400 font-bold max-w-sm mx-auto">
-                  قم بإنشاء قوالب رواتب لتسهيل وتوحيد البدلات وتأمينات GOSI للمجموعات بدلاً من تعبئتها يدوياً لكل موظف.
+                <p className="text-xs font-black text-zinc-500">
+                  لا توجد قوالب رواتب معرفة حالياً.
                 </p>
-                <button 
+                <p className="text-[10px] text-zinc-400 font-bold max-w-sm mx-auto">
+                  قم بإنشاء قوالب رواتب لتسهيل وتوحيد البدلات وتأمينات GOSI للمجموعات بدلاً من
+                  تعبئتها يدوياً لكل موظف.
+                </p>
+                <button
                   onClick={() => setIsEditing(true)}
                   className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white text-[10px] font-black rounded-xl transition cursor-pointer"
                 >
@@ -417,7 +456,7 @@ export default function PayrollTemplates() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {templates.map((tmpl) => (
-                  <div 
+                  <div
                     key={tmpl.id}
                     className="border border-zinc-200 bg-zinc-50/50 hover:bg-zinc-50 hover:shadow-md transition duration-200 rounded-3xl p-5 flex flex-col justify-between space-y-4 relative overflow-hidden"
                   >
@@ -425,17 +464,19 @@ export default function PayrollTemplates() {
                       <div className="flex justify-between items-start">
                         <div className="space-y-1 text-right">
                           <h4 className="text-sm font-black text-zinc-900">{tmpl.name}</h4>
-                          {tmpl.notes && <p className="text-[10px] text-zinc-400 font-bold">{tmpl.notes}</p>}
+                          {tmpl.notes && (
+                            <p className="text-[10px] text-zinc-400 font-bold">{tmpl.notes}</p>
+                          )}
                         </div>
                         <div className="flex items-center gap-1.5 no-print">
-                          <button 
+                          <button
                             onClick={() => handleEdit(tmpl)}
                             className="p-1.5 bg-white border border-zinc-150 hover:border-zinc-300 rounded-lg text-zinc-600 transition"
                             title="تعديل القالب"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
-                          <button 
+                          <button
                             onClick={() => tmpl.id && handleDelete(tmpl.id)}
                             className="p-1.5 bg-white border border-zinc-150 hover:bg-rose-100 hover:border-rose-200 rounded-lg text-rose-500 transition"
                             title="حذف القالب"
@@ -450,18 +491,20 @@ export default function PayrollTemplates() {
                       <div className="grid grid-cols-2 gap-3 text-[10px] font-bold text-zinc-500">
                         <div className="space-y-0.5 text-right">
                           <span>الراتب المرجعي:</span>
-                          <span className="block text-xs font-black text-zinc-800 font-mono">{tmpl.baseSalary.toLocaleString()} ر.س</span>
+                          <span className="block text-xs font-black text-zinc-800 font-mono">
+                            {tmpl.baseSalary.toLocaleString()} ر.س
+                          </span>
                         </div>
                         <div className="space-y-0.5 text-right">
                           <span>بدل السكن:</span>
                           <span className="block text-xs font-black text-zinc-850 font-mono">
-                            {tmpl.housingValue} {tmpl.housingType === 'percent' ? '%' : 'ر.س'}
+                            {tmpl.housingValue} {tmpl.housingType === "percent" ? "%" : "ر.س"}
                           </span>
                         </div>
                         <div className="space-y-0.5 text-right">
                           <span>بدل النقل:</span>
                           <span className="block text-xs font-black text-zinc-850 font-mono">
-                            {tmpl.transportValue} {tmpl.transportType === 'percent' ? '%' : 'ر.س'}
+                            {tmpl.transportValue} {tmpl.transportType === "percent" ? "%" : "ر.س"}
                           </span>
                         </div>
                         <div className="space-y-0.5 text-right">
@@ -478,7 +521,8 @@ export default function PayrollTemplates() {
                         🛡️ GOSI سعودي: <span className="font-mono">{tmpl.gosiSaudiPercent}%</span>
                       </div>
                       <div className="text-right text-emerald-700">
-                        🛡️ GOSI أجنبي: <span className="font-mono">{tmpl.gosiNonSaudiPercent}%</span>
+                        🛡️ GOSI أجنبي:{" "}
+                        <span className="font-mono">{tmpl.gosiNonSaudiPercent}%</span>
                       </div>
                     </div>
                   </div>

@@ -7,8 +7,9 @@ const router = Router();
 router.get("/me", authenticate, async (req: any, res) => {
   try {
     const userDoc = await db.collection("users").doc(req.user.id).get();
-    if (!userDoc.exists) return res.status(404).json({ error: "User profile not found in Firestore" });
-    
+    if (!userDoc.exists)
+      return res.status(404).json({ error: "User profile not found in Firestore" });
+
     res.json({ id: req.user.id, ...userDoc.data() });
   } catch (err) {
     console.error("Fetch me error:", err);

@@ -1,8 +1,8 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { getFirestore, collection, getDocs, limit, query } from 'firebase/firestore';
-import fs from 'fs';
-const config = JSON.parse(fs.readFileSync('./firebase-applet-config.json', 'utf8'));
+import { initializeApp } from "firebase/app";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { getFirestore, collection, getDocs, limit, query } from "firebase/firestore";
+import fs from "fs";
+const config = JSON.parse(fs.readFileSync("./firebase-applet-config.json", "utf8"));
 const app = initializeApp(config);
 const auth = getAuth(app);
 const db = getFirestore(app, config.firestoreDatabaseId);

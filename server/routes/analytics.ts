@@ -8,11 +8,14 @@ const analyticsEngine = new DataAnalyticsEngine();
 
 router.get("/summary", authenticate, async (req: any, res) => {
   try {
-    const invoicesSnapshot = await db.collection("invoices").where("userId", "==", req.user.uid).get();
-    const invoices = invoicesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const invoicesSnapshot = await db
+      .collection("invoices")
+      .where("userId", "==", req.user.uid)
+      .get();
+    const invoices = invoicesSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
     const leadsSnapshot = await db.collection("leads").where("userId", "==", req.user.uid).get();
-    const leads = leadsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const leads = leadsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
     const report = analyticsEngine.generateFullReport(invoices as any[], leads as any[]);
     res.json(report);
@@ -27,15 +30,21 @@ router.get("/context", authenticate, async (req: any, res) => {
     const user = userDoc.data();
 
     const leadsSnapshot = await db.collection("leads").where("userId", "==", req.user.uid).get();
-    const invoicesSnapshot = await db.collection("invoices").where("userId", "==", req.user.uid).get();
-    const employeesSnapshot = await db.collection("employees").where("userId", "==", req.user.uid).get();
+    const invoicesSnapshot = await db
+      .collection("invoices")
+      .where("userId", "==", req.user.uid)
+      .get();
+    const employeesSnapshot = await db
+      .collection("employees")
+      .where("userId", "==", req.user.uid)
+      .get();
 
     const stats = {
       leads: leadsSnapshot.size,
       invoices: invoicesSnapshot.size,
       employees: employeesSnapshot.size,
       companyName: user?.companyName || "منشأة غير محددة",
-      city: user?.city || "غير محدد"
+      city: user?.city || "غير محدد",
     };
     res.json(stats);
   } catch (err) {

@@ -7,21 +7,21 @@ router.get("/invoices/:id", async (req: any, res) => {
   try {
     const docSnap = await db.collection("invoices").doc(req.params.id).get();
     if (!docSnap.exists) return res.status(404).json({ error: "Invoice not found" });
-    
+
     const invoice: any = { id: docSnap.id, ...docSnap.data() };
-    
+
     // Fetch user settings to get paypal Client ID
     let paypalClientId = null;
     if (invoice.userId) {
-       const settingsSnap = await db.collection("settings").doc(invoice.userId).get();
-       if (settingsSnap.exists) {
-          paypalClientId = settingsSnap.data()?.paypalClientId || null;
-       }
+      const settingsSnap = await db.collection("settings").doc(invoice.userId).get();
+      if (settingsSnap.exists) {
+        paypalClientId = settingsSnap.data()?.paypalClientId || null;
+      }
     }
 
     res.json({
       ...invoice,
-      paypalClientId
+      paypalClientId,
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch invoice" });
@@ -61,7 +61,9 @@ router.post("/invoices/:id/pay", async (req: any, res) => {
 
     const invoice: any = invoiceSnap.data();
     const { amount, gateway, method, transactionId } = req.body;
-    const paymentAmountHalalas = Math.round((Number(amount) || (invoice.remainingBalanceHalalas / 100)) * 100);
+    const paymentAmountHalalas = Math.round(
+      (Number(amount) || invoice.remainingBalanceHalalas / 100) * 100
+    );
 
     const paidAmountHalalas = (invoice.paidAmountHalalas || 0) + paymentAmountHalalas;
     const remainingBalanceHalalas = invoice.totalAmountHalalas - paidAmountHalalas;
@@ -88,7 +90,7 @@ router.post("/invoices/:id/pay", async (req: any, res) => {
       remainingBalanceHalalas,
       status,
       logs: currentLogs,
-      isLocked: true
+      isLocked: true,
     };
 
     await docRef.update(updateData);
@@ -96,7 +98,7 @@ router.post("/invoices/:id/pay", async (req: any, res) => {
     res.json({
       id: invoiceSnap.id,
       ...invoice,
-      ...updateData
+      ...updateData,
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

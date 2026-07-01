@@ -1,5 +1,5 @@
-export type MetricStatus = 'strong' | 'average' | 'weak' | 'critical';
-export type ImpactLevel = 'high' | 'medium' | 'low';
+export type MetricStatus = "strong" | "average" | "weak" | "critical";
+export type ImpactLevel = "high" | "medium" | "low";
 
 export interface KPI {
   id: string;
@@ -31,8 +31,8 @@ export interface RiskAlert {
   id: string;
   title: string;
   description: string;
-  severity: 'high' | 'medium' | 'low';
-  type: 'anomaly' | 'efficiency' | 'risk' | 'dependence';
+  severity: "high" | "medium" | "low";
+  type: "anomaly" | "efficiency" | "risk" | "dependence";
 }
 
 export interface ActionRecommendation {

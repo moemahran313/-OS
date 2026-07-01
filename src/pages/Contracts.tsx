@@ -1,13 +1,24 @@
 import React, { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
-import { toPng } from 'html-to-image';
+import { toPng } from "html-to-image";
 import NafathAuth from "@/src/components/NafathAuth";
 import { QRCodeSVG } from "qrcode.react";
 import { useSettings } from "@/src/contexts/SettingsContext";
 import { useUser } from "@/src/contexts/UserContext";
 import { db } from "@/src/lib/firebase";
-import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, setDoc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  doc,
+  serverTimestamp,
+  setDoc,
+  getDoc,
+} from "firebase/firestore";
 import {
   FileSignature,
   Download,
@@ -36,7 +47,8 @@ import {
   Save,
   Plus,
   Clock,
-  Cloud
+  Cloud,
+  Mail,
 } from "lucide-react";
 
 interface ContractData {
@@ -106,7 +118,7 @@ const DEFAULT_DATA: ContractData = {
   workingDays: "5",
   annualLeaveDays: "21",
   disputeResolution: "SA_COURTS",
-  themeColor: "#0f172a" // Midnight Navy
+  themeColor: "#0f172a", // Midnight Navy
 };
 
 interface CategoryConfig {
@@ -131,7 +143,7 @@ const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     party2Ar: "الموظف (الطرف الثاني):",
     party2En: "Employee (Second Party):",
     titleAr: "عقد عمل موحد (نموذج مزدوج)",
-    titleEn: "Unified Employment Contract"
+    titleEn: "Unified Employment Contract",
   },
   sales: {
     id: "sales",
@@ -142,7 +154,7 @@ const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     party2Ar: "المشتري (الطرف الثاني):",
     party2En: "Buyer (Second Party):",
     titleAr: "عقد بيع وتفرغ رسمي",
-    titleEn: "Sales & Conveyance Agreement"
+    titleEn: "Sales & Conveyance Agreement",
   },
   purchase: {
     id: "purchase",
@@ -153,7 +165,7 @@ const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     party2Ar: "البائع (الطرف الثاني):",
     party2En: "Seller (Second Party):",
     titleAr: "عقد شراء وتملك أصول",
-    titleEn: "Purchase & Acquisition Agreement"
+    titleEn: "Purchase & Acquisition Agreement",
   },
   supply: {
     id: "supply",
@@ -164,7 +176,7 @@ const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     party2Ar: "العميل (الطرف الثاني):",
     party2En: "Customer (Second Party):",
     titleAr: "اتفاقية توريد خدمات ومواد",
-    titleEn: "Services & Materials Supply Agreement"
+    titleEn: "Services & Materials Supply Agreement",
   },
   distribution: {
     id: "distribution",
@@ -175,7 +187,7 @@ const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     party2Ar: "الموزع (الطرف الثاني):",
     party2En: "Distributor (Second Party):",
     titleAr: "عقد توزيع منتجات حصري",
-    titleEn: "Exclusive Product Distribution Agreement"
+    titleEn: "Exclusive Product Distribution Agreement",
   },
   agency: {
     id: "agency",
@@ -186,7 +198,7 @@ const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     party2Ar: "الوكيل (الطرف الثاني):",
     party2En: "Agent (Second Party):",
     titleAr: "عقد وكالة تجارية معتمد",
-    titleEn: "Commercial Agency Agreement"
+    titleEn: "Commercial Agency Agreement",
   },
   franchise: {
     id: "franchise",
@@ -197,7 +209,7 @@ const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     party2Ar: "ممنوح الامتياز (الطرف الثاني):",
     party2En: "Franchisee (Second Party):",
     titleAr: "عقد امتياز تجاري موحد",
-    titleEn: "Franchise Agreement"
+    titleEn: "Franchise Agreement",
   },
   partnership: {
     id: "partnership",
@@ -208,7 +220,7 @@ const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     party2Ar: "الشريك الثاني (الطرف الثاني):",
     party2En: "Second Partner (Second Party):",
     titleAr: "عقد شراكة واستثمار تجاري",
-    titleEn: "Business Partnership Agreement"
+    titleEn: "Business Partnership Agreement",
   },
   shareholders: {
     id: "shareholders",
@@ -219,7 +231,7 @@ const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     party2Ar: "المساهم الثاني (الطرف الثاني):",
     party2En: "Second Shareholder (Second Party):",
     titleAr: "اتفاقية مساهمين وتأسيس شركة",
-    titleEn: "Shareholders' Agreement"
+    titleEn: "Shareholders' Agreement",
   },
   investment: {
     id: "investment",
@@ -230,7 +242,7 @@ const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     party2Ar: "المستثمر (الطرف الثاني):",
     party2En: "Investor (Second Party):",
     titleAr: "عقد استثمار وتمويل جريء",
-    titleEn: "Investment & Venture Financing Agreement"
+    titleEn: "Investment & Venture Financing Agreement",
   },
   jv: {
     id: "jv",
@@ -241,7 +253,7 @@ const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     party2Ar: "الشريك المشترك 2 (الطرف الثاني):",
     party2En: "JV Partner 2 (Second Party):",
     titleAr: "اتفاقية مشروع مشترك وتضامن",
-    titleEn: "Joint Venture Agreement"
+    titleEn: "Joint Venture Agreement",
   },
   marketing: {
     id: "marketing",
@@ -252,7 +264,7 @@ const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     party2Ar: "شركة التسويق (الطرف الثاني):",
     party2En: "Marketer (Second Party):",
     titleAr: "عقد تقديم خدمات تسويقية احترافية",
-    titleEn: "Marketing Services Agreement"
+    titleEn: "Marketing Services Agreement",
   },
   brokerage: {
     id: "brokerage",
@@ -263,7 +275,7 @@ const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     party2Ar: "الوسيط (الطرف الثاني):",
     party2En: "Broker (Second Party):",
     titleAr: "عقد وساطة وسعي معتمد",
-    titleEn: "Brokerage & Commission Agreement"
+    titleEn: "Brokerage & Commission Agreement",
   },
   consulting: {
     id: "consulting",
@@ -274,31 +286,32 @@ const CATEGORY_CONFIGS: Record<string, CategoryConfig> = {
     party2Ar: "المستشار (الطرف الثاني):",
     party2En: "Consultant (Second Party):",
     titleAr: "اتفاقية تقديم خدمات استشارية",
-    titleEn: "Consulting Services Agreement"
-  }
+    titleEn: "Consulting Services Agreement",
+  },
 };
 
 const getGeneratedTexts = (d: ContractData) => {
   const cat = d.contractCategory || "employment";
   const cfg = CATEGORY_CONFIGS[cat] || CATEGORY_CONFIGS.employment;
 
-  const dispText = d.disputeResolution === "SCCA"
-    ? {
-        ar: "يتم تسوية أي نزاع ينشأ عن هذا العقد أو ما يرتبط به عن طريق التحكيم وفقًا لقواعد المركز السعودي للتحكيم التجاري (SCCA).",
-        en: "Any dispute arising out of or related to this contract shall be settled by arbitration in accordance with the rules of the Saudi Center for Commercial Arbitration (SCCA)."
-      }
-    : d.disputeResolution === "DIFC"
-    ? {
-        ar: "يخضع هذا العقد حصريًا لاختصاص محاكم مركز دبي المالي العالمي (DIFC).",
-        en: "This contract is subject exclusively to the jurisdiction of the DIFC Courts."
-      }
-    : {
-        ar: "تختص محاكم المملكة العربية السعودية بالنظر في أي نزاع ينشأ عن هذا العقد طبقاً للقوانين المرعية.",
-        en: "Courts of the Kingdom of Saudi Arabia shall have jurisdiction over any dispute arising from this contract according to laws."
-      };
+  const dispText =
+    d.disputeResolution === "SCCA"
+      ? {
+          ar: "يتم تسوية أي نزاع ينشأ عن هذا العقد أو ما يرتبط به عن طريق التحكيم وفقًا لقواعد المركز السعودي للتحكيم التجاري (SCCA).",
+          en: "Any dispute arising out of or related to this contract shall be settled by arbitration in accordance with the rules of the Saudi Center for Commercial Arbitration (SCCA).",
+        }
+      : d.disputeResolution === "DIFC"
+        ? {
+            ar: "يخضع هذا العقد حصريًا لاختصاص محاكم مركز دبي المالي العالمي (DIFC).",
+            en: "This contract is subject exclusively to the jurisdiction of the DIFC Courts.",
+          }
+        : {
+            ar: "تختص محاكم المملكة العربية السعودية بالنظر في أي نزاع ينشأ عن هذا العقد طبقاً للقوانين المرعية.",
+            en: "Courts of the Kingdom of Saudi Arabia shall have jurisdiction over any dispute arising from this contract according to laws.",
+          };
 
-  const getArVal = (v: string) => v && v.trim() !== "" ? v : "........................";
-  const getEnVal = (v: string) => v && v.trim() !== "" ? v : "........................";
+  const getArVal = (v: string) => (v && v.trim() !== "" ? v : "........................");
+  const getEnVal = (v: string) => (v && v.trim() !== "" ? v : "........................");
 
   let titleAr = cfg.titleAr;
   let titleEn = cfg.titleEn;
@@ -336,12 +349,14 @@ const getGeneratedTexts = (d: ContractData) => {
 
     clause2TitleAr = "البند الثاني: المدة والتجربة";
     clause2TitleEn = "Clause 2: Duration & Probation";
-    clause2TextAr = d.contractType === 'fixed' 
-      ? `مدة العقد (${getArVal(d.durationMonths)}) شهراً تبدأ من ${getArVal(d.startDate)} وفترة التجربة (${getArVal(d.probationDays)}) يوماً.`
-      : `هذا العقد غير محدد المدة يبدأ من ${getArVal(d.startDate)} وفترة التجربة (${getArVal(d.probationDays)}) يوماً.`;
-    clause2TextEn = d.contractType === 'fixed'
-      ? `Contract duration is (${getEnVal(d.durationMonths)}) months starting ${getEnVal(d.startDate)}. Probation period is (${getEnVal(d.probationDays)}) days.`
-      : `This is an indefinite contract starting ${getEnVal(d.startDate)}. Probation period is (${getEnVal(d.probationDays)}) days.`;
+    clause2TextAr =
+      d.contractType === "fixed"
+        ? `مدة العقد (${getArVal(d.durationMonths)}) شهراً تبدأ من ${getArVal(d.startDate)} وفترة التجربة (${getArVal(d.probationDays)}) يوماً.`
+        : `هذا العقد غير محدد المدة يبدأ من ${getArVal(d.startDate)} وفترة التجربة (${getArVal(d.probationDays)}) يوماً.`;
+    clause2TextEn =
+      d.contractType === "fixed"
+        ? `Contract duration is (${getEnVal(d.durationMonths)}) months starting ${getEnVal(d.startDate)}. Probation period is (${getEnVal(d.probationDays)}) days.`
+        : `This is an indefinite contract starting ${getEnVal(d.startDate)}. Probation period is (${getEnVal(d.probationDays)}) days.`;
 
     clause3TitleAr = "البند الثالث: الراتب والبدلات";
     clause3TitleEn = "Clause 3: Salary & Allowances";
@@ -586,39 +601,43 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.strokeStyle = '#020617';
+    ctx.strokeStyle = "#020617";
     ctx.lineWidth = 2.5;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
   }, []);
 
-  const getCoordinates = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+  const getCoordinates = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    
-    if ('touches' in e) {
+
+    if ("touches" in e) {
       if (e.touches.length === 0) return { x: 0, y: 0 };
       return {
         x: e.touches[0].clientX - rect.left,
         y: e.touches[0].clientY - rect.top,
       };
     }
-    
+
     return {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
     };
   };
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+  const startDrawing = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
     e.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const { x, y } = getCoordinates(e);
@@ -632,7 +651,7 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) => {
     e.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const { x, y } = getCoordinates(e);
@@ -652,7 +671,7 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) => {
   const clearCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     onClear();
@@ -678,9 +697,9 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) => {
           ارسم توقيعك هنا / Sign Here
         </div>
       </div>
-      <button 
-        type="button" 
-        onClick={clearCanvas} 
+      <button
+        type="button"
+        onClick={clearCanvas}
         className="text-[10px] bg-zinc-200 text-zinc-700 hover:bg-zinc-300 font-bold px-2 py-1 rounded transition-colors"
       >
         مسح التوقيع / Clear
@@ -694,30 +713,38 @@ const PREDEFINED_CLAUSES = [
     id: "confidentiality",
     titleAr: "بند السرية وحظر الإفشاء",
     titleEn: "Confidentiality & Non-Disclosure Clause",
-    textAr: "يلتزم الطرفان بالمحافظة التامة على سرية كافة المعلومات والبيانات الفنية أو التجارية التي يتم تبادلها خلال فترة العقد وعدم إفشائها للغير.",
-    textEn: "Both parties commit to maintain absolute confidentiality over all technical or commercial information and data exchanged during the term."
+    textAr:
+      "يلتزم الطرفان بالمحافظة التامة على سرية كافة المعلومات والبيانات الفنية أو التجارية التي يتم تبادلها خلال فترة العقد وعدم إفشائها للغير.",
+    textEn:
+      "Both parties commit to maintain absolute confidentiality over all technical or commercial information and data exchanged during the term.",
   },
   {
     id: "forcemajeure",
     titleAr: "بند القوة القاهرة والظروف الطارئة",
     titleEn: "Force Majeure Clause",
-    textAr: "لا يتحمل أي من الطرفين مسؤولية التأخير أو عدم التنفيذ الناتج عن ظروف قاهرة خارجة عن السيطرة المعقولة مثل الكوارث الطبيعية أو القرارات السيادية.",
-    textEn: "Neither party shall be liable for delay or failure to perform resulting from events beyond reasonable control, such as natural disasters or sovereign decrees."
+    textAr:
+      "لا يتحمل أي من الطرفين مسؤولية التأخير أو عدم التنفيذ الناتج عن ظروف قاهرة خارجة عن السيطرة المعقولة مثل الكوارث الطبيعية أو القرارات السيادية.",
+    textEn:
+      "Neither party shall be liable for delay or failure to perform resulting from events beyond reasonable control, such as natural disasters or sovereign decrees.",
   },
   {
     id: "termination",
     titleAr: "بند فسخ العقد والإنهاء المبكر",
     titleEn: "Termination & Early Dissolution Clause",
-    textAr: "يجوز لأي من الطرفين إنهاء العقد فور وقوع أي إخلال جوهري من الطرف الآخر ببنود التعاقد، وبموجب إخطار مكتوب بمهلة 15 يوماً.",
-    textEn: "Either party may immediately terminate the contract upon material breach by the other party, subject to a 15-day prior written notice."
+    textAr:
+      "يجوز لأي من الطرفين إنهاء العقد فور وقوع أي إخلال جوهري من الطرف الآخر ببنود التعاقد، وبموجب إخطار مكتوب بمهلة 15 يوماً.",
+    textEn:
+      "Either party may immediately terminate the contract upon material breach by the other party, subject to a 15-day prior written notice.",
   },
   {
     id: "noncompete",
     titleAr: "بند عدم المنافسة وتضارب المصالح",
     titleEn: "Non-Compete & Conflict of Interest",
-    textAr: "يتعهد الطرف الثاني بعدم القيام بأي نشاط منافس للطرف الأول أو تقديم خدمات لجهات منافسة طوال فترة سريان هذا العقد ولمدة سنتين من تاريخ انتهائه.",
-    textEn: "The Second Party undertakes not to engage in any competing activity or provide services to competitors throughout the term and for 2 years post-term."
-  }
+    textAr:
+      "يتعهد الطرف الثاني بعدم القيام بأي نشاط منافس للطرف الأول أو تقديم خدمات لجهات منافسة طوال فترة سريان هذا العقد ولمدة سنتين من تاريخ انتهائه.",
+    textEn:
+      "The Second Party undertakes not to engage in any competing activity or provide services to competitors throughout the term and for 2 years post-term.",
+  },
 ];
 
 export default function Contracts() {
@@ -728,11 +755,15 @@ export default function Contracts() {
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "employees"), where("userId", "==", user.uid || user.id));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setEmployees(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (error) => {
-      console.error("Error loading employees", error);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        setEmployees(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      },
+      (error) => {
+        console.error("Error loading employees", error);
+      }
+    );
     return () => unsubscribe();
   }, [user]);
 
@@ -746,9 +777,10 @@ export default function Contracts() {
       return;
     }
     try {
-      const matchedEmp = employees.find(x => 
-        (data.employeeId && (x.iqama === data.employeeId || x.nationalId === data.employeeId)) ||
-        (x.name?.toLowerCase() === data.employeeName?.toLowerCase())
+      const matchedEmp = employees.find(
+        (x) =>
+          (data.employeeId && (x.iqama === data.employeeId || x.nationalId === data.employeeId)) ||
+          x.name?.toLowerCase() === data.employeeName?.toLowerCase()
       );
 
       const empData = {
@@ -764,18 +796,22 @@ export default function Contracts() {
         email: data.employeeEmail || "",
         mobile: data.employeeMobile || "",
         userId: user.uid || user.id,
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       };
 
       if (matchedEmp) {
         await updateDoc(doc(db, "employees", matchedEmp.id), empData);
-        toast.success(`تم بنجاح تحديث بيانات الموظف المالي ${data.employeeName} في ملفات الرواتب الحية!`);
+        toast.success(
+          `تم بنجاح تحديث بيانات الموظف المالي ${data.employeeName} في ملفات الرواتب الحية!`
+        );
       } else {
         await addDoc(collection(db, "employees"), {
           ...empData,
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
         });
-        toast.success(`تم إنشاء ملف مالي جديد للموظف ${data.employeeName} وتصديره لقسم الرواتب بنجاح!`);
+        toast.success(
+          `تم إنشاء ملف مالي جديد للموظف ${data.employeeName} وتصديره لقسم الرواتب بنجاح!`
+        );
       }
 
       await addDoc(collection(db, "audit_logs"), {
@@ -784,7 +820,7 @@ export default function Contracts() {
         action: "مزامنة العقد مع نظام الرواتب والموظفين",
         payload: JSON.stringify({ employeeName: data.employeeName, employeeId: data.employeeId }),
         result: "success",
-        timestamp: serverTimestamp()
+        timestamp: serverTimestamp(),
       });
     } catch (err: any) {
       console.error("Sync to payroll failed:", err);
@@ -806,7 +842,9 @@ export default function Contracts() {
     return DEFAULT_DATA;
   });
   const isEmployment = !data.contractCategory || data.contractCategory === "employment";
-  const [activeTab, setActiveTab] = useState<"employer" | "employee" | "terms" | "settings" | "templates" | "documents">("templates");
+  const [activeTab, setActiveTab] = useState<
+    "employer" | "employee" | "terms" | "settings" | "templates" | "documents"
+  >("templates");
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // New features states
@@ -850,7 +888,7 @@ export default function Contracts() {
     return () => clearInterval(interval);
   }, []);
 
-  const filteredClauses = PREDEFINED_CLAUSES.filter(clause => {
+  const filteredClauses = PREDEFINED_CLAUSES.filter((clause) => {
     const query = clauseSearchQuery.toLowerCase().trim();
     if (!query) return true;
     return (
@@ -866,45 +904,56 @@ export default function Contracts() {
   const handleAutoBindSettings = () => {
     const newData = applySettingsToContract(data);
     setData(newData);
-    
+
     const generated = getGeneratedTexts(newData);
-    setEditedTexts(prev => ({
+    setEditedTexts((prev) => ({
       ...prev,
       party1TextAr: generated.party1TextAr,
       party1TextEn: generated.party1TextEn,
     }));
-    
+
     toast.success("تم جلب بيانات المنشأة من الإعدادات وربطها تلقائياً بالـ placeholders بنجاح! ⚡");
   };
 
   // Inline diff renderer helper
-  const renderInlineDiff = (original: string, current: string, isCompareActive: boolean, dir: "rtl" | "ltr" = "rtl") => {
+  const renderInlineDiff = (
+    original: string,
+    current: string,
+    isCompareActive: boolean,
+    dir: "rtl" | "ltr" = "rtl"
+  ) => {
     if (!isCompareActive) {
       if (!current || current.trim() === "") {
         return "........................";
       }
       return current;
     }
-    
+
     const cleanOrig = (original || "").trim();
     const cleanCurr = (current || "").trim();
-    
+
     if (cleanOrig === cleanCurr) {
       if (!cleanCurr) {
         return "........................";
       }
       return current;
     }
-    
+
     return (
       <span className="inline-block w-full">
         {cleanOrig && (
-          <span className="text-rose-600 line-through bg-rose-50 px-1 py-0.5 rounded mr-1 font-normal select-all select-none" title="النص الأصلي لعقد النظام">
+          <span
+            className="text-rose-600 line-through bg-rose-50 px-1 py-0.5 rounded mr-1 font-normal select-all select-none"
+            title="النص الأصلي لعقد النظام"
+          >
             {cleanOrig}
           </span>
         )}
         {cleanCurr && (
-          <span className="text-emerald-700 underline decoration-2 bg-emerald-50 px-1 py-0.5 rounded font-bold" title="تعديلك المباشر">
+          <span
+            className="text-emerald-700 underline decoration-2 bg-emerald-50 px-1 py-0.5 rounded font-bold"
+            title="تعديلك المباشر"
+          >
             {cleanCurr}
           </span>
         )}
@@ -917,10 +966,18 @@ export default function Contracts() {
     const query = documentSearchQuery.toLowerCase().trim();
     const textAr = (editedTexts[keyAr as keyof typeof editedTexts] || "").toLowerCase();
     const textEn = (editedTexts[keyEn as keyof typeof editedTexts] || "").toLowerCase();
-    const origTextAr = (getGeneratedTexts(data)[keyAr as keyof typeof editedTexts] || "").toLowerCase();
-    const origTextEn = (getGeneratedTexts(data)[keyEn as keyof typeof editedTexts] || "").toLowerCase();
-    
-    const matches = textAr.includes(query) || textEn.includes(query) || origTextAr.includes(query) || origTextEn.includes(query);
+    const origTextAr = (
+      getGeneratedTexts(data)[keyAr as keyof typeof editedTexts] || ""
+    ).toLowerCase();
+    const origTextEn = (
+      getGeneratedTexts(data)[keyEn as keyof typeof editedTexts] || ""
+    ).toLowerCase();
+
+    const matches =
+      textAr.includes(query) ||
+      textEn.includes(query) ||
+      origTextAr.includes(query) ||
+      origTextEn.includes(query);
     if (matches) {
       return "ring-4 ring-emerald-500/70 border-emerald-500 bg-emerald-50/20 scale-[1.01] transition-all p-4 -m-4 shadow-lg z-10 relative rounded-2xl";
     } else {
@@ -956,7 +1013,9 @@ export default function Contracts() {
   });
   const [verificationLink, setVerificationLink] = useState<string | null>(null);
 
-  const [lastModifiedInfo, setLastModifiedInfo] = useState<{ date: string; author: string } | null>(null);
+  const [lastModifiedInfo, setLastModifiedInfo] = useState<{ date: string; author: string } | null>(
+    null
+  );
   const [isSavingFirebase, setIsSavingFirebase] = useState(false);
 
   // Load contract from Firestore on mount/category change
@@ -985,8 +1044,8 @@ export default function Contracts() {
           if (docData.lastModified) {
             const date = new Date(docData.lastModified);
             setLastModifiedInfo({
-              date: date.toLocaleString('ar-SA') + " / " + date.toLocaleString('en-US'),
-              author: docData.authorEmail || "Administrator"
+              date: date.toLocaleString("ar-SA") + " / " + date.toLocaleString("en-US"),
+              author: docData.authorEmail || "Administrator",
             });
           }
         }
@@ -1007,29 +1066,30 @@ export default function Contracts() {
     const contractId = `${user.uid}_${data.contractCategory || "employment"}`;
     try {
       const contractDocRef = doc(db, "contracts", contractId);
-      const signatureToSave = typeof forcedSignature !== 'undefined' ? forcedSignature : signatureImage;
+      const signatureToSave =
+        typeof forcedSignature !== "undefined" ? forcedSignature : signatureImage;
       const statusToSave = forcedStatus || documentStatus;
-      
+
       const payload = {
         contractCategory: data.contractCategory || "employment",
         contractData: data,
         editedTexts: editedTexts,
         documentStatus: statusToSave,
         signatureImage: signatureToSave || null,
-        isSigned: typeof forcedSignature !== 'undefined' ? !!forcedSignature : isSigned,
+        isSigned: typeof forcedSignature !== "undefined" ? !!forcedSignature : isSigned,
         lastModified: new Date().toISOString(),
         authorEmail: user.email || "Administrator",
         authorUid: user.uid,
       };
 
       await setDoc(contractDocRef, payload, { merge: true });
-      
+
       const date = new Date();
       setLastModifiedInfo({
-        date: date.toLocaleString('ar-SA') + " / " + date.toLocaleString('en-US'),
-        author: user.email || "Administrator"
+        date: date.toLocaleString("ar-SA") + " / " + date.toLocaleString("en-US"),
+        author: user.email || "Administrator",
       });
-      
+
       toast.success("تم حفظ وتوثيق العقد بنجاح في قاعدة بيانات مدارج السحابية! ☁️");
     } catch (err: any) {
       console.error("Failed to save contract to Firestore:", err);
@@ -1059,22 +1119,22 @@ export default function Contracts() {
     const currentKey = `${data.contractCategory}-${data.jobTitle}-${data.basicSalary}`;
     if (lastTemplateKey && currentKey !== lastTemplateKey) {
       if (autoPopulateFromSettings) {
-        setData(prev => applySettingsToContract(prev));
+        setData((prev) => applySettingsToContract(prev));
       }
     }
     setLastTemplateKey(currentKey);
   }, [data.contractCategory, data.jobTitle, data.basicSalary, autoPopulateFromSettings]);
 
   // Inject predefined clauses helper
-  const injectClause = (clause: typeof PREDEFINED_CLAUSES[number], branchNum: 1 | 2 | 3 | 4) => {
+  const injectClause = (clause: (typeof PREDEFINED_CLAUSES)[number], branchNum: 1 | 2 | 3 | 4) => {
     const textArKey = `clause${branchNum}TextAr` as const;
     const textEnKey = `clause${branchNum}TextEn` as const;
 
-    setEditedTexts(prev => {
+    setEditedTexts((prev) => {
       const updatedAr = prev[textArKey]
         ? `${prev[textArKey]}\n\n[${clause.titleAr}]:\n${clause.textAr}`
         : `[${clause.titleAr}]:\n${clause.textAr}`;
-      
+
       const updatedEn = prev[textEnKey]
         ? `${prev[textEnKey]}\n\n[${clause.titleEn}]:\n${clause.textEn}`
         : `[${clause.titleEn}]:\n${clause.textEn}`;
@@ -1082,14 +1142,14 @@ export default function Contracts() {
       return {
         ...prev,
         [textArKey]: updatedAr,
-        [textEnKey]: updatedEn
+        [textEnKey]: updatedEn,
       };
     });
 
     // Automatically trigger highlight animation on the targeted clause
-    setHighlightedClauses(prev => ({ ...prev, [branchNum]: true }));
+    setHighlightedClauses((prev) => ({ ...prev, [branchNum]: true }));
     setTimeout(() => {
-      setHighlightedClauses(prev => ({ ...prev, [branchNum]: false }));
+      setHighlightedClauses((prev) => ({ ...prev, [branchNum]: false }));
     }, 3500);
 
     toast.success(`تم دمج بند (${clause.titleAr}) بنجاح في البند التعاقدي ${branchNum}!`);
@@ -1098,7 +1158,9 @@ export default function Contracts() {
   // Revert any local manual adjustments made in edit mode back to original template
   const handleResetToDefault = () => {
     setEditedTexts(getGeneratedTexts(data));
-    toast.success("تم إعادة تعيين نصوص وتفاصيل وثيقة المستند لنصوص القالب الأصلي المبرمج في النظام!");
+    toast.success(
+      "تم إعادة تعيين نصوص وتفاصيل وثيقة المستند لنصوص القالب الأصلي المبرمج في النظام!"
+    );
   };
 
   // Dynamically scales the document structure based on viewport/parent size when Page Width toggle is active
@@ -1140,31 +1202,31 @@ export default function Contracts() {
   useEffect(() => {
     if (canvasRef.current && data) {
       const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext("2d");
       if (ctx) {
         // High resolution for printing
         canvas.width = 1600;
         canvas.height = 2400;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
+
         ctx.font = 'bold 120px "IBM Plex Sans Arabic", Tajawal, sans-serif';
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.03)';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        
+        ctx.fillStyle = "rgba(0, 0, 0, 0.03)";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
         // Add rotation and repeat Pattern
         ctx.translate(canvas.width / 2, canvas.height / 2);
         ctx.rotate(-Math.PI / 4);
-        
+
         // Draw multiple lines of watermark
         for (let i = -3; i <= 3; i++) {
           for (let j = -3; j <= 3; j++) {
             const x = i * 600;
             const y = j * 400;
-            ctx.fillText(data.employerCR || 'CONFIDENTIAL', x, y);
-            
+            ctx.fillText(data.employerCR || "CONFIDENTIAL", x, y);
+
             // Add a smaller sub-watermark for extra security
-            ctx.font = 'bold 40px monospace';
+            ctx.font = "bold 40px monospace";
             ctx.fillText(data.employeeId, x, y + 60);
             ctx.font = 'bold 120px "IBM Plex Sans Arabic", Tajawal, sans-serif';
           }
@@ -1178,10 +1240,13 @@ export default function Contracts() {
     setData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleEditedTextChange = (key: keyof ReturnType<typeof getGeneratedTexts>, value: string) => {
-    setEditedTexts(prev => ({
+  const handleEditedTextChange = (
+    key: keyof ReturnType<typeof getGeneratedTexts>,
+    value: string
+  ) => {
+    setEditedTexts((prev) => ({
       ...prev,
-      [key]: value
+      [key]: value,
     }));
   };
 
@@ -1244,12 +1309,12 @@ export default function Contracts() {
 
   const downloadContractAsPDF = async () => {
     setIsExportingPDF(true);
-    const loadingToast = toast.loading('جاري توليد ملف PDF باستخدام jsPDF...');
+    const loadingToast = toast.loading("جاري توليد ملف PDF باستخدام jsPDF...");
 
     try {
       const contractElement = document.getElementById("contract-document");
       if (!contractElement) {
-        toast.error('لم يتم العثور على مستند العقد');
+        toast.error("لم يتم العثور على مستند العقد");
         setIsExportingPDF(false);
         return;
       }
@@ -1258,19 +1323,19 @@ export default function Contracts() {
       const imgData = await toPng(contractElement, {
         quality: 1.0,
         pixelRatio: 2.5, // Ultra-sharp precision
-        backgroundColor: '#ffffff',
+        backgroundColor: "#ffffff",
         filter: (node) => {
-          if (node instanceof HTMLElement && node.classList?.contains('print:hidden')) {
+          if (node instanceof HTMLElement && node.classList?.contains("print:hidden")) {
             return false;
           }
           return true;
-        }
+        },
       });
-      
+
       const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
       });
 
       const imgProps = pdf.getImageProperties(imgData);
@@ -1281,25 +1346,26 @@ export default function Contracts() {
       let position = 0;
       const pageHeight = pdf.internal.pageSize.getHeight();
 
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
+      pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, pdfHeight);
       heightLeft -= pageHeight;
 
       while (heightLeft >= 0) {
         position = heightLeft - pdfHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
+        pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, pdfHeight);
         heightLeft -= pageHeight;
       }
 
-      const categoryLabel = CATEGORY_CONFIGS[data.contractCategory || 'employment']?.labelEn || 'Contract';
-      const employeeNameClean = (data.employeeNameEn || 'Document').replace(/\s+/g, '_');
+      const categoryLabel =
+        CATEGORY_CONFIGS[data.contractCategory || "employment"]?.labelEn || "Contract";
+      const employeeNameClean = (data.employeeNameEn || "Document").replace(/\s+/g, "_");
       const fileName = `${categoryLabel}_${employeeNameClean}.pdf`;
-      
+
       pdf.save(fileName);
-      toast.success('تم تصدير وتحميل مستند العقد بصيغة PDF بنجاح 📄', { id: loadingToast });
+      toast.success("تم تصدير وتحميل مستند العقد بصيغة PDF بنجاح 📄", { id: loadingToast });
     } catch (error) {
-      console.error('PDF generation error:', error);
-      toast.error('حدث خطأ أثناء إنشاء وتنزيل ملف PDF', { id: loadingToast });
+      console.error("PDF generation error:", error);
+      toast.error("حدث خطأ أثناء إنشاء وتنزيل ملف PDF", { id: loadingToast });
     } finally {
       setIsExportingPDF(false);
     }
@@ -1313,28 +1379,28 @@ export default function Contracts() {
   };
 
   const generateVerificationLink = () => {
-    const uniqueId = `CNT-${data.employeeId || 'DEFAULT'}-${Date.now().toString().slice(-6)}`;
+    const uniqueId = `CNT-${data.employeeId || "DEFAULT"}-${Date.now().toString().slice(-6)}`;
     const link = `https://app.mudarij.com/audit/verify/contract/${uniqueId}`;
     setVerificationLink(link);
     toast.success("تم إصدار رابط التحقق الفوري ورمز الـ QR الموثق لدى مدارج!");
   };
 
   useEffect(() => {
-    const uniqueId = `CNT-${data.employeeId || 'DEFAULT'}-${Date.now().toString().slice(-4)}`;
+    const uniqueId = `CNT-${data.employeeId || "DEFAULT"}-${Date.now().toString().slice(-4)}`;
     setVerificationLink(`https://app.mudarij.com/audit/verify/contract/${uniqueId}`);
   }, [data.employeeId]);
 
   const handlePrint = async () => {
     setIsExporting(true);
-    const loadingToast = toast.loading('جاري توليد ملف PDF...');
+    const loadingToast = toast.loading("جاري توليد ملف PDF...");
 
     // Wait for React to re-render without Tailwind color components (NafathAuth)
-    await new Promise(resolve => setTimeout(resolve, 150));
+    await new Promise((resolve) => setTimeout(resolve, 150));
 
     try {
       const contractElement = document.getElementById("contract-document");
       if (!contractElement) {
-        toast.error('لم يتم العثور على مستند العقد');
+        toast.error("لم يتم العثور على مستند العقد");
         setIsExporting(false);
         return;
       }
@@ -1342,19 +1408,19 @@ export default function Contracts() {
       const imgData = await toPng(contractElement, {
         quality: 1.0,
         pixelRatio: 2,
-        backgroundColor: '#ffffff',
+        backgroundColor: "#ffffff",
         filter: (node) => {
-          if (node instanceof HTMLElement && node.classList?.contains('print:hidden')) {
+          if (node instanceof HTMLElement && node.classList?.contains("print:hidden")) {
             return false;
           }
           return true;
-        }
+        },
       });
-      
+
       const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4' // typical A4 size
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4", // typical A4 size
       });
 
       const imgProps = pdf.getImageProperties(imgData);
@@ -1366,29 +1432,31 @@ export default function Contracts() {
       let position = 0;
       const pageHeight = pdf.internal.pageSize.getHeight();
 
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
+      pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, pdfHeight);
       heightLeft -= pageHeight;
 
       while (heightLeft >= 0) {
         position = heightLeft - pdfHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, pdfHeight);
+        pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, pdfHeight);
         heightLeft -= pageHeight;
       }
 
-      pdf.save('Employment_Contract.pdf');
-      toast.success('تم تصدير العقد بصيغة PDF بنجاح', { id: loadingToast });
+      pdf.save("Employment_Contract.pdf");
+      toast.success("تم تصدير العقد بصيغة PDF بنجاح", { id: loadingToast });
     } catch (error) {
-      console.error('PDF generation error:', error);
-      toast.error('حدث خطأ أثناء إنشاء ملف PDF', { id: loadingToast });
+      console.error("PDF generation error:", error);
+      toast.error("حدث خطأ أثناء إنشاء ملف PDF", { id: loadingToast });
     } finally {
       setIsExporting(false);
     }
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-6rem)] overflow-hidden bg-zinc-50 font-sans" dir="rtl">
-      
+    <div
+      className="flex flex-col lg:flex-row h-[calc(100vh-6rem)] overflow-hidden bg-zinc-50 font-sans"
+      dir="rtl"
+    >
       {/* Injected custom native scale rules for gorgeous page-accurate browser printing */}
       <style>{`
         @media print {
@@ -1437,7 +1505,7 @@ export default function Contracts() {
           }
         }
       `}</style>
-      
+
       {/* LEFT PANE: The Questionnaire (Editor) */}
       <div className="w-full lg:w-[45%] h-full flex flex-col border-l border-zinc-200 bg-white print:hidden shadow-xl z-10">
         <header className="p-6 border-b border-zinc-100 flex items-center justify-between bg-white shrink-0">
@@ -1449,7 +1517,9 @@ export default function Contracts() {
                 <span>حفظ تلقائي / Auto-saved</span>
               </span>
             </div>
-            <p className="text-xs font-bold text-[#10b981] mt-1 tracking-wider uppercase">Next-Gen Legal Engine</p>
+            <p className="text-xs font-bold text-[#10b981] mt-1 tracking-wider uppercase">
+              Next-Gen Legal Engine
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -1464,8 +1534,12 @@ export default function Contracts() {
               disabled={isExporting}
               className="flex items-center gap-2 bg-[#0f172a] text-white px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-[#1e293b] disabled:opacity-50 transition-colors shadow-md"
             >
-              {isExporting ? <div className="w-4 h-4 border-2 border-[#d4af37] border-t-transparent animate-spin rounded-full" /> : <Download className="w-4 h-4 text-[#d4af37]" />} 
-              {isExporting ? 'جاري التصدير...' : 'تنزيل PDF'}
+              {isExporting ? (
+                <div className="w-4 h-4 border-2 border-[#d4af37] border-t-transparent animate-spin rounded-full" />
+              ) : (
+                <Download className="w-4 h-4 text-[#d4af37]" />
+              )}
+              {isExporting ? "جاري التصدير..." : "تنزيل PDF"}
             </button>
           </div>
         </header>
@@ -1474,26 +1548,35 @@ export default function Contracts() {
           {[
             { id: "templates", icon: FileSignature, label: "النماذج الجاهزة" },
             { id: "documents", icon: Folder, label: "DMS الوثائق" },
-            { 
-              id: "employer", 
-              icon: Building, 
-              label: data.contractCategory && data.contractCategory !== "employment"
-                ? (CATEGORY_CONFIGS[data.contractCategory]?.party1Ar || "الطرف الأول").replace(" (الطرف الأول):", "")
-                : "المنشأة" 
+            {
+              id: "employer",
+              icon: Building,
+              label:
+                data.contractCategory && data.contractCategory !== "employment"
+                  ? (CATEGORY_CONFIGS[data.contractCategory]?.party1Ar || "الطرف الأول").replace(
+                      " (الطرف الأول):",
+                      ""
+                    )
+                  : "المنشأة",
             },
-            { 
-              id: "employee", 
-              icon: User, 
-              label: data.contractCategory && data.contractCategory !== "employment"
-                ? (CATEGORY_CONFIGS[data.contractCategory]?.party2Ar || "الطرف الثاني").replace(" (الطرف الثاني):", "")
-                : "العامل" 
+            {
+              id: "employee",
+              icon: User,
+              label:
+                data.contractCategory && data.contractCategory !== "employment"
+                  ? (CATEGORY_CONFIGS[data.contractCategory]?.party2Ar || "الطرف الثاني").replace(
+                      " (الطرف الثاني):",
+                      ""
+                    )
+                  : "العامل",
             },
-            { 
-              id: "terms", 
-              icon: Scale, 
-              label: data.contractCategory && data.contractCategory !== "employment"
-                ? "الشروط والبنود"
-                : "الشروط والرواتب" 
+            {
+              id: "terms",
+              icon: Scale,
+              label:
+                data.contractCategory && data.contractCategory !== "employment"
+                  ? "الشروط والبنود"
+                  : "الشروط والرواتب",
             },
             { id: "settings", icon: Settings2, label: "الإعدادات الذكية" },
           ].map((tab) => (
@@ -1506,7 +1589,8 @@ export default function Contracts() {
                   : "border-transparent text-zinc-500 hover:text-zinc-700 hover:bg-zinc-50/50"
               }`}
             >
-              <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'text-[#10b981]' : ''}`} /> {tab.label}
+              <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? "text-[#10b981]" : ""}`} />{" "}
+              {tab.label}
             </button>
           ))}
         </div>
@@ -1516,8 +1600,13 @@ export default function Contracts() {
             {activeTab === "templates" && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="bg-[#10b981]/10 border border-[#10b981]/20 rounded-xl p-4">
-                  <h3 className="font-bold text-[#10b981] mb-1">صانع العقود المعتمدة والاتفاقيات الرسمية</h3>
-                  <p className="text-sm text-zinc-600">اختر نموذج العقد المطلوب للبدء وسيقوم النظام فوراً بتهيئة البنود القانونية وتوزيع الصلاحيات ثنائية اللغة لتلائم تطلعاتك التشغيلية.</p>
+                  <h3 className="font-bold text-[#10b981] mb-1">
+                    صانع العقود المعتمدة والاتفاقيات الرسمية
+                  </h3>
+                  <p className="text-sm text-zinc-600">
+                    اختر نموذج العقد المطلوب للبدء وسيقوم النظام فوراً بتهيئة البنود القانونية
+                    وتوزيع الصلاحيات ثنائية اللغة لتلائم تطلعاتك التشغيلية.
+                  </p>
                 </div>
 
                 {/* SETTINGS AUTO-POPULATE CONTROL BADGE */}
@@ -1527,9 +1616,15 @@ export default function Contracts() {
                       <Building className="w-5 h-5" />
                     </div>
                     <div className="text-right">
-                      <h4 className="font-extrabold text-xs text-[#0f172a]">تعبئة تلقائية ذكية للمنشأة</h4>
+                      <h4 className="font-extrabold text-xs text-[#0f172a]">
+                        تعبئة تلقائية ذكية للمنشأة
+                      </h4>
                       <p className="text-[11px] text-zinc-500 font-medium mt-0.5">
-                        نشغل حالياً المزامنة لـ: <span className="font-bold text-zinc-800">{settings.companyName || "غير محدد"}</span> (س.ت: {settings.crNumber || "بدون"})
+                        نشغل حالياً المزامنة لـ:{" "}
+                        <span className="font-bold text-zinc-800">
+                          {settings.companyName || "غير محدد"}
+                        </span>{" "}
+                        (س.ت: {settings.crNumber || "بدون"})
                       </p>
                     </div>
                   </div>
@@ -1541,7 +1636,7 @@ export default function Contracts() {
                         onChange={(e) => {
                           setAutoPopulateFromSettings(e.target.checked);
                           if (e.target.checked) {
-                            setData(prev => applySettingsToContract(prev));
+                            setData((prev) => applySettingsToContract(prev));
                             toast.success("تم تفعيل وتطبيق المزامنة الذكية فوراً!");
                           } else {
                             toast.info("تم تعطيل المزامنة الذكية للمنشأة.");
@@ -1559,64 +1654,226 @@ export default function Contracts() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 border-b-2 border-zinc-100 pb-2">
                     <span className="w-1.5 h-6 bg-emerald-500 rounded-full"></span>
-                    <h3 className="font-black text-sm text-zinc-800">عقود التوظيف والموارد البشرية (HR Contracts)</h3>
+                    <h3 className="font-black text-sm text-zinc-800">
+                      عقود التوظيف والموارد البشرية (HR Contracts)
+                    </h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'employment', jobTitle: 'مدير مبيعات', jobTitleEn: 'Sales Manager', contractType: 'fixed', basicSalary: '6000', housingAllowance: '1500', transportAllowance: '500', otherAllowances: '2000' }));
-                      toast.success("تم تحميل نموذج عقد موظف مبيعات المعتمد واختيار وضع عقود العمل!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group">
-                      <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">عقد موظف مبيعات</h4>
-                      <p className="text-xs text-zinc-500">يتضمن بدلات وتسويات العمولات والأهداف البيعية</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "employment",
+                          jobTitle: "مدير مبيعات",
+                          jobTitleEn: "Sales Manager",
+                          contractType: "fixed",
+                          basicSalary: "6000",
+                          housingAllowance: "1500",
+                          transportAllowance: "500",
+                          otherAllowances: "2000",
+                        }));
+                        toast.success(
+                          "تم تحميل نموذج عقد موظف مبيعات المعتمد واختيار وضع عقود العمل!"
+                        );
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group"
+                    >
+                      <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">
+                        عقد موظف مبيعات
+                      </h4>
+                      <p className="text-xs text-zinc-500">
+                        يتضمن بدلات وتسويات العمولات والأهداف البيعية
+                      </p>
                     </button>
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'employment', jobTitle: 'مطور برمجيات', jobTitleEn: 'Software Developer', contractType: 'indefinite', basicSalary: '12000', housingAllowance: '3000', transportAllowance: '1000', otherAllowances: '0' }));
-                      toast.success("تم تحميل نموذج عقد مهندس برمجيات المعتمد واختيار وضع عقود العمل!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group">
-                      <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">عقد مهندس / تقني</h4>
-                      <p className="text-xs text-zinc-500">يتضمن شروط السرية الفائقة، وحقوق الملكية الفكرية، وعدم المنافسة</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "employment",
+                          jobTitle: "مطور برمجيات",
+                          jobTitleEn: "Software Developer",
+                          contractType: "indefinite",
+                          basicSalary: "12000",
+                          housingAllowance: "3000",
+                          transportAllowance: "1000",
+                          otherAllowances: "0",
+                        }));
+                        toast.success(
+                          "تم تحميل نموذج عقد مهندس برمجيات المعتمد واختيار وضع عقود العمل!"
+                        );
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group"
+                    >
+                      <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">
+                        عقد مهندس / تقني
+                      </h4>
+                      <p className="text-xs text-zinc-500">
+                        يتضمن شروط السرية الفائقة، وحقوق الملكية الفكرية، وعدم المنافسة
+                      </p>
                     </button>
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'employment', jobTitle: 'محاسب', jobTitleEn: 'Accountant', contractType: 'fixed', basicSalary: '5000', housingAllowance: '1250', transportAllowance: '400', otherAllowances: '0' }));
-                      toast.success("تم تحميل نموذج عقد محاسب مالي المعتمد واختيار وضع عقود العمل!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group">
-                      <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">عقد مالي / محاسب</h4>
-                      <p className="text-xs text-zinc-500">يتضمن بنود العهدة العظمى والمسؤولية المالية والحوكمة</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "employment",
+                          jobTitle: "محاسب",
+                          jobTitleEn: "Accountant",
+                          contractType: "fixed",
+                          basicSalary: "5000",
+                          housingAllowance: "1250",
+                          transportAllowance: "400",
+                          otherAllowances: "0",
+                        }));
+                        toast.success(
+                          "تم تحميل نموذج عقد محاسب مالي المعتمد واختيار وضع عقود العمل!"
+                        );
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group"
+                    >
+                      <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">
+                        عقد مالي / محاسب
+                      </h4>
+                      <p className="text-xs text-zinc-500">
+                        يتضمن بنود العهدة العظمى والمسؤولية المالية والحوكمة
+                      </p>
                     </button>
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'employment', jobTitle: 'عامل صيانة', jobTitleEn: 'Maintenance Worker', contractType: 'fixed', basicSalary: '2000', housingAllowance: '500', transportAllowance: '200', otherAllowances: '0' }));
-                      toast.success("تم تحميل نموذج عقد عمالة مهنية وفنية المعتمد واختيار وضع عقود العمل!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group">
-                      <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">عقد عمالة مهنية</h4>
-                      <p className="text-xs text-zinc-500">يتضمن شروط توفير السكن المناسب، والتنقل، والإعاشة والمستلزمات</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "employment",
+                          jobTitle: "عامل صيانة",
+                          jobTitleEn: "Maintenance Worker",
+                          contractType: "fixed",
+                          basicSalary: "2000",
+                          housingAllowance: "500",
+                          transportAllowance: "200",
+                          otherAllowances: "0",
+                        }));
+                        toast.success(
+                          "تم تحميل نموذج عقد عمالة مهنية وفنية المعتمد واختيار وضع عقود العمل!"
+                        );
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group"
+                    >
+                      <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">
+                        عقد عمالة مهنية
+                      </h4>
+                      <p className="text-xs text-zinc-500">
+                        يتضمن شروط توفير السكن المناسب، والتنقل، والإعاشة والمستلزمات
+                      </p>
                     </button>
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'employment', jobTitle: 'أخصائي تسويق رقمي', jobTitleEn: 'Digital Marketing Specialist', contractType: 'fixed', basicSalary: '5500', housingAllowance: '1375', transportAllowance: '500', otherAllowances: '1000' }));
-                      toast.success("تم تحميل نموذج عقد أخصائي تسويق وصناعة محتوى المعتمد واختيار وضع عقود العمل!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group">
-                      <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">عقد تسويق وصناعة محتوى</h4>
-                      <p className="text-xs text-zinc-500">يركز على حقوق النشر وحسابات التواصل الاجتماعي وبدلات الأداء الرقمي</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "employment",
+                          jobTitle: "أخصائي تسويق رقمي",
+                          jobTitleEn: "Digital Marketing Specialist",
+                          contractType: "fixed",
+                          basicSalary: "5500",
+                          housingAllowance: "1375",
+                          transportAllowance: "500",
+                          otherAllowances: "1000",
+                        }));
+                        toast.success(
+                          "تم تحميل نموذج عقد أخصائي تسويق وصناعة محتوى المعتمد واختيار وضع عقود العمل!"
+                        );
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group"
+                    >
+                      <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">
+                        عقد تسويق وصناعة محتوى
+                      </h4>
+                      <p className="text-xs text-zinc-500">
+                        يركز على حقوق النشر وحسابات التواصل الاجتماعي وبدلات الأداء الرقمي
+                      </p>
                     </button>
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'employment', jobTitle: 'رئيس تنفيذي للعمليات', jobTitleEn: 'Chief Operating Officer (COO)', contractType: 'indefinite', basicSalary: '25000', housingAllowance: '6250', transportAllowance: '2000', otherAllowances: '5000' }));
-                      toast.success("تم تحميل نموذج عقد القيادة التنفيذية المعتمد واختيار وضع عقود العمل!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group">
-                      <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">عقد رئيس تنفيذي / إداري قيادي</h4>
-                      <p className="text-xs text-zinc-500">يتضمن تفويض الصلاحيات الإدارية، العمولات السنوية، والسرية والحوكمة</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "employment",
+                          jobTitle: "رئيس تنفيذي للعمليات",
+                          jobTitleEn: "Chief Operating Officer (COO)",
+                          contractType: "indefinite",
+                          basicSalary: "25000",
+                          housingAllowance: "6250",
+                          transportAllowance: "2000",
+                          otherAllowances: "5000",
+                        }));
+                        toast.success(
+                          "تم تحميل نموذج عقد القيادة التنفيذية المعتمد واختيار وضع عقود العمل!"
+                        );
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group"
+                    >
+                      <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">
+                        عقد رئيس تنفيذي / إداري قيادي
+                      </h4>
+                      <p className="text-xs text-zinc-500">
+                        يتضمن تفويض الصلاحيات الإدارية، العمولات السنوية، والسرية والحوكمة
+                      </p>
                     </button>
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'employment', jobTitle: 'مصمم واجهات المستخدم', jobTitleEn: 'UI/UX Designer', contractType: 'fixed', basicSalary: '8500', housingAllowance: '2125', transportAllowance: '800', otherAllowances: '0' }));
-                      toast.success("تم تحميل نموذج عقد مصمم واجهات مستخدم المعتمد واختيار وضع عقود العمل!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group">
-                      <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">عقد مصمم واجهات ومجال إبداعي</h4>
-                      <p className="text-xs text-zinc-500">يحتوي على بنود نقل ملكية الملكية الفكرية لحقوق التصاميم والهوية البصرية</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "employment",
+                          jobTitle: "مصمم واجهات المستخدم",
+                          jobTitleEn: "UI/UX Designer",
+                          contractType: "fixed",
+                          basicSalary: "8500",
+                          housingAllowance: "2125",
+                          transportAllowance: "800",
+                          otherAllowances: "0",
+                        }));
+                        toast.success(
+                          "تم تحميل نموذج عقد مصمم واجهات مستخدم المعتمد واختيار وضع عقود العمل!"
+                        );
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group"
+                    >
+                      <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">
+                        عقد مصمم واجهات ومجال إبداعي
+                      </h4>
+                      <p className="text-xs text-zinc-500">
+                        يحتوي على بنود نقل ملكية الملكية الفكرية لحقوق التصاميم والهوية البصرية
+                      </p>
                     </button>
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'employment', jobTitle: 'مدير مشاريع تقنية', jobTitleEn: 'Technical Project Manager', contractType: 'fixed', basicSalary: '14000', housingAllowance: '3500', transportAllowance: '1200', otherAllowances: '1500' }));
-                      toast.success("تم تحميل نموذج عقد مدير المشاريع المعتمد واختيار وضع عقود العمل!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group">
-                      <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">عقد مدير مشروع محترف</h4>
-                      <p className="text-xs text-zinc-500">يتضمن مؤشرات أداء تسليم المشاريع، والالتزام بمعايير الحوكمة والجودة</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "employment",
+                          jobTitle: "مدير مشاريع تقنية",
+                          jobTitleEn: "Technical Project Manager",
+                          contractType: "fixed",
+                          basicSalary: "14000",
+                          housingAllowance: "3500",
+                          transportAllowance: "1200",
+                          otherAllowances: "1500",
+                        }));
+                        toast.success(
+                          "تم تحميل نموذج عقد مدير المشاريع المعتمد واختيار وضع عقود العمل!"
+                        );
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-[#10b981] hover:ring-1 hover:ring-[#10b981] transition-all group"
+                    >
+                      <h4 className="font-bold text-zinc-900 group-hover:text-[#10b981] mb-1">
+                        عقد مدير مشروع محترف
+                      </h4>
+                      <p className="text-xs text-zinc-500">
+                        يتضمن مؤشرات أداء تسليم المشاريع، والالتزام بمعايير الحوكمة والجودة
+                      </p>
                     </button>
                   </div>
                 </div>
@@ -1625,150 +1882,429 @@ export default function Contracts() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 border-b-2 border-zinc-100 pb-2">
                     <span className="w-1.5 h-6 bg-indigo-500 rounded-full"></span>
-                    <h3 className="font-black text-sm text-zinc-800">العقود التجارية والاتفاقيات الاستثمارية (B2B & Investment)</h3>
+                    <h3 className="font-black text-sm text-zinc-800">
+                      العقود التجارية والاتفاقيات الاستثمارية (B2B & Investment)
+                    </h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'sales', jobTitle: 'برمجيات سحابية ومعدات شبكات', jobTitleEn: 'Cloud Software & Networking Equipment', contractType: 'fixed', durationMonths: '6', basicSalary: '45000', housingAllowance: '', transportAllowance: '', otherAllowances: '5000' }));
-                      toast.success("تم تحميل قالب عقد بيع وتفرغ رسمي للسلع والخدمات!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "sales",
+                          jobTitle: "برمجيات سحابية ومعدات شبكات",
+                          jobTitleEn: "Cloud Software & Networking Equipment",
+                          contractType: "fixed",
+                          durationMonths: "6",
+                          basicSalary: "45000",
+                          housingAllowance: "",
+                          transportAllowance: "",
+                          otherAllowances: "5000",
+                        }));
+                        toast.success("تم تحميل قالب عقد بيع وتفرغ رسمي للسلع والخدمات!");
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group"
+                    >
                       <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">عقد بيع</h4>
-                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">بائع ⇌ مشتري</span>
+                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">
+                          عقد بيع
+                        </h4>
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+                          بائع ⇌ مشتري
+                        </span>
                       </div>
-                      <p className="text-xs text-zinc-500">يتضمن التزام نقل الملكية، الضمانات الفنية، والمسؤولية عن جودة المبيع</p>
+                      <p className="text-xs text-zinc-500">
+                        يتضمن التزام نقل الملكية، الضمانات الفنية، والمسؤولية عن جودة المبيع
+                      </p>
                     </button>
 
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'purchase', jobTitle: 'أجهزة خوادم ومحطات عمل مكتبية', jobTitleEn: 'Office Servers & Workstations Hardware', contractType: 'fixed', probationDays: '30', basicSalary: '85000', housingAllowance: '', transportAllowance: '2500', otherAllowances: '' }));
-                      toast.success("تم تحميل قالب عقد شراء وتملك أصول!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "purchase",
+                          jobTitle: "أجهزة خوادم ومحطات عمل مكتبية",
+                          jobTitleEn: "Office Servers & Workstations Hardware",
+                          contractType: "fixed",
+                          probationDays: "30",
+                          basicSalary: "85000",
+                          housingAllowance: "",
+                          transportAllowance: "2500",
+                          otherAllowances: "",
+                        }));
+                        toast.success("تم تحميل قالب عقد شراء وتملك أصول!");
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group"
+                    >
                       <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">عقد شراء</h4>
-                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">مشتري ⇌ بائع</span>
+                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">
+                          عقد شراء
+                        </h4>
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+                          مشتري ⇌ بائع
+                        </span>
                       </div>
-                      <p className="text-xs text-zinc-500">يركز على حوكمة الفحص والقبول والمواصفات وجودة التوريد</p>
+                      <p className="text-xs text-zinc-500">
+                        يركز على حوكمة الفحص والقبول والمواصفات وجودة التوريد
+                      </p>
                     </button>
 
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'supply', jobTitle: 'قطع غيار إلكترونية ولدائن صناعية', jobTitleEn: 'Electronic Spare Parts & Industrial Plastics', contractType: 'fixed', durationMonths: '24', probationDays: '60', basicSalary: '120000', housingAllowance: '', transportAllowance: '8000', otherAllowances: '4000' }));
-                      toast.success("تم تحميل قالب عقد توريد خدمات ومواد!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "supply",
+                          jobTitle: "قطع غيار إلكترونية ولدائن صناعية",
+                          jobTitleEn: "Electronic Spare Parts & Industrial Plastics",
+                          contractType: "fixed",
+                          durationMonths: "24",
+                          probationDays: "60",
+                          basicSalary: "120000",
+                          housingAllowance: "",
+                          transportAllowance: "8000",
+                          otherAllowances: "4000",
+                        }));
+                        toast.success("تم تحميل قالب عقد توريد خدمات ومواد!");
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group"
+                    >
                       <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">عقد توريد</h4>
-                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">مورد ⇌ عميل</span>
+                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">
+                          عقد توريد
+                        </h4>
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+                          مورد ⇌ عميل
+                        </span>
                       </div>
-                      <p className="text-xs text-zinc-500">يتعلق بجدولة الشحنات، وسلاسل الإمداد وبنود التعبئة وضمان الالتزام</p>
+                      <p className="text-xs text-zinc-500">
+                        يتعلق بجدولة الشحنات، وسلاسل الإمداد وبنود التعبئة وضمان الالتزام
+                      </p>
                     </button>
 
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'distribution', jobTitle: 'منتجات غذائية ومكملات غذائية طبيعية', jobTitleEn: 'Food Products & Natural Dietary Supplements', contractType: 'fixed', durationMonths: '36', basicSalary: '350000', housingAllowance: '', transportAllowance: '', otherAllowances: '50000' }));
-                      toast.success("تم تحميل قالب عقد توزيع منتجات حصري!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "distribution",
+                          jobTitle: "منتجات غذائية ومكملات غذائية طبيعية",
+                          jobTitleEn: "Food Products & Natural Dietary Supplements",
+                          contractType: "fixed",
+                          durationMonths: "36",
+                          basicSalary: "350000",
+                          housingAllowance: "",
+                          transportAllowance: "",
+                          otherAllowances: "50000",
+                        }));
+                        toast.success("تم تحميل قالب عقد توزيع منتجات حصري!");
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group"
+                    >
                       <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">عقد توزيع</h4>
-                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">منتج ⇌ موزع</span>
+                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">
+                          عقد توزيع
+                        </h4>
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+                          منتج ⇌ موزع
+                        </span>
                       </div>
-                      <p className="text-xs text-zinc-500">يمنح الحصرية الإقليمية والتزام الحد الأدنى السنوي للاشتراء</p>
+                      <p className="text-xs text-zinc-500">
+                        يمنح الحصرية الإقليمية والتزام الحد الأدنى السنوي للاشتراء
+                      </p>
                     </button>
 
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'agency', jobTitle: 'حلول وبوابات الدفع الإلكتروني الذكية', jobTitleEn: 'Smart Electronic Payment Gateways & Solutions', contractType: 'fixed', durationMonths: '12', probationDays: '90', basicSalary: '15000', housingAllowance: '', transportAllowance: '3000', otherAllowances: '' }));
-                      toast.success("تم تحميل قالب عقد وكالة تجارية معتمد!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "agency",
+                          jobTitle: "حلول وبوابات الدفع الإلكتروني الذكية",
+                          jobTitleEn: "Smart Electronic Payment Gateways & Solutions",
+                          contractType: "fixed",
+                          durationMonths: "12",
+                          probationDays: "90",
+                          basicSalary: "15000",
+                          housingAllowance: "",
+                          transportAllowance: "3000",
+                          otherAllowances: "",
+                        }));
+                        toast.success("تم تحميل قالب عقد وكالة تجارية معتمد!");
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group"
+                    >
                       <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">عقد وكالة تجارية</h4>
-                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">موكل ⇌ وكيل</span>
+                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">
+                          عقد وكالة تجارية
+                        </h4>
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+                          موكل ⇌ وكيل
+                        </span>
                       </div>
-                      <p className="text-xs text-zinc-500">يتناول تفويض عمولات التمثيل، الحوكمة والترويج المهني للمنتجات</p>
+                      <p className="text-xs text-zinc-500">
+                        يتناول تفويض عمولات التمثيل، الحوكمة والترويج المهني للمنتجات
+                      </p>
                     </button>
 
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'franchise', jobTitle: 'سلسلة مقاهي ومطاعم الوجبات السريعة', jobTitleEn: 'Coffee Shops & Fast-food Restaurants Chain', contractType: 'fixed', durationMonths: '60', probationDays: '180', basicSalary: '250000', housingAllowance: '', transportAllowance: '', otherAllowances: '12000' }));
-                      toast.success("تم تحميل قالب عقد امتياز تجاري موحد!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "franchise",
+                          jobTitle: "سلسلة مقاهي ومطاعم الوجبات السريعة",
+                          jobTitleEn: "Coffee Shops & Fast-food Restaurants Chain",
+                          contractType: "fixed",
+                          durationMonths: "60",
+                          probationDays: "180",
+                          basicSalary: "250000",
+                          housingAllowance: "",
+                          transportAllowance: "",
+                          otherAllowances: "12000",
+                        }));
+                        toast.success("تم تحميل قالب عقد امتياز تجاري موحد!");
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group"
+                    >
                       <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">عقد امتياز تجاري (Franchise)</h4>
-                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">مانح ⇌ ممنوح</span>
+                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">
+                          عقد امتياز تجاري (Franchise)
+                        </h4>
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+                          مانح ⇌ ممنوح
+                        </span>
                       </div>
-                      <p className="text-xs text-zinc-500">يركز على حقوق استخدام الهوية والرسوم التشغيلية وضوابط الالتزام بالجودة</p>
+                      <p className="text-xs text-zinc-500">
+                        يركز على حقوق استخدام الهوية والرسوم التشغيلية وضوابط الالتزام بالجودة
+                      </p>
                     </button>
 
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'partnership', jobTitle: 'تأسيس وتشغيل مصنع تعبئة مياه صحية', jobTitleEn: 'Establishment & Operation of Water Bottling Plant', contractType: 'fixed', basicSalary: '1000000', housingAllowance: '600000', transportAllowance: '400000', otherAllowances: '' }));
-                      toast.success("تم تحميل قالب عقد شراكة واستثمار!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "partnership",
+                          jobTitle: "تأسيس وتشغيل مصنع تعبئة مياه صحية",
+                          jobTitleEn: "Establishment & Operation of Water Bottling Plant",
+                          contractType: "fixed",
+                          basicSalary: "1000000",
+                          housingAllowance: "600000",
+                          transportAllowance: "400000",
+                          otherAllowances: "",
+                        }));
+                        toast.success("تم تحميل قالب عقد شراكة واستثمار!");
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group"
+                    >
                       <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">عقد شراكة</h4>
-                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">شريك ⇌ شريك</span>
+                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">
+                          عقد شراكة
+                        </h4>
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+                          شريك ⇌ شريك
+                        </span>
                       </div>
-                      <p className="text-xs text-zinc-500">ينظم رأس المال المشترك، الإدارة بحسن نية، ونهج توزيع الأرباح والمسؤوليات</p>
+                      <p className="text-xs text-zinc-500">
+                        ينظم رأس المال المشترك، الإدارة بحسن نية، ونهج توزيع الأرباح والمسؤوليات
+                      </p>
                     </button>
 
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'shareholders', jobTitle: 'شركة خدمات الإسناد وتوفير الكفاءات', jobTitleEn: 'Outsourcing Services & Talent Acquisition Corp', contractType: 'fixed', durationMonths: '60', basicSalary: '500000', housingAllowance: '', transportAllowance: '', otherAllowances: '100000' }));
-                      toast.success("تم تحميل اتفاقية مساهمين وتأسيس شركة!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "shareholders",
+                          jobTitle: "شركة خدمات الإسناد وتوفير الكفاءات",
+                          jobTitleEn: "Outsourcing Services & Talent Acquisition Corp",
+                          contractType: "fixed",
+                          durationMonths: "60",
+                          basicSalary: "500000",
+                          housingAllowance: "",
+                          transportAllowance: "",
+                          otherAllowances: "100000",
+                        }));
+                        toast.success("تم تحميل اتفاقية مساهمين وتأسيس شركة!");
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group"
+                    >
                       <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">عقد مساهمين</h4>
-                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">مؤسس ⇌ مستثمر</span>
+                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">
+                          عقد مساهمين
+                        </h4>
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+                          مؤسس ⇌ مستثمر
+                        </span>
                       </div>
-                      <p className="text-xs text-zinc-500">تختص بنطاق الحظر وحقوق الشفعة وعرض الأسهم والقروض ونسب التصويت</p>
+                      <p className="text-xs text-zinc-500">
+                        تختص بنطاق الحظر وحقوق الشفعة وعرض الأسهم والقروض ونسب التصويت
+                      </p>
                     </button>
 
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'investment', jobTitle: 'تطبيق التجارة السريعة والخدمات اللوجستية', jobTitleEn: 'Quick Commerce App & Logistics Platform', contractType: 'fixed', probationDays: '45', basicSalary: '2500000', housingAllowance: '', transportAllowance: '', otherAllowances: '' }));
-                      toast.success("تم تحميل قالب عقد استثمار وتمويل جريء!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "investment",
+                          jobTitle: "تطبيق التجارة السريعة والخدمات اللوجستية",
+                          jobTitleEn: "Quick Commerce App & Logistics Platform",
+                          contractType: "fixed",
+                          probationDays: "45",
+                          basicSalary: "2500000",
+                          housingAllowance: "",
+                          transportAllowance: "",
+                          otherAllowances: "",
+                        }));
+                        toast.success("تم تحميل قالب عقد استثمار وتمويل جريء!");
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group"
+                    >
                       <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">عقد استثمار</h4>
-                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">مستهدف ⇌ مستثمر</span>
+                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">
+                          عقد استثمار
+                        </h4>
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+                          مستهدف ⇌ مستثمر
+                        </span>
                       </div>
-                      <p className="text-xs text-zinc-500">يتضمن التقييم وما يرتبط به من شروط الإغلاق والدفعات ومراحل التوسع الفعلي</p>
+                      <p className="text-xs text-zinc-500">
+                        يتضمن التقييم وما يرتبط به من شروط الإغلاق والدفعات ومراحل التوسع الفعلي
+                      </p>
                     </button>
 
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'jv', jobTitle: 'تطوير البنية التحتية لشبكات الإنترنت اللاسلكي', jobTitleEn: 'Infrastructure Development of Wireless Internet Networks', contractType: 'fixed', durationMonths: '18', basicSalary: '1500000', housingAllowance: '800000', transportAllowance: '700000', otherAllowances: '' }));
-                      toast.success("تم تحميل اتفاقية مشروع مشترك وتضامن!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "jv",
+                          jobTitle: "تطوير البنية التحتية لشبكات الإنترنت اللاسلكي",
+                          jobTitleEn: "Infrastructure Development of Wireless Internet Networks",
+                          contractType: "fixed",
+                          durationMonths: "18",
+                          basicSalary: "1500000",
+                          housingAllowance: "800000",
+                          transportAllowance: "700000",
+                          otherAllowances: "",
+                        }));
+                        toast.success("تم تحميل اتفاقية مشروع مشترك وتضامن!");
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group"
+                    >
                       <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">عقد مشروع مشترك (JV)</h4>
-                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">متحالف ⇌ متحالف</span>
+                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">
+                          عقد مشروع مشترك (JV)
+                        </h4>
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+                          متحالف ⇌ متحالف
+                        </span>
                       </div>
-                      <p className="text-xs text-zinc-500">موجه لتظافر الموارد والتكامل الفني وتبادل الوفاء بالمطالب والخدمات المشتركة</p>
+                      <p className="text-xs text-zinc-500">
+                        موجه لتظافر الموارد والتكامل الفني وتبادل الوفاء بالمطالب والخدمات المشتركة
+                      </p>
                     </button>
 
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'marketing', jobTitle: 'حملات المشاهير وصناعة المحتوى المرئي والمسموع', jobTitleEn: 'Influencer Campaigns, Visual & Audio Content Creation', contractType: 'fixed', durationMonths: '12', probationDays: '30', basicSalary: '35000', housingAllowance: '', transportAllowance: '', otherAllowances: '10000' }));
-                      toast.success("تم تحميل قالب عقد خدمات تسويق متميز!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "marketing",
+                          jobTitle: "حملات المشاهير وصناعة المحتوى المرئي والمسموع",
+                          jobTitleEn: "Influencer Campaigns, Visual & Audio Content Creation",
+                          contractType: "fixed",
+                          durationMonths: "12",
+                          probationDays: "30",
+                          basicSalary: "35000",
+                          housingAllowance: "",
+                          transportAllowance: "",
+                          otherAllowances: "10000",
+                        }));
+                        toast.success("تم تحميل قالب عقد خدمات تسويق متميز!");
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group"
+                    >
                       <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">عقد تسويق</h4>
-                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">عميل ⇌ مسوق</span>
+                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">
+                          عقد تسويق
+                        </h4>
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+                          عميل ⇌ مسوق
+                        </span>
                       </div>
-                      <p className="text-xs text-zinc-500">يتضمن تحديد قنوات العرض، الأجر الشهري الثابت وميزانيات الإنفاق المدفوع</p>
+                      <p className="text-xs text-zinc-500">
+                        يتضمن تحديد قنوات العرض، الأجر الشهري الثابت وميزانيات الإنفاق المدفوع
+                      </p>
                     </button>
 
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'brokerage', jobTitle: 'تسويق وبيع عقارات ومجمعات سكنية وتجارية', jobTitleEn: 'Marketing & Sales of Residential & Commercial Real Estate', contractType: 'fixed', durationMonths: '6', basicSalary: '75000', housingAllowance: '', transportAllowance: '', otherAllowances: '' }));
-                      toast.success("تم تحميل قالب عقد وساطة وسعي معتمد!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "brokerage",
+                          jobTitle: "تسويق وبيع عقارات ومجمعات سكنية وتجارية",
+                          jobTitleEn: "Marketing & Sales of Residential & Commercial Real Estate",
+                          contractType: "fixed",
+                          durationMonths: "6",
+                          basicSalary: "75000",
+                          housingAllowance: "",
+                          transportAllowance: "",
+                          otherAllowances: "",
+                        }));
+                        toast.success("تم تحميل قالب عقد وساطة وسعي معتمد!");
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group"
+                    >
                       <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">عقد وساطة</h4>
-                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">صاحب عمل ⇌ وسيط</span>
+                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">
+                          عقد وساطة
+                        </h4>
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+                          صاحب عمل ⇌ وسيط
+                        </span>
                       </div>
-                      <p className="text-xs text-zinc-500">يركز على شرف حظر العقد المباشر وتحديد قيم ونسب وجدول سحب العمولات</p>
+                      <p className="text-xs text-zinc-500">
+                        يركز على شرف حظر العقد المباشر وتحديد قيم ونسب وجدول سحب العمولات
+                      </p>
                     </button>
 
-                    <button type="button" onClick={() => {
-                      setData(prev => ({ ...prev, contractCategory: 'consulting', jobTitle: 'دراسات جدوى وهيكلة إدارية وتخطيط استراتيجي', jobTitleEn: 'Feasibility Studies, Restructuring & Strategic Planning', contractType: 'fixed', durationMonths: '3', probationDays: '15', basicSalary: '60000', housingAllowance: '', transportAllowance: '5000', otherAllowances: '' }));
-                      toast.success("تم تحميل اتفاقية تقديم خدمات استشارية!");
-                    }} className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev) => ({
+                          ...prev,
+                          contractCategory: "consulting",
+                          jobTitle: "دراسات جدوى وهيكلة إدارية وتخطيط استراتيجي",
+                          jobTitleEn: "Feasibility Studies, Restructuring & Strategic Planning",
+                          contractType: "fixed",
+                          durationMonths: "3",
+                          probationDays: "15",
+                          basicSalary: "60000",
+                          housingAllowance: "",
+                          transportAllowance: "5000",
+                          otherAllowances: "",
+                        }));
+                        toast.success("تم تحميل اتفاقية تقديم خدمات استشارية!");
+                      }}
+                      className="text-right bg-white border border-zinc-200 p-4 rounded-xl hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 transition-all group"
+                    >
                       <div className="flex justify-between items-start mb-1">
-                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">عقد استشارات</h4>
-                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">عميل ⇌ مستشار</span>
+                        <h4 className="font-bold text-zinc-900 group-hover:text-indigo-600">
+                          عقد استشارات
+                        </h4>
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+                          عميل ⇌ مستشار
+                        </span>
                       </div>
-                      <p className="text-xs text-zinc-500">يتضمن صياغة المخرجات الأسبوعية وبدلات الانتقال والزيارات والتكليفات</p>
+                      <p className="text-xs text-zinc-500">
+                        يتضمن صياغة المخرجات الأسبوعية وبدلات الانتقال والزيارات والتكليفات
+                      </p>
                     </button>
                   </div>
                 </div>
@@ -1779,63 +2315,111 @@ export default function Contracts() {
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex justify-between items-end mb-4">
                   <div>
-                    <h2 className="text-2xl font-black text-zinc-900 border-r-4 border-[#10b981] pr-4">نظام إدارة الوثائق الذكي (Smart DMS)</h2>
-                    <p className="text-zinc-500 mt-2 font-medium pr-5">أرشفة رقمية مشفرة من الطرفين، مع التعرف البصري (OCR) لتصنيف الوثائق تلقائياً واستخراج التواريخ الحرجة.</p>
+                    <h2 className="text-2xl font-black text-zinc-900 border-r-4 border-[#10b981] pr-4">
+                      نظام إدارة الوثائق الذكي (Smart DMS)
+                    </h2>
+                    <p className="text-zinc-500 mt-2 font-medium pr-5">
+                      أرشفة رقمية مشفرة من الطرفين، مع التعرف البصري (OCR) لتصنيف الوثائق تلقائياً
+                      واستخراج التواريخ الحرجة.
+                    </p>
                   </div>
-                  <button type="button" className="bg-[#10b981] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-[#059669] transition-shadow shadow-lg shadow-[#10b981]/20">
+                  <button
+                    type="button"
+                    className="bg-[#10b981] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-[#059669] transition-shadow shadow-lg shadow-[#10b981]/20"
+                  >
                     <Upload className="w-5 h-5" /> رفع مستند (OCR)
                   </button>
                 </div>
-                
+
                 <div className="bg-white border border-zinc-200 rounded-3xl p-8 shadow-sm">
                   <div className="flex flex-col md:flex-row gap-6">
                     {/* Left Sidebar (Folders) */}
                     <div className="w-full md:w-64 shrink-0 space-y-2 border-l border-zinc-100 pl-6">
-                       <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-4">التصنيفات الآلية</h4>
-                       {[
-                         { name: 'عقود الموظفين', count: 145, active: true },
-                         { name: 'السجلات المدنية والجوازات', count: 320, active: false },
-                         { name: 'التراخيص والسجلات (Wathiq)', count: 12, active: false },
-                         { name: 'اتفاقيات الموردين (NDAs)', count: 48, active: false },
-                       ].map((folder, i) => (
-                         <div key={i} className={`flex items-center justify-between p-3 rounded-xl cursor-pointer ${folder.active ? 'bg-emerald-50 text-emerald-800' : 'hover:bg-zinc-50 text-zinc-700'}`}>
-                           <div className="flex items-center gap-2">
-                             <Folder className={`w-4 h-4 ${folder.active ? 'text-emerald-500' : 'text-zinc-400'}`} />
-                             <span className="text-sm font-bold">{folder.name}</span>
-                           </div>
-                           <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${folder.active ? 'bg-emerald-200 text-emerald-900' : 'bg-zinc-100 text-zinc-500'}`}>{folder.count}</span>
-                         </div>
-                       ))}
-                       <div className="mt-8 p-4 bg-zinc-900 text-white rounded-2xl relative overflow-hidden">
-                          <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/20 rounded-full blur-xl"></div>
-                          <Lock className="w-5 h-5 mb-2 text-emerald-400" />
-                          <h4 className="text-xs font-black mb-1">تشفير AES-256</h4>
-                          <p className="text-[10px] text-zinc-400">جميع الوثائق محمية بتشفير عسكري ولا يمكن الوصول لها إلا بصلاحيات RBAC.</p>
-                       </div>
+                      <h4 className="text-xs font-black uppercase tracking-widest text-zinc-400 mb-4">
+                        التصنيفات الآلية
+                      </h4>
+                      {[
+                        { name: "عقود الموظفين", count: 145, active: true },
+                        { name: "السجلات المدنية والجوازات", count: 320, active: false },
+                        { name: "التراخيص والسجلات (Wathiq)", count: 12, active: false },
+                        { name: "اتفاقيات الموردين (NDAs)", count: 48, active: false },
+                      ].map((folder, i) => (
+                        <div
+                          key={i}
+                          className={`flex items-center justify-between p-3 rounded-xl cursor-pointer ${folder.active ? "bg-emerald-50 text-emerald-800" : "hover:bg-zinc-50 text-zinc-700"}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Folder
+                              className={`w-4 h-4 ${folder.active ? "text-emerald-500" : "text-zinc-400"}`}
+                            />
+                            <span className="text-sm font-bold">{folder.name}</span>
+                          </div>
+                          <span
+                            className={`text-[10px] font-black px-2 py-0.5 rounded-full ${folder.active ? "bg-emerald-200 text-emerald-900" : "bg-zinc-100 text-zinc-500"}`}
+                          >
+                            {folder.count}
+                          </span>
+                        </div>
+                      ))}
+                      <div className="mt-8 p-4 bg-zinc-900 text-white rounded-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/20 rounded-full blur-xl"></div>
+                        <Lock className="w-5 h-5 mb-2 text-emerald-400" />
+                        <h4 className="text-xs font-black mb-1">تشفير AES-256</h4>
+                        <p className="text-[10px] text-zinc-400">
+                          جميع الوثائق محمية بتشفير عسكري ولا يمكن الوصول لها إلا بصلاحيات RBAC.
+                        </p>
+                      </div>
                     </div>
 
                     {/* Main Content (Files Grid) */}
                     <div className="flex-1">
                       <div className="relative mb-6">
                         <Search className="w-5 h-5 absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400" />
-                        <input type="text" placeholder="البحث باستخدام الذكاء الاصطناعي (مثال: عقد أحمد الخاص بالتسويق)..." className="w-full bg-zinc-50 border border-zinc-200 rounded-xl py-3 pr-12 pl-4 text-sm font-bold focus:ring-2 focus:ring-[#10b981] outline-none transition-all" />
+                        <input
+                          type="text"
+                          placeholder="البحث باستخدام الذكاء الاصطناعي (مثال: عقد أحمد الخاص بالتسويق)..."
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-xl py-3 pr-12 pl-4 text-sm font-bold focus:ring-2 focus:ring-[#10b981] outline-none transition-all"
+                        />
                       </div>
 
                       <div className="overflow-x-auto">
                         <table className="w-full text-right">
                           <thead>
                             <tr className="border-b border-zinc-100">
-                              <th className="py-3 px-4 text-xs font-black text-zinc-400 w-1/3">اسم المستند</th>
-                              <th className="py-3 px-4 text-xs font-black text-zinc-400 w-1/4">الذكاء الاصطناعي (OCR)</th>
-                              <th className="py-3 px-4 text-xs font-black text-zinc-400 w-1/4">تاريخ الانتهاء المستخرج</th>
-                              <th className="py-3 px-4 text-xs font-black text-zinc-400 text-left">إجراءات</th>
+                              <th className="py-3 px-4 text-xs font-black text-zinc-400 w-1/3">
+                                اسم المستند
+                              </th>
+                              <th className="py-3 px-4 text-xs font-black text-zinc-400 w-1/4">
+                                الذكاء الاصطناعي (OCR)
+                              </th>
+                              <th className="py-3 px-4 text-xs font-black text-zinc-400 w-1/4">
+                                تاريخ الانتهاء المستخرج
+                              </th>
+                              <th className="py-3 px-4 text-xs font-black text-zinc-400 text-left">
+                                إجراءات
+                              </th>
                             </tr>
                           </thead>
                           <tbody>
                             {[
-                              { name: 'عقد توظيف - المهندس خالد.pdf', ocr: 'تم المعالجة', status: 'valid', date: '2027-01-15' },
-                              { name: 'تجديد إقامة - محمد سيد.jpeg', ocr: 'تم الاستخراج', status: 'warning', date: '2024-08-10 (قريباً)' },
-                              { name: 'اتفاقية سرية مورد تقنية.docx', ocr: 'جاري المعالجة...', status: 'processing', date: '-' },
+                              {
+                                name: "عقد توظيف - المهندس خالد.pdf",
+                                ocr: "تم المعالجة",
+                                status: "valid",
+                                date: "2027-01-15",
+                              },
+                              {
+                                name: "تجديد إقامة - محمد سيد.jpeg",
+                                ocr: "تم الاستخراج",
+                                status: "warning",
+                                date: "2024-08-10 (قريباً)",
+                              },
+                              {
+                                name: "اتفاقية سرية مورد تقنية.docx",
+                                ocr: "جاري المعالجة...",
+                                status: "processing",
+                                date: "-",
+                              },
                             ].map((file, idx) => (
                               <tr key={idx} className="border-b border-zinc-50 hover:bg-zinc-50/50">
                                 <td className="py-3 px-4">
@@ -1847,14 +2431,22 @@ export default function Contracts() {
                                   </div>
                                 </td>
                                 <td className="py-3 px-4">
-                                  <span className={`text-[10px] font-black px-2 py-1 rounded-md ${file.status === 'processing' ? 'bg-amber-100 text-amber-700 animate-pulse' : 'bg-blue-50 text-blue-700'}`}>{file.ocr}</span>
+                                  <span
+                                    className={`text-[10px] font-black px-2 py-1 rounded-md ${file.status === "processing" ? "bg-amber-100 text-amber-700 animate-pulse" : "bg-blue-50 text-blue-700"}`}
+                                  >
+                                    {file.ocr}
+                                  </span>
                                 </td>
                                 <td className="py-3 px-4">
-                                  <span className={`text-xs font-bold ${file.status === 'warning' ? 'text-rose-600 font-black' : 'text-zinc-600'}`}>{file.date}</span>
+                                  <span
+                                    className={`text-xs font-bold ${file.status === "warning" ? "text-rose-600 font-black" : "text-zinc-600"}`}
+                                  >
+                                    {file.date}
+                                  </span>
                                 </td>
                                 <td className="py-3 px-4 text-left">
                                   <button className="text-xs font-bold text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 px-3 py-1.5 rounded-lg transition-colors">
-                                     معاينة المستند
+                                    معاينة المستند
                                   </button>
                                 </td>
                               </tr>
@@ -1873,50 +2465,95 @@ export default function Contracts() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-700">
-                      {isEmployment 
-                        ? "اسم المنشأة الطرف الأول (عربي)" 
+                      {isEmployment
+                        ? "اسم المنشأة الطرف الأول (عربي)"
                         : `${(CATEGORY_CONFIGS[data.contractCategory]?.party1Ar || "الطرف الأول").replace(" (الطرف الأول):", "")} (عربي)`}
                     </label>
-                    <input type="text" name="employerName" value={data.employerName} onChange={handleChange} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981] outline-none transition-all" />
+                    <input
+                      type="text"
+                      name="employerName"
+                      value={data.employerName}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981] outline-none transition-all"
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-700">
-                      {isEmployment 
-                        ? "اسم المنشأة الطرف الأول (English)" 
+                      {isEmployment
+                        ? "اسم المنشأة الطرف الأول (English)"
                         : `${(CATEGORY_CONFIGS[data.contractCategory]?.party1En || "First Party").replace(" (First Party):", "")} (English)`}
                     </label>
-                    <input type="text" name="employerNameEn" value={data.employerNameEn} onChange={handleChange} dir="ltr" className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981] outline-none transition-all" />
+                    <input
+                      type="text"
+                      name="employerNameEn"
+                      value={data.employerNameEn}
+                      onChange={handleChange}
+                      dir="ltr"
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981] outline-none transition-all"
+                    />
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-zinc-700">
-                    {isEmployment ? "السجل التجاري للمنشأة (CR)" : "السجل التجاري / الهوية الرسمية للطرف الأول"}
+                    {isEmployment
+                      ? "السجل التجاري للمنشأة (CR)"
+                      : "السجل التجاري / الهوية الرسمية للطرف الأول"}
                   </label>
-                  <input type="text" name="employerCR" value={data.employerCR} onChange={handleChange} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none" />
+                  <input
+                    type="text"
+                    name="employerCR"
+                    value={data.employerCR}
+                    onChange={handleChange}
+                    className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-700">
-                      {isEmployment ? "Representative (English)" : "Authorized Representative (English)"}
+                      {isEmployment
+                        ? "Representative (English)"
+                        : "Authorized Representative (English)"}
                     </label>
-                    <input type="text" name="employerRepEn" value={data.employerRepEn} onChange={handleChange} dir="ltr" className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold outline-none focus:border-[#10b981]" />
+                    <input
+                      type="text"
+                      name="employerRepEn"
+                      value={data.employerRepEn}
+                      onChange={handleChange}
+                      dir="ltr"
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold outline-none focus:border-[#10b981]"
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-700">
-                      {isEmployment ? "مقر العمل والفرع الرئيسي (عربي)" : "مقر / عنوان الطرف الأول (عربي)"}
+                      {isEmployment
+                        ? "مقر العمل والفرع الرئيسي (عربي)"
+                        : "مقر / عنوان الطرف الأول (عربي)"}
                     </label>
-                    <input type="text" name="employerAddress" value={data.employerAddress} onChange={handleChange} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold outline-none focus:border-[#10b981]" />
+                    <input
+                      type="text"
+                      name="employerAddress"
+                      value={data.employerAddress}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold outline-none focus:border-[#10b981]"
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-700">
                       {isEmployment ? "HQ Address (English)" : "Primary Address (English)"}
                     </label>
-                    <input type="text" name="employerAddressEn" value={data.employerAddressEn} onChange={handleChange} dir="ltr" className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold outline-none focus:border-[#10b981]" />
+                    <input
+                      type="text"
+                      name="employerAddressEn"
+                      value={data.employerAddressEn}
+                      onChange={handleChange}
+                      dir="ltr"
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold outline-none focus:border-[#10b981]"
+                    />
                   </div>
                 </div>
               </div>
@@ -1940,17 +2577,20 @@ export default function Contracts() {
                       <span>مزامنة وتصدير للرواتب / Save & Sync to Payroll</span>
                     </button>
                   </div>
-                  
+
                   <div className="space-y-1.5 text-right">
-                    <label className="text-xs font-bold text-zinc-700 block text-right">اكتشاف واختيار موظف من قاعدة الرواتب لملء العقد تلقائياً / Match & Load Employee:</label>
+                    <label className="text-xs font-bold text-zinc-700 block text-right">
+                      اكتشاف واختيار موظف من قاعدة الرواتب لملء العقد تلقائياً / Match & Load
+                      Employee:
+                    </label>
                     <div className="relative">
                       <select
                         onChange={(e) => {
                           const empId = e.target.value;
                           if (!empId) return;
-                          const emp = employees.find(x => x.id === empId);
+                          const emp = employees.find((x) => x.id === empId);
                           if (emp) {
-                            setData(prev => ({
+                            setData((prev) => ({
                               ...prev,
                               employeeName: emp.name || "",
                               employeeNameEn: emp.nameEn || emp.name || "",
@@ -1962,21 +2602,32 @@ export default function Contracts() {
                               jobTitle: emp.position || "",
                               jobTitleEn: emp.positionEn || emp.position || "",
                               basicSalary: String((emp.baseSalaryHalalas || 0) / 100 || ""),
-                              housingAllowance: String((emp.housingAllowanceHalalas || 0) / 100 || ""),
-                              transportAllowance: String((emp.transportAllowanceHalalas || 0) / 100 || ""),
-                              otherAllowances: String((emp.otherDeductionsHalalas || 0) / 100 || "")
+                              housingAllowance: String(
+                                (emp.housingAllowanceHalalas || 0) / 100 || ""
+                              ),
+                              transportAllowance: String(
+                                (emp.transportAllowanceHalalas || 0) / 100 || ""
+                              ),
+                              otherAllowances: String(
+                                (emp.otherDeductionsHalalas || 0) / 100 || ""
+                              ),
                             }));
-                            toast.success(`تم جلب بيانات الموظف ${emp.name} وتعبئتها في العقد بنجاح!`);
+                            toast.success(
+                              `تم جلب بيانات الموظف ${emp.name} وتعبئتها في العقد بنجاح!`
+                            );
                           }
                         }}
                         className="w-full px-3 py-2 bg-white border border-emerald-300 rounded-xl text-xs font-bold focus:border-[#10b981] outline-none cursor-pointer text-right"
                         defaultValue=""
                         dir="rtl"
                       >
-                        <option value="">-- اختر موظفًا للتعبئة التلقائية من قاعدة البيانات --</option>
-                        {employees.map(emp => (
+                        <option value="">
+                          -- اختر موظفًا للتعبئة التلقائية من قاعدة البيانات --
+                        </option>
+                        {employees.map((emp) => (
                           <option key={emp.id} value={emp.id}>
-                            {emp.name} - {emp.position || "عام"} ({(emp.baseSalaryHalalas / 100).toLocaleString()} ر.س)
+                            {emp.name} - {emp.position || "عام"} (
+                            {(emp.baseSalaryHalalas / 100).toLocaleString()} ر.س)
                           </option>
                         ))}
                       </select>
@@ -1987,37 +2638,71 @@ export default function Contracts() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-700">
-                      {isEmployment 
-                        ? "اسم العامل الطرف الثاني (عربي)" 
+                      {isEmployment
+                        ? "اسم العامل الطرف الثاني (عربي)"
                         : `${(CATEGORY_CONFIGS[data.contractCategory]?.party2Ar || "الطرف الثاني").replace(" (الطرف الثاني):", "")} (عربي)`}
                     </label>
-                    <input type="text" name="employeeName" value={data.employeeName} onChange={handleChange} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none" />
+                    <input
+                      type="text"
+                      name="employeeName"
+                      value={data.employeeName}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none"
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-700">
-                      {isEmployment 
-                        ? "Employee Name (English)" 
+                      {isEmployment
+                        ? "Employee Name (English)"
                         : `${(CATEGORY_CONFIGS[data.contractCategory]?.party2En || "Second Party").replace(" (Second Party):", "")} (English)`}
                     </label>
-                    <input type="text" name="employeeNameEn" value={data.employeeNameEn} onChange={handleChange} dir="ltr" className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none" />
+                    <input
+                      type="text"
+                      name="employeeNameEn"
+                      value={data.employeeNameEn}
+                      onChange={handleChange}
+                      dir="ltr"
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none"
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-700">
-                      {isEmployment ? "رقم السجل المدني / الإقامة" : "رقم الهوية الوطنية / السجل التجاري للثاني"}
+                      {isEmployment
+                        ? "رقم السجل المدني / الإقامة"
+                        : "رقم الهوية الوطنية / السجل التجاري للثاني"}
                     </label>
-                    <input type="text" name="employeeId" value={data.employeeId} onChange={handleChange} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none" />
+                    <input
+                      type="text"
+                      name="employeeId"
+                      value={data.employeeId}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none"
+                    />
                   </div>
                   <div className="space-y-2 flex gap-2">
                     <div className="flex-1">
                       <label className="text-xs font-bold text-zinc-700">الجنسية</label>
-                      <input type="text" name="employeeNationality" value={data.employeeNationality} onChange={handleChange} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none" />
+                      <input
+                        type="text"
+                        name="employeeNationality"
+                        value={data.employeeNationality}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none"
+                      />
                     </div>
                     <div className="flex-1">
                       <label className="text-xs font-bold text-zinc-700">Nationality (EN)</label>
-                      <input type="text" name="employeeNationalityEn" value={data.employeeNationalityEn} onChange={handleChange} dir="ltr" className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none" />
+                      <input
+                        type="text"
+                        name="employeeNationalityEn"
+                        value={data.employeeNationalityEn}
+                        onChange={handleChange}
+                        dir="ltr"
+                        className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none"
+                      />
                     </div>
                   </div>
                 </div>
@@ -2025,78 +2710,165 @@ export default function Contracts() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-700">العنوان الوطني</label>
-                    <input type="text" name="employeeAddress" value={data.employeeAddress} onChange={handleChange} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none" />
+                    <input
+                      type="text"
+                      name="employeeAddress"
+                      value={data.employeeAddress}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none"
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-700">National Address</label>
-                    <input type="text" name="employeeAddressEn" value={data.employeeAddressEn} onChange={handleChange} dir="ltr" className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none" />
+                    <input
+                      type="text"
+                      name="employeeAddressEn"
+                      value={data.employeeAddressEn}
+                      onChange={handleChange}
+                      dir="ltr"
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none"
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-700">الجوال / Mobile</label>
-                    <input type="text" name="employeeMobile" value={data.employeeMobile} onChange={handleChange} dir="ltr" className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none block" />
+                    <input
+                      type="text"
+                      name="employeeMobile"
+                      value={data.employeeMobile}
+                      onChange={handleChange}
+                      dir="ltr"
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none block"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-zinc-700">البريد الإلكتروني / Email</label>
-                    <input type="email" name="employeeEmail" value={data.employeeEmail} onChange={handleChange} dir="ltr" className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none" />
+                    <label className="text-xs font-bold text-zinc-700">
+                      البريد الإلكتروني / Email
+                    </label>
+                    <input
+                      type="email"
+                      name="employeeEmail"
+                      value={data.employeeEmail}
+                      onChange={handleChange}
+                      dir="ltr"
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none"
+                    />
                   </div>
                 </div>
               </div>
             )}
-
 
             {activeTab === "terms" && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-700">المسمى الوظيفي (عربي)</label>
-                    <input type="text" name="jobTitle" value={data.jobTitle} onChange={handleChange} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none" />
+                    <input
+                      type="text"
+                      name="jobTitle"
+                      value={data.jobTitle}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none"
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-700">Job Title (English)</label>
-                    <input type="text" name="jobTitleEn" value={data.jobTitleEn} onChange={handleChange} dir="ltr" className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none" />
+                    <input
+                      type="text"
+                      name="jobTitleEn"
+                      value={data.jobTitleEn}
+                      onChange={handleChange}
+                      dir="ltr"
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none"
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-700">تاريخ المباشرة</label>
-                    <input type="date" name="startDate" value={data.startDate} onChange={handleChange} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none text-right" />
+                    <input
+                      type="date"
+                      name="startDate"
+                      value={data.startDate}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none text-right"
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-700">نوع العقد</label>
-                    <select name="contractType" value={data.contractType} onChange={handleChange} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none">
+                    <select
+                      name="contractType"
+                      value={data.contractType}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none"
+                    >
                       <option value="fixed">محدد المدة (Fixed)</option>
                       <option value="indefinite">غير محدد (Indefinite)</option>
                     </select>
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-zinc-700">المدة (أشهر)</label>
-                    <input type="number" name="durationMonths" value={data.durationMonths} onChange={handleChange} disabled={data.contractType === "indefinite"} className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold disabled:opacity-50 focus:border-[#10b981] outline-none" />
+                    <input
+                      type="number"
+                      name="durationMonths"
+                      value={data.durationMonths}
+                      onChange={handleChange}
+                      disabled={data.contractType === "indefinite"}
+                      className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-sm font-bold disabled:opacity-50 focus:border-[#10b981] outline-none"
+                    />
                   </div>
                 </div>
 
                 <div className="p-5 border border-[#10b981]/20 bg-[#10b981]/5 rounded-2xl relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-2 h-full bg-[#10b981]"></div>
-                  <h3 className="text-xs font-black text-[#0f172a] mb-4 uppercase tracking-wider">الحزمة المالية / Financial Package</h3>
+                  <h3 className="text-xs font-black text-[#0f172a] mb-4 uppercase tracking-wider">
+                    الحزمة المالية / Financial Package
+                  </h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-zinc-700">الراتب الأساسي / Basic</label>
-                      <input type="number" name="basicSalary" value={data.basicSalary} onChange={handleChange} className="w-full px-4 py-2.5 bg-white border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none" />
+                      <label className="text-xs font-bold text-zinc-700">
+                        الراتب الأساسي / Basic
+                      </label>
+                      <input
+                        type="number"
+                        name="basicSalary"
+                        value={data.basicSalary}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2.5 bg-white border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none"
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-zinc-700">السكن / Housing</label>
-                      <input type="number" name="housingAllowance" value={data.housingAllowance} onChange={handleChange} className="w-full px-4 py-2.5 bg-white border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none" />
+                      <input
+                        type="number"
+                        name="housingAllowance"
+                        value={data.housingAllowance}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2.5 bg-white border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none"
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-zinc-700">النقل / Transport</label>
-                      <input type="number" name="transportAllowance" value={data.transportAllowance} onChange={handleChange} className="w-full px-4 py-2.5 bg-white border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none" />
+                      <input
+                        type="number"
+                        name="transportAllowance"
+                        value={data.transportAllowance}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2.5 bg-white border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none"
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-zinc-700">أخرى / Other</label>
-                      <input type="number" name="otherAllowances" value={data.otherAllowances} onChange={handleChange} className="w-full px-4 py-2.5 bg-white border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none" />
+                      <input
+                        type="number"
+                        name="otherAllowances"
+                        value={data.otherAllowances}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2.5 bg-white border border-zinc-200 rounded-xl text-sm font-bold focus:border-[#10b981] outline-none"
+                      />
                     </div>
                   </div>
                 </div>
@@ -2105,38 +2877,70 @@ export default function Contracts() {
 
             {activeTab === "settings" && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                
                 <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl">
                   <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
                     <Globe2 className="w-5 h-5 text-[#d4af37]" /> آلية تسوية المنازعات
                   </h3>
                   <div className="space-y-3">
                     <label className="flex items-start gap-3 p-3 border border-slate-200 rounded-xl bg-white cursor-pointer hover:border-[#10b981] transition-all">
-                      <input type="radio" name="disputeResolution" value="SA_COURTS" checked={data.disputeResolution === "SA_COURTS"} onChange={handleChange} className="mt-1" />
+                      <input
+                        type="radio"
+                        name="disputeResolution"
+                        value="SA_COURTS"
+                        checked={data.disputeResolution === "SA_COURTS"}
+                        onChange={handleChange}
+                        className="mt-1"
+                      />
                       <div>
-                        <p className="text-sm font-bold text-slate-800">المحاكم العمالية السعودية (الافتراضي)</p>
-                        <p className="text-xs text-slate-500 font-medium">Saudi Labor Courts (Default for locals/standard hires)</p>
+                        <p className="text-sm font-bold text-slate-800">
+                          المحاكم العمالية السعودية (الافتراضي)
+                        </p>
+                        <p className="text-xs text-slate-500 font-medium">
+                          Saudi Labor Courts (Default for locals/standard hires)
+                        </p>
                       </div>
                     </label>
                     <label className="flex items-start gap-3 p-3 border border-slate-200 rounded-xl bg-white cursor-pointer hover:border-[#10b981] transition-all">
-                      <input type="radio" name="disputeResolution" value="SCCA" checked={data.disputeResolution === "SCCA"} onChange={handleChange} className="mt-1" />
+                      <input
+                        type="radio"
+                        name="disputeResolution"
+                        value="SCCA"
+                        checked={data.disputeResolution === "SCCA"}
+                        onChange={handleChange}
+                        className="mt-1"
+                      />
                       <div>
-                        <p className="text-sm font-bold text-slate-800">المركز السعودي للتحكيم التجاري (SCCA)</p>
-                        <p className="text-xs text-slate-500 font-medium">Saudi Center for Commercial Arbitration (Best for executives)</p>
+                        <p className="text-sm font-bold text-slate-800">
+                          المركز السعودي للتحكيم التجاري (SCCA)
+                        </p>
+                        <p className="text-xs text-slate-500 font-medium">
+                          Saudi Center for Commercial Arbitration (Best for executives)
+                        </p>
                       </div>
                     </label>
                     <label className="flex items-start gap-3 p-3 border border-slate-200 rounded-xl bg-white cursor-pointer hover:border-[#10b981] transition-all">
-                      <input type="radio" name="disputeResolution" value="DIFC" checked={data.disputeResolution === "DIFC"} onChange={handleChange} className="mt-1" />
+                      <input
+                        type="radio"
+                        name="disputeResolution"
+                        value="DIFC"
+                        checked={data.disputeResolution === "DIFC"}
+                        onChange={handleChange}
+                        className="mt-1"
+                      />
                       <div>
-                        <p className="text-sm font-bold text-slate-800">محاكم مركز دبي المالي (DIFC)</p>
-                        <p className="text-xs text-slate-500 font-medium">DIFC Courts (Best for cross-border international hires)</p>
+                        <p className="text-sm font-bold text-slate-800">
+                          محاكم مركز دبي المالي (DIFC)
+                        </p>
+                        <p className="text-xs text-slate-500 font-medium">
+                          DIFC Courts (Best for cross-border international hires)
+                        </p>
                       </div>
                     </label>
                   </div>
                 </div>
 
                 <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl">
-                   <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
+                  <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
                     <ImageIcon className="w-5 h-5 text-[#0f172a]" /> الهوية البصرية (Brand Identity)
                   </h3>
                   <div className="space-y-3">
@@ -2146,8 +2950,8 @@ export default function Contracts() {
                         <button
                           key={color}
                           type="button"
-                          onClick={() => setData(prev => ({ ...prev, themeColor: color }))}
-                          className={`w-8 h-8 rounded-full border-2 ${data.themeColor === color ? 'border-zinc-900 scale-110 shadow-md' : 'border-transparent'}`}
+                          onClick={() => setData((prev) => ({ ...prev, themeColor: color }))}
+                          className={`w-8 h-8 rounded-full border-2 ${data.themeColor === color ? "border-zinc-900 scale-110 shadow-md" : "border-transparent"}`}
                           style={{ backgroundColor: color }}
                         />
                       ))}
@@ -2159,10 +2963,12 @@ export default function Contracts() {
                   <ShieldCheck className="w-6 h-6 text-[#10b981]" />
                   <div>
                     <p className="font-bold text-sm">حماية التستر والموثوقية (Nafath)</p>
-                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">عند إرسال العقد للتوقيع الإلكتروني، سيتم توجيه الممثل القانوني للمصادقة عبر النفاذ الوطني لتأكيد الصلاحية (CR Audit Trail).</p>
+                    <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                      عند إرسال العقد للتوقيع الإلكتروني، سيتم توجيه الممثل القانوني للمصادقة عبر
+                      النفاذ الوطني لتأكيد الصلاحية (CR Audit Trail).
+                    </p>
                   </div>
                 </div>
-
               </div>
             )}
           </form>
@@ -2171,24 +2977,33 @@ export default function Contracts() {
 
       {/* RIGHT PANE: Split-Screen PDF Preview */}
       <div className="flex-1 bg-zinc-400 p-8 overflow-y-auto print:p-0 print:bg-white custom-scrollbar flex flex-col items-center gap-4">
-        
         {/* Interactive Direct Legal Editor Tool Shelf */}
         <div className="w-[210mm] max-w-full bg-white rounded-2xl p-4 shadow-md flex flex-wrap items-center justify-between print:hidden gap-3 border border-zinc-200">
           <div className="flex items-center gap-3">
-            <div className={`p-2.5 rounded-xl ${isEditMode ? 'bg-amber-100 text-amber-700' : 'bg-zinc-100 text-zinc-700'}`}>
+            <div
+              className={`p-2.5 rounded-xl ${isEditMode ? "bg-amber-100 text-amber-700" : "bg-zinc-100 text-zinc-700"}`}
+            >
               <PenTool className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-black text-sm text-[#0f172a]">المحرر المباشر للعقود (Edit Mode)</h3>
-              <p className="text-xs text-zinc-500 font-medium">عدّل أي بند من بنود العقد مباشرة بالضغط على تفعيل وضع التحرير.</p>
+              <h3 className="font-black text-sm text-[#0f172a]">
+                المحرر المباشر للعقود (Edit Mode)
+              </h3>
+              <p className="text-xs text-zinc-500 font-medium">
+                عدّل أي بند من بنود العقد مباشرة بالضغط على تفعيل وضع التحرير.
+              </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             {isEditMode && (
               <button
                 onClick={() => {
-                  if (confirm("هل أنت متأكد من إعادة تعيين كافة التعديلات والتوافق التلقائي للمستند مع المدخلات الجانبية؟")) {
+                  if (
+                    confirm(
+                      "هل أنت متأكد من إعادة تعيين كافة التعديلات والتوافق التلقائي للمستند مع المدخلات الجانبية؟"
+                    )
+                  ) {
                     setEditedTexts(getGeneratedTexts(data));
                     toast.info("تمت إعادة مزامنة النصوص تلقائياً!");
                   }
@@ -2202,7 +3017,11 @@ export default function Contracts() {
             <button
               onClick={() => {
                 setIsEditMode(!isEditMode);
-                toast.success(isEditMode ? "تم حفظ التعديلات وإغلاق المُحرّر المباشر" : "المحرر نشط! اضغط على أي بند لتعديله مباشرة");
+                toast.success(
+                  isEditMode
+                    ? "تم حفظ التعديلات وإغلاق المُحرّر المباشر"
+                    : "المحرر نشط! اضغط على أي بند لتعديله مباشرة"
+                );
               }}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all shadow-sm ${
                 isEditMode
@@ -2217,7 +3036,11 @@ export default function Contracts() {
               type="button"
               onClick={() => {
                 setIsDiffMode(!isDiffMode);
-                toast.info(isDiffMode ? "تم العودة لعرض المستند الكامل" : "نشط عرض المقارنة للفروقات والمراجعة!");
+                toast.info(
+                  isDiffMode
+                    ? "تم العودة لعرض المستند الكامل"
+                    : "نشط عرض المقارنة للفروقات والمراجعة!"
+                );
               }}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all shadow-sm border ${
                 isDiffMode
@@ -2226,7 +3049,9 @@ export default function Contracts() {
               }`}
             >
               <Scale className="w-3.5 h-3.5" />
-              <span>{isDiffMode ? "عرض العقد الكامل / Document" : "مقارنة التعديلات / Compare Diff"}</span>
+              <span>
+                {isDiffMode ? "عرض العقد الكامل / Document" : "مقارنة التعديلات / Compare Diff"}
+              </span>
             </button>
 
             {isEditMode && (
@@ -2243,7 +3068,6 @@ export default function Contracts() {
         </div>
 
         <div className="flex flex-row gap-6 max-w-full justify-center items-start print:block print:p-0">
-          
           {isDiffMode ? (
             <div className="w-[210mm] max-w-full bg-white rounded-2xl p-6 shadow-xl border border-zinc-200 animate-in fade-in duration-300">
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-100">
@@ -2252,8 +3076,12 @@ export default function Contracts() {
                     <Scale className="w-5 h-5" />
                   </div>
                   <div className="text-right">
-                    <h3 className="font-black text-[#0f172a] text-sm">مقارنة التعديلات الفورية للمستند / Split Diff View</h3>
-                    <p className="text-xs text-zinc-500 font-medium">مقارنة التعديلات المقولبة بيدك على اليمين مع نصوص القالب الأساسي على اليسار.</p>
+                    <h3 className="font-black text-[#0f172a] text-sm">
+                      مقارنة التعديلات الفورية للمستند / Split Diff View
+                    </h3>
+                    <p className="text-xs text-zinc-500 font-medium">
+                      مقارنة التعديلات المقولبة بيدك على اليمين مع نصوص القالب الأساسي على اليسار.
+                    </p>
                   </div>
                 </div>
                 <button
@@ -2276,30 +3104,76 @@ export default function Contracts() {
                   {(() => {
                     const orig = getGeneratedTexts(data);
                     const fields = [
-                      { label: "عنوان وثيقة العقد / Contract Title", keyAr: "titleAr", keyEn: "titleEn" },
-                      { label: "الطرف الأول (صاحب العمل) / First Party (Employer)", keyAr: "party1TextAr", keyEn: "party1TextEn" },
-                      { label: "الطرف الثاني (العامل) / Second Party (Employee)", keyAr: "party2TextAr", keyEn: "party2TextEn" },
-                      { label: "البند الأول التعاقدي / Clause 1", keyAr: "clause1TextAr", keyEn: "clause1TextEn" },
-                      { label: "البند الثاني التعاقدي / Clause 2", keyAr: "clause2TextAr", keyEn: "clause2TextEn" },
-                      { label: "البند الثالث التعاقدي / Clause 3", keyAr: "clause3TextAr", keyEn: "clause3TextEn" },
-                      { label: "البند الرابع التعاقدي / Clause 4", keyAr: "clause4TextAr", keyEn: "clause4TextEn" },
+                      {
+                        label: "عنوان وثيقة العقد / Contract Title",
+                        keyAr: "titleAr",
+                        keyEn: "titleEn",
+                      },
+                      {
+                        label: "الطرف الأول (صاحب العمل) / First Party (Employer)",
+                        keyAr: "party1TextAr",
+                        keyEn: "party1TextEn",
+                      },
+                      {
+                        label: "الطرف الثاني (العامل) / Second Party (Employee)",
+                        keyAr: "party2TextAr",
+                        keyEn: "party2TextEn",
+                      },
+                      {
+                        label: "البند الأول التعاقدي / Clause 1",
+                        keyAr: "clause1TextAr",
+                        keyEn: "clause1TextEn",
+                      },
+                      {
+                        label: "البند الثاني التعاقدي / Clause 2",
+                        keyAr: "clause2TextAr",
+                        keyEn: "clause2TextEn",
+                      },
+                      {
+                        label: "البند الثالث التعاقدي / Clause 3",
+                        keyAr: "clause3TextAr",
+                        keyEn: "clause3TextEn",
+                      },
+                      {
+                        label: "البند الرابع التعاقدي / Clause 4",
+                        keyAr: "clause4TextAr",
+                        keyEn: "clause4TextEn",
+                      },
                     ];
                     return (
                       <div className="space-y-4">
                         {fields.map((f, i) => {
-                          const hasArDiff = (orig[f.keyAr as keyof typeof orig] || "").trim() !== (editedTexts[f.keyAr as keyof typeof editedTexts] || "").trim();
-                          const hasEnDiff = (orig[f.keyEn as keyof typeof orig] || "").trim() !== (editedTexts[f.keyEn as keyof typeof editedTexts] || "").trim();
+                          const hasArDiff =
+                            (orig[f.keyAr as keyof typeof orig] || "").trim() !==
+                            (editedTexts[f.keyAr as keyof typeof editedTexts] || "").trim();
+                          const hasEnDiff =
+                            (orig[f.keyEn as keyof typeof orig] || "").trim() !==
+                            (editedTexts[f.keyEn as keyof typeof editedTexts] || "").trim();
                           return (
-                            <div key={i} className="border border-zinc-100 rounded-xl p-3 bg-zinc-50/50 space-y-1 text-right">
-                              <span className="text-[10px] font-black text-zinc-400 block">{f.label}</span>
-                              <div className={`p-2 rounded text-xs leading-relaxed whitespace-pre-line text-right font-medium ${
-                                hasArDiff ? "bg-rose-50 text-rose-800 line-through border-r-2 border-rose-300" : "text-zinc-650"
-                              }`}>
+                            <div
+                              key={i}
+                              className="border border-zinc-100 rounded-xl p-3 bg-zinc-50/50 space-y-1 text-right"
+                            >
+                              <span className="text-[10px] font-black text-zinc-400 block">
+                                {f.label}
+                              </span>
+                              <div
+                                className={`p-2 rounded text-xs leading-relaxed whitespace-pre-line text-right font-medium ${
+                                  hasArDiff
+                                    ? "bg-rose-50 text-rose-800 line-through border-r-2 border-rose-300"
+                                    : "text-zinc-650"
+                                }`}
+                              >
                                 {orig[f.keyAr as keyof typeof orig]}
                               </div>
-                              <div dir="ltr" className={`p-2 rounded text-[11px] leading-relaxed whitespace-pre-line text-left font-mono ${
-                                hasEnDiff ? "bg-rose-50/70 text-rose-800 line-through border-l-2 border-rose-300" : "text-zinc-505"
-                              }`}>
+                              <div
+                                dir="ltr"
+                                className={`p-2 rounded text-[11px] leading-relaxed whitespace-pre-line text-left font-mono ${
+                                  hasEnDiff
+                                    ? "bg-rose-50/70 text-rose-800 line-through border-l-2 border-rose-300"
+                                    : "text-zinc-505"
+                                }`}
+                              >
                                 {orig[f.keyEn as keyof typeof orig]}
                               </div>
                             </div>
@@ -2319,30 +3193,76 @@ export default function Contracts() {
                   {(() => {
                     const orig = getGeneratedTexts(data);
                     const fields = [
-                      { label: "عنوان وثيقة العقد / Contract Title", keyAr: "titleAr", keyEn: "titleEn" },
-                      { label: "الطرف الأول (صاحب العمل) / First Party (Employer)", keyAr: "party1TextAr", keyEn: "party1TextEn" },
-                      { label: "الطرف الثاني (العامل) / Second Party (Employee)", keyAr: "party2TextAr", keyEn: "party2TextEn" },
-                      { label: "البند الأول التعاقدي / Clause 1", keyAr: "clause1TextAr", keyEn: "clause1TextEn" },
-                      { label: "البند الثاني التعاقدي / Clause 2", keyAr: "clause2TextAr", keyEn: "clause2TextEn" },
-                      { label: "البند الثالث التعاقدي / Clause 3", keyAr: "clause3TextAr", keyEn: "clause3TextEn" },
-                      { label: "البند الرابع التعاقدي / Clause 4", keyAr: "clause4TextAr", keyEn: "clause4TextEn" },
+                      {
+                        label: "عنوان وثيقة العقد / Contract Title",
+                        keyAr: "titleAr",
+                        keyEn: "titleEn",
+                      },
+                      {
+                        label: "الطرف الأول (صاحب العمل) / First Party (Employer)",
+                        keyAr: "party1TextAr",
+                        keyEn: "party1TextEn",
+                      },
+                      {
+                        label: "الطرف الثاني (العامل) / Second Party (Employee)",
+                        keyAr: "party2TextAr",
+                        keyEn: "party2TextEn",
+                      },
+                      {
+                        label: "البند الأول التعاقدي / Clause 1",
+                        keyAr: "clause1TextAr",
+                        keyEn: "clause1TextEn",
+                      },
+                      {
+                        label: "البند الثاني التعاقدي / Clause 2",
+                        keyAr: "clause2TextAr",
+                        keyEn: "clause2TextEn",
+                      },
+                      {
+                        label: "البند الثالث التعاقدي / Clause 3",
+                        keyAr: "clause3TextAr",
+                        keyEn: "clause3TextEn",
+                      },
+                      {
+                        label: "البند الرابع التعاقدي / Clause 4",
+                        keyAr: "clause4TextAr",
+                        keyEn: "clause4TextEn",
+                      },
                     ];
                     return (
                       <div className="space-y-4">
                         {fields.map((f, i) => {
-                          const hasArDiff = (orig[f.keyAr as keyof typeof orig] || "").trim() !== (editedTexts[f.keyAr as keyof typeof editedTexts] || "").trim();
-                          const hasEnDiff = (orig[f.keyEn as keyof typeof orig] || "").trim() !== (editedTexts[f.keyEn as keyof typeof editedTexts] || "").trim();
+                          const hasArDiff =
+                            (orig[f.keyAr as keyof typeof orig] || "").trim() !==
+                            (editedTexts[f.keyAr as keyof typeof editedTexts] || "").trim();
+                          const hasEnDiff =
+                            (orig[f.keyEn as keyof typeof orig] || "").trim() !==
+                            (editedTexts[f.keyEn as keyof typeof editedTexts] || "").trim();
                           return (
-                            <div key={i} className="border border-zinc-100 rounded-xl p-3 bg-zinc-50/50 space-y-1 text-right">
-                              <span className="text-[10px] font-black text-zinc-400 block">{f.label}</span>
-                              <div className={`p-2 rounded text-xs leading-relaxed whitespace-pre-line text-right font-medium ${
-                                hasArDiff ? "bg-emerald-50 text-emerald-900 font-bold border-r-2 border-emerald-400" : "text-zinc-700"
-                              }`}>
+                            <div
+                              key={i}
+                              className="border border-zinc-100 rounded-xl p-3 bg-zinc-50/50 space-y-1 text-right"
+                            >
+                              <span className="text-[10px] font-black text-zinc-400 block">
+                                {f.label}
+                              </span>
+                              <div
+                                className={`p-2 rounded text-xs leading-relaxed whitespace-pre-line text-right font-medium ${
+                                  hasArDiff
+                                    ? "bg-emerald-50 text-emerald-900 font-bold border-r-2 border-emerald-400"
+                                    : "text-zinc-700"
+                                }`}
+                              >
                                 {editedTexts[f.keyAr as keyof typeof editedTexts]}
                               </div>
-                              <div dir="ltr" className={`p-2 rounded text-[11px] leading-relaxed whitespace-pre-line text-left font-mono ${
-                                hasEnDiff ? "bg-emerald-50/70 text-emerald-900 font-bold border-l-2 border-emerald-400" : "text-zinc-650"
-                              }`}>
+                              <div
+                                dir="ltr"
+                                className={`p-2 rounded text-[11px] leading-relaxed whitespace-pre-line text-left font-mono ${
+                                  hasEnDiff
+                                    ? "bg-emerald-50/70 text-emerald-900 font-bold border-l-2 border-emerald-400"
+                                    : "text-zinc-650"
+                                }`}
+                              >
                                 {editedTexts[f.keyEn as keyof typeof editedTexts]}
                               </div>
                             </div>
@@ -2361,9 +3281,11 @@ export default function Contracts() {
                 <div className="flex items-center gap-4 flex-wrap">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-xs font-bold text-zinc-700">تخطيط وثيقة العقد / Contract Style</span>
+                    <span className="text-xs font-bold text-zinc-700">
+                      تخطيط وثيقة العقد / Contract Style
+                    </span>
                   </div>
-                  
+
                   <div className="flex items-center bg-zinc-100 p-1 rounded-xl border border-zinc-200">
                     <button
                       type="button"
@@ -2438,877 +3360,1489 @@ export default function Contracts() {
                 </div>
               </div>
 
-              <div 
+              <div
                 ref={documentWrapperRef}
-                className={`min-h-[297mm] p-0 print:w-full print:h-auto overflow-hidden relative shrink-0 transition-all duration-300 origin-top shadow-2xl ${
+                className={`min-h-[297mm] p-0 print:w-full print:h-auto overflow-hidden relative shrink-0 transition-all duration-500 origin-top shadow-2xl border border-zinc-100 hover:border-zinc-300 hover:shadow-[0_30px_70px_rgba(0,0,0,0.15)] hover:-translate-y-0.5 cursor-default select-text scroll-smooth ${
                   docLayoutTheme === "wide" ? "w-[240mm]" : "w-[210mm]"
                 }`}
-                style={{ 
-                  backgroundColor: '#ffffff', 
-                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', 
-                  color: '#0f172a', 
-                  wordBreak: 'break-word', 
-                  fontFamily: docLayoutTheme === "wide" 
-                    ? '"Tajawal", "Inter", sans-serif'
-                    : '"Cairo", "Tajawal", "IBM Plex Sans Arabic", sans-serif',
+                style={{
+                  backgroundColor: "#ffffff",
+                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                  color: "#0f172a",
+                  wordBreak: "break-word",
+                  fontFamily:
+                    docLayoutTheme === "wide"
+                      ? '"Tajawal", "Inter", sans-serif'
+                      : '"Cairo", "Tajawal", "IBM Plex Sans Arabic", sans-serif',
                   transform: pageWidthMode === "fit" && scale < 1 ? `scale(${scale})` : undefined,
-                  marginBottom: pageWidthMode === "fit" && scale < 1 ? `calc(-297mm * ${1 - scale})` : undefined
+                  marginBottom:
+                    pageWidthMode === "fit" && scale < 1
+                      ? `calc(-297mm * ${1 - scale})`
+                      : undefined,
                 }}
                 id="contract-document"
               >
+                {/* HIGH-VISIBILITY STATUS RIBBON */}
+                <div className="absolute top-0 right-0 z-50 overflow-hidden w-40 h-40 pointer-events-none select-none print:hidden">
+                  <div
+                    className={`absolute top-8 -right-12 w-48 py-1.5 text-center text-[10px] font-black uppercase tracking-wider rotate-45 shadow-sm border-y text-white ${
+                      documentStatus === "Signed"
+                        ? "bg-emerald-600 border-emerald-500 text-emerald-50 shadow-emerald-200"
+                        : documentStatus === "Pending"
+                          ? "bg-amber-500 border-amber-400 text-amber-50 shadow-amber-200 animate-pulse"
+                          : "bg-zinc-500 border-zinc-400 text-zinc-50 shadow-zinc-200"
+                    }`}
+                  >
+                    {documentStatus === "Signed"
+                      ? "Signed / معتمد"
+                      : documentStatus === "Pending"
+                        ? "Review / مراجعة"
+                        : "Draft / مسودة"}
+                  </div>
+                </div>
+
                 {/* SECURE CANVAS WATERMARK */}
-                <canvas 
-                  ref={canvasRef} 
+                <canvas
+                  ref={canvasRef}
                   className="absolute inset-0 w-full h-full pointer-events-none select-none z-0 mix-blend-multiply"
                 />
 
                 {/* PRINT-ONLY CENTRAL WATERMARK */}
-                <div className="hidden print:flex absolute inset-0 items-center justify-center pointer-events-none select-none z-0">
+                <section className="hidden print:flex absolute inset-0 items-center justify-center pointer-events-none select-none z-0">
                   <div className="text-emerald-600/10 text-center border-[10px] border-emerald-600/10 text-5xl font-black uppercase tracking-widest px-10 py-5 rounded-3xl transform -rotate-30 select-none">
                     معتمد وصالح مدارج / Certified & Valid
                   </div>
-                </div>
+                </section>
 
                 {/* PRINT-ONLY CORNER VERIFICATION BADGE */}
-                <div className="hidden print:flex absolute top-6 left-6 items-center gap-1.5 border-2 border-emerald-500 bg-emerald-50 text-emerald-800 px-3 py-1 rounded-xl font-sans font-black text-[9px] z-50 shadow-xs" dir="rtl">
+                <section
+                  className="hidden print:flex absolute top-6 left-6 items-center gap-1.5 border-2 border-emerald-500 bg-emerald-50 text-emerald-800 px-3 py-1 rounded-xl font-sans font-black text-[9px] z-50 shadow-xs"
+                  dir="rtl"
+                >
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>مستند رسمي معتمد وصالح - منصة مدارج / Certified & Valid Document - Mudarij OS</span>
-                </div>
+                  <span>
+                    مستند رسمي معتمد وصالح - منصة مدارج / Certified & Valid Document - Mudarij OS
+                  </span>
+                </section>
 
-              <div className="h-4 w-full relative z-10" style={{ backgroundColor: data.themeColor }}></div>
-              
-              <div className={`relative z-10 bg-[rgba(255,255,255,0.4)] transition-all duration-300 ${
-                docLayoutTheme === "wide" ? "p-16 space-y-8" : "p-12 space-y-6"
-              }`}>
-                {/* Last Modified & Author Indicator fetched from Database */}
-                {lastModifiedInfo && (
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-slate-50/90 border border-slate-200 rounded-2xl p-4 text-[10px] text-slate-600 font-sans gap-3 mb-6 shadow-xs z-50">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-indigo-500 shrink-0" />
-                      <div>
-                        <span className="font-bold text-slate-700 block text-right">آخر تعديل سحابي / Last Modified (Cloud)</span>
-                        <span className="font-mono bg-white border border-slate-200 px-2 py-0.5 rounded text-indigo-600 font-bold block text-left mt-0.5">{lastModifiedInfo.date}</span>
+                <div
+                  className="h-4 w-full relative z-10"
+                  style={{ backgroundColor: data.themeColor }}
+                ></div>
+
+                <div
+                  className={`relative z-10 bg-[rgba(255,255,255,0.4)] transition-all duration-300 ${
+                    docLayoutTheme === "wide" ? "p-16 space-y-8" : "p-12 space-y-6"
+                  }`}
+                >
+                  {/* Last Modified & Author Indicator fetched from Database */}
+                  {lastModifiedInfo && (
+                    <section className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-slate-50/90 border border-slate-200 rounded-2xl p-4 text-[10px] text-slate-600 font-sans gap-3 mb-6 shadow-xs z-50">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-indigo-500 shrink-0" />
+                        <div>
+                          <span className="font-bold text-slate-700 block text-right">
+                            آخر تعديل سحابي / Last Modified (Cloud)
+                          </span>
+                          <span className="font-mono bg-white border border-slate-200 px-2 py-0.5 rounded text-indigo-600 font-bold block text-left mt-0.5">
+                            {lastModifiedInfo.date}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-indigo-500 shrink-0" />
-                      <div>
-                        <span className="font-bold text-slate-700 block text-right">المؤلف والموثق سحابياً / Document Author</span>
-                        <span className="font-mono bg-white border border-slate-200 px-2 py-0.5 rounded text-indigo-600 font-bold block text-left mt-0.5">{lastModifiedInfo.author}</span>
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-indigo-500 shrink-0" />
+                        <div>
+                          <span className="font-bold text-slate-700 block text-right">
+                            المؤلف والموثق سحابياً / Document Author
+                          </span>
+                          <span className="font-mono bg-white border border-slate-200 px-2 py-0.5 rounded text-indigo-600 font-bold block text-left mt-0.5">
+                            {lastModifiedInfo.author}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                )}
-                {/* INTERACTIVE CONTROLS BAR (PRINT HIDDEN) - Statuses, Compare Toggle, Auto-Bind */}
-                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-8 border-b pb-4 border-zinc-100 print:hidden select-none bg-zinc-50 p-4 rounded-2xl border border-zinc-200">
-                  {/* Status Lifecycle toggles */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[10px] sm:text-xs font-black text-zinc-500">حالة المستند / Status:</span>
-                    <div className="flex items-center gap-1.5 font-sans">
-                      {[
-                        { key: "Draft", labelAr: "مسودة", labelEn: "Draft", activeColors: "bg-zinc-100 text-zinc-900 border-zinc-400" },
-                        { key: "Pending", labelAr: "قيد المراجعة", labelEn: "Pending", activeColors: "bg-amber-100 text-amber-950 border-amber-400 animate-pulse" },
-                        { key: "Signed", labelAr: "معتمد وموقع", labelEn: "Signed", activeColors: "bg-emerald-100 text-emerald-950 border-emerald-400" }
-                      ].map((item) => {
-                        const isActive = documentStatus === item.key;
-                        return (
-                          <button
-                            key={item.key}
-                            type="button"
-                            onClick={() => {
-                              setDocumentStatus(item.key as any);
-                              if (item.key === "Signed") {
-                                setIsSigned(true);
-                                handleSyncToPayroll("active");
-                              } else {
-                                setIsSigned(false);
-                                handleSyncToPayroll("pending");
-                              }
-                              toast.success(`تغيرت حالة المستند إلى: ${item.labelAr}`);
-                            }}
-                            className={`px-3 py-1.5 text-xs font-black rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
-                              isActive 
-                                ? `${item.activeColors} font-extrabold scale-105 shadow-sm` 
-                                : "bg-white text-zinc-500 hover:bg-zinc-50 border-zinc-200"
-                            }`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full ${
-                              item.key === "Signed" 
-                                ? "bg-emerald-600" 
-                                : item.key === "Pending" 
-                                  ? "bg-amber-500" 
-                                  : "bg-zinc-500"
-                            }`} />
-                            <span>{item.labelAr}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Right: Compare Changes & Auto-Bind Settings */}
-                  <div className="flex items-center gap-2.5 flex-wrap justify-end">
-                    {/* Page Width View Toggle */}
-                    <button
-                      type="button"
-                      onClick={() => setPageWidthMode(prev => prev === "standard" ? "fit" : "standard")}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all cursor-pointer ${
-                        pageWidthMode === "fit"
-                          ? "bg-indigo-50 border-indigo-200 text-indigo-950 shadow-xs"
-                          : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50"
-                      }`}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full ${pageWidthMode === "fit" ? "bg-indigo-600 animate-pulse" : "bg-zinc-300"}`} />
-                      <span>{pageWidthMode === "fit" ? "تناسب كامل العرض / Fit Page Width" : "عرض طبيعي (A4) / Standard View"}</span>
-                    </button>
-
-                    {/* Reset to Default Button */}
-                    <button
-                      type="button"
-                      onClick={handleResetToDefault}
-                      className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-105 text-rose-800 hover:text-rose-950 border border-rose-200 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all cursor-pointer"
-                    >
-                      <RotateCw className="w-3.5 h-3.5 text-rose-600" />
-                      <span>إعادة ضبط / Reset to Default</span>
-                    </button>
-
-                    {/* Compare Changes Toggle */}
-                    <label className="relative inline-flex items-center cursor-pointer select-none border border-zinc-200 rounded-xl py-1.5 px-3 bg-white hover:bg-zinc-50 transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={isCompareChanges}
-                        onChange={(e) => {
-                          setIsCompareChanges(e.target.checked);
-                          if (e.target.checked) {
-                            toast.info("وضع مقارنة التغييرات نشط! مواءمة التعديلات الفردية مع قالب النظام الأصلي.");
-                          } else {
-                            toast.info("تم العودة للعرض الطبيعي للمحتويات.");
-                          }
-                        }}
-                        className="sr-only peer"
-                      />
-                      <div className="w-8 h-4.5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[10px] after:left-[17px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-indigo-600"></div>
-                      <span className="mr-2 text-[10px] font-black text-zinc-650">مقارنة التغييرات / Compare</span>
-                    </label>
-
-                    {/* Auto Bind Settings Button */}
-                    <button
-                      type="button"
-                      onClick={handleAutoBindSettings}
-                      className="flex items-center gap-1 bg-teal-50 hover:bg-teal-100 text-teal-850 hover:text-teal-950 border border-teal-200 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all cursor-pointer"
-                    >
-                      <span>ربط البيانات ⚡ Bind Settings</span>
-                    </button>
-
-                    {/* Print Button */}
-                    <button
-                      type="button"
-                      onClick={() => window.print()}
-                      className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 text-white hover:bg-zinc-800 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all cursor-pointer shadow-sm"
-                    >
-                      <Printer className="w-3.5 h-3.5 text-zinc-300" />
-                      <span>طباعة العقد / Print</span>
-                    </button>
-
-                    {/* Download as PDF Button */}
-                    <button
-                      type="button"
-                      onClick={downloadContractAsPDF}
-                      disabled={isExportingPDF}
-                      className="flex items-center gap-1.5 bg-indigo-650 hover:bg-indigo-720 text-white px-3 py-1.5 rounded-xl text-[10px] font-black transition-all cursor-pointer shadow-sm disabled:opacity-50"
-                    >
-                      {isExportingPDF ? (
-                        <div className="w-3 h-3 border-2 border-white border-t-transparent animate-spin rounded-full" />
-                      ) : (
-                        <Download className="w-3.5 h-3.5 text-indigo-100" />
-                      )}
-                      <span>تحميل PDF / Export</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* QUICK-FIND CLAUSE SEARCH (PRINT HIDDEN / within #contract-document) */}
-                <div className="mb-6 relative print:hidden">
-                  <input
-                    type="text"
-                    value={documentSearchQuery}
-                    onChange={(e) => setDocumentSearchQuery(e.target.value)}
-                    placeholder="ابحث سريعاً لتحديد وإبراز بنود معينة في هذا العقد... Quick-find to filter/highlight clauses..."
-                    className="w-full text-xs p-3 pr-10 border border-zinc-200 focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981] outline-none text-right rounded-xl bg-white shadow-xs font-medium"
-                  />
-                  <Search className="w-4 h-4 text-zinc-400 absolute right-3.5 top-3.5 pointer-events-none" />
-                  {documentSearchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setDocumentSearchQuery("")}
-                      className="absolute left-3.5 top-2.5 text-xs text-zinc-400 hover:text-zinc-650 font-sans p-1 hover:bg-zinc-150 rounded"
-                    >
-                      ✕
-                    </button>
+                    </section>
                   )}
-                </div>
-
-                {/* Header Content */}
-                <div className="flex justify-between items-center mb-12 border-b-2 pb-6" style={{ borderColor: data.themeColor }}>
-                  <div className="text-right flex-1">
-                    {isEditMode ? (
-                      <div className="space-y-1 max-w-[85%]">
-                        <input 
-                          type="text" 
-                          value={editedTexts.titleAr} 
-                          onChange={(e) => handleEditedTextChange('titleAr', e.target.value)} 
-                          className="text-lg font-black border-b border-zinc-200 focus:border-[#10b981] outline-none text-right px-1 w-full bg-amber-50/50"
-                        />
-                        <input 
-                          type="text" 
-                          value={editedTexts.titleEn} 
-                          onChange={(e) => handleEditedTextChange('titleEn', e.target.value)} 
-                          className="text-xs font-bold border-b border-zinc-200 focus:border-[#10b981] outline-none text-left px-1 w-full bg-amber-50/50"
-                          dir="ltr"
-                        />
-                      </div>
-                    ) : (
-                      <>
-                        <h1 className="text-2xl font-black text-[#0f172a]" style={{ color: data.themeColor, wordBreak: 'break-word' }}>
-                          {isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).titleAr, editedTexts.titleAr, isCompareChanges, "rtl") : editedTexts.titleAr}
-                        </h1>
-                        <p className="text-sm font-bold text-[#64748b] mt-1">
-                          {isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).titleEn, editedTexts.titleEn, isCompareChanges, "ltr") : editedTexts.titleEn}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                  <div className="text-left select-none shrink-0" dir="ltr">
-                    <p className="text-[10px] font-bold text-[#94a3b8] font-mono uppercase">Document Ref: EV-{new Date().getTime().toString().slice(-6)}</p>
-                    <p className="text-[10px] font-bold text-[#94a3b8] mt-1 font-mono">{new Date().toISOString().split("T")[0]}</p>
-                    
-                    {/* STATUS INDICATOR BADGE FOR PRINT/PDF */}
-                    <div className="text-right mt-1.5 font-mono">
-                      <span className="text-[8px] font-black border border-zinc-300 bg-zinc-50 px-1.5 py-0.5 rounded text-zinc-700">
-                        STATUS: {documentStatus.toUpperCase()}
+                  {/* INTERACTIVE CONTROLS BAR (PRINT HIDDEN) - Statuses, Compare Toggle, Auto-Bind */}
+                  <section className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 mb-8 border-b pb-4 border-zinc-100 print:hidden select-none bg-zinc-50 p-4 rounded-2xl border border-zinc-200">
+                    {/* Status Lifecycle toggles */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] sm:text-xs font-black text-zinc-500">
+                        حالة المستند / Status:
                       </span>
+                      <div className="flex items-center gap-1.5 font-sans">
+                        {[
+                          {
+                            key: "Draft",
+                            labelAr: "مسودة",
+                            labelEn: "Draft",
+                            activeColors: "bg-zinc-100 text-zinc-900 border-zinc-400",
+                          },
+                          {
+                            key: "Pending",
+                            labelAr: "قيد المراجعة",
+                            labelEn: "Pending",
+                            activeColors:
+                              "bg-amber-100 text-amber-950 border-amber-400 animate-pulse",
+                          },
+                          {
+                            key: "Signed",
+                            labelAr: "معتمد وموقع",
+                            labelEn: "Signed",
+                            activeColors: "bg-emerald-100 text-emerald-950 border-emerald-400",
+                          },
+                        ].map((item) => {
+                          const isActive = documentStatus === item.key;
+                          return (
+                            <button
+                              key={item.key}
+                              type="button"
+                              onClick={() => {
+                                setDocumentStatus(item.key as any);
+                                if (item.key === "Signed") {
+                                  setIsSigned(true);
+                                  handleSyncToPayroll("active");
+                                } else {
+                                  setIsSigned(false);
+                                  handleSyncToPayroll("pending");
+                                }
+                                toast.success(`تغيرت حالة المستند إلى: ${item.labelAr}`);
+                              }}
+                              className={`px-3 py-1.5 text-xs font-black rounded-xl border transition-all cursor-pointer flex items-center gap-1.5 ${
+                                isActive
+                                  ? `${item.activeColors} font-extrabold scale-105 shadow-sm`
+                                  : "bg-white text-zinc-500 hover:bg-zinc-50 border-zinc-200"
+                              }`}
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  item.key === "Signed"
+                                    ? "bg-emerald-600"
+                                    : item.key === "Pending"
+                                      ? "bg-amber-500"
+                                      : "bg-zinc-500"
+                                }`}
+                              />
+                              <span>{item.labelAr}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
 
-                  </div>
-                </div>
-
-            <div className="grid grid-cols-2 gap-x-12 gap-y-8 text-sm text-justify">
-              
-              {/* Employer Definition */}
-              <div dir="rtl" className={`space-y-2 border-r-4 pr-4 ${getSearchHighlightClass('party1TextAr', 'party1TextEn')}`} style={{ borderColor: data.themeColor }}>
-                {isEditMode ? (
-                  <div className="space-y-1.5 w-full">
-                    <input 
-                      type="text" 
-                      value={editedTexts.party1TitleAr} 
-                      onChange={(e) => handleEditedTextChange('party1TitleAr', e.target.value)}
-                      className="font-bold border-b border-zinc-200 outline-none w-full text-right bg-amber-50/50 text-xs"
-                    />
-                    <textarea 
-                      value={editedTexts.party1TextAr} 
-                      onChange={(e) => handleEditedTextChange('party1TextAr', e.target.value)}
-                      className="w-full text-[11px] text-[#334155] border p-1 rounded min-h-[90px] leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <h3 className="font-black text-[#0f172a]">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).party1TitleAr, editedTexts.party1TitleAr, isCompareChanges, "rtl") : editedTexts.party1TitleAr}</h3>
-                    <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).party1TextAr, editedTexts.party1TextAr, isCompareChanges, "rtl") : editedTexts.party1TextAr}</p>
-                  </>
-                )}
-              </div>
-              <div dir="ltr" className={`space-y-2 border-l-4 pl-4 ${getSearchHighlightClass('party1TextAr', 'party1TextEn')}`} style={{ borderColor: data.themeColor }}>
-                {isEditMode ? (
-                  <div className="space-y-1.5 w-full">
-                    <input 
-                      type="text" 
-                      value={editedTexts.party1TitleEn} 
-                      onChange={(e) => handleEditedTextChange('party1TitleEn', e.target.value)}
-                      className="font-bold border-b border-zinc-200 outline-none w-full text-left bg-amber-50/50 text-xs"
-                    />
-                    <textarea 
-                      value={editedTexts.party1TextEn} 
-                      onChange={(e) => handleEditedTextChange('party1TextEn', e.target.value)}
-                      className="w-full text-[11px] text-[#334155] border p-1 rounded min-h-[90px] leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <h3 className="font-black text-[#0f172a]">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).party1TitleEn, editedTexts.party1TitleEn, isCompareChanges, "ltr") : editedTexts.party1TitleEn}</h3>
-                    <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).party1TextEn, editedTexts.party1TextEn, isCompareChanges, "ltr") : editedTexts.party1TextEn}</p>
-                  </>
-                )}
-              </div>
-
-              {/* Employee Definition */}
-              <div dir="rtl" className={`space-y-2 border-r-4 pr-4 mt-6 ${getSearchHighlightClass('party2TextAr', 'party2TextEn')}`} style={{ borderColor: data.themeColor }}>
-                {isEditMode ? (
-                  <div className="space-y-1.5 w-full">
-                    <input 
-                      type="text" 
-                      value={editedTexts.party2TitleAr} 
-                      onChange={(e) => handleEditedTextChange('party2TitleAr', e.target.value)}
-                      className="font-bold border-b border-zinc-200 outline-none w-full text-right bg-amber-50/50 text-xs"
-                    />
-                    <textarea 
-                      value={editedTexts.party2TextAr} 
-                      onChange={(e) => handleEditedTextChange('party2TextAr', e.target.value)}
-                      className="w-full text-[11px] text-[#334155] border p-1 rounded min-h-[90px] leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <h3 className="font-black text-[#0f172a]">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).party2TitleAr, editedTexts.party2TitleAr, isCompareChanges, "rtl") : editedTexts.party2TitleAr}</h3>
-                    <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).party2TextAr, editedTexts.party2TextAr, isCompareChanges, "rtl") : editedTexts.party2TextAr}</p>
-                  </>
-                )}
-              </div>
-              <div dir="ltr" className={`space-y-2 border-l-4 pl-4 mt-6 ${getSearchHighlightClass('party2TextAr', 'party2TextEn')}`} style={{ borderColor: data.themeColor }}>
-                {isEditMode ? (
-                  <div className="space-y-1.5 w-full">
-                    <input 
-                      type="text" 
-                      value={editedTexts.party2TitleEn} 
-                      onChange={(e) => handleEditedTextChange('party2TitleEn', e.target.value)}
-                      className="font-bold border-b border-zinc-200 outline-none w-full text-left bg-amber-50/50 text-xs"
-                    />
-                    <textarea 
-                      value={editedTexts.party2TextEn} 
-                      onChange={(e) => handleEditedTextChange('party2TextEn', e.target.value)}
-                      className="w-full text-[11px] text-[#334155] border p-1 rounded min-h-[90px] leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <h3 className="font-black text-[#0f172a]">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).party2TitleEn, editedTexts.party2TitleEn, isCompareChanges, "ltr") : editedTexts.party2TitleEn}</h3>
-                    <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).party2TextEn, editedTexts.party2TextEn, isCompareChanges, "ltr") : editedTexts.party2TextEn}</p>
-                  </>
-                )}
-              </div>
-
-              {/* CLR: Divider */}
-              <div className="col-span-2 my-2 border-b border-[#f1f5f9]"></div>
-
-              {/* Clause 1: Position */}
-              <div dir="rtl" className={`transition-all duration-1000 rounded-xl ${highlightedClauses[1] ? "bg-emerald-50/90 border-emerald-500 scale-[1.01] p-3 -m-3 shadow-lg z-10 border relative ring-4 ring-emerald-100" : "border-transparent border p-0"} ${getSearchHighlightClass('clause1TextAr', 'clause1TextEn')}`}>
-                {isEditMode ? (
-                  <div className="space-y-1.5 w-full">
-                    <input 
-                      type="text" 
-                      value={editedTexts.clause1TitleAr} 
-                      onChange={(e) => handleEditedTextChange('clause1TitleAr', e.target.value)}
-                      className="font-black text-[#0f172a] border-b border-zinc-200 outline-none w-full text-right bg-amber-50/50"
-                    />
-                    <textarea 
-                      value={editedTexts.clause1TextAr} 
-                      onChange={(e) => handleEditedTextChange('clause1TextAr', e.target.value)}
-                      className="w-full text-xs text-[#334155] border p-1 rounded leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <h3 className="font-black text-[#0f172a] mb-2">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).clause1TitleAr, editedTexts.clause1TitleAr, isCompareChanges, "rtl") : editedTexts.clause1TitleAr}</h3>
-                    <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).clause1TextAr, editedTexts.clause1TextAr, isCompareChanges, "rtl") : editedTexts.clause1TextAr}</p>
-                  </>
-                )}
-              </div>
-              <div dir="ltr" className={`transition-all duration-1000 rounded-xl ${highlightedClauses[1] ? "bg-emerald-50/90 border-emerald-500 scale-[1.01] p-3 -m-3 shadow-lg z-10 border relative ring-4 ring-emerald-100" : "border-transparent border p-0"} ${getSearchHighlightClass('clause1TextAr', 'clause1TextEn')}`}>
-                {isEditMode ? (
-                  <div className="space-y-1.5 w-full">
-                    <input 
-                      type="text" 
-                      value={editedTexts.clause1TitleEn} 
-                      onChange={(e) => handleEditedTextChange('clause1TitleEn', e.target.value)}
-                      className="font-black text-[#0f172a] border-b border-zinc-200 outline-none w-full text-left bg-amber-50/50"
-                    />
-                    <textarea 
-                      value={editedTexts.clause1TextEn} 
-                      onChange={(e) => handleEditedTextChange('clause1TextEn', e.target.value)}
-                      className="w-full text-xs text-[#334155] border p-1 rounded leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <h3 className="font-black text-[#0f172a] mb-2">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).clause1TitleEn, editedTexts.clause1TitleEn, isCompareChanges, "ltr") : editedTexts.clause1TitleEn}</h3>
-                    <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).clause1TextEn, editedTexts.clause1TextEn, isCompareChanges, "ltr") : editedTexts.clause1TextEn}</p>
-                  </>
-                )}
-              </div>
-
-              {/* Clause 2: Duration */}
-              <div dir="rtl" className={`transition-all duration-1000 rounded-xl ${highlightedClauses[2] ? "bg-emerald-50/90 border-emerald-500 scale-[1.01] p-3 -m-3 shadow-lg z-10 border relative ring-4 ring-emerald-100" : "border-transparent border p-0"} ${getSearchHighlightClass('clause2TextAr', 'clause2TextEn')}`}>
-                {isEditMode ? (
-                  <div className="space-y-1.5 w-full">
-                    <input 
-                      type="text" 
-                      value={editedTexts.clause2TitleAr} 
-                      onChange={(e) => handleEditedTextChange('clause2TitleAr', e.target.value)}
-                      className="font-black text-[#0f172a] border-b border-zinc-200 outline-none w-full text-right bg-amber-50/50"
-                    />
-                    <textarea 
-                      value={editedTexts.clause2TextAr} 
-                      onChange={(e) => handleEditedTextChange('clause2TextAr', e.target.value)}
-                      className="w-full text-xs text-[#334155] border p-1 rounded leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <h3 className="font-black text-[#0f172a] mb-2">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).clause2TitleAr, editedTexts.clause2TitleAr, isCompareChanges, "rtl") : editedTexts.clause2TitleAr}</h3>
-                    <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).clause2TextAr, editedTexts.clause2TextAr, isCompareChanges, "rtl") : editedTexts.clause2TextAr}</p>
-                  </>
-                )}
-              </div>
-              <div dir="ltr" className={`transition-all duration-1000 rounded-xl ${highlightedClauses[2] ? "bg-emerald-50/90 border-emerald-500 scale-[1.01] p-3 -m-3 shadow-lg z-10 border relative ring-4 ring-emerald-100" : "border-transparent border p-0"} ${getSearchHighlightClass('clause2TextAr', 'clause2TextEn')}`}>
-                {isEditMode ? (
-                  <div className="space-y-1.5 w-full">
-                    <input 
-                      type="text" 
-                      value={editedTexts.clause2TitleEn} 
-                      onChange={(e) => handleEditedTextChange('clause2TitleEn', e.target.value)}
-                      className="font-black text-[#0f172a] border-b border-zinc-200 outline-none w-full text-left bg-amber-50/50"
-                    />
-                    <textarea 
-                      value={editedTexts.clause2TextEn} 
-                      onChange={(e) => handleEditedTextChange('clause2TextEn', e.target.value)}
-                      className="w-full text-xs text-[#334155] border p-1 rounded leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <h3 className="font-black text-[#0f172a] mb-2">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).clause2TitleEn, editedTexts.clause2TitleEn, isCompareChanges, "ltr") : editedTexts.clause2TitleEn}</h3>
-                    <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).clause2TextEn, editedTexts.clause2TextEn, isCompareChanges, "ltr") : editedTexts.clause2TextEn}</p>
-                  </>
-                )}
-              </div>
-
-              {/* Clause 3: Compensation */}
-              <div dir="rtl" className={`transition-all duration-1000 rounded-xl ${highlightedClauses[3] ? "bg-emerald-50/90 border-emerald-500 scale-[1.01] p-3 -m-3 shadow-lg z-10 border relative ring-4 ring-emerald-100" : "border-transparent border p-0"} ${getSearchHighlightClass('clause3TextAr', 'clause3TextEn')}`}>
-                {isEditMode ? (
-                  <div className="space-y-1.5 w-full">
-                    <input 
-                      type="text" 
-                      value={editedTexts.clause3TitleAr} 
-                      onChange={(e) => handleEditedTextChange('clause3TitleAr', e.target.value)}
-                      className="font-black text-[#0f172a] border-b border-zinc-200 outline-none w-full text-right bg-amber-50/50"
-                    />
-                    <textarea 
-                      value={editedTexts.clause3TextAr} 
-                      onChange={(e) => handleEditedTextChange('clause3TextAr', e.target.value)}
-                      className="w-full text-xs text-[#334155] border p-1 rounded min-h-[90px] leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <h3 className="font-black text-[#0f172a] mb-2">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).clause3TitleAr, editedTexts.clause3TitleAr, isCompareChanges, "rtl") : editedTexts.clause3TitleAr}</h3>
-                    <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).clause3TextAr, editedTexts.clause3TextAr, isCompareChanges, "rtl") : editedTexts.clause3TextAr}</p>
-                  </>
-                )}
-              </div>
-              <div dir="ltr" className={`transition-all duration-1000 rounded-xl ${highlightedClauses[3] ? "bg-emerald-50/90 border-emerald-500 scale-[1.01] p-3 -m-3 shadow-lg z-10 border relative ring-4 ring-emerald-100" : "border-transparent border p-0"} ${getSearchHighlightClass('clause3TextAr', 'clause3TextEn')}`}>
-                {isEditMode ? (
-                  <div className="space-y-1.5 w-full">
-                    <input 
-                      type="text" 
-                      value={editedTexts.clause3TitleEn} 
-                      onChange={(e) => handleEditedTextChange('clause3TitleEn', e.target.value)}
-                      className="font-black text-[#0f172a] border-b border-zinc-200 outline-none w-full text-left bg-amber-50/50"
-                    />
-                    <textarea 
-                      value={editedTexts.clause3TextEn} 
-                      onChange={(e) => handleEditedTextChange('clause3TextEn', e.target.value)}
-                      className="w-full text-xs text-[#334155] border p-1 rounded min-h-[90px] leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <h3 className="font-black text-[#0f172a] mb-2">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).clause3TitleEn, editedTexts.clause3TitleEn, isCompareChanges, "ltr") : editedTexts.clause3TitleEn}</h3>
-                    <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).clause3TextEn, editedTexts.clause3TextEn, isCompareChanges, "ltr") : editedTexts.clause3TextEn}</p>
-                  </>
-                )}
-              </div>
-
-              {/* Clause 4: Dispute Resolution (Dynamic) */}
-              <div dir="rtl" className={`transition-all duration-1000 rounded-xl ${highlightedClauses[4] ? "bg-emerald-50/90 border-emerald-500 scale-[1.01] p-3 -m-3 shadow-lg z-10 border relative ring-4 ring-emerald-100" : "border-transparent border p-0"} ${getSearchHighlightClass('clause4TextAr', 'clause4TextEn')}`}>
-                {isEditMode ? (
-                  <div className="space-y-1.5 w-full">
-                    <input 
-                      type="text" 
-                      value={editedTexts.clause4TitleAr} 
-                      onChange={(e) => handleEditedTextChange('clause4TitleAr', e.target.value)}
-                      className="font-black text-[#0f172a] border-b border-zinc-200 outline-none w-full text-right bg-amber-50/50"
-                    />
-                    <textarea 
-                      value={editedTexts.clause4TextAr} 
-                      onChange={(e) => handleEditedTextChange('clause4TextAr', e.target.value)}
-                      className="w-full text-xs text-[#334155] border p-1 rounded min-h-[70px] leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <h3 className="font-black text-[#0f172a] mb-2">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).clause4TitleAr, editedTexts.clause4TitleAr, isCompareChanges, "rtl") : editedTexts.clause4TitleAr}</h3>
-                    <p className="text-[#334155] leading-relaxed font-medium bg-[#f8fafc] p-2 rounded border border-[#f1f5f9] whitespace-pre-line text-xs">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).clause4TextAr, editedTexts.clause4TextAr, isCompareChanges, "rtl") : editedTexts.clause4TextAr}</p>
-                  </>
-                )}
-              </div>
-              <div dir="ltr" className={`transition-all duration-1000 rounded-xl ${highlightedClauses[4] ? "bg-emerald-50/90 border-emerald-500 scale-[1.01] p-3 -m-3 shadow-lg z-10 border relative ring-4 ring-emerald-100" : "border-transparent border p-0"} ${getSearchHighlightClass('clause4TextAr', 'clause4TextEn')}`}>
-                {isEditMode ? (
-                  <div className="space-y-1.5 w-full">
-                    <input 
-                      type="text" 
-                      value={editedTexts.clause4TitleEn} 
-                      onChange={(e) => handleEditedTextChange('clause4TitleEn', e.target.value)}
-                      className="font-black text-[#0f172a] border-b border-zinc-200 outline-none w-full text-left bg-amber-50/50"
-                    />
-                    <textarea 
-                      value={editedTexts.clause4TextEn} 
-                      onChange={(e) => handleEditedTextChange('clause4TextEn', e.target.value)}
-                      className="w-full text-xs text-[#334155] border p-1 rounded min-h-[70px] leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <h3 className="font-black text-[#0f172a] mb-2">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).clause4TitleEn, editedTexts.clause4TitleEn, isCompareChanges, "ltr") : editedTexts.clause4TitleEn}</h3>
-                    <p className="text-[#334155] leading-relaxed font-medium bg-[#f8fafc] p-2 rounded border border-[#f1f5f9] whitespace-pre-line text-xs">{isCompareChanges ? renderInlineDiff(getGeneratedTexts(data).clause4TextEn, editedTexts.clause4TextEn, isCompareChanges, "ltr") : editedTexts.clause4TextEn}</p>
-                  </>
-                )}
-              </div>
-
-              {/* Signatures */}
-              <div className="col-span-2 mt-12 pt-8 border-t-2 border-[#f1f5f9] grid grid-cols-2 gap-8 relative">
-                
-                <div id="nafez-qr-container" className="absolute left-1/2 -top-6 -translate-x-1/2 flex flex-col items-center justify-center opacity-40 mix-blend-multiply">
-                   {isSigned && qrCodeData && <QRCodeSVG value={qrCodeData} size={84} />}
-                </div>
-
-                <div className="text-center flex flex-col items-center">
-                  <p className="font-black text-[#0f172a] mb-5 text-xs">الطرف الأول / First Party</p>
-                  {(!isExporting || !isSigned) && (
-                    <div className="print:hidden">
-                       <NafathAuth onVerified={handleSignatureSuccess} />
-                    </div>
-                  )}
-                  {(isExporting || isSigned) && (
-                    <p className="text-[10px] text-emerald-600 font-mono uppercase tracking-widest border border-emerald-200 bg-emerald-50 rounded-lg py-2 px-6">Digital Signature Confirmed</p>
-                  )}
-                </div>
-                
-                <div className="text-center flex flex-col items-center gap-2">
-                  <p className="font-black text-[#0f172a] mb-5 text-xs">الطرف الثاني / Second Party</p>
-                  {signatureImage ? (
-                    <div className="relative border border-zinc-200 rounded-lg p-1.5 bg-zinc-50 flex flex-col items-center shadow-inner">
-                      <img src={signatureImage} alt="Signature" className="h-10 object-contain" />
-                      <button 
+                    {/* Right: Compare Changes & Auto-Bind Settings */}
+                    <div className="flex items-center gap-2.5 flex-wrap justify-end">
+                      {/* Page Width View Toggle */}
+                      <button
                         type="button"
-                        onClick={() => {
-                          setSignatureImage(null);
-                          saveContractToFirebase(null);
-                        }} 
-                        className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-bold text-xs hover:bg-rose-600 print:hidden shadow-md cursor-pointer"
+                        onClick={() =>
+                          setPageWidthMode((prev) => (prev === "standard" ? "fit" : "standard"))
+                        }
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black border transition-all cursor-pointer ${
+                          pageWidthMode === "fit"
+                            ? "bg-indigo-50 border-indigo-200 text-indigo-950 shadow-xs"
+                            : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50"
+                        }`}
                       >
-                        ×
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${pageWidthMode === "fit" ? "bg-indigo-600 animate-pulse" : "bg-zinc-300"}`}
+                        />
+                        <span>
+                          {pageWidthMode === "fit"
+                            ? "تناسب كامل العرض / Fit Page Width"
+                            : "عرض طبيعي (A4) / Standard View"}
+                        </span>
+                      </button>
+
+                      {/* Reset to Default Button */}
+                      <button
+                        type="button"
+                        onClick={handleResetToDefault}
+                        className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-105 text-rose-800 hover:text-rose-950 border border-rose-200 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all cursor-pointer"
+                      >
+                        <RotateCw className="w-3.5 h-3.5 text-rose-600" />
+                        <span>إعادة ضبط / Reset to Default</span>
+                      </button>
+
+                      {/* Compare Changes Toggle */}
+                      <label className="relative inline-flex items-center cursor-pointer select-none border border-zinc-200 rounded-xl py-1.5 px-3 bg-white hover:bg-zinc-50 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={isCompareChanges}
+                          onChange={(e) => {
+                            setIsCompareChanges(e.target.checked);
+                            if (e.target.checked) {
+                              toast.info(
+                                "وضع مقارنة التغييرات نشط! مواءمة التعديلات الفردية مع قالب النظام الأصلي."
+                              );
+                            } else {
+                              toast.info("تم العودة للعرض الطبيعي للمحتويات.");
+                            }
+                          }}
+                          className="sr-only peer"
+                        />
+                        <div className="w-8 h-4.5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[10px] after:left-[17px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <span className="mr-2 text-[10px] font-black text-zinc-650">
+                          مقارنة التغييرات / Compare
+                        </span>
+                      </label>
+
+                      {/* Auto Bind Settings Button */}
+                      <button
+                        type="button"
+                        onClick={handleAutoBindSettings}
+                        className="flex items-center gap-1 bg-teal-50 hover:bg-teal-100 text-teal-850 hover:text-teal-950 border border-teal-200 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all cursor-pointer"
+                      >
+                        <span>ربط البيانات ⚡ Bind Settings</span>
+                      </button>
+
+                      {/* Print Button */}
+                      <button
+                        type="button"
+                        onClick={() => window.print()}
+                        className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 text-white hover:bg-zinc-800 px-3 py-1.5 rounded-xl text-[10px] font-black transition-all cursor-pointer shadow-sm"
+                      >
+                        <Printer className="w-3.5 h-3.5 text-zinc-300" />
+                        <span>طباعة العقد / Print</span>
+                      </button>
+
+                      {/* Download as PDF Button */}
+                      <button
+                        type="button"
+                        onClick={downloadContractAsPDF}
+                        disabled={isExportingPDF}
+                        className="flex items-center gap-1.5 bg-indigo-650 hover:bg-indigo-720 text-white px-3 py-1.5 rounded-xl text-[10px] font-black transition-all cursor-pointer shadow-sm disabled:opacity-50"
+                      >
+                        {isExportingPDF ? (
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent animate-spin rounded-full" />
+                        ) : (
+                          <Download className="w-3.5 h-3.5 text-indigo-100" />
+                        )}
+                        <span>تحميل PDF / Export</span>
                       </button>
                     </div>
-                  ) : (
-                    <SignaturePad 
-                      onSave={(dataUrl) => {
-                        setSignatureImage(dataUrl);
-                        saveContractToFirebase(dataUrl);
-                      }} 
-                      onClear={() => {
-                        setSignatureImage(null);
-                        saveContractToFirebase(null);
-                      }} 
+                  </section>
+
+                  {/* QUICK-FIND CLAUSE SEARCH (PRINT HIDDEN / within #contract-document) */}
+                  <section className="mb-6 relative print:hidden">
+                    <input
+                      type="text"
+                      value={documentSearchQuery}
+                      onChange={(e) => setDocumentSearchQuery(e.target.value)}
+                      placeholder="ابحث سريعاً لتحديد وإبراز بنود معينة في هذا العقد... Quick-find to filter/highlight clauses..."
+                      className="w-full text-xs p-3 pr-10 border border-zinc-200 focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981] outline-none text-right rounded-xl bg-white shadow-xs font-medium"
                     />
-                  )}
-                </div>
-              </div>
-
-              {/* Designated Digital Signature Area with Dynamic Timestamp */}
-              <div className="col-span-2 mt-8 p-6 bg-zinc-50 border border-zinc-200 rounded-2xl space-y-4 shadow-xs">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between border-b border-zinc-200 pb-3 gap-2">
-                  <div className="flex items-center gap-2">
-                    <FileCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span className="text-xs font-black text-zinc-800">منطقة التوقيع والتحكم بالمصادقة الرقمية / Cryptographic Authentication Zone</span>
-                  </div>
-                  <div className="text-[10px] text-zinc-500 font-mono flex items-center gap-1 bg-white border border-zinc-200 px-2.5 py-1 rounded-lg" dir="ltr">
-                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
-                    <span>TIMESTAMP: {currentTimestamp || "2026-06-21 12:58:18"} (MUDARIJ-UTC)</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-6 text-right">
-                  {/* Employer Digital Signature Place */}
-                  <div className="border border-zinc-150 rounded-xl p-3 bg-white space-y-2 flex flex-col items-center justify-center min-h-[105px] relative">
-                    <span className="text-[9px] font-black text-zinc-450 absolute top-2 right-2 border-b border-zinc-100 pb-0.5">توقيع صاحب العمل • First Party</span>
-                    
-                    {isSigned ? (
-                      <div className="flex flex-col items-center gap-1.5 mt-4">
-                        <span className="text-[9px] text-emerald-700 font-black px-2.5 py-1 bg-emerald-50 border border-emerald-300 rounded-lg shadow-2xs">✓ مصادق رقميًا بالنفاذ الوطني / Nafath Active</span>
-                        <span className="text-[8px] text-zinc-400 font-mono">HASH: SHA256-MDRJ-{data.employerCR || "CR-SEO-482"}</span>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-1 mt-4">
-                        <span className="w-16 h-3.5 border-b border-dashed border-zinc-300"></span>
-                        <span className="text-[9px] text-zinc-400 font-bold italic">انتظار الموثق المالي / Awaiting Nafath Seal</span>
-                      </div>
+                    <Search className="w-4 h-4 text-zinc-400 absolute right-3.5 top-3.5 pointer-events-none" />
+                    {documentSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setDocumentSearchQuery("")}
+                        className="absolute left-3.5 top-2.5 text-xs text-zinc-400 hover:text-zinc-650 font-sans p-1 hover:bg-zinc-150 rounded"
+                      >
+                        ✕
+                      </button>
                     )}
-                  </div>
+                  </section>
 
-                  {/* Employee Digital Signature Place */}
-                  <div className="border border-zinc-150 rounded-xl p-3 bg-white space-y-2 flex flex-col items-center justify-center min-h-[105px] relative">
-                    <span className="text-[9px] font-black text-zinc-450 absolute top-2 right-2 border-b border-zinc-100 pb-0.5">توقيع الموظف • Second Party</span>
-                    
-                    {signatureImage ? (
-                      <div className="flex flex-col items-center gap-1.5 mt-4">
-                        <img src={signatureImage} alt="Employee Signature Pad Captured" className="h-8 object-contain mix-blend-multiply" />
-                        <span className="text-[8px] text-zinc-400 font-mono">REF: {data.employeeId || "EMP-ID-281"}</span>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-1 mt-4">
-                        <span className="w-16 h-3.5 border-b border-dashed border-zinc-300"></span>
-                        <span className="text-[9px] text-zinc-400 font-bold italic">انتظار التوقيع اليدوي / Awaiting Pad Signature</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="text-[9px] text-zinc-450 leading-relaxed text-center" dir="rtl">
-                  هذا التوقيع ملزم ونهائي لكلا الطرفين قانونًا ونظامًا، وتم التحقق الفوري من سلامة الهوية التجارية ورمز الاستعلام عبر سجلات التدقيق الآمن لدى منصة مدارج.
-                </div>
-              </div>
-
-            </div>
-
-            {/* Dynamic Verification Area with QR Code component rendered on demand */}
-            <div className="mt-14 pt-6 border-t border-[#f1f5f9] flex items-center justify-between gap-4">
-              <div className="text-right max-w-[70%]">
-                <p className="text-[10px] font-black text-[#0f172a] uppercase tracking-wider">ترميز موثق رقمي ورابط التحقق / Cryptographic Verification Seal</p>
-                <p className="text-[9px] text-[#64748b] mt-0.5 leading-relaxed">
-                  هذا العقد معتمد وصادر عبر CLM الذكي وموثق رقميًا بالنفاذ الوطني. للتحقق من سلامة العقد ومطابقته للأنظمة، يمكن استخدام رمز الاستجابة السريعة (QR Code).
-                </p>
-                {verificationLink ? (
-                  <p className="text-[9px] text-teal-600 font-mono mt-1 select-all" dir="ltr">
-                    {verificationLink}
-                  </p>
-                ) : (
-                  <button
-                    onClick={generateVerificationLink}
-                    type="button"
-                    className="text-[10px] text-teal-600 font-bold hover:underline mt-1 bg-teal-50 px-2 py-0.5 rounded border border-teal-100 transition-all print:hidden"
+                  {/* Header Content */}
+                  <div
+                    className="flex justify-between items-center mb-12 border-b-2 pb-6"
+                    style={{ borderColor: data.themeColor }}
                   >
-                    + إصدار رابط التحقق الفوري (QR On-Demand)
+                    <div
+                      className="text-right flex-1 group relative cursor-pointer border border-transparent hover:border-amber-300 hover:bg-amber-50/15 p-2 rounded-2xl transition-all"
+                      onClick={() => {
+                        if (!isEditMode) {
+                          setIsEditMode(true);
+                          toast.info("تم تفعيل وضع التعديل المباشر / Inline Edit Mode Activated");
+                        }
+                      }}
+                      title={
+                        !isEditMode ? "انقر للتعديل المباشر / Click to edit inline" : undefined
+                      }
+                    >
+                      {isEditMode ? (
+                        <div className="space-y-1 max-w-[85%]">
+                          <input
+                            type="text"
+                            value={editedTexts.titleAr}
+                            onChange={(e) => handleEditedTextChange("titleAr", e.target.value)}
+                            className="text-lg font-black border-b border-zinc-200 focus:border-[#10b981] outline-none text-right px-1 w-full bg-amber-50/50"
+                          />
+                          <input
+                            type="text"
+                            value={editedTexts.titleEn}
+                            onChange={(e) => handleEditedTextChange("titleEn", e.target.value)}
+                            className="text-xs font-bold border-b border-zinc-200 focus:border-[#10b981] outline-none text-left px-1 w-full bg-amber-50/50"
+                            dir="ltr"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <h1
+                            className="text-2xl font-black text-[#0f172a] flex items-center gap-2 flex-wrap"
+                            style={{ color: data.themeColor, wordBreak: "break-word" }}
+                          >
+                            <span>
+                              {isCompareChanges
+                                ? renderInlineDiff(
+                                    getGeneratedTexts(data).titleAr,
+                                    editedTexts.titleAr,
+                                    isCompareChanges,
+                                    "rtl"
+                                  )
+                                : editedTexts.titleAr}
+                            </span>
+                            <span
+                              title="عقد موثق ومعتمد قانونياً"
+                              className="inline-flex items-center shrink-0"
+                            >
+                              <ShieldCheck className="w-5 h-5 text-emerald-600 inline-block align-middle" />
+                            </span>
+                          </h1>
+                          <p className="text-sm font-bold text-[#64748b] mt-1 pr-32 sm:pr-0">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).titleEn,
+                                  editedTexts.titleEn,
+                                  isCompareChanges,
+                                  "ltr"
+                                )
+                              : editedTexts.titleEn}
+                          </p>
+                          <span className="absolute top-1 left-2 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] bg-amber-500 text-white px-1.5 py-0.5 rounded font-sans select-none print:hidden">
+                            تعديل / Edit ✎
+                          </span>
+
+                          {/* FLOATING ACTION BUTTONS GROUP NEXT TO TITLE */}
+                          <span
+                            onClick={(e) => e.stopPropagation()}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1.5 bg-white border border-zinc-200 p-1 rounded-xl shadow-md print:hidden z-50 transition-all scale-95 hover:scale-100"
+                          >
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                downloadContractAsPDF();
+                              }}
+                              disabled={isExportingPDF}
+                              className="flex items-center justify-center p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                              title="تحميل كـ PDF / Download PDF"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toast.info(
+                                  "جاري تحضير إرسال العقد عبر البريد الإلكتروني... Preparing Email..."
+                                );
+                                setTimeout(() => {
+                                  toast.success(
+                                    "تم إرسال نسخة موثقة من العقد إلى بريدك بنجاح! / Email sent successfully!"
+                                  );
+                                }, 1000);
+                              }}
+                              className="flex items-center justify-center p-1.5 text-teal-600 hover:bg-teal-50 rounded-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                              title="إرسال بالبريد / Send via Email"
+                            >
+                              <Mail className="w-3.5 h-3.5" />
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.print();
+                              }}
+                              className="flex items-center justify-center p-1.5 text-zinc-700 hover:bg-zinc-100 rounded-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                              title="طباعة العقد / Print"
+                            >
+                              <Printer className="w-3.5 h-3.5" />
+                            </button>
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <div
+                      className="text-left select-none shrink-0 font-mono text-[10px] text-[#94a3b8]"
+                      dir="ltr"
+                    >
+                      <p className="font-bold uppercase">
+                        Document Ref: EV-{new Date().getTime().toString().slice(-6)}
+                      </p>
+                      <p className="font-bold mt-1">{new Date().toISOString().split("T")[0]}</p>
+
+                      {/* STATUS INDICATOR BADGE FOR PRINT/PDF */}
+                      <div className="text-right mt-1.5">
+                        <span className="text-[8px] font-black border border-zinc-300 bg-zinc-50 px-1.5 py-0.5 rounded text-zinc-700">
+                          STATUS: {documentStatus.toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-12 gap-y-8 text-sm text-justify">
+                    {/* Employer Definition */}
+                    <div
+                      dir="rtl"
+                      className={`space-y-2 border-r-4 pr-4 ${getSearchHighlightClass("party1TextAr", "party1TextEn")}`}
+                      style={{ borderColor: data.themeColor }}
+                    >
+                      {isEditMode ? (
+                        <div className="space-y-1.5 w-full">
+                          <input
+                            type="text"
+                            value={editedTexts.party1TitleAr}
+                            onChange={(e) =>
+                              handleEditedTextChange("party1TitleAr", e.target.value)
+                            }
+                            className="font-bold border-b border-zinc-200 outline-none w-full text-right bg-amber-50/50 text-xs"
+                          />
+                          <textarea
+                            value={editedTexts.party1TextAr}
+                            onChange={(e) => handleEditedTextChange("party1TextAr", e.target.value)}
+                            className="w-full text-[11px] text-[#334155] border p-1 rounded min-h-[90px] leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => {
+                            setIsEditMode(true);
+                            toast.info(
+                              "تم تفعيل وضع التعديل المباشر لهذا البند / Edit mode enabled for this clause"
+                            );
+                          }}
+                          className="cursor-pointer hover:bg-amber-50/15 hover:border-amber-300 border border-transparent p-2 -m-2 rounded-2xl transition-all group relative"
+                          title="انقر للتعديل المباشر / Click to edit"
+                        >
+                          <h3 className="font-black text-[#0f172a]">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).party1TitleAr,
+                                  editedTexts.party1TitleAr,
+                                  isCompareChanges,
+                                  "rtl"
+                                )
+                              : editedTexts.party1TitleAr}
+                          </h3>
+                          <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).party1TextAr,
+                                  editedTexts.party1TextAr,
+                                  isCompareChanges,
+                                  "rtl"
+                                )
+                              : editedTexts.party1TextAr}
+                          </p>
+                          <span className="absolute top-1 left-2 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] bg-amber-500 text-white px-1 py-0.5 rounded font-sans select-none print:hidden">
+                            تعديل✎
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div
+                      dir="ltr"
+                      className={`space-y-2 border-l-4 pl-4 ${getSearchHighlightClass("party1TextAr", "party1TextEn")}`}
+                      style={{ borderColor: data.themeColor }}
+                    >
+                      {isEditMode ? (
+                        <div className="space-y-1.5 w-full">
+                          <input
+                            type="text"
+                            value={editedTexts.party1TitleEn}
+                            onChange={(e) =>
+                              handleEditedTextChange("party1TitleEn", e.target.value)
+                            }
+                            className="font-bold border-b border-zinc-200 outline-none w-full text-left bg-amber-50/50 text-xs"
+                          />
+                          <textarea
+                            value={editedTexts.party1TextEn}
+                            onChange={(e) => handleEditedTextChange("party1TextEn", e.target.value)}
+                            className="w-full text-[11px] text-[#334155] border p-1 rounded min-h-[90px] leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => {
+                            setIsEditMode(true);
+                            toast.info(
+                              "تم تفعيل وضع التعديل المباشر لهذا البند / Edit mode enabled for this clause"
+                            );
+                          }}
+                          className="cursor-pointer hover:bg-amber-50/15 hover:border-amber-300 border border-transparent p-2 -m-2 rounded-2xl transition-all group relative"
+                          title="انقر للتعديل المباشر / Click to edit"
+                        >
+                          <h3 className="font-black text-[#0f172a]">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).party1TitleEn,
+                                  editedTexts.party1TitleEn,
+                                  isCompareChanges,
+                                  "ltr"
+                                )
+                              : editedTexts.party1TitleEn}
+                          </h3>
+                          <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).party1TextEn,
+                                  editedTexts.party1TextEn,
+                                  isCompareChanges,
+                                  "ltr"
+                                )
+                              : editedTexts.party1TextEn}
+                          </p>
+                          <span className="absolute top-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] bg-amber-500 text-white px-1 py-0.5 rounded font-sans select-none print:hidden">
+                            Edit✎
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Employee Definition */}
+                    <div
+                      dir="rtl"
+                      className={`space-y-2 border-r-4 pr-4 mt-6 ${getSearchHighlightClass("party2TextAr", "party2TextEn")}`}
+                      style={{ borderColor: data.themeColor }}
+                    >
+                      {isEditMode ? (
+                        <div className="space-y-1.5 w-full">
+                          <input
+                            type="text"
+                            value={editedTexts.party2TitleAr}
+                            onChange={(e) =>
+                              handleEditedTextChange("party2TitleAr", e.target.value)
+                            }
+                            className="font-bold border-b border-zinc-200 outline-none w-full text-right bg-amber-50/50 text-xs"
+                          />
+                          <textarea
+                            value={editedTexts.party2TextAr}
+                            onChange={(e) => handleEditedTextChange("party2TextAr", e.target.value)}
+                            className="w-full text-[11px] text-[#334155] border p-1 rounded min-h-[90px] leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => {
+                            setIsEditMode(true);
+                            toast.info(
+                              "تم تفعيل وضع التعديل المباشر لهذا البند / Edit mode enabled for this clause"
+                            );
+                          }}
+                          className="cursor-pointer hover:bg-amber-50/15 hover:border-amber-300 border border-transparent p-2 -m-2 rounded-2xl transition-all group relative"
+                          title="انقر للتعديل المباشر / Click to edit"
+                        >
+                          <h3 className="font-black text-[#0f172a]">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).party2TitleAr,
+                                  editedTexts.party2TitleAr,
+                                  isCompareChanges,
+                                  "rtl"
+                                )
+                              : editedTexts.party2TitleAr}
+                          </h3>
+                          <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).party2TextAr,
+                                  editedTexts.party2TextAr,
+                                  isCompareChanges,
+                                  "rtl"
+                                )
+                              : editedTexts.party2TextAr}
+                          </p>
+                          <span className="absolute top-1 left-2 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] bg-amber-500 text-white px-1 py-0.5 rounded font-sans select-none print:hidden">
+                            تعديل✎
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div
+                      dir="ltr"
+                      className={`space-y-2 border-l-4 pl-4 mt-6 ${getSearchHighlightClass("party2TextAr", "party2TextEn")}`}
+                      style={{ borderColor: data.themeColor }}
+                    >
+                      {isEditMode ? (
+                        <div className="space-y-1.5 w-full">
+                          <input
+                            type="text"
+                            value={editedTexts.party2TitleEn}
+                            onChange={(e) =>
+                              handleEditedTextChange("party2TitleEn", e.target.value)
+                            }
+                            className="font-bold border-b border-zinc-200 outline-none w-full text-left bg-amber-50/50 text-xs"
+                          />
+                          <textarea
+                            value={editedTexts.party2TextEn}
+                            onChange={(e) => handleEditedTextChange("party2TextEn", e.target.value)}
+                            className="w-full text-[11px] text-[#334155] border p-1 rounded min-h-[90px] leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => {
+                            setIsEditMode(true);
+                            toast.info(
+                              "تم تفعيل وضع التعديل المباشر لهذا البند / Edit mode enabled for this clause"
+                            );
+                          }}
+                          className="cursor-pointer hover:bg-amber-50/15 hover:border-amber-300 border border-transparent p-2 -m-2 rounded-2xl transition-all group relative"
+                          title="انقر للتعديل المباشر / Click to edit"
+                        >
+                          <h3 className="font-black text-[#0f172a]">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).party2TitleEn,
+                                  editedTexts.party2TitleEn,
+                                  isCompareChanges,
+                                  "ltr"
+                                )
+                              : editedTexts.party2TitleEn}
+                          </h3>
+                          <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).party2TextEn,
+                                  editedTexts.party2TextEn,
+                                  isCompareChanges,
+                                  "ltr"
+                                )
+                              : editedTexts.party2TextEn}
+                          </p>
+                          <span className="absolute top-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] bg-amber-500 text-white px-1 py-0.5 rounded font-sans select-none print:hidden">
+                            Edit✎
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* CLR: Divider */}
+                    <div className="col-span-2 my-2 border-b border-[#f1f5f9]"></div>
+
+                    {/* Clause 1: Position */}
+                    <div
+                      dir="rtl"
+                      className={`transition-all duration-1000 rounded-xl ${highlightedClauses[1] ? "bg-emerald-50/90 border-emerald-500 scale-[1.01] p-3 -m-3 shadow-lg z-10 border relative ring-4 ring-emerald-100" : "border-transparent border p-0"} ${getSearchHighlightClass("clause1TextAr", "clause1TextEn")}`}
+                    >
+                      {isEditMode ? (
+                        <div className="space-y-1.5 w-full">
+                          <input
+                            type="text"
+                            value={editedTexts.clause1TitleAr}
+                            onChange={(e) =>
+                              handleEditedTextChange("clause1TitleAr", e.target.value)
+                            }
+                            className="font-black text-[#0f172a] border-b border-zinc-200 outline-none w-full text-right bg-amber-50/50"
+                          />
+                          <textarea
+                            value={editedTexts.clause1TextAr}
+                            onChange={(e) =>
+                              handleEditedTextChange("clause1TextAr", e.target.value)
+                            }
+                            className="w-full text-xs text-[#334155] border p-1 rounded leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => {
+                            setIsEditMode(true);
+                            toast.info(
+                              "تم تفعيل وضع التعديل المباشر لهذا البند / Edit mode enabled for this clause"
+                            );
+                          }}
+                          className="cursor-pointer hover:bg-amber-50/15 hover:border-amber-300 border border-transparent p-2 -m-2 rounded-2xl transition-all group relative"
+                          title="انقر للتعديل المباشر / Click to edit"
+                        >
+                          <h3 className="font-black text-[#0f172a] mb-2">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).clause1TitleAr,
+                                  editedTexts.clause1TitleAr,
+                                  isCompareChanges,
+                                  "rtl"
+                                )
+                              : editedTexts.clause1TitleAr}
+                          </h3>
+                          <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).clause1TextAr,
+                                  editedTexts.clause1TextAr,
+                                  isCompareChanges,
+                                  "rtl"
+                                )
+                              : editedTexts.clause1TextAr}
+                          </p>
+                          <span className="absolute top-1 left-2 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] bg-amber-500 text-white px-1 py-0.5 rounded font-sans select-none print:hidden">
+                            تعديل✎
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div
+                      dir="ltr"
+                      className={`transition-all duration-1000 rounded-xl ${highlightedClauses[1] ? "bg-emerald-50/90 border-emerald-500 scale-[1.01] p-3 -m-3 shadow-lg z-10 border relative ring-4 ring-emerald-100" : "border-transparent border p-0"} ${getSearchHighlightClass("clause1TextAr", "clause1TextEn")}`}
+                    >
+                      {isEditMode ? (
+                        <div className="space-y-1.5 w-full">
+                          <input
+                            type="text"
+                            value={editedTexts.clause1TitleEn}
+                            onChange={(e) =>
+                              handleEditedTextChange("clause1TitleEn", e.target.value)
+                            }
+                            className="font-black text-[#0f172a] border-b border-zinc-200 outline-none w-full text-left bg-amber-50/50"
+                          />
+                          <textarea
+                            value={editedTexts.clause1TextEn}
+                            onChange={(e) =>
+                              handleEditedTextChange("clause1TextEn", e.target.value)
+                            }
+                            className="w-full text-xs text-[#334155] border p-1 rounded leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
+                          />
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => {
+                            setIsEditMode(true);
+                            toast.info(
+                              "تم تفعيل وضع التعديل المباشر لهذا البند / Edit mode enabled for this clause"
+                            );
+                          }}
+                          className="cursor-pointer hover:bg-amber-50/15 hover:border-amber-300 border border-transparent p-2 -m-2 rounded-2xl transition-all group relative"
+                          title="انقر للتعديل المباشر / Click to edit"
+                        >
+                          <h3 className="font-black text-[#0f172a] mb-2">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).clause1TitleEn,
+                                  editedTexts.clause1TitleEn,
+                                  isCompareChanges,
+                                  "ltr"
+                                )
+                              : editedTexts.clause1TitleEn}
+                          </h3>
+                          <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).clause1TextEn,
+                                  editedTexts.clause1TextEn,
+                                  isCompareChanges,
+                                  "ltr"
+                                )
+                              : editedTexts.clause1TextEn}
+                          </p>
+                          <span className="absolute top-1 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] bg-amber-500 text-white px-1 py-0.5 rounded font-sans select-none print:hidden">
+                            Edit✎
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Clause 2: Duration */}
+                    <div
+                      dir="rtl"
+                      className={`transition-all duration-1000 rounded-xl ${highlightedClauses[2] ? "bg-emerald-50/90 border-emerald-500 scale-[1.01] p-3 -m-3 shadow-lg z-10 border relative ring-4 ring-emerald-100" : "border-transparent border p-0"} ${getSearchHighlightClass("clause2TextAr", "clause2TextEn")}`}
+                    >
+                      {isEditMode ? (
+                        <div className="space-y-1.5 w-full">
+                          <input
+                            type="text"
+                            value={editedTexts.clause2TitleAr}
+                            onChange={(e) =>
+                              handleEditedTextChange("clause2TitleAr", e.target.value)
+                            }
+                            className="font-black text-[#0f172a] border-b border-zinc-200 outline-none w-full text-right bg-amber-50/50"
+                          />
+                          <textarea
+                            value={editedTexts.clause2TextAr}
+                            onChange={(e) =>
+                              handleEditedTextChange("clause2TextAr", e.target.value)
+                            }
+                            className="w-full text-xs text-[#334155] border p-1 rounded leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <h3 className="font-black text-[#0f172a] mb-2">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).clause2TitleAr,
+                                  editedTexts.clause2TitleAr,
+                                  isCompareChanges,
+                                  "rtl"
+                                )
+                              : editedTexts.clause2TitleAr}
+                          </h3>
+                          <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).clause2TextAr,
+                                  editedTexts.clause2TextAr,
+                                  isCompareChanges,
+                                  "rtl"
+                                )
+                              : editedTexts.clause2TextAr}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                    <div
+                      dir="ltr"
+                      className={`transition-all duration-1000 rounded-xl ${highlightedClauses[2] ? "bg-emerald-50/90 border-emerald-500 scale-[1.01] p-3 -m-3 shadow-lg z-10 border relative ring-4 ring-emerald-100" : "border-transparent border p-0"} ${getSearchHighlightClass("clause2TextAr", "clause2TextEn")}`}
+                    >
+                      {isEditMode ? (
+                        <div className="space-y-1.5 w-full">
+                          <input
+                            type="text"
+                            value={editedTexts.clause2TitleEn}
+                            onChange={(e) =>
+                              handleEditedTextChange("clause2TitleEn", e.target.value)
+                            }
+                            className="font-black text-[#0f172a] border-b border-zinc-200 outline-none w-full text-left bg-amber-50/50"
+                          />
+                          <textarea
+                            value={editedTexts.clause2TextEn}
+                            onChange={(e) =>
+                              handleEditedTextChange("clause2TextEn", e.target.value)
+                            }
+                            className="w-full text-xs text-[#334155] border p-1 rounded leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <h3 className="font-black text-[#0f172a] mb-2">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).clause2TitleEn,
+                                  editedTexts.clause2TitleEn,
+                                  isCompareChanges,
+                                  "ltr"
+                                )
+                              : editedTexts.clause2TitleEn}
+                          </h3>
+                          <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).clause2TextEn,
+                                  editedTexts.clause2TextEn,
+                                  isCompareChanges,
+                                  "ltr"
+                                )
+                              : editedTexts.clause2TextEn}
+                          </p>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Clause 3: Compensation */}
+                    <div
+                      dir="rtl"
+                      className={`transition-all duration-1000 rounded-xl ${highlightedClauses[3] ? "bg-emerald-50/90 border-emerald-500 scale-[1.01] p-3 -m-3 shadow-lg z-10 border relative ring-4 ring-emerald-100" : "border-transparent border p-0"} ${getSearchHighlightClass("clause3TextAr", "clause3TextEn")}`}
+                    >
+                      {isEditMode ? (
+                        <div className="space-y-1.5 w-full">
+                          <input
+                            type="text"
+                            value={editedTexts.clause3TitleAr}
+                            onChange={(e) =>
+                              handleEditedTextChange("clause3TitleAr", e.target.value)
+                            }
+                            className="font-black text-[#0f172a] border-b border-zinc-200 outline-none w-full text-right bg-amber-50/50"
+                          />
+                          <textarea
+                            value={editedTexts.clause3TextAr}
+                            onChange={(e) =>
+                              handleEditedTextChange("clause3TextAr", e.target.value)
+                            }
+                            className="w-full text-xs text-[#334155] border p-1 rounded min-h-[90px] leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <h3 className="font-black text-[#0f172a] mb-2">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).clause3TitleAr,
+                                  editedTexts.clause3TitleAr,
+                                  isCompareChanges,
+                                  "rtl"
+                                )
+                              : editedTexts.clause3TitleAr}
+                          </h3>
+                          <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).clause3TextAr,
+                                  editedTexts.clause3TextAr,
+                                  isCompareChanges,
+                                  "rtl"
+                                )
+                              : editedTexts.clause3TextAr}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                    <div
+                      dir="ltr"
+                      className={`transition-all duration-1000 rounded-xl ${highlightedClauses[3] ? "bg-emerald-50/90 border-emerald-500 scale-[1.01] p-3 -m-3 shadow-lg z-10 border relative ring-4 ring-emerald-100" : "border-transparent border p-0"} ${getSearchHighlightClass("clause3TextAr", "clause3TextEn")}`}
+                    >
+                      {isEditMode ? (
+                        <div className="space-y-1.5 w-full">
+                          <input
+                            type="text"
+                            value={editedTexts.clause3TitleEn}
+                            onChange={(e) =>
+                              handleEditedTextChange("clause3TitleEn", e.target.value)
+                            }
+                            className="font-black text-[#0f172a] border-b border-zinc-200 outline-none w-full text-left bg-amber-50/50"
+                          />
+                          <textarea
+                            value={editedTexts.clause3TextEn}
+                            onChange={(e) =>
+                              handleEditedTextChange("clause3TextEn", e.target.value)
+                            }
+                            className="w-full text-xs text-[#334155] border p-1 rounded min-h-[90px] leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <h3 className="font-black text-[#0f172a] mb-2">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).clause3TitleEn,
+                                  editedTexts.clause3TitleEn,
+                                  isCompareChanges,
+                                  "ltr"
+                                )
+                              : editedTexts.clause3TitleEn}
+                          </h3>
+                          <p className="text-[#334155] leading-relaxed font-medium whitespace-pre-line text-xs">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).clause3TextEn,
+                                  editedTexts.clause3TextEn,
+                                  isCompareChanges,
+                                  "ltr"
+                                )
+                              : editedTexts.clause3TextEn}
+                          </p>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Clause 4: Dispute Resolution (Dynamic) */}
+                    <div
+                      dir="rtl"
+                      className={`transition-all duration-1000 rounded-xl ${highlightedClauses[4] ? "bg-emerald-50/90 border-emerald-500 scale-[1.01] p-3 -m-3 shadow-lg z-10 border relative ring-4 ring-emerald-100" : "border-transparent border p-0"} ${getSearchHighlightClass("clause4TextAr", "clause4TextEn")}`}
+                    >
+                      {isEditMode ? (
+                        <div className="space-y-1.5 w-full">
+                          <input
+                            type="text"
+                            value={editedTexts.clause4TitleAr}
+                            onChange={(e) =>
+                              handleEditedTextChange("clause4TitleAr", e.target.value)
+                            }
+                            className="font-black text-[#0f172a] border-b border-zinc-200 outline-none w-full text-right bg-amber-50/50"
+                          />
+                          <textarea
+                            value={editedTexts.clause4TextAr}
+                            onChange={(e) =>
+                              handleEditedTextChange("clause4TextAr", e.target.value)
+                            }
+                            className="w-full text-xs text-[#334155] border p-1 rounded min-h-[70px] leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <h3 className="font-black text-[#0f172a] mb-2">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).clause4TitleAr,
+                                  editedTexts.clause4TitleAr,
+                                  isCompareChanges,
+                                  "rtl"
+                                )
+                              : editedTexts.clause4TitleAr}
+                          </h3>
+                          <p className="text-[#334155] leading-relaxed font-medium bg-[#f8fafc] p-2 rounded border border-[#f1f5f9] whitespace-pre-line text-xs">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).clause4TextAr,
+                                  editedTexts.clause4TextAr,
+                                  isCompareChanges,
+                                  "rtl"
+                                )
+                              : editedTexts.clause4TextAr}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                    <div
+                      dir="ltr"
+                      className={`transition-all duration-1000 rounded-xl ${highlightedClauses[4] ? "bg-emerald-50/90 border-emerald-500 scale-[1.01] p-3 -m-3 shadow-lg z-10 border relative ring-4 ring-emerald-100" : "border-transparent border p-0"} ${getSearchHighlightClass("clause4TextAr", "clause4TextEn")}`}
+                    >
+                      {isEditMode ? (
+                        <div className="space-y-1.5 w-full">
+                          <input
+                            type="text"
+                            value={editedTexts.clause4TitleEn}
+                            onChange={(e) =>
+                              handleEditedTextChange("clause4TitleEn", e.target.value)
+                            }
+                            className="font-black text-[#0f172a] border-b border-zinc-200 outline-none w-full text-left bg-amber-50/50"
+                          />
+                          <textarea
+                            value={editedTexts.clause4TextEn}
+                            onChange={(e) =>
+                              handleEditedTextChange("clause4TextEn", e.target.value)
+                            }
+                            className="w-full text-xs text-[#334155] border p-1 rounded min-h-[70px] leading-relaxed outline-none focus:border-[#10b981] bg-amber-50/30"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <h3 className="font-black text-[#0f172a] mb-2">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).clause4TitleEn,
+                                  editedTexts.clause4TitleEn,
+                                  isCompareChanges,
+                                  "ltr"
+                                )
+                              : editedTexts.clause4TitleEn}
+                          </h3>
+                          <p className="text-[#334155] leading-relaxed font-medium bg-[#f8fafc] p-2 rounded border border-[#f1f5f9] whitespace-pre-line text-xs">
+                            {isCompareChanges
+                              ? renderInlineDiff(
+                                  getGeneratedTexts(data).clause4TextEn,
+                                  editedTexts.clause4TextEn,
+                                  isCompareChanges,
+                                  "ltr"
+                                )
+                              : editedTexts.clause4TextEn}
+                          </p>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Signatures */}
+                    <div className="col-span-2 mt-12 pt-8 border-t-2 border-[#f1f5f9] grid grid-cols-2 gap-8 relative">
+                      <div
+                        id="nafez-qr-container"
+                        className="absolute left-1/2 -top-6 -translate-x-1/2 flex flex-col items-center justify-center opacity-40 mix-blend-multiply"
+                      >
+                        {isSigned && qrCodeData && <QRCodeSVG value={qrCodeData} size={84} />}
+                      </div>
+
+                      <div className="text-center flex flex-col items-center">
+                        <p className="font-black text-[#0f172a] mb-5 text-xs">
+                          الطرف الأول / First Party
+                        </p>
+                        {(!isExporting || !isSigned) && (
+                          <div className="print:hidden">
+                            <NafathAuth onVerified={handleSignatureSuccess} />
+                          </div>
+                        )}
+                        {(isExporting || isSigned) && (
+                          <p className="text-[10px] text-emerald-600 font-mono uppercase tracking-widest border border-emerald-200 bg-emerald-50 rounded-lg py-2 px-6">
+                            Digital Signature Confirmed
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="text-center flex flex-col items-center gap-2">
+                        <p className="font-black text-[#0f172a] mb-5 text-xs">
+                          الطرف الثاني / Second Party
+                        </p>
+                        {signatureImage ? (
+                          <div className="relative border border-zinc-200 rounded-lg p-1.5 bg-zinc-50 flex flex-col items-center shadow-inner">
+                            <img
+                              src={signatureImage}
+                              alt="Signature"
+                              className="h-10 object-contain"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSignatureImage(null);
+                                saveContractToFirebase(null);
+                              }}
+                              className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-bold text-xs hover:bg-rose-600 print:hidden shadow-md cursor-pointer"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ) : (
+                          <SignaturePad
+                            onSave={(dataUrl) => {
+                              setSignatureImage(dataUrl);
+                              saveContractToFirebase(dataUrl);
+                            }}
+                            onClear={() => {
+                              setSignatureImage(null);
+                              saveContractToFirebase(null);
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Designated Digital Signature Area with Dynamic Timestamp */}
+                    <div className="col-span-2 mt-8 p-6 bg-zinc-50 border border-zinc-200 rounded-2xl space-y-4 shadow-xs">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between border-b border-zinc-200 pb-3 gap-2">
+                        <div className="flex items-center gap-2">
+                          <FileCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <span className="text-xs font-black text-zinc-800">
+                            منطقة التوقيع والتحكم بالمصادقة الرقمية / Cryptographic Authentication
+                            Zone
+                          </span>
+                        </div>
+                        <div
+                          className="text-[10px] text-zinc-500 font-mono flex items-center gap-1 bg-white border border-zinc-200 px-2.5 py-1 rounded-lg"
+                          dir="ltr"
+                        >
+                          <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
+                          <span>
+                            TIMESTAMP: {currentTimestamp || "2026-06-21 12:58:18"} (MUDARIJ-UTC)
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-6 text-right">
+                        {/* Employer Digital Signature Place */}
+                        <div className="border border-zinc-150 rounded-xl p-3 bg-white space-y-2 flex flex-col items-center justify-center min-h-[105px] relative">
+                          <span className="text-[9px] font-black text-zinc-450 absolute top-2 right-2 border-b border-zinc-100 pb-0.5">
+                            توقيع صاحب العمل • First Party
+                          </span>
+
+                          {isSigned ? (
+                            <div className="flex flex-col items-center gap-1.5 mt-4">
+                              <span className="text-[9px] text-emerald-700 font-black px-2.5 py-1 bg-emerald-50 border border-emerald-300 rounded-lg shadow-2xs">
+                                ✓ مصادق رقميًا بالنفاذ الوطني / Nafath Active
+                              </span>
+                              <span className="text-[8px] text-zinc-400 font-mono">
+                                HASH: SHA256-MDRJ-{data.employerCR || "CR-SEO-482"}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-1 mt-4">
+                              <span className="w-16 h-3.5 border-b border-dashed border-zinc-300"></span>
+                              <span className="text-[9px] text-zinc-400 font-bold italic">
+                                انتظار الموثق المالي / Awaiting Nafath Seal
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Employee Digital Signature Place */}
+                        <div className="border border-zinc-150 rounded-xl p-3 bg-white space-y-2 flex flex-col items-center justify-center min-h-[105px] relative">
+                          <span className="text-[9px] font-black text-zinc-450 absolute top-2 right-2 border-b border-zinc-100 pb-0.5">
+                            توقيع الموظف • Second Party
+                          </span>
+
+                          {signatureImage ? (
+                            <div className="flex flex-col items-center gap-1.5 mt-4">
+                              <img
+                                src={signatureImage}
+                                alt="Employee Signature Pad Captured"
+                                className="h-8 object-contain mix-blend-multiply"
+                              />
+                              <span className="text-[8px] text-zinc-400 font-mono">
+                                REF: {data.employeeId || "EMP-ID-281"}
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-1 mt-4">
+                              <span className="w-16 h-3.5 border-b border-dashed border-zinc-300"></span>
+                              <span className="text-[9px] text-zinc-400 font-bold italic">
+                                انتظار التوقيع اليدوي / Awaiting Pad Signature
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div
+                        className="text-[9px] text-zinc-450 leading-relaxed text-center"
+                        dir="rtl"
+                      >
+                        هذا التوقيع ملزم ونهائي لكلا الطرفين قانونًا ونظامًا، وتم التحقق الفوري من
+                        سلامة الهوية التجارية ورمز الاستعلام عبر سجلات التدقيق الآمن لدى منصة مدارج.
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dynamic Verification Area with QR Code component rendered on demand */}
+                  <div className="mt-14 pt-6 border-t border-[#f1f5f9] flex items-center justify-between gap-4">
+                    <div className="text-right max-w-[70%]">
+                      <p className="text-[10px] font-black text-[#0f172a] uppercase tracking-wider">
+                        ترميز موثق رقمي ورابط التحقق / Cryptographic Verification Seal
+                      </p>
+                      <p className="text-[9px] text-[#64748b] mt-0.5 leading-relaxed">
+                        هذا العقد معتمد وصادر عبر CLM الذكي وموثق رقميًا بالنفاذ الوطني. للتحقق من
+                        سلامة العقد ومطابقته للأنظمة، يمكن استخدام رمز الاستجابة السريعة (QR Code).
+                      </p>
+                      {verificationLink ? (
+                        <p className="text-[9px] text-teal-600 font-mono mt-1 select-all" dir="ltr">
+                          {verificationLink}
+                        </p>
+                      ) : (
+                        <button
+                          onClick={generateVerificationLink}
+                          type="button"
+                          className="text-[10px] text-teal-600 font-bold hover:underline mt-1 bg-teal-50 px-2 py-0.5 rounded border border-teal-100 transition-all print:hidden"
+                        >
+                          + إصدار رابط التحقق الفوري (QR On-Demand)
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col items-center select-none shrink-0">
+                      {verificationLink ? (
+                        <div className="bg-white p-1 border border-zinc-200 rounded-lg shadow-sm">
+                          <QRCodeSVG value={verificationLink} size={64} />
+                        </div>
+                      ) : (
+                        <div className="w-[64px] h-[64px] border border-dashed border-zinc-300 bg-zinc-50 rounded-lg flex items-center justify-center text-[9px] text-center text-zinc-400 font-mono select-none px-1 print:hidden">
+                          بلا رمز / No QR
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SIDEBAR: Legal Clauses Sidebar Panel */}
+          {isEditMode && !isDiffMode && (
+            <div className="w-80 bg-white rounded-2xl p-5 shadow-lg border border-zinc-200 shrink-0 self-start animate-in slide-in-from-left duration-300 print:hidden h-auto space-y-4 text-right">
+              <div className="flex items-center justify-between border-b pb-3 border-zinc-100">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-[#10b981]/10 text-[#10b981] rounded-lg">
+                    <Scale className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs text-[#0f172a] block">
+                      مكتبة البنود الإضافية
+                    </h4>
+                    <p className="text-[10px] text-zinc-400 font-medium font-sans">
+                      اختر بنداً لإدراجه فورياً
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Real-time search in sidebar */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={clauseSearchQuery}
+                  onChange={(e) => setClauseSearchQuery(e.target.value)}
+                  placeholder="ابحث عن بند قانوني... Search..."
+                  className="w-full text-xs p-2.5 pr-8.5 border border-zinc-200 rounded-xl focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981] outline-none text-right bg-zinc-50 font-medium"
+                />
+                <Search className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-3 pointer-events-none" />
+                {clauseSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setClauseSearchQuery("")}
+                    className="absolute left-2.5 top-2.5 text-zinc-400 hover:text-zinc-650 font-sans text-[9px] bg-zinc-200/50 hover:bg-zinc-200 px-1 rounded-md transition-all sm:block"
+                  >
+                    ✕
                   </button>
                 )}
               </div>
-              
-              <div className="flex flex-col items-center select-none shrink-0">
-                {verificationLink ? (
-                  <div className="bg-white p-1 border border-zinc-200 rounded-lg shadow-sm">
-                    <QRCodeSVG value={verificationLink} size={64} />
+
+              {/* Clauses List */}
+              <div className="space-y-4 divide-y divide-zinc-100 max-h-[420px] overflow-y-auto pr-1">
+                {filteredClauses.length === 0 ? (
+                  <div className="text-center py-6 text-zinc-400 text-xs font-medium">
+                    لا يوجد بنود متطابقة للبحث / No clauses found
                   </div>
                 ) : (
-                  <div className="w-[64px] h-[64px] border border-dashed border-zinc-300 bg-zinc-50 rounded-lg flex items-center justify-center text-[9px] text-center text-zinc-400 font-mono select-none px-1 print:hidden">
-                    بلا رمز / No QR
-                  </div>
+                  filteredClauses.map((clause) => (
+                    <div key={clause.id} className="pt-3 first:pt-0 space-y-2">
+                      <div>
+                        <h5 className="font-bold text-xs text-[#0f172a]">{clause.titleAr}</h5>
+                        <span className="text-[9px] text-[#64748b] font-mono block" dir="ltr">
+                          {clause.titleEn}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-zinc-600 line-clamp-3 leading-relaxed bg-zinc-50 p-2.5 rounded-xl border border-zinc-100 mt-1">
+                        {clause.textAr}
+                      </p>
+
+                      {/* Inject selectors */}
+                      <div className="space-y-1.5 pt-1">
+                        <span className="text-[9px] font-black text-zinc-400 block">
+                          :مكان الإدراج كبند إضافي
+                        </span>
+                        <div className="grid grid-cols-4 gap-1">
+                          {[1, 2, 3, 4].map((num) => (
+                            <button
+                              key={num}
+                              type="button"
+                              onClick={() => injectClause(clause, num as 1 | 2 | 3 | 4)}
+                              className="py-1 text-[9px] font-black bg-zinc-100 hover:bg-[#10b981] hover:text-white rounded text-center transition-all border border-zinc-200 cursor-pointer"
+                            >
+                              البند {num}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
             </div>
+          )}
 
-          </div>
-          </div>
-        </div>
-      )}
-
-        {/* SIDEBAR: Legal Clauses Sidebar Panel */}
-        {isEditMode && !isDiffMode && (
-          <div className="w-80 bg-white rounded-2xl p-5 shadow-lg border border-zinc-200 shrink-0 self-start animate-in slide-in-from-left duration-300 print:hidden h-auto space-y-4 text-right">
-            <div className="flex items-center justify-between border-b pb-3 border-zinc-100">
-              <div className="flex items-center gap-2">
-                <div className="p-2 bg-[#10b981]/10 text-[#10b981] rounded-lg">
-                  <Scale className="w-4 h-4" />
-                </div>
-                <div>
-                  <h4 className="font-extrabold text-xs text-[#0f172a] block">مكتبة البنود الإضافية</h4>
-                  <p className="text-[10px] text-zinc-400 font-medium font-sans">اختر بنداً لإدراجه فورياً</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Real-time search in sidebar */}
-            <div className="relative">
-              <input
-                type="text"
-                value={clauseSearchQuery}
-                onChange={(e) => setClauseSearchQuery(e.target.value)}
-                placeholder="ابحث عن بند قانوني... Search..."
-                className="w-full text-xs p-2.5 pr-8.5 border border-zinc-200 rounded-xl focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981] outline-none text-right bg-zinc-50 font-medium"
+          {/* SIDE-DRAWER OVERLAY: Predefined Legal Clauses */}
+          {isClausesDrawerOpen && (
+            <div className="fixed inset-0 z-50 flex justify-end print:hidden">
+              {/* Backdrop */}
+              <div
+                className="absolute inset-0 bg-black/55 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+                onClick={() => setIsClausesDrawerOpen(false)}
               />
-              <Search className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-3 pointer-events-none" />
-              {clauseSearchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setClauseSearchQuery("")}
-                  className="absolute left-2.5 top-2.5 text-zinc-400 hover:text-zinc-650 font-sans text-[9px] bg-zinc-200/50 hover:bg-zinc-200 px-1 rounded-md transition-all sm:block"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
 
-            {/* Clauses List */}
-            <div className="space-y-4 divide-y divide-zinc-100 max-h-[420px] overflow-y-auto pr-1">
-              {filteredClauses.length === 0 ? (
-                <div className="text-center py-6 text-zinc-400 text-xs font-medium">
-                  لا يوجد بنود متطابقة للبحث / No clauses found
-                </div>
-              ) : (
-                filteredClauses.map((clause) => (
-                  <div key={clause.id} className="pt-3 first:pt-0 space-y-2">
+              {/* Drawer Panel */}
+              <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between text-right animate-in slide-in-from-left md:slide-in-from-right duration-300">
+                {/* Header */}
+                <div className="p-5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
+                  <button
+                    type="button"
+                    onClick={() => setIsClausesDrawerOpen(false)}
+                    className="p-1 px-2.5 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-xs rounded-lg transition-colors font-bold"
+                  >
+                    إغلاق × Close
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                      <Scale className="w-5 h-5" />
+                    </div>
                     <div>
-                      <h5 className="font-bold text-xs text-[#0f172a]">{clause.titleAr}</h5>
-                      <span className="text-[9px] text-[#64748b] font-mono block" dir="ltr">{clause.titleEn}</span>
+                      <h3 className="font-black text-sm text-[#0f172a]">
+                        ملحق البنود القانونية والإضافة
+                      </h3>
+                      <p className="text-[10px] text-zinc-500 font-medium">
+                        اختر بنداً لإضافته مباشرة في بنود العقد
+                      </p>
                     </div>
-                    <p className="text-[11px] text-zinc-600 line-clamp-3 leading-relaxed bg-zinc-50 p-2.5 rounded-xl border border-zinc-100 mt-1">{clause.textAr}</p>
-                    
-                    {/* Inject selectors */}
-                    <div className="space-y-1.5 pt-1">
-                      <span className="text-[9px] font-black text-zinc-400 block">:مكان الإدراج كبند إضافي</span>
-                      <div className="grid grid-cols-4 gap-1">
-                        {[1, 2, 3, 4].map((num) => (
-                          <button
-                            key={num}
-                            type="button"
-                            onClick={() => injectClause(clause, num as 1 | 2 | 3 | 4)}
-                            className="py-1 text-[9px] font-black bg-zinc-100 hover:bg-[#10b981] hover:text-white rounded text-center transition-all border border-zinc-200 cursor-pointer"
-                          >
-                            البند {num}
-                          </button>
-                        ))}
+                  </div>
+                </div>
+
+                {/* Content / Clause items */}
+                <div className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar">
+                  <div className="bg-amber-50/70 border border-amber-100 rounded-2xl p-4 text-xs text-amber-850 leading-relaxed font-sans">
+                    💡 <strong>كيف تعمل الإضافة؟</strong> يمكنك اختيار أي بند كـ (السرية، القوة
+                    القاهرة، الإنهاء...) ثم تحديد رقم البند المستهدف في العقد لدمجه فورياً وسيقوم
+                    النظام بتعديل المحتوى وتحريمه.
+                  </div>
+
+                  {/* Real-time search in Drawer */}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={clauseSearchQuery}
+                      onChange={(e) => setClauseSearchQuery(e.target.value)}
+                      placeholder="ابحث بالعنوان أو محتوى البند... Search clauses..."
+                      className="w-full text-xs p-3 pr-9 border border-zinc-200 rounded-xl focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981] outline-none text-right bg-zinc-50 font-medium"
+                    />
+                    <Search className="w-4 h-4 text-zinc-400 absolute right-3 top-3.5 pointer-events-none" />
+                    {clauseSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setClauseSearchQuery("")}
+                        className="absolute left-3 top-3 text-zinc-400 hover:text-zinc-650 font-sans text-[10px] bg-zinc-200/50 hover:bg-zinc-200 px-1.5 py-0.5 rounded-md transition-all cursor-pointer"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-4 divide-y divide-zinc-100">
+                    {filteredClauses.length === 0 ? (
+                      <div className="text-center py-10 text-zinc-400 text-xs font-semibold bg-zinc-50/50 rounded-2xl border border-dashed border-zinc-200">
+                        لا يوجد بنود متطابقة لمدخلات البحث
+                        <span className="block text-[10px] text-zinc-400 font-normal mt-1">
+                          No matching clauses found
+                        </span>
                       </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
+                    ) : (
+                      filteredClauses.map((clause) => (
+                        <div
+                          key={clause.id}
+                          className="pt-4 first:pt-0 space-y-3 animate-in fade-in duration-200"
+                        >
+                          <div>
+                            <span className="text-[9px] font-black uppercase text-[#10b981] bg-emerald-50 px-2 py-0.5 rounded-md inline-block mb-1">
+                              {clause.id}
+                            </span>
+                            <h4 className="font-extrabold text-xs text-[#0f172a]">
+                              {clause.titleAr}
+                            </h4>
+                            <span
+                              className="text-[10px] text-zinc-400 font-mono block mt-0.5"
+                              dir="ltr"
+                            >
+                              {clause.titleEn}
+                            </span>
+                          </div>
 
-        {/* SIDE-DRAWER OVERLAY: Predefined Legal Clauses */}
-        {isClausesDrawerOpen && (
-          <div className="fixed inset-0 z-50 flex justify-end print:hidden">
-            {/* Backdrop */}
-            <div 
-              className="absolute inset-0 bg-black/55 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
-              onClick={() => setIsClausesDrawerOpen(false)}
-            />
-            
-            {/* Drawer Panel */}
-            <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between text-right animate-in slide-in-from-left md:slide-in-from-right duration-300">
-              {/* Header */}
-              <div className="p-5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
-                <button
-                  type="button"
-                  onClick={() => setIsClausesDrawerOpen(false)}
-                  className="p-1 px-2.5 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-xs rounded-lg transition-colors font-bold"
-                >
-                  إغلاق × Close
-                </button>
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-                    <Scale className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-black text-sm text-[#0f172a]">ملحق البنود القانونية والإضافة</h3>
-                    <p className="text-[10px] text-zinc-500 font-medium">اختر بنداً لإضافته مباشرة في بنود العقد</p>
-                  </div>
-                </div>
-              </div>
+                          <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-150 text-[11px] leading-relaxed text-zinc-600 space-y-2 font-sans">
+                            <p className="font-medium text-right text-zinc-805">{clause.textAr}</p>
+                            <p
+                              className="font-mono text-left block text-zinc-450 border-t border-zinc-200 pt-1.5"
+                              dir="ltr"
+                            >
+                              {clause.textEn}
+                            </p>
+                          </div>
 
-              {/* Content / Clause items */}
-              <div className="flex-1 overflow-y-auto p-5 space-y-5 custom-scrollbar">
-                <div className="bg-amber-50/70 border border-amber-100 rounded-2xl p-4 text-xs text-amber-850 leading-relaxed font-sans">
-                  💡 <strong>كيف تعمل الإضافة؟</strong> يمكنك اختيار أي بند كـ (السرية، القوة القاهرة، الإنهاء...) ثم تحديد رقم البند المستهدف في العقد لدمجه فورياً وسيقوم النظام بتعديل المحتوى وتحريمه.
-                </div>
-
-                {/* Real-time search in Drawer */}
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={clauseSearchQuery}
-                    onChange={(e) => setClauseSearchQuery(e.target.value)}
-                    placeholder="ابحث بالعنوان أو محتوى البند... Search clauses..."
-                    className="w-full text-xs p-3 pr-9 border border-zinc-200 rounded-xl focus:border-[#10b981] focus:ring-1 focus:ring-[#10b981] outline-none text-right bg-zinc-50 font-medium"
-                  />
-                  <Search className="w-4 h-4 text-zinc-400 absolute right-3 top-3.5 pointer-events-none" />
-                  {clauseSearchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setClauseSearchQuery("")}
-                      className="absolute left-3 top-3 text-zinc-400 hover:text-zinc-650 font-sans text-[10px] bg-zinc-200/50 hover:bg-zinc-200 px-1.5 py-0.5 rounded-md transition-all cursor-pointer"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-
-                <div className="space-y-4 divide-y divide-zinc-100">
-                  {filteredClauses.length === 0 ? (
-                    <div className="text-center py-10 text-zinc-400 text-xs font-semibold bg-zinc-50/50 rounded-2xl border border-dashed border-zinc-200">
-                      لا يوجد بنود متطابقة لمدخلات البحث
-                      <span className="block text-[10px] text-zinc-400 font-normal mt-1">No matching clauses found</span>
-                    </div>
-                  ) : (
-                    filteredClauses.map((clause) => (
-                      <div key={clause.id} className="pt-4 first:pt-0 space-y-3 animate-in fade-in duration-200">
-                        <div>
-                          <span className="text-[9px] font-black uppercase text-[#10b981] bg-emerald-50 px-2 py-0.5 rounded-md inline-block mb-1">
-                            {clause.id}
-                          </span>
-                          <h4 className="font-extrabold text-xs text-[#0f172a]">{clause.titleAr}</h4>
-                          <span className="text-[10px] text-zinc-400 font-mono block mt-0.5" dir="ltr">{clause.titleEn}</span>
-                        </div>
-                        
-                        <div className="bg-zinc-50 p-3 rounded-xl border border-zinc-150 text-[11px] leading-relaxed text-zinc-600 space-y-2 font-sans">
-                          <p className="font-medium text-right text-zinc-805">{clause.textAr}</p>
-                          <p className="font-mono text-left block text-zinc-450 border-t border-zinc-200 pt-1.5" dir="ltr">{clause.textEn}</p>
-                        </div>
-
-                        {/* Selectors */}
-                        <div className="space-y-1.5 bg-zinc-50/50 p-2.5 rounded-xl border border-zinc-100">
-                          <span className="text-[9px] font-black text-zinc-400 block">:دمج وإدراج في</span>
-                          <div className="grid grid-cols-4 gap-1.5 font-sans">
-                            {[1, 2, 3, 4].map((num) => (
-                              <button
-                                key={num}
-                                type="button"
-                                onClick={() => {
-                                  injectClause(clause, num as any);
-                                }}
-                                className="py-1.5 text-[10px] font-black bg-white hover:bg-emerald-600 hover:text-white text-zinc-700 border border-zinc-200 rounded-lg text-center transition-all shadow-sm cursor-pointer"
-                              >
-                                البند {num}
-                              </button>
-                            ))}
+                          {/* Selectors */}
+                          <div className="space-y-1.5 bg-zinc-50/50 p-2.5 rounded-xl border border-zinc-100">
+                            <span className="text-[9px] font-black text-zinc-400 block">
+                              :دمج وإدراج في
+                            </span>
+                            <div className="grid grid-cols-4 gap-1.5 font-sans">
+                              {[1, 2, 3, 4].map((num) => (
+                                <button
+                                  key={num}
+                                  type="button"
+                                  onClick={() => {
+                                    injectClause(clause, num as any);
+                                  }}
+                                  className="py-1.5 text-[10px] font-black bg-white hover:bg-emerald-600 hover:text-white text-zinc-700 border border-zinc-200 rounded-lg text-center transition-all shadow-sm cursor-pointer"
+                                >
+                                  البند {num}
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
-                  )}
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-4 bg-zinc-50 border-t border-zinc-150 flex items-center justify-between text-[10px] text-zinc-400 font-mono">
+                  <span>PREDEFINED_CLAUSES v2.4</span>
+                  <span>SaudiOS CLM Legal Engine</span>
                 </div>
               </div>
-
-              {/* Footer */}
-              <div className="p-4 bg-zinc-50 border-t border-zinc-150 flex items-center justify-between text-[10px] text-zinc-400 font-mono">
-                <span>PREDEFINED_CLAUSES v2.4</span>
-                <span>SaudiOS CLM Legal Engine</span>
-              </div>
             </div>
-          </div>
-        )}
-
+          )}
+        </div>
       </div>
-    </div>
-
     </div>
   );
 }

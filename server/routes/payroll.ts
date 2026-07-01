@@ -9,12 +9,13 @@ const router = Router();
 // Get all payroll runs for the user
 router.get("/", authenticate, async (req: any, res) => {
   try {
-    const runsSnap = await db.collection("payroll_runs")
+    const runsSnap = await db
+      .collection("payroll_runs")
       .where("userId", "==", req.user.uid)
       .orderBy("createdAt", "desc")
       .get();
-    
-    const runs = runsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    const runs = runsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     res.json(runs);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -36,21 +37,26 @@ router.post("/simulate", authenticate, async (req: any, res) => {
 router.post("/commit", authenticate, async (req: any, res) => {
   try {
     const { simulatedRunId, entries, ...runData } = req.body;
-    
+
     const docRef = await db.collection("payroll_runs").add({
       ...runData,
       entries,
       userId: req.user.uid,
       status: "processed",
-      createdAt: new Date()
+      createdAt: new Date(),
     });
-    
-    await logAudit("PAYROLL", { 
-      action: "Approve Payroll Run", 
-      runId: docRef.id, 
-      period: runData.period, 
-      totalNetPay: runData.totalNet 
-    }, { success: true }, req);
+
+    await logAudit(
+      "PAYROLL",
+      {
+        action: "Approve Payroll Run",
+        runId: docRef.id,
+        period: runData.period,
+        totalNetPay: runData.totalNet,
+      },
+      { success: true },
+      req
+    );
 
     res.json({ id: docRef.id, ...runData, status: "processed" });
   } catch (err: any) {

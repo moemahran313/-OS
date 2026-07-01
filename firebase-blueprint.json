@@ -224,7 +224,10 @@
         "purchaseDate": { "type": "string" },
         "historicalValueHalalas": { "type": "integer" },
         "depreciationRate": { "type": "number" },
-        "depreciationMethod": { "type": "string", "enum": ["straight_line", "diminishing_balance"] },
+        "depreciationMethod": {
+          "type": "string",
+          "enum": ["straight_line", "diminishing_balance"]
+        },
         "accumulatedDepreciationHalalas": { "type": "integer" },
         "currentBookValueHalalas": { "type": "integer" },
         "status": { "type": "string", "enum": ["active", "disposed"] },
@@ -267,9 +270,90 @@
         "gosiNationalityRule": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       }
+    },
+    "Company": {
+      "title": "Company",
+      "description": "Legal Entity under multi-company accounting",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "nameAr": { "type": "string" },
+        "nameEn": { "type": "string" },
+        "crNumber": { "type": "string" },
+        "vatNumber": { "type": "string" },
+        "defaultCurrency": { "type": "string" },
+        "reportingCurrency": { "type": "string" },
+        "address": { "type": "string" },
+        "manager": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["Independent", "Holding", "Subsidiary", "Sister", "Branch"]
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Branch": {
+      "title": "Branch",
+      "description": "Operational branch under a legal entity",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "companyId": { "type": "string" },
+        "nameAr": { "type": "string" },
+        "nameEn": { "type": "string" },
+        "code": { "type": "string" },
+        "manager": { "type": "string" },
+        "address": { "type": "string" },
+        "bankAccounts": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "FiscalYear": {
+      "title": "FiscalYear",
+      "description": "Accounting fiscal calendar",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "companyId": { "type": "string" },
+        "name": { "type": "string" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "status": { "type": "string" },
+        "currentFlag": { "type": "boolean" },
+        "periods": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "ExchangeRate": {
+      "title": "ExchangeRate",
+      "description": "Historical spot exchange rates relative to SAR",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "currencyCode": { "type": "string" },
+        "rate": { "type": "number" },
+        "date": { "type": "string" },
+        "source": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "WhatsAppQueue": {
+      "title": "WhatsAppQueue",
+      "description": "WhatsApp incoming message queue",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "status": { "type": "string" },
+        "payload": { "type": "object" },
+        "createdAt": { "type": "string" },
+        "processedAt": { "type": "string" },
+        "error": { "type": "string" }
+      }
     }
   },
   "firestore": {
+    "whatsapp_queue": { "schema": "WhatsAppQueue", "description": "WhatsApp incoming message queue" },
     "users": { "schema": "User", "description": "User profiles" },
     "employees": { "schema": "Employee", "description": "HR Employees" },
     "invoices": { "schema": "Invoice", "description": "Invoices" },
@@ -278,10 +362,22 @@
     "leads": { "schema": "Lead", "description": "CRM Leads" },
     "shipments": { "schema": "Shipment", "description": "Logistics shipments" },
     "brokers": { "schema": "Broker", "description": "Brokers" },
-    "shipments/{shipmentId}/documents": { "schema": "ShipmentDocument", "description": "Shipment documents" },
-    "shipments/{shipmentId}/comments": { "schema": "ShipmentComment", "description": "Shipment comments" },
-    "shipments/{shipmentId}/events": { "schema": "ShipmentEvent", "description": "Shipment events" },
-    "financial_transactions": { "schema": "FinancialTransaction", "description": "Anti-Concealment Audit Trail" },
+    "shipments/{shipmentId}/documents": {
+      "schema": "ShipmentDocument",
+      "description": "Shipment documents"
+    },
+    "shipments/{shipmentId}/comments": {
+      "schema": "ShipmentComment",
+      "description": "Shipment comments"
+    },
+    "shipments/{shipmentId}/events": {
+      "schema": "ShipmentEvent",
+      "description": "Shipment events"
+    },
+    "financial_transactions": {
+      "schema": "FinancialTransaction",
+      "description": "Anti-Concealment Audit Trail"
+    },
     "leave_requests": { "schema": "LeaveRequest", "description": "Employee leave requests" },
     "advance_requests": { "schema": "AdvanceRequest", "description": "Salary advance requests" },
     "cost_centers": { "schema": "CostCenter", "description": "Hierarchical cost centers" },
@@ -290,6 +386,19 @@
     "journal_entries": { "schema": "object", "description": "General journal entries" },
     "vouchers": { "schema": "Voucher", "description": "Receipt & Payment Vouchers" },
     "bank_reconciliations": { "schema": "object", "description": "Bank Reconciliation lists" },
-    "payroll_templates": { "schema": "PayrollTemplate", "description": "Saved payroll templates for employee groups" }
+    "payroll_templates": {
+      "schema": "PayrollTemplate",
+      "description": "Saved payroll templates for employee groups"
+    },
+    "companies": { "schema": "Company", "description": "Companies list" },
+    "branches": { "schema": "Branch", "description": "Company branches" },
+    "fiscal_years": {
+      "schema": "FiscalYear",
+      "description": "Accounting fiscal calendars and period lock states"
+    },
+    "exchange_rates": {
+      "schema": "ExchangeRate",
+      "description": "Spot exchange rates for foreign currencies"
+    }
   }
 }

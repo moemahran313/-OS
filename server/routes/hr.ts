@@ -6,15 +6,14 @@ const router = Router();
 
 router.post("/nitaqat/calculate", authenticate, async (req: any, res) => {
   const { totalEmployees, saudiEmployees, companySize } = req.body;
-  const percentage =
-    totalEmployees > 0 ? (saudiEmployees / totalEmployees) * 100 : 0;
+  const percentage = totalEmployees > 0 ? (saudiEmployees / totalEmployees) * 100 : 0;
   let category = "Red";
   let targetPlatinum = 0;
   let targetGreen = 0;
 
   let platinumThreshold = 40;
   let greenThreshold = 20;
-  
+
   if (percentage >= platinumThreshold) category = "Platinum";
   else if (percentage >= greenThreshold) category = "Green";
   else if (percentage >= 10) category = "Yellow";
@@ -24,10 +23,14 @@ router.post("/nitaqat/calculate", authenticate, async (req: any, res) => {
 
   const recommendations = [];
   if (category !== "Platinum") {
-    recommendations.push(`Hire ${Math.max(1, targetPlatinum)} more Saudi national(s) to reach Platinum category.`);
+    recommendations.push(
+      `Hire ${Math.max(1, targetPlatinum)} more Saudi national(s) to reach Platinum category.`
+    );
   }
   if (category === "Red" || category === "Yellow") {
-     recommendations.push(`Hire ${Math.max(1, targetGreen)} more Saudi national(s) to reach Green category.`);
+    recommendations.push(
+      `Hire ${Math.max(1, targetGreen)} more Saudi national(s) to reach Green category.`
+    );
   }
   recommendations.push(
     "Update contract details for all employees",
@@ -35,13 +38,9 @@ router.post("/nitaqat/calculate", authenticate, async (req: any, res) => {
   );
 
   if (companySize === "Small") {
-    recommendations.push(
-      "Small companies are exempt from some quotas, check the official portal.",
-    );
+    recommendations.push("Small companies are exempt from some quotas, check the official portal.");
   } else if (companySize === "Large") {
-    recommendations.push(
-      "Large companies must strictly adhere to the 40% Platinum threshold.",
-    );
+    recommendations.push("Large companies must strictly adhere to the 40% Platinum threshold.");
   }
 
   const payload = {
@@ -63,13 +62,13 @@ router.post("/workpermit/calculate", authenticate, (req: any, res) => {
   if (industry === "agricultural") baseFee = 4800;
 
   const totalFees = payingExpats * baseFee * durationYears;
-  
+
   const payload = {
-    totalFees, 
-    exemptCount, 
-    payingExpats, 
+    totalFees,
+    exemptCount,
+    payingExpats,
     baseFee,
-    durationYears 
+    durationYears,
   };
   logAudit("WORK_PERMIT", req.body, payload, req);
   res.json(payload);
@@ -79,15 +78,17 @@ router.post("/workpermit/calculate", authenticate, (req: any, res) => {
 function getGeminiClient() {
   const key = process.env.GEMINI_API_KEY;
   if (!key) {
-    throw new Error("GEMINI_API_KEY environment variable is required. Please set it in Settings > Secrets.");
+    throw new Error(
+      "GEMINI_API_KEY environment variable is required. Please set it in Settings > Secrets."
+    );
   }
   return new GoogleGenAI({
     apiKey: key,
     httpOptions: {
       headers: {
-        'User-Agent': 'aistudio-build',
-      }
-    }
+        "User-Agent": "aistudio-build",
+      },
+    },
   });
 }
 
@@ -98,12 +99,19 @@ async function generateWithFallback(ai: any, params: any) {
     return await ai.models.generateContent(params);
   } catch (err: any) {
     const errMsg = (err?.message || "").toLowerCase();
-    const isUnavailable = errMsg.includes("503") || errMsg.includes("unavailable") || errMsg.includes("demand") || errMsg.includes("resource_exhausted") || errMsg.includes("429");
+    const isUnavailable =
+      errMsg.includes("503") ||
+      errMsg.includes("unavailable") ||
+      errMsg.includes("demand") ||
+      errMsg.includes("resource_exhausted") ||
+      errMsg.includes("429");
     if (isUnavailable && primaryModel !== "gemini-3.1-flash-lite") {
-      console.warn(`Model ${primaryModel} is experiencing high demand or limit. Falling back to gemini-3.1-flash-lite...`);
+      console.warn(
+        `Model ${primaryModel} is experiencing high demand or limit. Falling back to gemini-3.1-flash-lite...`
+      );
       return await ai.models.generateContent({
         ...params,
-        model: "gemini-3.1-flash-lite"
+        model: "gemini-3.1-flash-lite",
       });
     }
     throw err;
@@ -117,13 +125,13 @@ import { db } from "../services/firebase.js";
 router.post("/hr/assistant", authenticate, async (req: any, res) => {
   try {
     const { message, history = [] } = req.body;
-    
+
     let ai;
     try {
       ai = getGeminiClient();
     } catch (err: any) {
-      return res.status(200).json({ 
-        text: "⚠️ **يبدو أن مفتاح واجهة برمجة تطبيقات Gemini (GEMINI_API_KEY) غير مكوّن حالياً.**\n\nيرجى فتح قائمة **Settings (الإعدادات) > Secrets (الأسرار)** وإدخال قيمة `GEMINI_API_KEY` الخاصة بك لتشغيل المساعد الذكي لمراجعة الرواتب وتوطين الوظائف بشكل آلي ومتكامل."
+      return res.status(200).json({
+        text: "⚠️ **يبدو أن مفتاح واجهة برمجة تطبيقات Gemini (GEMINI_API_KEY) غير مكوّن حالياً.**\n\nيرجى فتح قائمة **Settings (الإعدادات) > Secrets (الأسرار)** وإدخال قيمة `GEMINI_API_KEY` الخاصة بك لتشغيل المساعد الذكي لمراجعة الرواتب وتوطين الوظائف بشكل آلي ومتكامل.",
       });
     }
 
@@ -133,11 +141,12 @@ router.post("/hr/assistant", authenticate, async (req: any, res) => {
     let dbStatus = "connected";
 
     try {
-      const employeesSnap = await db.collection("employees")
+      const employeesSnap = await db
+        .collection("employees")
         .where("userId", "==", req.user.uid)
         .get();
-      
-      employees = employeesSnap.docs.map(d => {
+
+      employees = employeesSnap.docs.map((d) => {
         const data = d.data();
         return {
           id: d.id,
@@ -145,7 +154,7 @@ router.post("/hr/assistant", authenticate, async (req: any, res) => {
           position: data.position,
           department: data.department,
           status: data.status,
-          isSaudi: data.isSaudi ?? (data.nationality === 'Saudi' || data.nationality === 'سعودي'),
+          isSaudi: data.isSaudi ?? (data.nationality === "Saudi" || data.nationality === "سعودي"),
           basicSalary: (data.baseSalaryHalalas || 0) / 100,
           housingAllowance: (data.housingAllowanceHalalas || 0) / 100,
           transportAllowance: (data.transportAllowanceHalalas || 0) / 100,
@@ -153,26 +162,54 @@ router.post("/hr/assistant", authenticate, async (req: any, res) => {
           natureOfWorkAllowance: (data.natureOfWorkAllowanceHalalas || 0) / 100,
           otherDeductions: (data.otherDeductionsHalalas || 0) / 100,
           iban: data.iban || "غير متوفر",
-          qiwaStatus: data.qiwaStatus || "غير مطابق"
+          qiwaStatus: data.qiwaStatus || "غير مطابق",
         };
       });
     } catch (e: any) {
-      console.warn("Firestore employees fetch security/permission error, falling back: ", e.message);
+      console.warn(
+        "Firestore employees fetch security/permission error, falling back: ",
+        e.message
+      );
       dbStatus = "limited_permissions";
       // Clean, professional mock fallback list representing typical structure for simulation/safeguard
       employees = [
-        { id: "mock-1", name: "أحمد بن عبد الله", position: "مدير الموارد البشرية", department: "HR", status: "Active", isSaudi: true, basicSalary: 12000, housingAllowance: 3000, transportAllowance: 1000, iban: "SA1234567890123456789012", qiwaStatus: "مطابق" },
-        { id: "mock-2", name: "John Doe", position: "مهندس برمجيات", department: "Engineering", status: "Active", isSaudi: false, basicSalary: 15000, housingAllowance: 3500, transportAllowance: 1000, iban: "غير متوفر", qiwaStatus: "غير مطابق" }
+        {
+          id: "mock-1",
+          name: "أحمد بن عبد الله",
+          position: "مدير الموارد البشرية",
+          department: "HR",
+          status: "Active",
+          isSaudi: true,
+          basicSalary: 12000,
+          housingAllowance: 3000,
+          transportAllowance: 1000,
+          iban: "SA1234567890123456789012",
+          qiwaStatus: "مطابق",
+        },
+        {
+          id: "mock-2",
+          name: "John Doe",
+          position: "مهندس برمجيات",
+          department: "Engineering",
+          status: "Active",
+          isSaudi: false,
+          basicSalary: 15000,
+          housingAllowance: 3500,
+          transportAllowance: 1000,
+          iban: "غير متوفر",
+          qiwaStatus: "غير مطابق",
+        },
       ];
     }
-    
+
     try {
-      const runsSnap = await db.collection("payroll_runs")
+      const runsSnap = await db
+        .collection("payroll_runs")
         .where("userId", "==", req.user.uid)
         .limit(5)
         .get();
-        
-      runs = runsSnap.docs.map(d => {
+
+      runs = runsSnap.docs.map((d) => {
         const data = d.data();
         return {
           id: d.id,
@@ -180,13 +217,23 @@ router.post("/hr/assistant", authenticate, async (req: any, res) => {
           totalNet: data.totalNet,
           totalGross: data.totalGross,
           status: data.status,
-          isLocked: data.isLocked
+          isLocked: data.isLocked,
         };
       });
     } catch (e: any) {
-      console.warn("Firestore payroll_runs fetch security/permission error, falling back: ", e.message);
+      console.warn(
+        "Firestore payroll_runs fetch security/permission error, falling back: ",
+        e.message
+      );
       runs = [
-        { id: "mock-run-1", period: "2026-05", totalNet: 28500, totalGross: 31000, status: "WPS_APPROVED", isLocked: true }
+        {
+          id: "mock-run-1",
+          period: "2026-05",
+          totalNet: 28500,
+          totalGross: 31000,
+          status: "WPS_APPROVED",
+          isLocked: true,
+        },
       ];
     }
 
@@ -211,14 +258,14 @@ ${JSON.stringify(runs, null, 2)}
 
     // Map history to compliant structure
     const formattedHistory = (history || []).slice(-10).map((h: any) => ({
-      role: h.role === 'model' || h.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: h.text }]
+      role: h.role === "model" || h.role === "assistant" ? "model" : "user",
+      parts: [{ text: h.text }],
     }));
 
     const contents = [
       { role: "user" as const, parts: [{ text: contextPrompt }] },
       ...formattedHistory,
-      { role: "user" as const, parts: [{ text: message }] }
+      { role: "user" as const, parts: [{ text: message }] },
     ];
 
     const response = await generateWithFallback(ai, {
@@ -226,11 +273,11 @@ ${JSON.stringify(runs, null, 2)}
       contents,
       config: {
         temperature: 0.7,
-      }
+      },
     });
 
     res.json({
-      text: response.text
+      text: response.text,
     });
   } catch (err: any) {
     console.error("Gemini Assistant Error:", err);
@@ -239,4 +286,3 @@ ${JSON.stringify(runs, null, 2)}
 });
 
 export default router;
-

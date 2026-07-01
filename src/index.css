@@ -1,35 +1,69 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 
 /* Custom Font Faces specifically optimized for html2canvas/jsPDF rendering */
 @font-face {
-  font-family: 'CairoPDF';
+  font-family: "CairoPDF";
   font-style: normal;
   font-weight: 300 800;
   font-display: swap;
-  src: url(https://fonts.gstatic.com/s/cairo/v28/SLXVc1nY6HkvangqZ1iWdTsMC1.woff2) format('woff2');
+  src: url(https://fonts.gstatic.com/s/cairo/v28/SLXVc1nY6HkvangqZ1iWdTsMC1.woff2) format("woff2");
   unicode-range: U+0600-06FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE80-FEFC;
 }
 
 @theme {
-  --font-sans: "IBM Plex Sans Arabic", "Tajawal", "Cairo", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans:
+    "IBM Plex Sans Arabic", "Tajawal", "Cairo", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "IBM Plex Sans Arabic", "Tajawal", "Cairo", sans-serif;
-  
+
   --color-primary: #10b981;
   --color-primary-foreground: #ffffff;
 
-  /* Hex fallbacks for zinc to support html2canvas / PDF generation */
-  --color-zinc-50: #fafafa;
-  --color-zinc-100: #f4f4f5;
-  --color-zinc-200: #e4e4e7;
-  --color-zinc-300: #d4d4d8;
-  --color-zinc-400: #a1a1aa;
-  --color-zinc-500: #71717a;
-  --color-zinc-600: #52525b;
-  --color-zinc-700: #3f3f46;
-  --color-zinc-800: #27272a;
-  --color-zinc-900: #18181b;
-  --color-zinc-950: #09090b;
+  /* Premium Light Theme - Zinc Scale Fallbacks */
+  --color-zinc-50: #f8fafc;       /* Clean, soft slate-infused background */
+  --color-zinc-100: #f1f5f9;      /* Card borders / secondary background */
+  --color-zinc-150: #e2e8f0;      /* Crisp border intermediate */
+  --color-zinc-200: #e2e8f0;      /* Clean element borders */
+  --color-zinc-250: #cbd5e1;      /* Mid-gray accent borders */
+  --color-zinc-300: #cbd5e1;      /* Section divider lines */
+  --color-zinc-400: #94a3b8;      /* Placeholder text / inactive icons */
+  --color-zinc-500: #64748b;      /* Muted subtitles & meta-info text */
+  --color-zinc-600: #475569;      /* Readable secondary body text */
+  --color-zinc-700: #334155;      /* Main readable body text */
+  --color-zinc-800: #1e293b;      /* Section subheadings */
+  --color-zinc-850: #0f172a;      /* Rich dropdown borders / active labels */
+  --color-zinc-900: #0f172a;      /* Primary headings & prominent titles */
+  --color-zinc-950: #020617;      /* Near-black deep accents */
+
+  /* Premium Light Theme - Slate Scale Alignment */
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-150: #e2e8f0;
+  --color-slate-200: #e2e8f0;
+  --color-slate-250: #cbd5e1;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+  --color-slate-950: #020617;
+
+  /* Premium Light Theme - Gray Scale Alignment */
+  --color-gray-50: #f8fafc;
+  --color-gray-100: #f1f5f9;
+  --color-gray-150: #e2e8f0;
+  --color-gray-200: #e2e8f0;
+  --color-gray-250: #cbd5e1;
+  --color-gray-300: #cbd5e1;
+  --color-gray-400: #94a3b8;
+  --color-gray-500: #64748b;
+  --color-gray-600: #475569;
+  --color-gray-700: #334155;
+  --color-gray-800: #1e293b;
+  --color-gray-900: #0f172a;
+  --color-gray-950: #020617;
 
   /* Emerald & Blue fallbacks for status badges in PDF */
   --color-emerald-50: #ecfdf5;
@@ -38,7 +72,7 @@
   --color-blue-50: #eff6ff;
   --color-blue-500: #3b82f6;
   --color-blue-600: #2563eb;
-  
+
   --radius-sm: 0.375rem;
   --radius-md: 0.625rem;
   --radius-lg: 0.875rem;
@@ -62,7 +96,7 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  
+
   #contract-document {
     display: block !important;
     box-shadow: none !important;
@@ -71,7 +105,7 @@
   }
 
   /* Prevent elements from breaking mid-page */
-  #contract-document p, 
+  #contract-document p,
   #contract-document h1,
   #contract-document h2,
   #contract-document h3,
@@ -82,11 +116,11 @@
     page-break-inside: avoid;
     break-inside: avoid;
   }
-  
+
   #contract-document section {
     page-break-inside: auto;
   }
-  
+
   /* Create repeating table headers/footers trick or fixed elements for print */
   @page {
     margin: 20mm;
@@ -97,7 +131,7 @@
       content: counter(page);
     }
   }
-  
+
   /* Force a page break before certain important sections if needed */
   .page-break-before {
     page-break-before: always;
@@ -106,17 +140,17 @@
 
 .dark {
   /* Rich, premium cosmic space palette for variables */
-  --color-zinc-50: #0c0e12;     /* Obsidian background */
-  --color-zinc-100: #13161c;    /* Deep gray-blue card */
-  --color-zinc-200: #1e222b;    /* Mid charcoal */
-  --color-zinc-300: #2a2f3a;    /* Light-mid charcoal border/bg */
-  --color-zinc-400: #3f4654;    /* Cool gray-dark bg */
-  --color-zinc-500: #6b758d;    /* Cool gray-muted */
-  --color-zinc-600: #2a2f3a;    /* Dark background helper */
-  --color-zinc-700: #1e222b;    /* Dark background helper */
-  --color-zinc-800: #13161c;    /* Dark background helper */
-  --color-zinc-900: #0c0e12;    /* Dark background helper */
-  --color-zinc-950: #08090c;    /* Darkest obsidian */
+  --color-zinc-50: #0c0e12; /* Obsidian background */
+  --color-zinc-100: #13161c; /* Deep gray-blue card */
+  --color-zinc-200: #1e222b; /* Mid charcoal */
+  --color-zinc-300: #2a2f3a; /* Light-mid charcoal border/bg */
+  --color-zinc-400: #3f4654; /* Cool gray-dark bg */
+  --color-zinc-500: #6b758d; /* Cool gray-muted */
+  --color-zinc-600: #2a2f3a; /* Dark background helper */
+  --color-zinc-700: #1e222b; /* Dark background helper */
+  --color-zinc-800: #13161c; /* Dark background helper */
+  --color-zinc-900: #0c0e12; /* Dark background helper */
+  --color-zinc-950: #08090c; /* Darkest obsidian */
 
   /* Map other common tailwind frameworks color scales to the same premium dark palette */
   --color-slate-50: #0c0e12;
@@ -155,7 +189,8 @@
   /* Fix white gradients inside dark mode */
   .from-white {
     --tw-gradient-from: #13161c !important;
-    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(19, 22, 28, 0)) !important;
+    --tw-gradient-stops:
+      var(--tw-gradient-from), var(--tw-gradient-to, rgba(19, 22, 28, 0)) !important;
   }
   .to-white {
     --tw-gradient-to: #13161c !important;
@@ -165,34 +200,59 @@
   }
 
   /* Secondary light background components override */
-  .bg-zinc-50, .bg-gray-50, .bg-slate-50, .bg-neutral-50 {
+  .bg-zinc-50,
+  .bg-gray-50,
+  .bg-slate-50,
+  .bg-neutral-50 {
     background-color: #0c0e12 !important;
   }
-  .bg-zinc-100, .bg-gray-100, .bg-slate-100, .bg-neutral-100 {
+  .bg-zinc-100,
+  .bg-gray-100,
+  .bg-slate-100,
+  .bg-neutral-100 {
     background-color: #1a1e26 !important;
   }
-  .bg-zinc-200, .bg-gray-200, .bg-slate-200, .bg-neutral-200 {
+  .bg-zinc-200,
+  .bg-gray-200,
+  .bg-slate-200,
+  .bg-neutral-200 {
     background-color: #242936 !important;
   }
 
   /* Ensure tables look incredibly clean and dark */
-  .bg-gray-50\/50, .bg-zinc-50\/50, .bg-slate-50\/50 {
+  .bg-gray-50\/50,
+  .bg-zinc-50\/50,
+  .bg-slate-50\/50 {
     background-color: rgba(12, 14, 18, 0.4) !important;
   }
 
   /* Global high-end border color overrides in dark mode */
-  .border-zinc-100, .border-gray-100, .border-slate-100, .border-neutral-100,
-  .border-zinc-150, .border-gray-150, .border-slate-150,
-  .border-zinc-200, .border-gray-200, .border-slate-200, .border-neutral-200,
-  .border-zinc-250, .border-gray-250, .border-slate-250 {
+  .border-zinc-100,
+  .border-gray-100,
+  .border-slate-100,
+  .border-neutral-100,
+  .border-zinc-150,
+  .border-gray-150,
+  .border-slate-150,
+  .border-zinc-200,
+  .border-gray-200,
+  .border-slate-200,
+  .border-neutral-200,
+  .border-zinc-250,
+  .border-gray-250,
+  .border-slate-250 {
     border-color: #1f2532 !important;
   }
-  .border-zinc-300, .border-gray-300, .border-slate-300, .border-neutral-300 {
+  .border-zinc-300,
+  .border-gray-300,
+  .border-slate-300,
+  .border-neutral-300 {
     border-color: #2c3345 !important;
   }
 
   /* Transparent overlay classes in dark mode */
-  .glass, .glass-premium {
+  .glass,
+  .glass-premium {
     background: rgba(19, 22, 28, 0.75) !important;
     border-color: rgba(31, 37, 50, 0.5) !important;
     backdrop-filter: blur(14px) !important;
@@ -200,74 +260,127 @@
   }
 
   /* Multi-framework text colors - robust, high-contrast overrides */
-  .text-zinc-900, .text-slate-900, .text-gray-900, .text-neutral-900, .text-slate-950, .text-zinc-950, .text-black {
+  .text-zinc-900,
+  .text-slate-900,
+  .text-gray-900,
+  .text-neutral-900,
+  .text-slate-950,
+  .text-zinc-950,
+  .text-black {
     color: #f5f7fa !important;
   }
-  .text-zinc-850, .text-slate-850, .text-gray-850 {
+  .text-zinc-850,
+  .text-slate-850,
+  .text-gray-850 {
     color: #eef2f6 !important;
   }
-  .text-zinc-800, .text-slate-800, .text-gray-800, .text-neutral-800 {
+  .text-zinc-800,
+  .text-slate-800,
+  .text-gray-800,
+  .text-neutral-800 {
     color: #dde2ec !important;
   }
-  .text-zinc-700, .text-slate-700, .text-gray-700, .text-neutral-700 {
+  .text-zinc-700,
+  .text-slate-700,
+  .text-gray-700,
+  .text-neutral-700 {
     color: #b8c1d3 !important;
   }
-  .text-zinc-600, .text-slate-600, .text-gray-600, .text-neutral-600 {
+  .text-zinc-600,
+  .text-slate-600,
+  .text-gray-600,
+  .text-neutral-600 {
     color: #939db2 !important;
   }
-  .text-zinc-550, .text-slate-550, .text-gray-550 {
+  .text-zinc-550,
+  .text-slate-550,
+  .text-gray-550 {
     color: #7b859b !important;
   }
-  .text-zinc-500, .text-slate-500, .text-gray-500, .text-neutral-500 {
+  .text-zinc-500,
+  .text-slate-500,
+  .text-gray-500,
+  .text-neutral-500 {
     color: #6b758d !important;
   }
-  .text-zinc-400, .text-slate-400, .text-gray-400, .text-neutral-400 {
+  .text-zinc-400,
+  .text-slate-400,
+  .text-gray-400,
+  .text-neutral-400 {
     color: #4a5264 !important;
   }
 
   /* Status badge aesthetic improvements in dark mode */
   /* Emerald / Green */
-  .bg-emerald-50, .bg-green-50, .bg-emerald-500\/10 {
+  .bg-emerald-50,
+  .bg-green-50,
+  .bg-emerald-500\/10 {
     background-color: rgba(16, 185, 129, 0.12) !important;
     border-color: rgba(16, 185, 129, 0.25) !important;
   }
-  .text-emerald-700, .text-green-700, .text-emerald-600, .text-green-600 {
+  .text-emerald-700,
+  .text-green-700,
+  .text-emerald-600,
+  .text-green-600 {
     color: #34d399 !important;
   }
 
   /* Blue / Sky / Indigo */
-  .bg-blue-50, .bg-sky-50, .bg-indigo-50, .bg-blue-500\/10 {
+  .bg-blue-50,
+  .bg-sky-50,
+  .bg-indigo-50,
+  .bg-blue-500\/10 {
     background-color: rgba(59, 130, 246, 0.12) !important;
     border-color: rgba(59, 130, 246, 0.25) !important;
   }
-  .text-blue-700, .text-indigo-700, .text-sky-700, .text-blue-600, .text-indigo-600, .text-sky-600 {
+  .text-blue-700,
+  .text-indigo-700,
+  .text-sky-700,
+  .text-blue-600,
+  .text-indigo-600,
+  .text-sky-600 {
     color: #60a5fa !important;
   }
 
   /* Amber / Yellow */
-  .bg-amber-50, .bg-yellow-50, .bg-amber-500\/10 {
+  .bg-amber-50,
+  .bg-yellow-50,
+  .bg-amber-500\/10 {
     background-color: rgba(245, 158, 11, 0.12) !important;
     border-color: rgba(245, 158, 11, 0.25) !important;
   }
-  .text-amber-700, .text-yellow-700, .text-amber-600, .text-yellow-600 {
+  .text-amber-700,
+  .text-yellow-700,
+  .text-amber-600,
+  .text-yellow-600 {
     color: #fbbf24 !important;
   }
 
   /* Rose / Red */
-  .bg-rose-50, .bg-red-50, .bg-rose-500\/10 {
+  .bg-rose-50,
+  .bg-red-50,
+  .bg-rose-500\/10 {
     background-color: rgba(244, 63, 94, 0.12) !important;
     border-color: rgba(244, 63, 94, 0.25) !important;
   }
-  .text-rose-700, .text-red-700, .text-rose-600, .text-red-600 {
+  .text-rose-700,
+  .text-red-700,
+  .text-rose-600,
+  .text-red-600 {
     color: #f87171 !important;
   }
 
   /* Purple / Violet */
-  .bg-purple-50, .bg-violet-50, .bg-purple-500\/10 {
+  .bg-purple-50,
+  .bg-violet-50,
+  .bg-purple-500\/10 {
     background-color: rgba(168, 85, 247, 0.12) !important;
     border-color: rgba(168, 85, 247, 0.25) !important;
   }
-  .text-purple-700, .text-violet-700, .text-purple-600, .text-violet-600 {
+  .text-purple-700,
+  .text-violet-700,
+  .text-purple-600,
+  .text-violet-600 {
     color: #c084fc !important;
   }
 }
@@ -282,7 +395,9 @@
 }
 
 .card-premium-shadow {
-  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.015);
+  box-shadow:
+    0 10px 30px -10px rgba(15, 23, 42, 0.04),
+    0 1px 3px rgba(15, 23, 42, 0.015);
 }
 
 .card-premium-hover {
@@ -290,7 +405,9 @@
 }
 .card-premium-hover:hover {
   transform: translateY(-2px);
-  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08), 0 1px 6px rgba(15, 23, 42, 0.02);
+  box-shadow:
+    0 20px 40px -15px rgba(15, 23, 42, 0.08),
+    0 1px 6px rgba(15, 23, 42, 0.02);
   border-color: rgba(16, 185, 129, 0.25);
 }
 
@@ -299,26 +416,113 @@
 }
 
 /* Prevent Arabic characters from becoming disconnected due to Tailwind tracking- classes */
-[dir="rtl"], 
-[dir="rtl"] *, 
-[lang="ar"], 
+[dir="rtl"],
+[dir="rtl"] *,
+[lang="ar"],
 [lang="ar"] * {
   letter-spacing: normal !important;
 }
 
-div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div#contract-document:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > h1:nth-of-type(1) {
+div#root:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > main:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(2)
+  > div#contract-document:nth-of-type(1)
+  > div:nth-of-type(2)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > h1:nth-of-type(1) {
   letter-spacing: normal !important;
 }
 
-div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div#contract-document:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(1) > p:nth-of-type(1) {
+div#root:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > main:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(2)
+  > div#contract-document:nth-of-type(1)
+  > div:nth-of-type(2)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > p:nth-of-type(1) {
   letter-spacing: normal !important;
 }
 
-div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div#contract-document:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > p:nth-of-type(1) {
+div#root:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > main:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(2)
+  > div#contract-document:nth-of-type(1)
+  > div:nth-of-type(2)
+  > div:nth-of-type(1)
+  > div:nth-of-type(2)
+  > p:nth-of-type(1) {
   letter-spacing: normal !important;
 }
 
-div#root:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > main:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div#contract-document:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(1) > div:nth-of-type(2) > p:nth-of-type(2) {
+div#root:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > main:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(1)
+  > div:nth-of-type(2)
+  > div#contract-document:nth-of-type(1)
+  > div:nth-of-type(2)
+  > div:nth-of-type(1)
+  > div:nth-of-type(2)
+  > p:nth-of-type(2) {
   letter-spacing: normal !important;
+}
+
+/* Elegant, modern scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.2);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.4);
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.15);
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.3);
+}
+
+/* Premium smooth light mode selections and layout card overrides */
+::selection {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: inherit;
+}
+.dark ::selection {
+  background-color: rgba(16, 185, 129, 0.3);
 }
 

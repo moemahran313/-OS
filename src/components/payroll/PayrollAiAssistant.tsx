@@ -12,8 +12,8 @@ export default function PayrollAiAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "model",
-      text: "مرحباً بك! أنا مساعد مدرج HR الذكي المدعوم بنموذج الذكاء الاصطناعي Gemini. أملك وصولاً مباشراً لملفات موظفيك ومسيرات رواتبك لمساعدتك في الامتثال لنظام العمل وحل مشاكل مدد ومدقق العقود وإعداد WPS."
-    }
+      text: "مرحباً بك! أنا مساعد مدرج HR الذكي المدعوم بنموذج الذكاء الاصطناعي Gemini. أملك وصولاً مباشراً لملفات موظفيك ومسيرات رواتبك لمساعدتك في الامتثال لنظام العمل وحل مشاكل مدد ومدقق العقود وإعداد WPS.",
+    },
   ]);
   const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -31,7 +31,7 @@ export default function PayrollAiAssistant() {
     if (!textToSend.trim() || loading) return;
 
     const userMsg: Message = { role: "user", text: textToSend };
-    setMessages(prev => [...prev, userMsg]);
+    setMessages((prev) => [...prev, userMsg]);
     setInputText("");
     setLoading(true);
 
@@ -41,8 +41,8 @@ export default function PayrollAiAssistant() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: textToSend,
-          history: messages
-        })
+          history: messages,
+        }),
       });
 
       if (!response.ok) {
@@ -50,15 +50,18 @@ export default function PayrollAiAssistant() {
       }
 
       const data = await response.json();
-      setMessages(prev => [...prev, { role: "model", text: data.text || "لم تتم الاستجابة بالشكل المتوقع." }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "model", text: data.text || "لم تتم الاستجابة بالشكل المتوقع." },
+      ]);
     } catch (error: any) {
       console.error(error);
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         {
           role: "model",
-          text: "⚠️ **حدث خطأ فني أثناء التحدث مع الخادم.**\n\nيرجى التأكد من توفر اتصال بالشبكة، وتكوين مفتاح Gemini في إعدادات التطبيق الخاصة بمدير النظام."
-        }
+          text: "⚠️ **حدث خطأ فني أثناء التحدث مع الخادم.**\n\nيرجى التأكد من توفر اتصال بالشبكة، وتكوين مفتاح Gemini في إعدادات التطبيق الخاصة بمدير النظام.",
+        },
       ]);
     } finally {
       setLoading(false);
@@ -69,11 +72,14 @@ export default function PayrollAiAssistant() {
     "مقارنة رواتب السعوديين بالأجانب والامتثال لـ GOSI",
     "توصيات لتحسين النطاقات ومستوى التوطين في الشركة",
     "تدقيق ملفات الموظفين - من ينقصه رقم الآيبان (IBAN) أو العقد؟",
-    "طريقة توليد ملف SIF وتقديمه لمنصة مدد"
+    "طريقة توليد ملف SIF وتقديمه لمنصة مدد",
   ];
 
   return (
-    <div className="bg-white rounded-[2.5rem] border border-zinc-200 shadow-sm overflow-hidden flex flex-col h-[600px]" dir="rtl">
+    <div
+      className="bg-white rounded-[2.5rem] border border-zinc-200 shadow-sm overflow-hidden flex flex-col h-[600px]"
+      dir="rtl"
+    >
       {/* Header */}
       <div className="p-6 border-b border-zinc-100 bg-zinc-50 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -83,9 +89,13 @@ export default function PayrollAiAssistant() {
           <div>
             <h3 className="text-base font-black text-zinc-900 flex items-center gap-2">
               مساعد شؤون الموظفين الذكي (Generative AI)
-              <span className="text-[10px] bg-violet-100 text-violet-700 font-bold px-2 py-0.5 rounded-full">Gemini 3.5</span>
+              <span className="text-[10px] bg-violet-100 text-violet-700 font-bold px-2 py-0.5 rounded-full">
+                Gemini 3.5
+              </span>
             </h3>
-            <p className="text-xs text-zinc-400 font-medium">ذكي، فوري ومترابط مع بيانات الموظفين والمسيرات النشطة</p>
+            <p className="text-xs text-zinc-400 font-medium">
+              ذكي، فوري ومترابط مع بيانات الموظفين والمسيرات النشطة
+            </p>
           </div>
         </div>
       </div>
@@ -100,16 +110,26 @@ export default function PayrollAiAssistant() {
               animate={{ opacity: 1, y: 0 }}
               className={`flex gap-3 max-w-[85%] ${msg.role === "user" ? "mr-auto flex-row-reverse" : "ml-auto"}`}
             >
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm ${
-                msg.role === "user" ? "bg-zinc-900 border-zinc-900 text-white" : "bg-white border-zinc-200 text-violet-600"
-              }`}>
-                {msg.role === "user" ? <User className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border shadow-sm ${
+                  msg.role === "user"
+                    ? "bg-zinc-900 border-zinc-900 text-white"
+                    : "bg-white border-zinc-200 text-violet-600"
+                }`}
+              >
+                {msg.role === "user" ? (
+                  <User className="w-4 h-4" />
+                ) : (
+                  <Sparkles className="w-4 h-4" />
+                )}
               </div>
-              <div className={`p-4 rounded-3xl text-sm font-semibold leading-relaxed shadow-sm whitespace-pre-line ${
-                msg.role === "user"
-                  ? "bg-zinc-900 text-white rounded-tr-none"
-                  : "bg-white border border-zinc-200/85 text-zinc-800 rounded-tl-none"
-              }`}>
+              <div
+                className={`p-4 rounded-3xl text-sm font-semibold leading-relaxed shadow-sm whitespace-pre-line ${
+                  msg.role === "user"
+                    ? "bg-zinc-900 text-white rounded-tr-none"
+                    : "bg-white border border-zinc-200/85 text-zinc-800 rounded-tl-none"
+                }`}
+              >
                 {msg.text}
               </div>
             </motion.div>
@@ -122,9 +142,18 @@ export default function PayrollAiAssistant() {
               <Sparkles className="w-4 h-4" />
             </div>
             <div className="bg-white border border-zinc-200/85 p-4 rounded-3xl rounded-tl-none flex items-center gap-2 text-xs font-bold text-zinc-500 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-violet-600 animate-bounce" style={{ animationDelay: "0ms" }} />
-              <span className="w-2 h-2 rounded-full bg-violet-600 animate-bounce" style={{ animationDelay: "150ms" }} />
-              <span className="w-2 h-2 rounded-full bg-violet-600 animate-bounce" style={{ animationDelay: "300ms" }} />
+              <span
+                className="w-2 h-2 rounded-full bg-violet-600 animate-bounce"
+                style={{ animationDelay: "0ms" }}
+              />
+              <span
+                className="w-2 h-2 rounded-full bg-violet-600 animate-bounce"
+                style={{ animationDelay: "150ms" }}
+              />
+              <span
+                className="w-2 h-2 rounded-full bg-violet-600 animate-bounce"
+                style={{ animationDelay: "300ms" }}
+              />
               <span>مساعد مدرج يقوم بمراجعة ملفات موظفيك...</span>
             </div>
           </div>

@@ -7,10 +7,8 @@ const router = Router();
 
 router.get("/", authenticate, async (req: any, res) => {
   try {
-    const snap = await db.collection("employees")
-      .where("userId", "==", req.user.uid)
-      .get();
-    const employees = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const snap = await db.collection("employees").where("userId", "==", req.user.uid).get();
+    const employees = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     res.json(employees);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -22,7 +20,7 @@ router.post("/", authenticate, async (req: any, res) => {
     const docRef = await db.collection("employees").add({
       ...req.body,
       userId: req.user.uid,
-      createdAt: new Date()
+      createdAt: new Date(),
     });
     logAudit("HR", { action: "Create Employee", id: docRef.id }, { id: docRef.id }, req);
     res.status(201).json({ id: docRef.id, ...req.body });
@@ -45,15 +43,20 @@ router.delete("/:id", authenticate, async (req: any, res) => {
     const docRef = db.collection("employees").doc(req.params.id);
     const doc = await docRef.get();
     const data = doc.data();
-    
+
     await docRef.delete();
-    
-    await logAudit("PAYROLL", { 
-      action: "Remove Employee", 
-      employeeId: req.params.id, 
-      name: data?.name 
-    }, { success: true }, req);
-    
+
+    await logAudit(
+      "PAYROLL",
+      {
+        action: "Remove Employee",
+        employeeId: req.params.id,
+        name: data?.name,
+      },
+      { success: true },
+      req
+    );
+
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

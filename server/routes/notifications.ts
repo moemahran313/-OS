@@ -8,8 +8,8 @@ router.get("/", authenticate, async (req: any, res) => {
   try {
     const notifications = await prisma.notification.findMany({
       where: { userId: req.user.id },
-      orderBy: { createdAt: 'desc' },
-      take: 20
+      orderBy: { createdAt: "desc" },
+      take: 20,
     });
     res.json(notifications);
   } catch (err: any) {
@@ -21,7 +21,7 @@ router.put("/:id/read", authenticate, async (req: any, res) => {
   try {
     await prisma.notification.update({
       where: { id: req.params.id },
-      data: { isRead: true }
+      data: { isRead: true },
     });
     res.json({ success: true });
   } catch (err: any) {

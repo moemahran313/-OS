@@ -9,15 +9,17 @@ const router = Router();
 function getGeminiClient() {
   const key = process.env.GEMINI_API_KEY;
   if (!key) {
-    throw new Error("GEMINI_API_KEY environment variable is required. Please set it in Settings > Secrets.");
+    throw new Error(
+      "GEMINI_API_KEY environment variable is required. Please set it in Settings > Secrets."
+    );
   }
   return new GoogleGenAI({
     apiKey: key,
     httpOptions: {
       headers: {
-        'User-Agent': 'aistudio-build',
-      }
-    }
+        "User-Agent": "aistudio-build",
+      },
+    },
   });
 }
 
@@ -28,12 +30,19 @@ async function generateWithFallback(ai: any, params: any) {
     return await ai.models.generateContent(params);
   } catch (err: any) {
     const errMsg = (err?.message || "").toLowerCase();
-    const isUnavailable = errMsg.includes("503") || errMsg.includes("unavailable") || errMsg.includes("demand") || errMsg.includes("resource_exhausted") || errMsg.includes("429");
+    const isUnavailable =
+      errMsg.includes("503") ||
+      errMsg.includes("unavailable") ||
+      errMsg.includes("demand") ||
+      errMsg.includes("resource_exhausted") ||
+      errMsg.includes("429");
     if (isUnavailable && primaryModel !== "gemini-3.1-flash-lite") {
-      console.warn(`Model ${primaryModel} is experiencing high demand or limit. Falling back to gemini-3.1-flash-lite...`);
+      console.warn(
+        `Model ${primaryModel} is experiencing high demand or limit. Falling back to gemini-3.1-flash-lite...`
+      );
       return await ai.models.generateContent({
         ...params,
-        model: "gemini-3.1-flash-lite"
+        model: "gemini-3.1-flash-lite",
       });
     }
     throw err;
@@ -44,11 +53,11 @@ async function generateWithFallback(ai: any, params: any) {
 router.post("/analyze", authenticate, async (req: any, res) => {
   try {
     const { text, title } = req.body;
-    
+
     if (!text || !text.trim()) {
       return res.status(400).json({
         success: false,
-        error: "يرجى تقديم تفاصيل الاجتماع أو النصوص المقروءة لتحليلها."
+        error: "يرجى تقديم تفاصيل الاجتماع أو النصوص المقروءة لتحليلها.",
       });
     }
 
@@ -105,10 +114,10 @@ router.post("/analyze", authenticate, async (req: any, res) => {
                   titleEn: { type: Type.STRING },
                   valueAr: { type: Type.STRING },
                   valueEn: { type: Type.STRING },
-                  confidence: { type: Type.INTEGER }
+                  confidence: { type: Type.INTEGER },
                 },
-                required: ["category", "titleAr", "titleEn", "valueAr", "valueEn", "confidence"]
-              }
+                required: ["category", "titleAr", "titleEn", "valueAr", "valueEn", "confidence"],
+              },
             },
             actionItems: {
               type: Type.ARRAY,
@@ -119,19 +128,19 @@ router.post("/analyze", authenticate, async (req: any, res) => {
                   titleEn: { type: Type.STRING },
                   assignee: { type: Type.STRING },
                   dueDate: { type: Type.STRING },
-                  priority: { type: Type.STRING }
+                  priority: { type: Type.STRING },
                 },
-                required: ["titleAr", "titleEn", "assignee", "dueDate", "priority"]
-              }
-            }
+                required: ["titleAr", "titleEn", "assignee", "dueDate", "priority"],
+              },
+            },
           },
-          required: ["category", "summaryAr", "summaryEn", "variables", "actionItems"]
-        }
-      }
+          required: ["category", "summaryAr", "summaryEn", "variables", "actionItems"],
+        },
+      },
     });
 
     const parsedData = JSON.parse(response.text.trim());
-    
+
     // Log audit log
     await logAudit(
       req.user?.uid || "internal-ai",
@@ -142,14 +151,13 @@ router.post("/analyze", authenticate, async (req: any, res) => {
 
     return res.json({
       success: true,
-      ...parsedData
+      ...parsedData,
     });
-
   } catch (err: any) {
     console.error("AI Analysis Failed:", err);
     return res.status(500).json({
       success: false,
-      error: `فشلت معالجة النصوص عبر الذكاء الاصطناعي: ${err.message}`
+      error: `فشلت معالجة النصوص عبر الذكاء الاصطناعي: ${err.message}`,
     });
   }
 });
@@ -161,21 +169,21 @@ router.post("/create-meet", authenticate, async (req: any, res) => {
     if (!accessToken) {
       return res.status(400).json({
         success: false,
-        error: "Google account access token is required to create a Meet space."
+        error: "Google account access token is required to create a Meet space.",
       });
     }
 
     const googleMeetRes = await fetch("https://meet.googleapis.com/v2/spaces", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "application/json"
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         config: {
-          accessType: "OPEN"
-        }
-      })
+          accessType: "OPEN",
+        },
+      }),
     });
 
     if (!googleMeetRes.ok) {
@@ -189,13 +197,13 @@ router.post("/create-meet", authenticate, async (req: any, res) => {
       success: true,
       meetingUri: data.meetingUri,
       meetingCode: data.name?.replace("spaces/", "") || "",
-      space: data
+      space: data,
     });
   } catch (err: any) {
     console.error("Error creating Google Meet space:", err);
     return res.status(500).json({
       success: false,
-      error: `Failed to create Google Meet space: ${err.message}`
+      error: `Failed to create Google Meet space: ${err.message}`,
     });
   }
 });

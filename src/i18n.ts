@@ -1,21 +1,21 @@
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
 
-import translationEN from './locales/en/translation.json';
-import translationAR from './locales/ar/translation.json';
-import translationFR from './locales/fr/translation.json';
+import translationEN from "./locales/en/translation.json";
+import translationAR from "./locales/ar/translation.json";
+import translationFR from "./locales/fr/translation.json";
 
 const resources = {
   en: {
-    translation: translationEN
+    translation: translationEN,
   },
   ar: {
-    translation: translationAR
+    translation: translationAR,
   },
   fr: {
-    translation: translationFR
-  }
+    translation: translationFR,
+  },
 };
 
 i18n
@@ -23,14 +23,14 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: 'ar',
+    fallbackLng: "ar",
     interpolation: {
-      escapeValue: false
+      escapeValue: false,
     },
     detection: {
-      order: ['localStorage', 'htmlTag', 'cookie'],
-      caches: ['localStorage']
-    }
+      order: ["localStorage", "htmlTag", "cookie"],
+      caches: ["localStorage"],
+    },
   });
 
 export default i18n;

@@ -21,12 +21,12 @@ export function generateZatcaQR(data: ZatcaData): string {
     const valueBytes = textEncoder.encode(value);
     const lengthBytes = new Uint8Array([valueBytes.length]);
     const tagBytes = new Uint8Array([tag]);
-    
+
     const tlv = new Uint8Array(tagBytes.length + lengthBytes.length + valueBytes.length);
     tlv.set(tagBytes, 0);
     tlv.set(lengthBytes, 1);
     tlv.set(valueBytes, 2);
-    
+
     return tlv;
   };
 
@@ -55,11 +55,11 @@ export function generateZatcaQR(data: ZatcaData): string {
   }
 
   // Convert to Base64 avoiding Maximum Call Stack Size Exceeded
-  let binary = '';
+  let binary = "";
   const len = combinedTLV.byteLength;
   for (let i = 0; i < len; i++) {
     binary += String.fromCharCode(combinedTLV[i]);
   }
-  
+
   return btoa(binary);
 }

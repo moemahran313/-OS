@@ -1,18 +1,18 @@
-import { EventEmitter } from 'events';
-import { PrismaClient } from '@prisma/client';
+import { EventEmitter } from "events";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const eventEmitter = new EventEmitter();
 
 // Define Event Types
 export enum ShipmentEvents {
-  CREATED = 'shipment.created',
-  UPDATED = 'shipment.updated',
-  ARRIVED = 'shipment.arrived',
-  DEPARTED = 'shipment.departed',
-  TRANSIT = 'shipment.transit',
-  DOC_MISSING = 'document.missing',
-  COMPLIANCE_FAILED = 'compliance.failed',
+  CREATED = "shipment.created",
+  UPDATED = "shipment.updated",
+  ARRIVED = "shipment.arrived",
+  DEPARTED = "shipment.departed",
+  TRANSIT = "shipment.transit",
+  DOC_MISSING = "document.missing",
+  COMPLIANCE_FAILED = "compliance.failed",
 }
 
 interface EventPayload {
@@ -32,7 +32,7 @@ export const emitShipmentEvent = async (type: ShipmentEvents, payload: EventPayl
         metadata: payload.metadata ? JSON.stringify(payload.metadata) : null,
       },
     });
-    
+
     eventEmitter.emit(type, payload);
     console.log(`[EventSystem] Emitted ${type} for shipment ${payload.shipmentId}`);
   } catch (err) {

@@ -1,4 +1,4 @@
-import { db } from './server/services/firebase.js';
+import { db } from "./server/services/firebase.js";
 async function run() {
   try {
     const doc = await db.collection("payroll_runs").limit(1).get();

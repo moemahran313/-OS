@@ -22,7 +22,7 @@ export class AramexAdapter implements CarrierAdapter {
       success: true,
       trackingNumber: `ARM-${Math.random().toString(36).substring(7).toUpperCase()}`,
       labelUrl: "https://aramex.com/labels/demo-label.pdf",
-      estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     };
   }
 
@@ -30,7 +30,7 @@ export class AramexAdapter implements CarrierAdapter {
     console.log(`[Aramex] Tracking ${trackingNumber}`);
     const statuses = ["SHIPPED", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED"];
     const status = statuses[Math.floor(Math.random() * statuses.length)];
-    
+
     return {
       trackingNumber,
       status: status,
@@ -38,18 +38,30 @@ export class AramexAdapter implements CarrierAdapter {
       lastUpdate: new Date().toISOString(),
       estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString(),
       events: [
-        { status: "أمر شحن مؤكد", location: "مصنع المورد (الصين)", timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString() },
-        { status: "تم استلام الشحنة في المركز اللوجستي", location: "Shenzhen Port", timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString() },
-        { status: "غادرت الميناء", location: "South China Sea", timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
-        { status: status, location: "مركز توزيع الرياض", timestamp: new Date().toISOString() }
-      ]
+        {
+          status: "أمر شحن مؤكد",
+          location: "مصنع المورد (الصين)",
+          timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+        {
+          status: "تم استلام الشحنة في المركز اللوجستي",
+          location: "Shenzhen Port",
+          timestamp: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+        {
+          status: "غادرت الميناء",
+          location: "South China Sea",
+          timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+        { status: status, location: "مركز توزيع الرياض", timestamp: new Date().toISOString() },
+      ],
     };
   }
 
   async getRates(origin: string, destination: string, weight: number) {
     return [
       { service: "Ground", price: 45.0, currency: "SAR", days: 5 },
-      { service: "Express", price: 120.0, currency: "SAR", days: 2 }
+      { service: "Express", price: 120.0, currency: "SAR", days: 2 },
     ];
   }
 }
@@ -69,7 +81,7 @@ export class DhlAdapter implements CarrierAdapter {
       success: true,
       trackingNumber: `DHL-${Math.random().toString(10).substring(2, 12)}`,
       labelUrl: "https://dhl.com/labels/demo-label.pdf",
-      estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString()
+      estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
     };
   }
 
@@ -77,7 +89,7 @@ export class DhlAdapter implements CarrierAdapter {
     console.log(`[DHL] Tracking ${trackingNumber}`);
     const statuses = ["PICKED_UP", "TRANSIT", "ARRIVED_AT_FACILITY", "DELIVERED"];
     const status = statuses[Math.floor(Math.random() * statuses.length)];
-    
+
     return {
       trackingNumber,
       status: status,
@@ -85,18 +97,30 @@ export class DhlAdapter implements CarrierAdapter {
       lastUpdate: new Date().toISOString(),
       estimatedDelivery: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toLocaleDateString(),
       events: [
-        { status: "Shipment Picked Up", location: "Hong Kong", timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
-        { status: "Processed at Hong Kong", location: "Hong Kong", timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
-        { status: "Departed from Facility", location: "Hong Kong", timestamp: new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString() },
-        { status: status, location: "Leipzig Hub", timestamp: new Date().toISOString() }
-      ]
+        {
+          status: "Shipment Picked Up",
+          location: "Hong Kong",
+          timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+        {
+          status: "Processed at Hong Kong",
+          location: "Hong Kong",
+          timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+        {
+          status: "Departed from Facility",
+          location: "Hong Kong",
+          timestamp: new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString(),
+        },
+        { status: status, location: "Leipzig Hub", timestamp: new Date().toISOString() },
+      ],
     };
   }
 
   async getRates(origin: string, destination: string, weight: number) {
     return [
       { service: "Express Worldwide", price: 15.0, currency: "USD", days: 3 },
-      { service: "Express 12:00", price: 185.0, currency: "USD", days: 1 }
+      { service: "Express 12:00", price: 185.0, currency: "USD", days: 1 },
     ];
   }
 }

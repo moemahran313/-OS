@@ -9,10 +9,8 @@ const router = Router();
 
 router.get("/", authenticate, async (req: any, res) => {
   try {
-    const snap = await db.collection("leads")
-      .where("userId", "==", req.user.uid)
-      .get();
-    const leads = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const snap = await db.collection("leads").where("userId", "==", req.user.uid).get();
+    const leads = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     res.json(leads);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -51,16 +49,16 @@ router.post("/", authenticate, async (req: any, res) => {
       userId: req.user.uid,
       value: value ? parseFloat(value) : 0,
       status: req.body.status || "new",
-      createdAt: new Date()
+      createdAt: new Date(),
     };
-    
+
     const docRef = await db.collection("leads").add(leadData);
 
     logAudit("CRM", { action: "Create Lead", id: docRef.id }, leadData, req);
-    
+
     // Trigger webhooks
     executeWebhooks(req.user.uid, "lead.created", { id: docRef.id, ...leadData });
-    
+
     res.status(201).json({ id: docRef.id, ...leadData });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -72,7 +70,7 @@ router.put("/:id", authenticate, async (req: any, res) => {
     const { value, ...rest } = req.body;
     const updateData: any = { ...rest };
     if (value !== undefined) updateData.value = parseFloat(value);
-    
+
     await db.collection("leads").doc(req.params.id).update(updateData);
     res.json({ success: true });
   } catch (err: any) {
@@ -84,11 +82,11 @@ router.post("/:id/score", authenticate, async (req: any, res) => {
   try {
     const leadId = req.params.id;
     const leadDoc = await db.collection("leads").doc(leadId).get();
-    
+
     if (!leadDoc.exists) {
       return res.status(404).json({ error: "Lead not found" });
     }
-    
+
     const leadData = leadDoc.data();
     if (leadData?.userId !== req.user.uid) {
       return res.status(403).json({ error: "Unauthorized access to this lead" });
@@ -103,9 +101,9 @@ router.post("/:id/score", authenticate, async (req: any, res) => {
       apiKey: apiKey,
       httpOptions: {
         headers: {
-          'User-Agent': 'aistudio-build',
-        }
-      }
+          "User-Agent": "aistudio-build",
+        },
+      },
     });
 
     const prompt = `Analyze this sales lead and assign a lead priority score:
@@ -138,11 +136,11 @@ Provide:
             leadScoreReason: {
               type: Type.STRING,
               description: "Short reason and strategic sales advice in Arabic.",
-            }
+            },
           },
-          required: ["leadScore", "leadScoreReason"]
-        }
-      }
+          required: ["leadScore", "leadScoreReason"],
+        },
+      },
     });
 
     const resultText = response.text;
@@ -159,7 +157,7 @@ Provide:
       id: `h_ai_${Date.now()}`,
       date: new Date().toISOString(),
       action: "تقييم الذكاء الاصطناعي",
-      details: `تم تقييم الفرصة البيعية كـ (${score}) بناءً على تحليل البيانات. السبب: ${reason}`
+      details: `تم تقييم الفرصة البيعية كـ (${score}) بناءً على تحليل البيانات. السبب: ${reason}`,
     };
 
     const updatedHistory = [newHistoryItem, ...(leadData.history || [])];
@@ -168,7 +166,7 @@ Provide:
       leadScore: score,
       leadScoreReason: reason,
       leadScoreDate: new Date().toISOString(),
-      history: updatedHistory
+      history: updatedHistory,
     };
 
     await db.collection("leads").doc(leadId).update(updatePayload);

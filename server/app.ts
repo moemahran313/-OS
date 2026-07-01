@@ -23,11 +23,14 @@ import auditLogRoutes from "./routes/auditLogs.js";
 import certificateRoutes from "./routes/certificate.js";
 import workflowRoutes from "./routes/workflows.js";
 import negotiationRoutes from "./routes/negotiations.js";
+import openwaRoutes from "./routes/openwa.js";
+import accountingRoutes from "./routes/accounting.js";
+import organizationsRoutes from "./routes/organizations.js";
 
 export async function createApp() {
   const app = express();
 
-  app.set('trust proxy', 1);
+  app.set("trust proxy", 1);
   app.use(express.json());
   app.use(cookieParser());
 
@@ -58,9 +61,12 @@ export async function createApp() {
   app.use("/api/certificate", certificateRoutes);
   app.use("/api/workflows", workflowRoutes);
   app.use("/api/negotiations", negotiationRoutes);
-  
+  app.use("/api/openwa", openwaRoutes);
+  app.use("/api/accounting", accountingRoutes);
+  app.use("/api/organizations", organizationsRoutes);
+
   // HR routes like /api/nitaqat/calculate and /api/workpermit/calculate
-  app.use("/api", hrRoutes); 
+  app.use("/api", hrRoutes);
 
   // Health check
   app.get("/api/health", (req, res) => {

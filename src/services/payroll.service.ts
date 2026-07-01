@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
 export class PayrollService {
@@ -16,11 +16,11 @@ export class PayrollService {
       where("status", "==", "approved")
     );
     const advSnap = await getDocs(advQuery);
-    const advances = advSnap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+    const advances = advSnap.docs.map((d) => ({ id: d.id, ...d.data() }) as any);
 
     const payrollEntries = employeesSnap.docs.map((docSnap) => {
       const e = docSnap.data();
-      
+
       // Base contract salary package (Basic + Housing + Transport)
       const basePackageHalalas =
         (e.baseSalaryHalalas || 0) +
@@ -35,19 +35,20 @@ export class PayrollService {
       const grossHalalas = basePackageHalalas + overtimeHalalas + commissionHalalas;
 
       // Check for advance installments for this employee
-      const employeeAdvances = advances.filter(a => a.employeeId === docSnap.id);
+      const employeeAdvances = advances.filter((a) => a.employeeId === docSnap.id);
       let advanceDeductionHalalas = 0;
-      employeeAdvances.forEach(adv => {
-          const advAmountHalalas = adv.amountHalalas || (adv.amount ? adv.amount * 100 : 0);
-          if (adv.installments && advAmountHalalas) {
-              const installmentHalalas = Math.round(advAmountHalalas / adv.installments);
-              advanceDeductionHalalas += installmentHalalas;
-          }
+      employeeAdvances.forEach((adv) => {
+        const advAmountHalalas = adv.amountHalalas || (adv.amount ? adv.amount * 100 : 0);
+        if (adv.installments && advAmountHalalas) {
+          const installmentHalalas = Math.round(advAmountHalalas / adv.installments);
+          advanceDeductionHalalas += installmentHalalas;
+        }
       });
 
       // Nationality check for GOSI calculation
-      const isSaudi = !e.nationality || 
-        e.nationality.toString().toLowerCase().includes("saud") || 
+      const isSaudi =
+        !e.nationality ||
+        e.nationality.toString().toLowerCase().includes("saud") ||
         e.nationality.toString().includes("سعودي");
 
       // GOSI deduction computed legally on (basic + housing)
@@ -60,7 +61,11 @@ export class PayrollService {
       const absenceDeductionHalalas = Math.round(((e.baseSalaryHalalas || 0) / 30) * absenceDays);
 
       // Total deductions (GOSI + absence + other/custom manager deductions + advances)
-      const deductionsHalalas = gosiDeductionHalalas + absenceDeductionHalalas + (e.otherDeductionsHalalas || 0) + advanceDeductionHalalas;
+      const deductionsHalalas =
+        gosiDeductionHalalas +
+        absenceDeductionHalalas +
+        (e.otherDeductionsHalalas || 0) +
+        advanceDeductionHalalas;
       const netHalalas = grossHalalas - deductionsHalalas;
 
       return {
@@ -87,8 +92,14 @@ export class PayrollService {
 
     const totalGosi = payrollEntries.reduce((acc, p) => acc + (p.gosiDeduction || 0), 0);
     const totalAbsence = payrollEntries.reduce((acc, p) => acc + (p.absenceDeduction || 0), 0);
-    const totalOtherDeductions = payrollEntries.reduce((acc, p) => acc + (p.otherDeductions || 0), 0);
-    const totalAdvanceDeductions = payrollEntries.reduce((acc, p) => acc + (p.advanceDeductions || 0), 0);
+    const totalOtherDeductions = payrollEntries.reduce(
+      (acc, p) => acc + (p.otherDeductions || 0),
+      0
+    );
+    const totalAdvanceDeductions = payrollEntries.reduce(
+      (acc, p) => acc + (p.advanceDeductions || 0),
+      0
+    );
 
     return {
       id: `pr_${Date.now()}`,
@@ -115,17 +126,17 @@ export class PayrollService {
     }
 
     await updateDoc(runRef, {
-      mudadSifGenerated: true
+      mudadSifGenerated: true,
     });
 
-    let csvData = '\uFEFF'; 
+    let csvData = "\uFEFF";
     csvData += `رقم هوية الموظف,اسم الموظف,الايبان,الراتب الاساسي,بدل السكن,بدلات اخرى,الخصومات,الراتب الصافي\n`;
-    
+
     for (const e of run.entries) {
       const empDoc = await getDoc(doc(db, "employees", e.employeeId));
       const emp = empDoc.data() || {};
-      
-      const empIdNumber = emp.idNumber || emp.employeeId || e.employeeId || ""; 
+
+      const empIdNumber = emp.idNumber || emp.employeeId || e.employeeId || "";
       const name = e.employeeName || emp.name || "";
       const iban = emp.iban || "";
       const basic = e.basic || 0;
@@ -139,7 +150,7 @@ export class PayrollService {
 
     return {
       data: csvData,
-      period: run.period
+      period: run.period,
     };
   }
 
@@ -150,26 +161,26 @@ export class PayrollService {
       where("period", "==", period)
     );
     const snap = await getDocs(q);
-    
+
     if (snap.empty) {
       throw new Error("No payroll runs found for this period");
     }
 
-    let csvData = '\uFEFF'; 
+    let csvData = "\uFEFF";
     csvData += `رقم هوية الموظف,اسم الموظف,الايبان,الراتب الاساسي,بدل السكن,بدلات اخرى,الخصومات,الراتب الصافي\n`;
 
     for (const d of snap.docs) {
       // Mark run as having the SIF generated
       await updateDoc(doc(db, "payroll_runs", d.id), {
-        mudadSifGenerated: true
+        mudadSifGenerated: true,
       });
 
       const run = d.data();
       for (const e of run.entries) {
         const empDoc = await getDoc(doc(db, "employees", e.employeeId));
         const emp = empDoc.data() || {};
-        
-        const empIdNumber = emp.idNumber || emp.employeeId || e.employeeId || ""; 
+
+        const empIdNumber = emp.idNumber || emp.employeeId || e.employeeId || "";
         const name = e.employeeName || emp.name || "";
         const iban = emp.iban || "";
         const basic = e.basic || 0;
@@ -184,7 +195,7 @@ export class PayrollService {
 
     return {
       data: csvData,
-      period
+      period,
     };
   }
 
@@ -205,7 +216,7 @@ export class PayrollService {
 
     return {
       data: wpsData,
-      period: run.period
+      period: run.period,
     };
   }
 
@@ -217,14 +228,14 @@ export class PayrollService {
       throw new Error("Payroll run not found");
     }
 
-    let csvData = '\uFEFF' + `اسم الموظف,البنك,الراتب الأساسي,البدلات,الخصومات,الصافي\n`;
+    let csvData = "\uFEFF" + `اسم الموظف,البنك,الراتب الأساسي,البدلات,الخصومات,الصافي\n`;
     run.entries.forEach((e: any) => {
       csvData += `${e.employeeName || ""},${e.bank || ""},${e.basic},${e.allowances},${e.deductions},${e.netPay}\n`;
     });
 
     return {
       data: csvData,
-      period: run.period
+      period: run.period,
     };
   }
 }

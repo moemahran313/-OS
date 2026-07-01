@@ -2,7 +2,8 @@ import { db } from "./firebase.js";
 
 export class PayrollService {
   static async simulatePayroll(userId: string, period: string) {
-    const employeesSnap = await db.collection("employees")
+    const employeesSnap = await db
+      .collection("employees")
       .where("userId", "==", userId)
       .where("status", "==", "active")
       .get();
@@ -57,7 +58,7 @@ export class PayrollService {
 
     return {
       data: wpsData,
-      period: run.period
+      period: run.period,
     };
   }
 
@@ -69,14 +70,14 @@ export class PayrollService {
       throw new Error("Payroll run not found");
     }
 
-    let csvData = '\uFEFF' + `اسم الموظف,البنك,الراتب الأساسي,البدلات,الخصومات,الصافي\n`;
+    let csvData = "\uFEFF" + `اسم الموظف,البنك,الراتب الأساسي,البدلات,الخصومات,الصافي\n`;
     run.entries.forEach((e: any) => {
       csvData += `${e.employeeName || ""},${e.bank || ""},${e.basic},${e.allowances},${e.deductions},${e.netPay}\n`;
     });
 
     return {
       data: csvData,
-      period: run.period
+      period: run.period,
     };
   }
 }
