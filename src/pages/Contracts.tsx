@@ -313,18 +313,18 @@ const getGeneratedTexts = (d: ContractData) => {
   const getArVal = (v: string) => (v && v.trim() !== "" ? v : "........................");
   const getEnVal = (v: string) => (v && v.trim() !== "" ? v : "........................");
 
-  let titleAr = cfg.titleAr;
-  let titleEn = cfg.titleEn;
-  let party1TitleAr = cfg.party1Ar;
-  let party1TitleEn = cfg.party1En;
-  let party2TitleAr = cfg.party2Ar;
-  let party2TitleEn = cfg.party2En;
+  const titleAr = cfg.titleAr;
+  const titleEn = cfg.titleEn;
+  const party1TitleAr = cfg.party1Ar;
+  const party1TitleEn = cfg.party1En;
+  const party2TitleAr = cfg.party2Ar;
+  const party2TitleEn = cfg.party2En;
 
-  let party1TextAr = `الاسم: ${getArVal(d.employerName)}\nسجل تجاري: ${getArVal(d.employerCR)}\nالعنوان: ${getArVal(d.employerAddress)}\nيمثلها: ${getArVal(d.employerRep)}`;
-  let party1TextEn = `Name: ${getEnVal(d.employerNameEn)}\nCR No: ${getEnVal(d.employerCR)}\nAddress: ${getEnVal(d.employerAddressEn)}\nRepresented By: ${getEnVal(d.employerRepEn)}`;
+  const party1TextAr = `الاسم: ${getArVal(d.employerName)}\nسجل تجاري: ${getArVal(d.employerCR)}\nالعنوان: ${getArVal(d.employerAddress)}\nيمثلها: ${getArVal(d.employerRep)}`;
+  const party1TextEn = `Name: ${getEnVal(d.employerNameEn)}\nCR No: ${getEnVal(d.employerCR)}\nAddress: ${getEnVal(d.employerAddressEn)}\nRepresented By: ${getEnVal(d.employerRepEn)}`;
 
-  let party2TextAr = `الاسم: ${getArVal(d.employeeName)}\nالجنسية: ${getArVal(d.employeeNationality)} - هوية رقم: ${getArVal(d.employeeId)}\nالعنوان: ${getArVal(d.employeeAddress)}\nالجوال: ${getArVal(d.employeeMobile)} - إيميل: ${getArVal(d.employeeEmail)}`;
-  let party2TextEn = `Name: ${getEnVal(d.employeeNameEn)}\nNationality: ${getEnVal(d.employeeNationalityEn)} - ID: ${getEnVal(d.employeeId)}\nAddress: ${getEnVal(d.employeeAddressEn)}\nMobile: ${getEnVal(d.employeeMobile)} - Email: ${getEnVal(d.employeeEmail)}`;
+  const party2TextAr = `الاسم: ${getArVal(d.employeeName)}\nالجنسية: ${getArVal(d.employeeNationality)} - هوية رقم: ${getArVal(d.employeeId)}\nالعنوان: ${getArVal(d.employeeAddress)}\nالجوال: ${getArVal(d.employeeMobile)} - إيميل: ${getArVal(d.employeeEmail)}`;
+  const party2TextEn = `Name: ${getEnVal(d.employeeNameEn)}\nNationality: ${getEnVal(d.employeeNationalityEn)} - ID: ${getEnVal(d.employeeId)}\nAddress: ${getEnVal(d.employeeAddressEn)}\nMobile: ${getEnVal(d.employeeMobile)} - Email: ${getEnVal(d.employeeEmail)}`;
 
   let clause1TitleAr = "البند الأول: موضوع العقد";
   let clause1TitleEn = "Clause 1: Subject Matter";

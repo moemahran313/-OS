@@ -43,7 +43,7 @@ router.post("/send", authenticate, async (req: any, res) => {
     }
 
     // Format phone number for WhatsApp (needs to end in @c.us for many OpenWA endpoints)
-    let cleanedPhone = cleanPhoneNumber(to);
+    const cleanedPhone = cleanPhoneNumber(to);
     if (!cleanedPhone) {
       return res.status(400).json({ error: "رقم الهاتف غير صالح." });
     }

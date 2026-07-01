@@ -26,7 +26,7 @@ const rawDb = getFirestore(getFirebaseAdmin(), config.firestoreDatabaseId);
 // --- SEAMLESS FIREBASE FIRESTORE LOCAL FALLBACK SYSTEM ---
 // If the Firebase Admin SDK is running in an environment without direct GCP IAM permissions
 // (like development/preview sandboxes), any Firestore query throws a PERMISSION_DENIED error.
-// To prevent 500 errors and keep the app 100% functional, this system automatically falls back 
+// To prevent 500 errors and keep the app 100% functional, this system automatically falls back
 // to a local JSON-based document database.
 
 const fallbackFilePath = path.join(process.cwd(), "local_firestore_fallback.json");
@@ -50,7 +50,8 @@ function writeFallbackDb(data: Record<string, Record<string, any>>) {
   }
 }
 
-const generateId = () => Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+const generateId = () =>
+  Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
 class FallbackDocumentSnapshot {
   id: string;
@@ -110,7 +111,10 @@ class FallbackDocumentReference {
 
   async update(data: any) {
     const dbData = readFallbackDb();
-    if (!dbData[this._collectionName] || !idExistsInCollection(dbData[this._collectionName]!, this.id)) {
+    if (
+      !dbData[this._collectionName] ||
+      !idExistsInCollection(dbData[this._collectionName]!, this.id)
+    ) {
       throw new Error(`Document ${this.id} not found in collection ${this._collectionName}`);
     }
     dbData[this._collectionName]![this.id] = { ...dbData[this._collectionName]![this.id], ...data };
@@ -120,7 +124,10 @@ class FallbackDocumentReference {
 
   async delete() {
     const dbData = readFallbackDb();
-    if (dbData[this._collectionName] && idExistsInCollection(dbData[this._collectionName]!, this.id)) {
+    if (
+      dbData[this._collectionName] &&
+      idExistsInCollection(dbData[this._collectionName]!, this.id)
+    ) {
       delete dbData[this._collectionName]![this.id];
       writeFallbackDb(dbData);
     }
@@ -185,7 +192,9 @@ class FallbackQuery {
   async get() {
     const dbData = readFallbackDb();
     const col = dbData[this._collectionName] || {};
-    let docs = Object.entries(col).map(([id, data]) => new FallbackDocumentSnapshot(id, true, data));
+    let docs = Object.entries(col).map(
+      ([id, data]) => new FallbackDocumentSnapshot(id, true, data)
+    );
 
     // Apply filters
     for (const filter of this._filters) {
@@ -319,7 +328,7 @@ const dbWrapper: any = {
   // Collection factory
   collection(collectionName: string) {
     const rawCollection = rawDb.collection(collectionName);
-    
+
     // Return a proxy that intercepts calls and falls back if permission is denied
     return new Proxy(rawCollection, {
       get(target, prop, receiver) {
@@ -333,8 +342,14 @@ const dbWrapper: any = {
                     try {
                       return await docTarget.get();
                     } catch (err: any) {
-                      if (err.message?.includes("PERMISSION_DENIED") || err.code === 7 || err.code === "permission-denied") {
-                        console.warn(`[Firestore Fallback] Permission Denied on doc get for ${collectionName}/${docTarget.id}. Falling back to local DB.`);
+                      if (
+                        err.message?.includes("PERMISSION_DENIED") ||
+                        err.code === 7 ||
+                        err.code === "permission-denied"
+                      ) {
+                        console.warn(
+                          `[Firestore Fallback] Permission Denied on doc get for ${collectionName}/${docTarget.id}. Falling back to local DB.`
+                        );
                         const fbDoc = new FallbackDocumentReference(collectionName, docTarget.id);
                         return await fbDoc.get();
                       }
@@ -347,8 +362,14 @@ const dbWrapper: any = {
                     try {
                       return await docTarget.set(data, options);
                     } catch (err: any) {
-                      if (err.message?.includes("PERMISSION_DENIED") || err.code === 7 || err.code === "permission-denied") {
-                        console.warn(`[Firestore Fallback] Permission Denied on doc set for ${collectionName}/${docTarget.id}. Falling back to local DB.`);
+                      if (
+                        err.message?.includes("PERMISSION_DENIED") ||
+                        err.code === 7 ||
+                        err.code === "permission-denied"
+                      ) {
+                        console.warn(
+                          `[Firestore Fallback] Permission Denied on doc set for ${collectionName}/${docTarget.id}. Falling back to local DB.`
+                        );
                         const fbDoc = new FallbackDocumentReference(collectionName, docTarget.id);
                         return await fbDoc.set(data, options);
                       }
@@ -361,8 +382,14 @@ const dbWrapper: any = {
                     try {
                       return await docTarget.update(data);
                     } catch (err: any) {
-                      if (err.message?.includes("PERMISSION_DENIED") || err.code === 7 || err.code === "permission-denied") {
-                        console.warn(`[Firestore Fallback] Permission Denied on doc update for ${collectionName}/${docTarget.id}. Falling back to local DB.`);
+                      if (
+                        err.message?.includes("PERMISSION_DENIED") ||
+                        err.code === 7 ||
+                        err.code === "permission-denied"
+                      ) {
+                        console.warn(
+                          `[Firestore Fallback] Permission Denied on doc update for ${collectionName}/${docTarget.id}. Falling back to local DB.`
+                        );
                         const fbDoc = new FallbackDocumentReference(collectionName, docTarget.id);
                         return await fbDoc.update(data);
                       }
@@ -375,8 +402,14 @@ const dbWrapper: any = {
                     try {
                       return await docTarget.delete();
                     } catch (err: any) {
-                      if (err.message?.includes("PERMISSION_DENIED") || err.code === 7 || err.code === "permission-denied") {
-                        console.warn(`[Firestore Fallback] Permission Denied on doc delete for ${collectionName}/${docTarget.id}. Falling back to local DB.`);
+                      if (
+                        err.message?.includes("PERMISSION_DENIED") ||
+                        err.code === 7 ||
+                        err.code === "permission-denied"
+                      ) {
+                        console.warn(
+                          `[Firestore Fallback] Permission Denied on doc delete for ${collectionName}/${docTarget.id}. Falling back to local DB.`
+                        );
                         const fbDoc = new FallbackDocumentReference(collectionName, docTarget.id);
                         return await fbDoc.delete();
                       }
@@ -385,7 +418,7 @@ const dbWrapper: any = {
                   };
                 }
                 return (Reflect.get(docTarget, docProp) as any)?.bind(docTarget);
-              }
+              },
             });
           };
         }
@@ -395,8 +428,14 @@ const dbWrapper: any = {
             try {
               return await target.add(data);
             } catch (err: any) {
-              if (err.message?.includes("PERMISSION_DENIED") || err.code === 7 || err.code === "permission-denied") {
-                console.warn(`[Firestore Fallback] Permission Denied on collection add for ${collectionName}. Falling back to local DB.`);
+              if (
+                err.message?.includes("PERMISSION_DENIED") ||
+                err.code === 7 ||
+                err.code === "permission-denied"
+              ) {
+                console.warn(
+                  `[Firestore Fallback] Permission Denied on collection add for ${collectionName}. Falling back to local DB.`
+                );
                 const fbCol = new FallbackCollectionReference(collectionName);
                 return await fbCol.add(data);
               }
@@ -408,7 +447,7 @@ const dbWrapper: any = {
         if (prop === "where") {
           return (field: string, op: string, val: any) => {
             const rawQuery = target.where(field, op as any, val);
-            
+
             // Return query proxy
             const wrapQuery = (q: any): any => {
               return new Proxy(q, {
@@ -418,8 +457,14 @@ const dbWrapper: any = {
                       try {
                         return await qTarget.get();
                       } catch (err: any) {
-                        if (err.message?.includes("PERMISSION_DENIED") || err.code === 7 || err.code === "permission-denied") {
-                          console.warn(`[Firestore Fallback] Permission Denied on query get for ${collectionName}. Falling back to local DB.`);
+                        if (
+                          err.message?.includes("PERMISSION_DENIED") ||
+                          err.code === 7 ||
+                          err.code === "permission-denied"
+                        ) {
+                          console.warn(
+                            `[Firestore Fallback] Permission Denied on query get for ${collectionName}. Falling back to local DB.`
+                          );
                           const fbCol = new FallbackCollectionReference(collectionName);
                           // Build fallback query matching this chain
                           let fbQ: any = fbCol;
@@ -447,7 +492,7 @@ const dbWrapper: any = {
                     };
                   }
                   return (Reflect.get(qTarget, qProp) as any)?.bind(qTarget);
-                }
+                },
               });
             };
             return wrapQuery(rawQuery);
@@ -455,7 +500,7 @@ const dbWrapper: any = {
         }
 
         return (Reflect.get(target, prop) as any)?.bind(target);
-      }
+      },
     });
   },
 
@@ -469,8 +514,14 @@ const dbWrapper: any = {
             try {
               return await target.commit();
             } catch (err: any) {
-              if (err.message?.includes("PERMISSION_DENIED") || err.code === 7 || err.code === "permission-denied") {
-                console.warn(`[Firestore Fallback] Permission Denied on batch commit. Falling back to local DB.`);
+              if (
+                err.message?.includes("PERMISSION_DENIED") ||
+                err.code === 7 ||
+                err.code === "permission-denied"
+              ) {
+                console.warn(
+                  `[Firestore Fallback] Permission Denied on batch commit. Falling back to local DB.`
+                );
                 // Return a resolved promise as if committed locally
                 return { writeTime: new Date() };
               }
@@ -479,7 +530,7 @@ const dbWrapper: any = {
           };
         }
         return (Reflect.get(target, prop) as any)?.bind(target);
-      }
+      },
     });
   },
 
@@ -488,36 +539,53 @@ const dbWrapper: any = {
     try {
       return await rawDb.runTransaction(updateFunction, transactionOptions);
     } catch (err: any) {
-      if (err.message?.includes("PERMISSION_DENIED") || err.code === 7 || err.code === "permission-denied") {
-        console.warn(`[Firestore Fallback] Permission Denied on transaction run. Falling back to mock transaction.`);
+      if (
+        err.message?.includes("PERMISSION_DENIED") ||
+        err.code === 7 ||
+        err.code === "permission-denied"
+      ) {
+        console.warn(
+          `[Firestore Fallback] Permission Denied on transaction run. Falling back to mock transaction.`
+        );
         // Run simple local fallback logic
         const mockTransaction: any = {
           get: async (docRef: any) => {
-            const fbDoc = new FallbackDocumentReference(docRef._collectionName || "unknown", docRef.id);
+            const fbDoc = new FallbackDocumentReference(
+              docRef._collectionName || "unknown",
+              docRef.id
+            );
             return await fbDoc.get();
           },
           set: (docRef: any, data: any, options?: any) => {
-            const fbDoc = new FallbackDocumentReference(docRef._collectionName || "unknown", docRef.id);
+            const fbDoc = new FallbackDocumentReference(
+              docRef._collectionName || "unknown",
+              docRef.id
+            );
             fbDoc.set(data, options);
             return mockTransaction;
           },
           update: (docRef: any, data: any) => {
-            const fbDoc = new FallbackDocumentReference(docRef._collectionName || "unknown", docRef.id);
+            const fbDoc = new FallbackDocumentReference(
+              docRef._collectionName || "unknown",
+              docRef.id
+            );
             fbDoc.update(data);
             return mockTransaction;
           },
           delete: (docRef: any) => {
-            const fbDoc = new FallbackDocumentReference(docRef._collectionName || "unknown", docRef.id);
+            const fbDoc = new FallbackDocumentReference(
+              docRef._collectionName || "unknown",
+              docRef.id
+            );
             fbDoc.delete();
             return mockTransaction;
-          }
+          },
         };
         return await updateFunction(mockTransaction);
       }
       throw err;
     }
-  }
+  },
 };
 
 export const db = dbWrapper;
-

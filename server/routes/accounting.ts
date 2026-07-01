@@ -927,12 +927,10 @@ router.post("/exchange-rates/revalue", authenticate, async (req: any, res) => {
     const { companyId, currencyCode, rate, accountIds } = req.body;
 
     if (!companyId || !currencyCode || !rate || !accountIds || !Array.isArray(accountIds)) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "المعلومات المطلوبة (الشركة، كود العملة، معدل الصرف الجديد، قائمة الحسابات) غير مكتملة.",
-        });
+      return res.status(400).json({
+        error:
+          "المعلومات المطلوبة (الشركة، كود العملة، معدل الصرف الجديد، قائمة الحسابات) غير مكتملة.",
+      });
     }
 
     const newRate = parseFloat(rate);
@@ -984,12 +982,12 @@ router.post("/exchange-rates/revalue", authenticate, async (req: any, res) => {
 
     // Offset FX Gain/Loss account
     // Find or create FX Gain/Loss account in the COA
-    let fxAcc = accountsSnap.docs.find(
+    const fxAcc = accountsSnap.docs.find(
       (d) => d.data().code === (totalAdjustment > 0 ? "402002" : "502005")
     );
     let fxAccId = fxAcc ? fxAcc.id : null;
-    let fxAccCode = fxAcc ? fxAcc.data().code : totalAdjustment > 0 ? "402002" : "502005";
-    let fxAccName = fxAcc
+    const fxAccCode = fxAcc ? fxAcc.data().code : totalAdjustment > 0 ? "402002" : "502005";
+    const fxAccName = fxAcc
       ? fxAcc.data().nameAr
       : totalAdjustment > 0
         ? "أرباح فروقات أسعار الصرف (FX)"
@@ -1177,11 +1175,9 @@ router.post("/accounts", authenticate, async (req: any, res) => {
     const userId = req.user.uid;
 
     if (!code || !nameAr || !nameEn || !type || !companyId) {
-      return res
-        .status(400)
-        .json({
-          error: "جميع الحقول (الشركة، الرمز، الاسم العربي، الاسم الإنجليزي، النوع) مطلوبة.",
-        });
+      return res.status(400).json({
+        error: "جميع الحقول (الشركة، الرمز، الاسم العربي، الاسم الإنجليزي، النوع) مطلوبة.",
+      });
     }
 
     // Check duplicate code in this company
@@ -1271,11 +1267,9 @@ router.post("/journals", authenticate, async (req: any, res) => {
     } = req.body;
 
     if (!companyId || !date || !lines || !Array.isArray(lines) || lines.length < 2) {
-      return res
-        .status(400)
-        .json({
-          error: "جميع المعلومات الأساسية (الشركة والتاريخ وسطري قيد محاسبيين كحد أدنى) مطلوبة.",
-        });
+      return res.status(400).json({
+        error: "جميع المعلومات الأساسية (الشركة والتاريخ وسطري قيد محاسبيين كحد أدنى) مطلوبة.",
+      });
     }
 
     // CHECK FISCAL YEAR AND PERIOD LOCK STATUS
@@ -1297,11 +1291,9 @@ router.post("/journals", authenticate, async (req: any, res) => {
           (p: any) => date >= p.startDate && date <= p.endDate
         );
         if (period && ["Hard Locked", "Closed"].includes(period.status)) {
-          return res
-            .status(400)
-            .json({
-              error: `الفترة المالية المقابلة (${period.name}) مغلقة أو مقفلة نهائياً لا تتيح التعديل.`,
-            });
+          return res.status(400).json({
+            error: `الفترة المالية المقابلة (${period.name}) مغلقة أو مقفلة نهائياً لا تتيح التعديل.`,
+          });
         }
       }
     }
@@ -1624,10 +1616,10 @@ router.post("/journals/:id/post", authenticate, async (req: any, res) => {
           // Company B: Due To Company A (Liability)
           const allAccsSnap = await db.collection("accounts").where("userId", "==", userId).get();
 
-          let compA_Clearing = allAccsSnap.docs.find(
+          const compA_Clearing = allAccsSnap.docs.find(
             (d) => d.data().companyId === journal.companyId && d.data().code === "102002"
           );
-          let compB_Clearing = allAccsSnap.docs.find(
+          const compB_Clearing = allAccsSnap.docs.find(
             (d) => d.data().companyId === destCompId && d.data().code === "201002"
           );
 

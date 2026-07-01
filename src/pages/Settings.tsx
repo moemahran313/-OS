@@ -50,6 +50,7 @@ import SecurityCompliance from "./SecurityCompliance";
 import DeveloperTools from "./DeveloperTools";
 import MobileSimulator from "../components/MobileSimulator";
 import MultiTenancySettings from "../components/MultiTenancySettings";
+import AIPromptLibrary from "../components/AIPromptLibrary";
 
 export default function Settings() {
   const { t } = useTranslation();
@@ -151,6 +152,7 @@ export default function Settings() {
       label: t("settings.tabs.compliance", "الامتثال والأمان المتقدم"),
       icon: ShieldCheck,
     },
+    { id: "ai_prompts", label: t("settings.tabs.ai_prompts", "موجهات الذكاء الاصطناعي"), icon: Sparkles },
     { id: "developer", label: t("settings.tabs.developer", "أدوات المطورين"), icon: Code2 },
     { id: "mobile", label: t("settings.tabs.mobile", "تطبيق الجوال والتحكم"), icon: Smartphone },
   ];
@@ -1761,6 +1763,12 @@ export default function Settings() {
               </div>
             )}
 
+            {activeTab === "ai_prompts" && (
+              <div className="relative z-10 -mx-6 -mt-6">
+                <AIPromptLibrary />
+              </div>
+            )}
+
             {activeTab === "developer" && (
               <div className="relative z-10 -mx-6 -mt-6">
                 <DeveloperTools />
@@ -1773,7 +1781,7 @@ export default function Settings() {
               </div>
             )}
 
-            {activeTab !== "organizations" && (
+            {activeTab !== "organizations" && activeTab !== "ai_prompts" && (
               <div className="mt-12 pt-6 border-t border-zinc-100 flex items-center justify-between bg-white relative z-10 w-full rounded-b-3xl">
                 <AnimatePresence>
                   {saved && (

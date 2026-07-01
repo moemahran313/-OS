@@ -587,7 +587,7 @@ export default function CRM() {
   const submitStatusChange = (addNote: boolean) => {
     if (!statusChangePrompt) return;
 
-    let items = [...statusChangePrompt.itemsToUpdate];
+    const items = [...statusChangePrompt.itemsToUpdate];
 
     if (addNote && statusChangeNote.trim()) {
       const noteHistoryItem = {

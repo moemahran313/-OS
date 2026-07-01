@@ -206,7 +206,7 @@ export default function ReceivingFulfillment({
 
     try {
       let stockError = false;
-      let shortfalls: string[] = [];
+      const shortfalls: string[] = [];
 
       // Check stock sufficiency in target warehouse
       so.items.forEach((soItem: any) => {

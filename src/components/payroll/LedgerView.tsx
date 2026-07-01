@@ -462,7 +462,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
       where("authorUid", "==", user.uid)
     );
     const unsubAccounts = onSnapshot(qAccounts, async (snapshot) => {
-      let docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
       // Bootstrap accounts if empty
       if (docs.length === 0) {
@@ -503,7 +503,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
     const qAudit = query(collection(db, "audit_logs"), where("authorUid", "==", user.uid));
     const unsubAudit = onSnapshot(qAudit, async (snapshot) => {
-      let docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
       // Bootstrap audit logs if empty
       if (docs.length === 0) {
@@ -549,7 +549,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
     const qCostCenters = query(collection(db, "cost_centers"), where("userId", "==", user.uid));
     const unsubCostCenters = onSnapshot(qCostCenters, async (snapshot) => {
-      let docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       if (docs.length === 0) {
         try {
           const batch = writeBatch(db);
@@ -616,7 +616,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
     const qFixedAssets = query(collection(db, "fixed_assets"), where("userId", "==", user.uid));
     const unsubFixedAssets = onSnapshot(qFixedAssets, async (snapshot) => {
-      let docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       if (docs.length === 0) {
         try {
           const batch = writeBatch(db);
@@ -640,7 +640,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
 
     const qVouchers = query(collection(db, "vouchers"), where("userId", "==", user.uid));
     const unsubVouchers = onSnapshot(qVouchers, async (snapshot) => {
-      let docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      const docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       if (docs.length === 0) {
         try {
           const batch = writeBatch(db);
@@ -787,7 +787,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
       });
 
       // Calculate Net Opening Balance
-      let openingBalance = isDebitType
+      const openingBalance = isDebitType
         ? openingDebit - openingCredit
         : openingCredit - openingDebit;
 
@@ -1051,7 +1051,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
     setEntryLines((prev) =>
       prev.map((line, idx) => {
         if (idx !== index) return line;
-        let updated = { ...line, [field]: value };
+        const updated = { ...line, [field]: value };
         if (field === "debit" && Number(value) > 0) updated.credit = 0;
         if (field === "credit" && Number(value) > 0) updated.debit = 0;
         return updated;

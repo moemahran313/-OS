@@ -330,7 +330,7 @@ export default function FWCOS() {
       let riskScore = 0;
       let isExpiring = false;
       let isCritical = false;
-      let alerts: AlertInfo[] = [];
+      const alerts: AlertInfo[] = [];
 
       const wpsRule = rules.find((r) => r.type === "wps");
       const isWpsActive = wpsRule?.countries.find((c: any) => c.code === w.country)?.active ?? true;

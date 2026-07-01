@@ -208,4 +208,65 @@ router.post("/create-meet", authenticate, async (req: any, res) => {
   }
 });
 
+// REST route to test system prompts with real data dynamically
+router.post("/test-prompt", authenticate, async (req: any, res) => {
+  try {
+    const { prompt, inputData, responseMimeType } = req.body;
+    if (!prompt) {
+      return res.status(400).json({
+        success: false,
+        error: "يجب توفير موجه النظام (System Prompt) للبدء في المعالجة.",
+      });
+    }
+
+    const ai = getGeminiClient();
+
+    const generateParams: any = {
+      model: "gemini-3.5-flash",
+      contents: inputData || "تجربة تشغيل الوكيل",
+      config: {
+        systemInstruction: prompt,
+      },
+    };
+
+    if (responseMimeType === "application/json") {
+      generateParams.config.responseMimeType = "application/json";
+    }
+
+    const response = await generateWithFallback(ai, generateParams);
+    const text = response.text || "";
+    let isJson = false;
+    let jsonPayload = null;
+
+    if (responseMimeType === "application/json") {
+      try {
+        jsonPayload = JSON.parse(text.trim());
+        isJson = true;
+      } catch (parseErr) {
+        // Fallback or retry clean parsing if needed
+        const cleanedText = text.replace(/```json/g, "").replace(/```/g, "").trim();
+        try {
+          jsonPayload = JSON.parse(cleanedText);
+          isJson = true;
+        } catch {
+          console.warn("Failed to parse response as JSON:", text);
+        }
+      }
+    }
+
+    return res.json({
+      success: true,
+      text,
+      isJson,
+      jsonPayload,
+    });
+  } catch (err: any) {
+    console.error("AI Prompt Test Failed:", err);
+    return res.status(500).json({
+      success: false,
+      error: err.message || "حدث خطأ غير متوقع أثناء معالجة الطلب بالذكاء الاصطناعي.",
+    });
+  }
+});
+
 export default router;

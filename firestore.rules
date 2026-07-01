@@ -168,6 +168,12 @@ service cloud.firestore {
       allow update: if isOwner(userId);
     }
 
+    // User Sessions Rules
+    match /user_sessions/{sessionId} {
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow list, get, update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
     // Compliance Rules
     match /compliance_rules/{ruleId} {
       allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;

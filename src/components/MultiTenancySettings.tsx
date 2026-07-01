@@ -28,6 +28,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { auth } from "../lib/firebase";
 
 export default function MultiTenancySettings() {
   // Navigation & View selection
@@ -90,12 +91,22 @@ export default function MultiTenancySettings() {
     },
   });
 
+  // Helper to fetch with Firebase ID Token
+  const authFetch = async (url: string, options: RequestInit = {}) => {
+    const token = await auth.currentUser?.getIdToken();
+    const headers = {
+      ...options.headers,
+      Authorization: token ? `Bearer ${token}` : "",
+    };
+    return fetch(url, { ...options, headers });
+  };
+
   // Fetch all necessary multi-tenancy information
   const loadContext = async () => {
     setLoading(true);
     try {
       // 1. Fetch active context
-      const contextRes = await fetch("/api/organizations/active");
+      const contextRes = await authFetch("/api/organizations/active");
       if (!contextRes.ok) throw new Error("Failed to fetch active context");
       const contextData = await contextRes.json();
       setActiveContext(contextData);
@@ -111,7 +122,7 @@ export default function MultiTenancySettings() {
         });
 
         // 2. Fetch companies of active organization
-        const compRes = await fetch("/api/organizations/companies");
+        const compRes = await authFetch("/api/organizations/companies");
         if (compRes.ok) {
           const compData = await compRes.json();
           setCompanies(compData);
@@ -119,7 +130,7 @@ export default function MultiTenancySettings() {
           // 3. Fetch branches of current active company
           const activeCompanyId = contextData.userContext.activeCompanyId;
           if (activeCompanyId) {
-            const brRes = await fetch(`/api/organizations/companies/${activeCompanyId}/branches`);
+            const brRes = await authFetch(`/api/organizations/companies/${activeCompanyId}/branches`);
             if (brRes.ok) {
               const brData = await brRes.json();
               setBranches(brData);
@@ -128,7 +139,7 @@ export default function MultiTenancySettings() {
         }
 
         // 4. Fetch subscription data
-        const subRes = await fetch(`/api/organizations/${orgId}/subscription`);
+        const subRes = await authFetch(`/api/organizations/${orgId}/subscription`);
         if (subRes.ok) {
           const subData = await subRes.json();
           setSubscription(subData);
@@ -136,7 +147,7 @@ export default function MultiTenancySettings() {
       }
 
       // 5. Fetch all organizations for switching list
-      const orgsRes = await fetch("/api/organizations");
+      const orgsRes = await authFetch("/api/organizations");
       if (orgsRes.ok) {
         const orgsData = await orgsRes.json();
         setOrganizations(orgsData);
@@ -157,7 +168,7 @@ export default function MultiTenancySettings() {
   const handleSwitchContext = async (orgId?: string, compId?: string, brId?: string) => {
     setActionLoading(true);
     try {
-      const res = await fetch("/api/organizations/switch", {
+      const res = await authFetch("/api/organizations/switch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -187,7 +198,7 @@ export default function MultiTenancySettings() {
     if (!newOrgName) return;
     setActionLoading(true);
     try {
-      const res = await fetch("/api/organizations", {
+      const res = await authFetch("/api/organizations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -219,7 +230,7 @@ export default function MultiTenancySettings() {
     if (!newCompanyNameAr || !newCompanyNameEn) return;
     setActionLoading(true);
     try {
-      const res = await fetch("/api/organizations/companies", {
+      const res = await authFetch("/api/organizations/companies", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -255,7 +266,7 @@ export default function MultiTenancySettings() {
 
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/organizations/companies/${activeCompanyId}/branches`, {
+      const res = await authFetch(`/api/organizations/companies/${activeCompanyId}/branches`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -288,7 +299,7 @@ export default function MultiTenancySettings() {
     if (!window.confirm("هل أنت متأكد من رغبتك في أرشفة وحذف هذه الشركة؟")) return;
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/organizations/companies/${compId}`, {
+      const res = await authFetch(`/api/organizations/companies/${compId}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete company");
@@ -309,7 +320,7 @@ export default function MultiTenancySettings() {
 
     setActionLoading(true);
     try {
-      const res = await fetch(
+      const res = await authFetch(
         `/api/organizations/companies/${activeCompanyId}/branches/${branchId}`,
         {
           method: "DELETE",
@@ -331,7 +342,7 @@ export default function MultiTenancySettings() {
     if (!orgId) return;
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/organizations/${orgId}/subscription`, {
+      const res = await authFetch(`/api/organizations/${orgId}/subscription`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan }),
@@ -353,7 +364,7 @@ export default function MultiTenancySettings() {
     if (!orgId) return;
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/organizations/${orgId}/settings`, {
+      const res = await authFetch(`/api/organizations/${orgId}/settings`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(settingsForm),

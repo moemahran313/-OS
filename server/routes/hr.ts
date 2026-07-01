@@ -11,8 +11,8 @@ router.post("/nitaqat/calculate", authenticate, async (req: any, res) => {
   let targetPlatinum = 0;
   let targetGreen = 0;
 
-  let platinumThreshold = 40;
-  let greenThreshold = 20;
+  const platinumThreshold = 40;
+  const greenThreshold = 20;
 
   if (percentage >= platinumThreshold) category = "Platinum";
   else if (percentage >= greenThreshold) category = "Green";

@@ -9,7 +9,7 @@ router.post("/zatca-validate", authenticate, async (req: any, res) => {
   const { crNumber, vatNumber, certificateNumber } = req.body;
 
   let isValid = false;
-  let errors: string[] = [];
+  const errors: string[] = [];
 
   if (crNumber) {
     if (/^\d{10}$/.test(crNumber)) {

@@ -754,11 +754,11 @@ export default function Payroll() {
 
   const sortedEmployees = useMemo(() => {
     if (!Array.isArray(employees)) return [];
-    let sortableEmployees = [...employees];
+    const sortableEmployees = [...employees];
     if (sortConfig !== null) {
       sortableEmployees.sort((a, b) => {
-        let aValue = a[sortConfig.key];
-        let bValue = b[sortConfig.key];
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
         // Handle nested or derived keys if needed, but simple property access should work.
         if (aValue < bValue) {
           return sortConfig.direction === "asc" ? -1 : 1;

@@ -524,15 +524,15 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
   // Helper to generate complementary colors
   const getComplementaryColors = (hex: string) => {
     // Basic hex to HSL (simplified)
-    let r = parseInt(hex.substring(1, 3), 16) / 255;
-    let g = parseInt(hex.substring(3, 5), 16) / 255;
-    let b = parseInt(hex.substring(5, 7), 16) / 255;
+    const r = parseInt(hex.substring(1, 3), 16) / 255;
+    const g = parseInt(hex.substring(3, 5), 16) / 255;
+    const b = parseInt(hex.substring(5, 7), 16) / 255;
 
     if (isNaN(r) || isNaN(g) || isNaN(b)) {
       return ["#10b981", "#3b82f6", "#6366f1", "#f43f5e", "#f59e0b"]; // fallback
     }
 
-    let max = Math.max(r, g, b),
+    const max = Math.max(r, g, b),
       min = Math.min(r, g, b);
     let h = 0,
       s,
@@ -541,7 +541,7 @@ export default function InvoiceBuilder({ onSave, onCancel, initialData }: Invoic
     if (max === min) {
       h = s = 0; // achromatic
     } else {
-      let d = max - min;
+      const d = max - min;
       s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
       switch (max) {
         case r:

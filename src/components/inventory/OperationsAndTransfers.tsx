@@ -110,7 +110,7 @@ export default function OperationsAndTransfers({
     const orderQty = Number(assemblyQty) || 1;
 
     let allReady = true;
-    let missingParts: string[] = [];
+    const missingParts: string[] = [];
 
     selectedBOMComponents.forEach((comp: any) => {
       const requiredTotal = comp.quantity * orderQty;

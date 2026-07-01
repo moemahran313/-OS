@@ -1089,7 +1089,7 @@ export default function ProductsModule({
                     ) : (
                       (() => {
                         // Implement sorting manually based on sorting state
-                        let displayProducts = [...filteredProducts];
+                        const displayProducts = [...filteredProducts];
                         if (sorting.length > 0) {
                           const { id, desc } = sorting[0];
                           displayProducts.sort((a, b) => {

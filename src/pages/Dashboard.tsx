@@ -177,7 +177,7 @@ function QuickActionsWidget({
   }, [quickActions]);
 
   const handleSave = async () => {
-    let finalActions = localActions;
+    const finalActions = localActions;
     if (finalActions.length === 0) {
       toast.error("يجب اختيار إجراء واحد على الأقل");
       return;
