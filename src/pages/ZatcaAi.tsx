@@ -40,6 +40,7 @@ import {
 import { useSettings } from "../contexts/SettingsContext";
 import { toast } from "sonner";
 import { generateZatcaQR } from "../lib/zatca";
+import { auth } from "../lib/firebase";
 
 // Mock Sample Contracts for 1-click Demo experience
 interface DemoContract {
@@ -261,43 +262,79 @@ export default function ZatcaAi() {
   const { subtotal, vat, total } = getTotals();
 
   // Load a demo contract
-  const handleSelectDemo = (contract: DemoContract) => {
+  const handleSelectDemo = async (contract: DemoContract) => {
     setIsOcrProcessing(true);
     setOcrProgress(0);
     setActiveContract(contract);
 
-    // Simulate OCR scanning progress
+    // Start progress simulation
+    let progress = 0;
     const interval = setInterval(() => {
-      setOcrProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setTimeout(() => {
-            setIsOcrProcessing(false);
-            setExtractedData(JSON.parse(JSON.stringify(contract.extracted)));
-            // Pre-fill correction inputs
-            setSellerVatInput(contract.extracted.sellerVat || "");
-            setBuyerVatInput(contract.extracted.buyerVat || "");
-            setCurrencyInput(contract.extracted.currency || "SAR");
-            setInvoiceDateInput(contract.extracted.contractDate || "2026-07-02");
-            setCurrentStep("extract");
-            toast.success(
-              isAr
-                ? `تم تحليل العقد بنجاح بواسطة محرك OCR والذكاء الاصطناعي بنسبة مطابقة ${contract.id === "contract-3" ? "75%" : "99%"}`
-                : `Contract scanned & processed by OCR & Deep Parser. Match quality: ${contract.id === "contract-3" ? "75%" : "99%"}`
-            );
-            if (contract.id === "contract-3") {
-              setMissingInfoCount(2);
-              setAiConfidenceScore(76.4);
-            } else {
-              setMissingInfoCount(0);
-              setAiConfidenceScore(98.8);
-            }
-          }, 400);
-          return 100;
-        }
-        return prev + 10;
+      progress += 5;
+      if (progress > 85) {
+        clearInterval(interval);
+      } else {
+        setOcrProgress(progress);
+      }
+    }, 100);
+
+    try {
+      const userToken = await auth.currentUser?.getIdToken();
+      const res = await fetch("/api/zatca/process", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: userToken ? `Bearer ${userToken}` : "",
+        },
+        body: JSON.stringify({
+          contractText: contract.text,
+          language: selectedLanguage,
+          fileType: selectedFileType,
+        }),
       });
-    }, 150);
+
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      const parsedData = await res.json();
+      
+      clearInterval(interval);
+      setOcrProgress(100);
+      
+      setTimeout(() => {
+        setIsOcrProcessing(false);
+        setExtractedData(parsedData);
+        // Pre-fill correction inputs
+        setSellerVatInput(parsedData.sellerVat || "");
+        setBuyerVatInput(parsedData.buyerVat || "");
+        setCurrencyInput(parsedData.currency || "SAR");
+        setInvoiceDateInput(parsedData.contractDate || "2026-07-02");
+        setCurrentStep("extract");
+        
+        let missing = 0;
+        if (!parsedData.sellerVat) missing++;
+        if (!parsedData.buyerVat) missing++;
+        setMissingInfoCount(missing);
+        setAiConfidenceScore(missing === 0 ? 99.5 : (missing === 1 ? 88.5 : 76.4));
+        
+        toast.success(
+          isAr
+            ? `تم تحليل العقد بنجاح بواسطة الذكاء الاصطناعي والتعرف الضوئي!`
+            : `Contract parsed and structured successfully via Gemini AI!`
+        );
+      }, 400);
+
+    } catch (err: any) {
+      clearInterval(interval);
+      setIsOcrProcessing(false);
+      console.error(err);
+      toast.error(
+        isAr
+          ? `فشل معالجة العقد: ${err.message}`
+          : `Failed to process contract: ${err.message}`
+      );
+    }
   };
 
   // Drag and drop handler
@@ -444,7 +481,7 @@ export default function ZatcaAi() {
   };
 
   // AI Dialog Chat processing
-  const handleSendAiPrompt = (overridePrompt?: string) => {
+  const handleSendAiPrompt = async (overridePrompt?: string) => {
     const prompt = overridePrompt || aiPromptInput;
     if (!prompt.trim()) return;
 
@@ -453,68 +490,51 @@ export default function ZatcaAi() {
     setAiPromptInput("");
     setIsAiThinking(true);
 
-    // Simulate AI response based on prompts requested in UI requirements
-    setTimeout(() => {
-      let reply = "";
-      if (prompt.includes("Split") || prompt.includes("12 monthly") || prompt.includes("تقسيم")) {
-        const monthlyAmount = (total / 12).toFixed(2);
-        reply = isAr
-          ? `قمنا بتقسيم العقد البالغة قيمته الإجمالية **${total.toLocaleString()} ريال** إلى **12 دفعة شهرية متساوية** بقيمة **${parseFloat(monthlyAmount).toLocaleString()} ريال** لكل منها. 
-          إليك مسار الجدولة المقترح:
-          - الدفعة 1: 2026-07-01 (قيمة: ${parseFloat(monthlyAmount).toLocaleString()} ر.س)
-          - الدفعة 2: 2026-08-01 (قيمة: ${parseFloat(monthlyAmount).toLocaleString()} ر.س)
-          - الدفعة 3: 2026-09-01 (قيمة: ${parseFloat(monthlyAmount).toLocaleString()} ر.س)
-          ... وهكذا حتى الدفعة 12. هل تريد توليد ملفات XML لجميع هذه الفواتير دفعة واحدة؟`
-          : `We have split the total contract amount of **${total.toLocaleString()} ${extractedData?.currency || "SAR"}** into **12 monthly recurring installments** of **${parseFloat(monthlyAmount).toLocaleString()} ${extractedData?.currency || "SAR"}** each. 
-          Here is the generated schedule:
-          - Installment #1: 2026-07-01 (Amount: ${parseFloat(monthlyAmount).toLocaleString()})
-          - Installment #2: 2026-08-01 (Amount: ${parseFloat(monthlyAmount).toLocaleString()})
-          - Installment #3: 2026-09-01 (Amount: ${parseFloat(monthlyAmount).toLocaleString()})
-          - Installment #12: 2027-06-01. Would you like me to queue these XML packages to ZATCA?`;
+    try {
+      const userToken = await auth.currentUser?.getIdToken();
+      const res = await fetch("/api/zatca/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: userToken ? `Bearer ${userToken}` : "",
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+          history: aiChatHistory,
+          contractContext: extractedData ? {
+            ...extractedData,
+            total: total,
+            subtotal: subtotal,
+            vat: vat,
+          } : null,
+        }),
+      });
 
-        // Generate temporary mock invoices array representing the split in extraction if the user wants
-        if (extractedData) {
-          const splitItems = Array.from({ length: 12 }, (_, i) => ({
-            name: `Installment #${i + 1} for ${extractedData.contractNumber}`,
-            amount: total / 12
-          }));
-        }
-      } else if (prompt.includes("milestone") || prompt.includes("دفعة") || prompt.includes("إنجاز")) {
-        reply = isAr
-          ? `تم رصد **3 معالم دفع أساسية (Milestones)** في العقد:
-          1. **التوقيع والمباشرة**: قيمة 34,500 ر.س (تاريخ 2026-06-15) - جاهز للفوترة الفورية 🟢
-          2. **التوريد والتدريب**: قيمة 46,000 ر.س (تاريخ 2026-08-01) - مجدول 🟡
-          3. **التسليم النهائي**: قيمة 34,500 ر.س (تاريخ 2026-10-15) - مجدول 🟡
-          انقر فوق زر "توليد فواتير المعالم" لبرمجة هذه المعالم في جدول فواتيرك.`
-          : `I have extracted **3 distinct payment milestones** from the contract:
-          1. **Sign-off Kick-off (30%)**: ${extractedData?.currency || "SAR"} 34,500 on 2026-06-15 🟢 Ready to bill
-          2. **Beta Deploy & Config (40%)**: ${extractedData?.currency || "SAR"} 46,000 on 2026-08-01 🟡 Scheduled
-          3. **Production Acceptance (30%)**: ${extractedData?.currency || "SAR"} 34,500 on 2026-10-15 🟡 Scheduled`;
-      } else if (prompt.includes("error") || prompt.includes("أخطاء") || prompt.includes("VAT")) {
-        if (extractedData && (!extractedData.sellerVat || !extractedData.buyerVat)) {
-          reply = isAr
-            ? `⚠️ **تم العثور على أخطاء بالتحقق المسبق**:
-            - الرقم الضريبي للبائع أو العميل فارغ أو غير متطابق مع بنية الـ 15 خانة السعودية.
-            - العملة موضوع العقد دولية (USD)، الفواتير المرسلة لهيئة الزكاة ZATCA يجب تحويل مجاميعها ومبالغ ضريبتها لتبلغ القيمة المقابلة بالريال السعودي (SAR) بسعر الصرف الرسمي (3.75).
-            هل تريد مني تصحيح الرقم الضريبي للشركة تلقائياً؟`
-            : `⚠️ **Validation Errors Discovered**:
-            - One or more 15-digit VAT tax numbers are empty or non-compliant.
-            - Contract currency is USD. Under ZATCA guidelines, standard tax invoices must translate subtotals and VAT sums into Saudi Riyals (SAR) at the official exchange rate (3.75) for XML reporting.
-            Click 'Auto-Fix' to apply valid standard references.`;
-        } else {
-          reply = isAr
-            ? `✅ الفاتورة مطابقة تماماً لشروط الفوترة ولا توجد أي أخطاء بالصيغ الضريبية أو الحسابات.`
-            : `✅ Perfect match. pre-clearance validation engine reports zero errors. Standard VAT computation matches the 15% rate exactly.`;
-        }
-      } else {
-        reply = isAr
-          ? `بصفتي معالج عقود الذكاء الاصطناعي لـ ZATCA، قمت بقراءة العقد بدقة. تتوفر مجاميع وخطط دفع قابلة للفوترة. يمكنك توليد الفاتورة الضريبية أو طلب تقسيمها.`
-          : `As your ZATCA Contract Intelligence agent, I have indexed your contract clauses. You can export tax invoices, schedule monthly installments, or run instant API validation tests.`;
+      if (!res.ok) {
+        throw new Error(await res.text());
       }
 
-      setAiChatHistory((prev) => [...prev, { role: "assistant", content: reply }]);
+      const data = await res.json();
+      setAiChatHistory((prev) => [...prev, { role: "assistant", content: data.reply }]);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(
+        isAr
+          ? "فشل توليد رد من المساعد الذكي."
+          : "Failed to generate response from AI Copilot."
+      );
+      setAiChatHistory((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: isAr
+            ? "عذراً، حدث خطأ أثناء الاتصال بمحرك الذكاء الاصطناعي."
+            : "Sorry, an error occurred while connecting to the AI engine.",
+        },
+      ]);
+    } finally {
       setIsAiThinking(false);
-    }, 1200);
+    }
   };
 
   const toggleIntegration = (key: string) => {
