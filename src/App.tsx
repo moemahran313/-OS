@@ -119,6 +119,7 @@ const Suppliers = lazy(() => import("./pages/Suppliers"));
 const Chat = lazy(() => import("./pages/Chat"));
 const SmartNegotiations = lazy(() => import("./pages/SmartNegotiations"));
 const Accounting = lazy(() => import("./pages/Accounting"));
+const ZatcaAi = lazy(() => import("./pages/ZatcaAi"));
 
 function LoadingSpinner() {
   return (
@@ -441,6 +442,14 @@ function AppInnerRoutes() {
               element={
                 <PageTransition>
                   <Contracts />
+                </PageTransition>
+              }
+            />
+            <Route
+              path="zatca-ai"
+              element={
+                <PageTransition>
+                  <ZatcaAi />
                 </PageTransition>
               }
             />

@@ -171,7 +171,7 @@ service cloud.firestore {
     // User Sessions Rules
     match /user_sessions/{sessionId} {
       allow create: if isSignedIn() && incoming().userId == request.auth.uid;
-      allow list, get, update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list, get, update, delete: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid);
     }
 
     // Compliance Rules
@@ -282,6 +282,13 @@ service cloud.firestore {
                        resource.data.authorUid == request.auth.uid && 
                        incoming().authorUid == request.auth.uid;
       allow delete: if isSignedIn() && resource.data.authorUid == request.auth.uid;
+    }
+
+    // DMS Documents Rules
+    match /dms_documents/{docId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
     // Cost Centers Rules

@@ -155,19 +155,24 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     if (!currentSessionId || !user) return;
 
     const sessionDocRef = doc(db, "user_sessions", currentSessionId);
-    const unsubSession = onSnapshot(sessionDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        if (data.status === "Revoked") {
-          toast.warn("تم إنهاء جلستك الحالية بطلب من الإدارة أو من جهاز آخر.");
+    const unsubSession = onSnapshot(sessionDocRef, 
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.status === "Revoked") {
+            toast.warn("تم إنهاء جلستك الحالية بطلب من الإدارة أو من جهاز آخر.");
+            logout();
+          }
+        } else if (user.id !== "demo-admin-uid") {
+          // Session document was deleted
+          toast.warn("انتهت صلاحية الجلسة الحالية. يرجى تسجيل الدخول مجدداً.");
           logout();
         }
-      } else if (user.id !== "demo-admin-uid") {
-        // Session document was deleted
-        toast.warn("انتهت صلاحية الجلسة الحالية. يرجى تسجيل الدخول مجدداً.");
-        logout();
+      },
+      (error) => {
+        console.warn("User sessions snapshot listener error (handled gracefully):", error);
       }
-    });
+    );
 
     return () => unsubSession();
   }, [currentSessionId, user]);

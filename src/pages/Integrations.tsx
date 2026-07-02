@@ -32,69 +32,22 @@ const BRAND_LOGOS: Record<string, React.ReactNode> = {
     </svg>
   ),
   zid: (
-    <svg
-      viewBox="0 0 100 100"
-      className="w-full h-full"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect width="100" height="100" rx="22" fill="#4f2d7f" />
-      <path
-        d="M28 35 H46 V65 H28"
-        stroke="white"
-        strokeWidth="8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+    <div className="w-full h-full bg-white flex items-center justify-center p-2 rounded-2xl">
+      <img
+        src="https://upload.wikimedia.org/wikipedia/ar/5/52/%D8%B4%D9%8B%D8%B9%D8%A7%D8%B1_%D9%85%D9%86%D8%B5%D8%A9_%D8%B2%D8%AF.png"
+        alt="Zid"
+        className="w-full h-full object-contain"
       />
-      <path
-        d="M54 35 H72 V50 H54 V65 H72"
-        stroke="white"
-        strokeWidth="8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <rect x="33" y="18" width="9" height="9" rx="2" fill="#ffb400" />
-    </svg>
+    </div>
   ),
   zatca: (
-    <svg
-      viewBox="0 0 100 100"
-      className="w-full h-full"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect width="100" height="100" rx="22" fill="#0f4a36" />
-      <circle cx="50" cy="50" r="28" stroke="#c9a054" strokeWidth="3" />
-      <circle cx="50" cy="50" r="20" stroke="white" strokeWidth="1.5" strokeDasharray="4 4" />
-      <path d="M50 32 V58" stroke="#c9a054" strokeWidth="4" strokeLinecap="round" />
-      <path
-        d="M50 32 C46 26, 38 29, 38 34"
-        stroke="#c9a054"
-        strokeWidth="3"
-        strokeLinecap="round"
+    <div className="w-full h-full bg-white flex items-center justify-center p-1 rounded-2xl">
+      <img
+        src="https://upload.wikimedia.org/wikipedia/ar/b/be/%D8%B4%D8%B9%D8%A7%D8%B1_%D9%87%D9%8A%D8%A6%D8%A9_%D8%A7%D9%84%D8%B2%D9%83%D8%A7%D8%A9_%D9%88%D8%A7%D9%84%D8%B6%D8%B1%D9%8A%D8%A8%D8%A9_%D9%88%D8%A7%D9%84%D8%AC%D9%85%D8%A7%D8%B1%D9%83.svg"
+        alt="ZATCA"
+        className="w-full h-full object-contain"
       />
-      <path
-        d="M50 32 C54 26, 62 29, 62 34"
-        stroke="#c9a054"
-        strokeWidth="3"
-        strokeLinecap="round"
-      />
-      <path d="M35 56 L65 56" stroke="white" strokeWidth="4" strokeLinecap="round" />
-      <path
-        d="M35 56 L42 66 H58 L65 56"
-        stroke="white"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M43 45 L48 50 L57 38"
-        stroke="#00b093"
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
+    </div>
   ),
   whatsapp: (
     <svg

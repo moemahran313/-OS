@@ -14,6 +14,7 @@ import {
   onSnapshot,
   addDoc,
   updateDoc,
+  deleteDoc,
   doc,
   serverTimestamp,
   setDoc,
@@ -49,6 +50,8 @@ import {
   Clock,
   Cloud,
   Mail,
+  Trash2,
+  Calendar,
 } from "lucide-react";
 
 interface ContractData {
@@ -751,10 +754,149 @@ export default function Contracts() {
   const { settings } = useSettings();
   const { user } = useUser();
   const [employees, setEmployees] = useState<any[]>([]);
+  const [dmsDocuments, setDmsDocuments] = useState<any[]>([]);
+  const [isAnalyzingDoc, setIsAnalyzingDoc] = useState(false);
+  const [selectedDmsFolder, setSelectedDmsFolder] = useState<string>("الكل");
+  const [dmsSearchQuery, setDmsSearchQuery] = useState<string>("");
+  const [previewDoc, setPreviewDoc] = useState<any | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) return;
-    const q = query(collection(db, "employees"), where("userId", "==", user.uid || user.id));
+    const uid = user.uid || user.id;
+
+    if (uid === "demo-admin-uid") {
+      setDmsDocuments([
+        {
+          id: "demo-doc-1",
+          userId: uid,
+          name: "عقد توظيف - المهندس خالد.pdf",
+          category: "عقود الموظفين",
+          expiryDate: "2027-01-15",
+          ocrStatus: "تم المعالجة",
+          status: "valid",
+          summary: "عقد عمل موحد محدد المدة للمهندس خالد لوظيفة مطور برمجيات أساسي.",
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: "demo-doc-2",
+          userId: uid,
+          name: "تجديد إقامة - محمد سيد.jpeg",
+          category: "السجلات المدنية والجوازات",
+          expiryDate: "2024-08-10",
+          ocrStatus: "تم الاستخراج",
+          status: "warning",
+          summary: "بطاقة هوية مقيم مخصصة للمهندس محمد سيد مع رصد تاريخ الانتهاء تلقائياً.",
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: "demo-doc-3",
+          userId: uid,
+          name: "اتفاقية سرية مورد تقنية.docx",
+          category: "اتفاقيات الموردين (NDAs)",
+          expiryDate: "-",
+          ocrStatus: "تم المعالجة",
+          status: "processing",
+          summary: "اتفاقية عدم إفصاح وحماية البيانات الحساسة مع شركة الحلول السحابية.",
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+      return;
+    }
+
+    const q = query(collection(db, "dms_documents"), where("userId", "==", uid));
+    const unsubscribe = onSnapshot(
+      q,
+      async (snapshot) => {
+        if (snapshot.empty) {
+          // Seed initial documents for first-time use
+          const seeds = [
+            {
+              userId: uid,
+              name: "عقد توظيف - المهندس خالد.pdf",
+              category: "عقود الموظفين",
+              expiryDate: "2027-01-15",
+              ocrStatus: "تم المعالجة",
+              status: "valid",
+              summary: "عقد عمل موحد محدد المدة للمهندس خالد لوظيفة مطور برمجيات أساسي.",
+              createdAt: new Date().toISOString(),
+            },
+            {
+              userId: uid,
+              name: "تجديد إقامة - محمد سيد.jpeg",
+              category: "السجلات المدنية والجوازات",
+              expiryDate: "2024-08-10",
+              ocrStatus: "تم الاستخراج",
+              status: "warning",
+              summary: "بطاقة هوية مقيم مخصصة للمهندس محمد سيد مع رصد تاريخ الانتهاء تلقائياً.",
+              createdAt: new Date().toISOString(),
+            },
+            {
+              userId: uid,
+              name: "اتفاقية سرية مورد تقنية.docx",
+              category: "اتفاقيات الموردين (NDAs)",
+              expiryDate: "-",
+              ocrStatus: "تم المعالجة",
+              status: "processing",
+              summary: "اتفاقية عدم إفصاح وحماية البيانات الحساسة مع شركة الحلول السحابية.",
+              createdAt: new Date().toISOString(),
+            },
+          ];
+          for (const s of seeds) {
+            await addDoc(collection(db, "dms_documents"), s);
+          }
+        } else {
+          setDmsDocuments(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+        }
+      },
+      (error) => {
+        console.error("Error loading DMS documents", error);
+      }
+    );
+    return () => unsubscribe();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const uid = user.uid || user.id;
+
+    if (uid === "demo-admin-uid") {
+      setEmployees([
+        {
+          id: "demo-emp-1",
+          name: "خالد الغامدي",
+          position: "مطور برمجيات أساسي",
+          nationality: "سعودي",
+          baseSalaryHalalas: 1500000,
+          housingAllowanceHalalas: 300000,
+          transportAllowanceHalalas: 100000,
+          otherDeductionsHalalas: 0,
+          status: "active",
+          iqama: "1029384756",
+          email: "khaled@example.com",
+          mobile: "+966500000001",
+          userId: uid,
+        },
+        {
+          id: "demo-emp-2",
+          name: "محمد سيد",
+          position: "مهندس نظم",
+          nationality: "مصري",
+          baseSalaryHalalas: 1200000,
+          housingAllowanceHalalas: 250000,
+          transportAllowanceHalalas: 100000,
+          otherDeductionsHalalas: 0,
+          status: "active",
+          iqama: "2039485761",
+          email: "m.sayed@example.com",
+          mobile: "+966500000002",
+          userId: uid,
+        },
+      ]);
+      return;
+    }
+
+    const q = query(collection(db, "employees"), where("userId", "==", uid));
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
@@ -766,6 +908,117 @@ export default function Contracts() {
     );
     return () => unsubscribe();
   }, [user]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!user) {
+      toast.error("يرجى تسجيل الدخول أولاً لرفع المستندات.");
+      return;
+    }
+
+    setIsAnalyzingDoc(true);
+    const toastId = toast.loading("جاري قراءة وتحليل المستند بالذكاء الاصطناعي (OCR)...");
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64String = (reader.result as string).split(",")[1];
+          
+          const response = await fetch("/api/dms/analyze", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              fileName: file.name,
+              fileType: file.type,
+              fileData: base64String,
+            }),
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            const { documentTypeAr, extractedTitleAr, extractedExpiryDate, extractedSummaryAr } = result.analysis;
+            
+            let status = "valid";
+            if (extractedExpiryDate !== "-") {
+              const exp = new Date(extractedExpiryDate);
+              const today = new Date();
+              const diffTime = exp.getTime() - today.getTime();
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              if (diffDays < 0) {
+                status = "expired";
+              } else if (diffDays < 60) {
+                status = "warning";
+              }
+            }
+
+            const docPayload = {
+              userId: user.uid || user.id,
+              name: file.name,
+              category: documentTypeAr || "أخرى",
+              expiryDate: extractedExpiryDate || "-",
+              ocrStatus: "تم الاستخراج",
+              status: status,
+              summary: extractedSummaryAr || "مستند تمت معالجته تلقائياً باستخدام الذكاء الاصطناعي.",
+              createdAt: new Date().toISOString(),
+            };
+
+            const uid = user.uid || user.id;
+            if (uid === "demo-admin-uid") {
+              setDmsDocuments((prev) => [
+                { id: "demo-" + Date.now(), ...docPayload },
+                ...prev,
+              ]);
+            } else {
+              await addDoc(collection(db, "dms_documents"), docPayload);
+            }
+
+            toast.success(`تم رفع وتصنيف المستند تلقائياً كـ "${documentTypeAr}"! ✨`, { id: toastId });
+          } else {
+            toast.error(result.error || "فشل تحليل المستند.", { id: toastId });
+          }
+        } catch (err: any) {
+          toast.error(err?.message || "فشل معالجة الملف.", { id: toastId });
+        } finally {
+          setIsAnalyzingDoc(false);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+      };
+      reader.onerror = () => {
+        toast.error("حدث خطأ في قراءة ملف المستند.", { id: toastId });
+        setIsAnalyzingDoc(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Error uploading document:", error);
+      toast.error("فشل رفع المستند وتصنيفه بالذكاء الاصطناعي.", { id: toastId });
+      setIsAnalyzingDoc(false);
+    }
+  };
+
+  const handleDeleteDocument = async (docId: string) => {
+    if (!confirm("هل أنت متأكد من رغبتك في حذف هذا المستند نهائياً؟")) return;
+    try {
+      const uid = user?.uid || user?.id;
+      if (uid === "demo-admin-uid" || docId.startsWith("demo-")) {
+        setDmsDocuments((prev) => prev.filter((d) => d.id !== docId));
+        toast.success("تم حذف المستند بنجاح.");
+      } else {
+        await deleteDoc(doc(db, "dms_documents", docId));
+        toast.success("تم حذف المستند بنجاح.");
+      }
+      if (previewDoc && previewDoc.id === docId) {
+        setPreviewDoc(null);
+      }
+    } catch (error) {
+      console.error("Error deleting document", error);
+      toast.error("فشل حذف المستند.");
+    }
+  };
 
   const handleSyncToPayroll = async (customStatus?: string) => {
     if (!user) {
@@ -796,32 +1049,58 @@ export default function Contracts() {
         email: data.employeeEmail || "",
         mobile: data.employeeMobile || "",
         userId: user.uid || user.id,
-        updatedAt: serverTimestamp(),
+        updatedAt: new Date().toISOString(),
       };
 
-      if (matchedEmp) {
-        await updateDoc(doc(db, "employees", matchedEmp.id), empData);
-        toast.success(
-          `تم بنجاح تحديث بيانات الموظف المالي ${data.employeeName} في ملفات الرواتب الحية!`
-        );
+      const uid = user.uid || user.id;
+      if (uid === "demo-admin-uid") {
+        if (matchedEmp) {
+          setEmployees((prev) =>
+            prev.map((x) => (x.id === matchedEmp.id ? { ...x, ...empData } : x))
+          );
+          toast.success(
+            `[تجريبي] تم بنجاح تحديث بيانات الموظف المالي ${data.employeeName} في ملفات الرواتب الحية!`
+          );
+        } else {
+          const newEmp = {
+            id: "demo-emp-" + Date.now(),
+            ...empData,
+            createdAt: new Date().toISOString(),
+          };
+          setEmployees((prev) => [...prev, newEmp]);
+          toast.success(
+            `[تجريبي] تم إنشاء ملف مالي جديد للموظف ${data.employeeName} وتصديره لقسم الرواتب بنجاح!`
+          );
+        }
       } else {
-        await addDoc(collection(db, "employees"), {
-          ...empData,
-          createdAt: serverTimestamp(),
-        });
-        toast.success(
-          `تم إنشاء ملف مالي جديد للموظف ${data.employeeName} وتصديره لقسم الرواتب بنجاح!`
-        );
-      }
+        if (matchedEmp) {
+          await updateDoc(doc(db, "employees", matchedEmp.id), {
+            ...empData,
+            updatedAt: serverTimestamp(),
+          });
+          toast.success(
+            `تم بنجاح تحديث بيانات الموظف المالي ${data.employeeName} في ملفات الرواتب الحية!`
+          );
+        } else {
+          await addDoc(collection(db, "employees"), {
+            ...empData,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+          toast.success(
+            `تم إنشاء ملف مالي جديد للموظف ${data.employeeName} وتصديره لقسم الرواتب بنجاح!`
+          );
+        }
 
-      await addDoc(collection(db, "audit_logs"), {
-        userId: user.uid || user.id,
-        module: "Contracts",
-        action: "مزامنة العقد مع نظام الرواتب والموظفين",
-        payload: JSON.stringify({ employeeName: data.employeeName, employeeId: data.employeeId }),
-        result: "success",
-        timestamp: serverTimestamp(),
-      });
+        await addDoc(collection(db, "audit_logs"), {
+          userId: user.uid || user.id,
+          module: "Contracts",
+          action: "مزامنة العقد مع نظام الرواتب والموظفين",
+          payload: JSON.stringify({ employeeName: data.employeeName, employeeId: data.employeeId }),
+          result: "success",
+          timestamp: serverTimestamp(),
+        });
+      }
     } catch (err: any) {
       console.error("Sync to payroll failed:", err);
       toast.error(`فشلت مزامنة حاسبة الرواتب: ${err.message || err}`);
@@ -2313,7 +2592,7 @@ export default function Contracts() {
 
             {activeTab === "documents" && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="flex justify-between items-end mb-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-4">
                   <div>
                     <h2 className="text-2xl font-black text-zinc-900 border-r-4 border-[#10b981] pr-4">
                       نظام إدارة الوثائق الذكي (Smart DMS)
@@ -2323,12 +2602,23 @@ export default function Contracts() {
                       واستخراج التواريخ الحرجة.
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    className="bg-[#10b981] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-[#059669] transition-shadow shadow-lg shadow-[#10b981]/20"
-                  >
-                    <Upload className="w-5 h-5" /> رفع مستند (OCR)
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      className="hidden"
+                      accept=".pdf,.png,.jpg,.jpeg,.webp,.docx,.doc"
+                    />
+                    <button
+                      type="button"
+                      disabled={isAnalyzingDoc}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="bg-[#10b981] text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-[#059669] transition-shadow shadow-lg shadow-[#10b981]/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      <Upload className="w-5 h-5 animate-bounce" /> رفع مستند (OCR)
+                    </button>
+                  </div>
                 </div>
 
                 <div className="bg-white border border-zinc-200 rounded-3xl p-8 shadow-sm">
@@ -2339,28 +2629,34 @@ export default function Contracts() {
                         التصنيفات الآلية
                       </h4>
                       {[
-                        { name: "عقود الموظفين", count: 145, active: true },
-                        { name: "السجلات المدنية والجوازات", count: 320, active: false },
-                        { name: "التراخيص والسجلات (Wathiq)", count: 12, active: false },
-                        { name: "اتفاقيات الموردين (NDAs)", count: 48, active: false },
-                      ].map((folder, i) => (
-                        <div
-                          key={i}
-                          className={`flex items-center justify-between p-3 rounded-xl cursor-pointer ${folder.active ? "bg-emerald-50 text-emerald-800" : "hover:bg-zinc-50 text-zinc-700"}`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Folder
-                              className={`w-4 h-4 ${folder.active ? "text-emerald-500" : "text-zinc-400"}`}
-                            />
-                            <span className="text-sm font-bold">{folder.name}</span>
-                          </div>
-                          <span
-                            className={`text-[10px] font-black px-2 py-0.5 rounded-full ${folder.active ? "bg-emerald-200 text-emerald-900" : "bg-zinc-100 text-zinc-500"}`}
+                        { name: "الكل", count: dmsDocuments.length },
+                        { name: "عقود الموظفين", count: dmsDocuments.filter(d => d.category === "عقود الموظفين").length },
+                        { name: "السجلات المدنية والجوازات", count: dmsDocuments.filter(d => d.category === "السجلات المدنية والجوازات").length },
+                        { name: "التراخيص والسجلات (Wathiq)", count: dmsDocuments.filter(d => d.category === "التراخيص والسجلات (Wathiq)").length },
+                        { name: "اتفاقيات الموردين (NDAs)", count: dmsDocuments.filter(d => d.category === "اتفاقيات الموردين (NDAs)").length },
+                        { name: "أخرى", count: dmsDocuments.filter(d => d.category === "أخرى").length },
+                      ].map((folder, i) => {
+                        const isActive = selectedDmsFolder === folder.name;
+                        return (
+                          <div
+                            key={i}
+                            onClick={() => setSelectedDmsFolder(folder.name)}
+                            className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all ${isActive ? "bg-emerald-50 text-emerald-800 font-bold" : "hover:bg-zinc-50 text-zinc-700"}`}
                           >
-                            {folder.count}
-                          </span>
-                        </div>
-                      ))}
+                            <div className="flex items-center gap-2">
+                              <Folder
+                                className={`w-4 h-4 ${isActive ? "text-emerald-500" : "text-zinc-400"}`}
+                              />
+                              <span className="text-sm">{folder.name}</span>
+                            </div>
+                            <span
+                              className={`text-[10px] font-black px-2 py-0.5 rounded-full ${isActive ? "bg-emerald-200 text-emerald-900" : "bg-zinc-100 text-zinc-500"}`}
+                            >
+                              {folder.count}
+                            </span>
+                          </div>
+                        );
+                      })}
                       <div className="mt-8 p-4 bg-zinc-900 text-white rounded-2xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/20 rounded-full blur-xl"></div>
                         <Lock className="w-5 h-5 mb-2 text-emerald-400" />
@@ -2377,7 +2673,9 @@ export default function Contracts() {
                         <Search className="w-5 h-5 absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400" />
                         <input
                           type="text"
-                          placeholder="البحث باستخدام الذكاء الاصطناعي (مثال: عقد أحمد الخاص بالتسويق)..."
+                          value={dmsSearchQuery}
+                          onChange={(e) => setDmsSearchQuery(e.target.value)}
+                          placeholder="البحث باستخدام الذكاء الاصطناعي (مثال: عقد خالد أو المهندس)..."
                           className="w-full bg-zinc-50 border border-zinc-200 rounded-xl py-3 pr-12 pl-4 text-sm font-bold focus:ring-2 focus:ring-[#10b981] outline-none transition-all"
                         />
                       </div>
@@ -2386,14 +2684,14 @@ export default function Contracts() {
                         <table className="w-full text-right">
                           <thead>
                             <tr className="border-b border-zinc-100">
-                              <th className="py-3 px-4 text-xs font-black text-zinc-400 w-1/3">
+                              <th className="py-3 px-4 text-xs font-black text-zinc-400 w-2/5">
                                 اسم المستند
                               </th>
-                              <th className="py-3 px-4 text-xs font-black text-zinc-400 w-1/4">
-                                الذكاء الاصطناعي (OCR)
+                              <th className="py-3 px-4 text-xs font-black text-zinc-400 w-1/5">
+                                التصنيف
                               </th>
-                              <th className="py-3 px-4 text-xs font-black text-zinc-400 w-1/4">
-                                تاريخ الانتهاء المستخرج
+                              <th className="py-3 px-4 text-xs font-black text-zinc-400 w-1/5">
+                                تاريخ الانتهاء
                               </th>
                               <th className="py-3 px-4 text-xs font-black text-zinc-400 text-left">
                                 إجراءات
@@ -2401,56 +2699,105 @@ export default function Contracts() {
                             </tr>
                           </thead>
                           <tbody>
-                            {[
-                              {
-                                name: "عقد توظيف - المهندس خالد.pdf",
-                                ocr: "تم المعالجة",
-                                status: "valid",
-                                date: "2027-01-15",
-                              },
-                              {
-                                name: "تجديد إقامة - محمد سيد.jpeg",
-                                ocr: "تم الاستخراج",
-                                status: "warning",
-                                date: "2024-08-10 (قريباً)",
-                              },
-                              {
-                                name: "اتفاقية سرية مورد تقنية.docx",
-                                ocr: "جاري المعالجة...",
-                                status: "processing",
-                                date: "-",
-                              },
-                            ].map((file, idx) => (
-                              <tr key={idx} className="border-b border-zinc-50 hover:bg-zinc-50/50">
-                                <td className="py-3 px-4">
+                            {isAnalyzingDoc && (
+                              <tr className="border-b border-zinc-50 bg-emerald-50/20 animate-pulse">
+                                <td className="py-4 px-4" colSpan={4}>
                                   <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0">
-                                      <FileText className="w-4 h-4" />
+                                    <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                      <RotateCw className="w-4 h-4 animate-spin" />
                                     </div>
-                                    <p className="font-bold text-sm text-zinc-900">{file.name}</p>
+                                    <div>
+                                      <p className="font-bold text-sm text-emerald-800">جاري تحليل مستند جديد بالذكاء الاصطناعي...</p>
+                                      <p className="text-xs text-emerald-600">يتم تشغيل OCR لاستخراج التصنيف والتواريخ والملخص الذكي.</p>
+                                    </div>
                                   </div>
                                 </td>
-                                <td className="py-3 px-4">
-                                  <span
-                                    className={`text-[10px] font-black px-2 py-1 rounded-md ${file.status === "processing" ? "bg-amber-100 text-amber-700 animate-pulse" : "bg-blue-50 text-blue-700"}`}
-                                  >
-                                    {file.ocr}
-                                  </span>
-                                </td>
-                                <td className="py-3 px-4">
-                                  <span
-                                    className={`text-xs font-bold ${file.status === "warning" ? "text-rose-600 font-black" : "text-zinc-600"}`}
-                                  >
-                                    {file.date}
-                                  </span>
-                                </td>
-                                <td className="py-3 px-4 text-left">
-                                  <button className="text-xs font-bold text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 px-3 py-1.5 rounded-lg transition-colors">
-                                    معاينة المستند
-                                  </button>
-                                </td>
                               </tr>
-                            ))}
+                            )}
+
+                            {(() => {
+                              const displayedDocs = dmsDocuments.filter((doc) => {
+                                const matchesFolder = selectedDmsFolder === "الكل" || doc.category === selectedDmsFolder;
+                                const queryText = dmsSearchQuery.trim().toLowerCase();
+                                if (!queryText) return matchesFolder;
+                                return (
+                                  matchesFolder &&
+                                  (doc.name.toLowerCase().includes(queryText) ||
+                                    (doc.summary && doc.summary.toLowerCase().includes(queryText)) ||
+                                    (doc.category && doc.category.toLowerCase().includes(queryText)))
+                                );
+                              });
+
+                              if (displayedDocs.length === 0 && !isAnalyzingDoc) {
+                                return (
+                                  <tr>
+                                    <td className="py-12 px-4 text-center text-zinc-400" colSpan={4}>
+                                      <Folder className="w-12 h-12 mx-auto text-zinc-200 mb-3" />
+                                      <p className="font-bold text-zinc-700 text-sm">لا توجد مستندات مطابقة للبحث أو التصنيف</p>
+                                      <p className="text-xs text-zinc-400 mt-1">ابدأ برفع مستندك الأول وسيقوم مساعدنا الذكي بتصنيفه فوراً!</p>
+                                    </td>
+                                  </tr>
+                                );
+                              }
+
+                              return displayedDocs.map((file, idx) => {
+                                let badgeColor = "bg-emerald-50 text-emerald-700 border-emerald-100";
+                                if (file.status === "warning") {
+                                  badgeColor = "bg-amber-50 text-amber-700 border-amber-100";
+                                } else if (file.status === "expired") {
+                                  badgeColor = "bg-rose-50 text-rose-700 border-rose-100";
+                                } else if (file.status === "processing") {
+                                  badgeColor = "bg-blue-50 text-blue-700 border-blue-100 animate-pulse";
+                                }
+
+                                return (
+                                  <tr key={file.id || idx} className="border-b border-zinc-50 hover:bg-zinc-50/50 transition-colors">
+                                    <td className="py-4 px-4">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-600 flex items-center justify-center shrink-0">
+                                          <FileText className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                          <p className="font-bold text-sm text-zinc-900 line-clamp-1">{file.name}</p>
+                                          {file.summary && (
+                                            <p className="text-[11px] text-zinc-400 line-clamp-1 font-medium mt-0.5">{file.summary}</p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className="py-4 px-4">
+                                      <span className="text-xs font-bold text-zinc-600 bg-zinc-100 px-2 py-1 rounded-md">
+                                        {file.category}
+                                      </span>
+                                    </td>
+                                    <td className="py-4 px-4">
+                                      <div className="flex items-center gap-1.5">
+                                        <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+                                        <span className={`text-xs font-bold ${file.status === "warning" || file.status === "expired" ? "text-rose-600 font-black" : "text-zinc-600"}`}>
+                                          {file.expiryDate === "-" ? "مفتوح" : file.expiryDate}
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td className="py-4 px-4 text-left">
+                                      <div className="flex items-center justify-end gap-2">
+                                        <button
+                                          onClick={() => setPreviewDoc(file)}
+                                          className="text-xs font-bold text-[#10b981] hover:bg-emerald-50 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                                        >
+                                          معاينة
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteDocument(file.id)}
+                                          className="text-zinc-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              });
+                            })()}
                           </tbody>
                         </table>
                       </div>
@@ -4837,6 +5184,101 @@ export default function Contracts() {
                 <div className="p-4 bg-zinc-50 border-t border-zinc-150 flex items-center justify-between text-[10px] text-zinc-400 font-mono">
                   <span>PREDEFINED_CLAUSES v2.4</span>
                   <span>SaudiOS CLM Legal Engine</span>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* DMS Document Preview Modal */}
+          {previewDoc && (
+            <div className="fixed inset-0 bg-zinc-950/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
+              <div className="bg-white rounded-3xl border border-zinc-200 max-w-2xl w-full overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                {/* Header */}
+                <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                      <FileText className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-zinc-900 text-lg line-clamp-1">{previewDoc.name}</h3>
+                      <p className="text-xs text-zinc-400 font-medium">معالجة فورية بالتعرف البصري والذكاء الاصطناعي</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setPreviewDoc(null)}
+                    className="w-8 h-8 rounded-full bg-zinc-200/60 hover:bg-zinc-200 flex items-center justify-center text-zinc-600 transition-all font-bold cursor-pointer text-sm"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-6 text-right" dir="rtl">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-100">
+                      <span className="text-xs font-black text-zinc-400 block mb-1">التصنيف التلقائي</span>
+                      <span className="text-sm font-extrabold text-zinc-800 bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-md inline-block">
+                        {previewDoc.category}
+                      </span>
+                    </div>
+                    <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-100">
+                      <span className="text-xs font-black text-zinc-400 block mb-1">تاريخ الانتهاء المستخلص</span>
+                      <div className="flex items-center gap-1.5 justify-start">
+                        <Calendar className="w-4 h-4 text-emerald-500" />
+                        <span className={`text-sm font-extrabold ${previewDoc.status === "warning" || previewDoc.status === "expired" ? "text-rose-600" : "text-zinc-800"}`}>
+                          {previewDoc.expiryDate === "-" ? "مفتوح / غير محدد" : previewDoc.expiryDate}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-emerald-50/30 border border-emerald-100 p-5 rounded-2xl space-y-2">
+                    <span className="text-xs font-black text-emerald-800 block">الملخص الذكي (AI Summary)</span>
+                    <p className="text-sm text-zinc-700 leading-relaxed font-sans">{previewDoc.summary}</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <span className="text-xs font-black text-zinc-400 block">توصيات وإجراءات المتابعة</span>
+                    <ul className="space-y-2 text-xs text-zinc-600 list-inside list-disc font-medium pr-1">
+                      {previewDoc.category === "عقود الموظفين" ? (
+                        <>
+                          <li>مزامنة بيانات هذا الموظف مع سجلات الرواتب لربطه بالنظام الأساسي.</li>
+                          <li>مراجعة بنود العقد بانتظام لضمان توافقه مع نظام العمل السعودي المحدث.</li>
+                        </>
+                      ) : previewDoc.category === "السجلات المدنية والجوازات" ? (
+                        <>
+                          <li>إعداد تذكير لتجديد الوثيقة قبل تاريخ انتهائها بـ 60 يوماً على الأقل.</li>
+                          <li>تحديث ملف الموظف لتفادي غرامات عدم تجديد رخصة الإقامة.</li>
+                        </>
+                      ) : previewDoc.category === "التراخيص والسجلات (Wathiq)" ? (
+                        <>
+                          <li>التحقق من صحة ترخيص المنشأة عبر ربط بوابة واثق (Wathiq) الرسمية.</li>
+                          <li>أرشفة السجل التجاري لتحديث بيانات المفوضين بالتوقيع.</li>
+                        </>
+                      ) : (
+                        <>
+                          <li>مراجعة شروط السرية والبنود الملزمة في العقد.</li>
+                          <li>التحقق من هوية الشركاء وصلاحيات الممثلين القانونيين.</li>
+                        </>
+                      )}
+                      <li>تم حفظ هذا الملف بنجاح وتشفيره عسكرياً بمعيار AES-256.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-6 border-t border-zinc-150 flex items-center justify-between bg-zinc-50" dir="rtl">
+                  <button
+                    onClick={() => handleDeleteDocument(previewDoc.id)}
+                    className="text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-100 px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer animate-in duration-200"
+                  >
+                    <Trash2 className="w-4 h-4" /> حذف المستند نهائياً
+                  </button>
+                  <button
+                    onClick={() => setPreviewDoc(null)}
+                    className="bg-zinc-900 text-white text-xs font-black px-5 py-2.5 rounded-xl hover:bg-zinc-800 transition-all cursor-pointer"
+                  >
+                    إغلاق المعاينة
+                  </button>
                 </div>
               </div>
             </div>

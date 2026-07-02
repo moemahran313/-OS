@@ -18,10 +18,16 @@ export default function ComplianceDashboard() {
     // In our app, employee docs have 'userId' to ensure multi-tenant safety
     const safeQuery = query(collection(db, "employees"), where("userId", "==", user.uid));
 
-    const unsub = onSnapshot(safeQuery, (snapshot) => {
-      const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Employee);
-      setEmployees(docs);
-    });
+    const unsub = onSnapshot(
+      safeQuery,
+      (snapshot) => {
+        const docs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Employee);
+        setEmployees(docs);
+      },
+      (error) => {
+        console.warn("ComplianceDashboard employees snapshot listener error (handled gracefully):", error);
+      }
+    );
 
     return () => unsub();
   }, [user]);

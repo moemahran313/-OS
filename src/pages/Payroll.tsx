@@ -136,11 +136,18 @@ export default function Payroll() {
       where("userId", "==", user.uid),
       orderBy("createdAt", "desc")
     );
-    const unsubEmp = onSnapshot(qEmp, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setEmployees(data);
-      setLoading(false);
-    });
+    const unsubEmp = onSnapshot(
+      qEmp,
+      (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setEmployees(data);
+        setLoading(false);
+      },
+      (error) => {
+        console.warn("Payroll employees snapshot listener error (handled gracefully):", error);
+        setLoading(false);
+      }
+    );
 
     // Listen to Payroll Runs
     const qRuns = query(
@@ -148,10 +155,16 @@ export default function Payroll() {
       where("userId", "==", user.uid),
       orderBy("createdAt", "desc")
     );
-    const unsubRuns = onSnapshot(qRuns, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setRuns(data);
-    });
+    const unsubRuns = onSnapshot(
+      qRuns,
+      (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setRuns(data);
+      },
+      (error) => {
+        console.warn("Payroll runs snapshot listener error (handled gracefully):", error);
+      }
+    );
 
     return () => {
       unsubEmp();

@@ -49,6 +49,7 @@ const navigationData = [
   { nameKey: "دفتر الأستاذ والقيود", id: "Accounting", href: "/app/accounting", icon: Scale },
   { nameKey: "sidebar.suppliers", id: "Suppliers", href: "/app/suppliers", icon: Truck },
   { nameKey: "sidebar.contracts", id: "Contracts", href: "/app/contracts", icon: FileSignature },
+  { nameKey: "sidebar.zatca_ai", id: "ZatcaAi", href: "/app/zatca-ai", icon: Sparkles },
   {
     nameKey: "sidebar.negotiations",
     id: "SmartNegotiations",

@@ -154,7 +154,7 @@ const HeroSection = () => {
           </p>
           <div className="flex flex-wrap justify-center items-center gap-8 md:gap-14">
             <img
-              src="data:image/svg+xml;utf8,%3Csvg viewBox='0 0 60 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10,2 L15,10 L10,18 L5,10 Z' fill='%231d8c7c'/%3E%3Ctext x='20' y='14' font-family='sans-serif' font-weight='800' font-size='11' fill='%231d8c7c'%3EZATCA%3C/text%3E%3C/svg%3E"
+              src="https://upload.wikimedia.org/wikipedia/ar/b/be/%D8%B4%D8%B9%D8%A7%D8%B1_%D9%87%D9%8A%D8%A6%D8%A9_%D8%A7%D9%84%D8%B2%D9%83%D8%A7%D8%A9_%D9%88%D8%A7%D9%84%D8%B6%D8%B1%D9%8A%D8%A8%D8%A9_%D9%88%D8%A7%D9%84%D8%AC%D9%85%D8%A7%D8%B1%D9%83.svg"
               alt="ZATCA"
               className="h-10 md:h-12 object-contain opacity-40 hover:opacity-100 transition-all duration-500 cursor-pointer"
               title="هيئة الزكاة والضريبة والجمارك"
@@ -172,7 +172,7 @@ const HeroSection = () => {
               title="سلة"
             />
             <img
-              src="data:image/svg+xml;utf8,%3Csvg viewBox='0 0 60 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10,4 C14,4 16,8 10,12 C4,8 6,4 10,4 Z' fill='%237E57C2'/%3E%3Ctext x='20' y='14' font-family='sans-serif' font-weight='800' font-size='12' fill='%237E57C2'%3Ezid%3C/text%3E%3C/svg%3E"
+              src="https://upload.wikimedia.org/wikipedia/ar/5/52/%D8%B4%D9%8B%D8%B9%D8%A7%D8%B1_%D9%85%D9%86%D8%B5%D8%A9_%D8%B2%D8%AF.png"
               alt="Zid"
               className="h-8 md:h-10 object-contain opacity-40 hover:opacity-100 transition-all duration-500 cursor-pointer"
               title="زد"
