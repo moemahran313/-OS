@@ -20,20 +20,20 @@
   --color-primary-foreground: #ffffff;
 
   /* Premium Light Theme - Zinc Scale Fallbacks */
-  --color-zinc-50: #f8fafc;       /* Clean, soft slate-infused background */
-  --color-zinc-100: #f1f5f9;      /* Card borders / secondary background */
-  --color-zinc-150: #e2e8f0;      /* Crisp border intermediate */
-  --color-zinc-200: #e2e8f0;      /* Clean element borders */
-  --color-zinc-250: #cbd5e1;      /* Mid-gray accent borders */
-  --color-zinc-300: #cbd5e1;      /* Section divider lines */
-  --color-zinc-400: #94a3b8;      /* Placeholder text / inactive icons */
-  --color-zinc-500: #64748b;      /* Muted subtitles & meta-info text */
-  --color-zinc-600: #475569;      /* Readable secondary body text */
-  --color-zinc-700: #334155;      /* Main readable body text */
-  --color-zinc-800: #1e293b;      /* Section subheadings */
-  --color-zinc-850: #0f172a;      /* Rich dropdown borders / active labels */
-  --color-zinc-900: #0f172a;      /* Primary headings & prominent titles */
-  --color-zinc-950: #020617;      /* Near-black deep accents */
+  --color-zinc-50: #f8fafc; /* Clean, soft slate-infused background */
+  --color-zinc-100: #f1f5f9; /* Card borders / secondary background */
+  --color-zinc-150: #e2e8f0; /* Crisp border intermediate */
+  --color-zinc-200: #e2e8f0; /* Clean element borders */
+  --color-zinc-250: #cbd5e1; /* Mid-gray accent borders */
+  --color-zinc-300: #cbd5e1; /* Section divider lines */
+  --color-zinc-400: #94a3b8; /* Placeholder text / inactive icons */
+  --color-zinc-500: #64748b; /* Muted subtitles & meta-info text */
+  --color-zinc-600: #475569; /* Readable secondary body text */
+  --color-zinc-700: #334155; /* Main readable body text */
+  --color-zinc-800: #1e293b; /* Section subheadings */
+  --color-zinc-850: #0f172a; /* Rich dropdown borders / active labels */
+  --color-zinc-900: #0f172a; /* Primary headings & prominent titles */
+  --color-zinc-950: #020617; /* Near-black deep accents */
 
   /* Premium Light Theme - Slate Scale Alignment */
   --color-slate-50: #f8fafc;
@@ -525,4 +525,3 @@ div#root:nth-of-type(1)
 .dark ::selection {
   background-color: rgba(16, 185, 129, 0.3);
 }
-

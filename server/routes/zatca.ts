@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../middleware/auth.js";
 import { GoogleGenAI, Type } from "@google/genai";
+import { generateContentWithRetry } from "../services/utils.js";
 
 const router = Router();
 
@@ -73,12 +74,13 @@ Ensure the output is ONLY a raw JSON string conforming to the schema. Do not enc
 Contract Text:
 ${contractText}`;
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithRetry(ai, {
       model: "gemini-3.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
-        systemInstruction: "You are an expert financial OCR parser specializing in Saudi commercial contracts and standard ZATCA e-invoicing compliance.",
+        systemInstruction:
+          "You are an expert financial OCR parser specializing in Saudi commercial contracts and standard ZATCA e-invoicing compliance.",
       },
     });
 
@@ -146,7 +148,7 @@ Key Guidance:
     // Add current user prompt
     formattedContents.push({ role: "user", parts: [{ text: prompt }] });
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithRetry(ai, {
       model: "gemini-3.5-flash",
       contents: formattedContents,
       config: {

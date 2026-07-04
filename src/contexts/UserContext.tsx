@@ -155,7 +155,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     if (!currentSessionId || !user) return;
 
     const sessionDocRef = doc(db, "user_sessions", currentSessionId);
-    const unsubSession = onSnapshot(sessionDocRef, 
+    const unsubSession = onSnapshot(
+      sessionDocRef,
       (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();

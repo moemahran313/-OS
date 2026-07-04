@@ -130,7 +130,9 @@ export default function MultiTenancySettings() {
           // 3. Fetch branches of current active company
           const activeCompanyId = contextData.userContext.activeCompanyId;
           if (activeCompanyId) {
-            const brRes = await authFetch(`/api/organizations/companies/${activeCompanyId}/branches`);
+            const brRes = await authFetch(
+              `/api/organizations/companies/${activeCompanyId}/branches`
+            );
             if (brRes.ok) {
               const brData = await brRes.json();
               setBranches(brData);

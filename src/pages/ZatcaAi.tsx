@@ -38,9 +38,13 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { useSettings } from "../contexts/SettingsContext";
+import { useUser } from "../contexts/UserContext";
+import { db } from "../lib/firebase";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { toast } from "sonner";
 import { generateZatcaQR } from "../lib/zatca";
 import { auth } from "../lib/firebase";
+import { handleFirestoreError, OperationType } from "../lib/firestore-errors";
 
 // Mock Sample Contracts for 1-click Demo experience
 interface DemoContract {
@@ -86,16 +90,37 @@ DELIVERY DATES: Project start date 2026-07-01, final handover estimated on 2026-
       retention: 5,
       deliveryDates: "2026-07-01 to 2026-10-30",
       lineItems: [
-        { id: 1, name: "AI Portal License - Setup & Installation", quantity: 1, unitPrice: 35000, discount: 0, vatPercent: 15 },
-        { id: 2, name: "Neural Modeling Config & Integration", quantity: 1, unitPrice: 45000, discount: 0, vatPercent: 15 },
-        { id: 3, name: "Bilingual Custom Workflows Engine", quantity: 1, unitPrice: 35000, discount: 0, vatPercent: 15 }
+        {
+          id: 1,
+          name: "AI Portal License - Setup & Installation",
+          quantity: 1,
+          unitPrice: 35000,
+          discount: 0,
+          vatPercent: 15,
+        },
+        {
+          id: 2,
+          name: "Neural Modeling Config & Integration",
+          quantity: 1,
+          unitPrice: 45000,
+          discount: 0,
+          vatPercent: 15,
+        },
+        {
+          id: 3,
+          name: "Bilingual Custom Workflows Engine",
+          quantity: 1,
+          unitPrice: 35000,
+          discount: 0,
+          vatPercent: 15,
+        },
       ],
       milestones: [
         { name: "Sign-off & Initial Kick-off", amount: 34500, date: "2026-06-15" },
         { name: "Beta Deploy & Training", amount: 46000, date: "2026-08-01" },
-        { name: "Final Production Acceptance", amount: 34500, date: "2026-10-15" }
-      ]
-    }
+        { name: "Final Production Acceptance", amount: 34500, date: "2026-10-15" },
+      ],
+    },
   },
   {
     id: "contract-2",
@@ -124,7 +149,14 @@ DELIVERY DATES: Project start date 2026-07-01, final handover estimated on 2026-
       retention: 0,
       deliveryDates: "2026-07-10 to 2026-12-10",
       lineItems: [
-        { id: 1, name: "توريد شاحنات نقل ذكية من الفئة أ", quantity: 3, unitPrice: 150000, discount: 0, vatPercent: 15 }
+        {
+          id: 1,
+          name: "توريد شاحنات نقل ذكية من الفئة أ",
+          quantity: 3,
+          unitPrice: 150000,
+          discount: 0,
+          vatPercent: 15,
+        },
       ],
       milestones: [
         { name: "الدفعة الأولى للتوريد الأساسي", amount: 75000, date: "2026-07-10" },
@@ -132,9 +164,9 @@ DELIVERY DATES: Project start date 2026-07-01, final handover estimated on 2026-
         { name: "الدفعة الشهرية الثالثة", amount: 75000, date: "2026-09-10" },
         { name: "الدفعة الشهرية الرابعة", amount: 75000, date: "2026-10-10" },
         { name: "الدفعة الشهرية الخامسة", amount: 75000, date: "2026-11-10" },
-        { name: "الدفعة الشهرية النهائية والتسليم", amount: 75000, date: "2026-12-10" }
-      ]
-    }
+        { name: "الدفعة الشهرية النهائية والتسليم", amount: 75000, date: "2026-12-10" },
+      ],
+    },
   },
   {
     id: "contract-3",
@@ -162,28 +194,81 @@ Expected Delivery: 2026-09-01.`,
       retention: 0,
       deliveryDates: "2026-09-01",
       lineItems: [
-        { id: 1, name: "Consulting Service & SC Feasibility Report", quantity: 1, unitPrice: 80000, discount: 0, vatPercent: 15 }
+        {
+          id: 1,
+          name: "Consulting Service & SC Feasibility Report",
+          quantity: 1,
+          unitPrice: 80000,
+          discount: 0,
+          vatPercent: 15,
+        },
       ],
-      milestones: [
-        { name: "Final Feasibility Acceptance", amount: 80000, date: "2026-09-01" }
-      ]
-    }
-  }
+      milestones: [{ name: "Final Feasibility Acceptance", amount: 80000, date: "2026-09-01" }],
+    },
+  },
 ];
 
 export default function ZatcaAi() {
   const { t } = useTranslation();
   const { settings } = useSettings();
+  const { user } = useUser();
   const isAr = settings.language === "ar";
 
   // Dashboard state variables
-  const [contractsUploadedCount, setContractsUploadedCount] = useState(3);
-  const [invoicesGeneratedCount, setInvoicesGeneratedCount] = useState(42);
+  const [contractsUploadedCount, setContractsUploadedCount] = useState(0);
+  const [invoicesGeneratedCount, setInvoicesGeneratedCount] = useState(0);
   const [rejectedInvoicesCount, setRejectedInvoicesCount] = useState(0);
-  const [clearedInvoicesCount, setClearedInvoicesCount] = useState(41);
-  const [warningsCount, setWarningsCount] = useState(1);
-  const [missingInfoCount, setMissingInfoCount] = useState(1);
-  const [aiConfidenceScore, setAiConfidenceScore] = useState(98.2);
+  const [clearedInvoicesCount, setClearedInvoicesCount] = useState(0);
+  const [warningsCount, setWarningsCount] = useState(0);
+  const [missingInfoCount, setMissingInfoCount] = useState(0);
+  const [aiConfidenceScore, setAiConfidenceScore] = useState(100.0);
+
+  useEffect(() => {
+    if (!user) return;
+    const uid = user.uid || user.id;
+
+    // Load Invoices
+    const qInvoices = query(collection(db, "invoices"), where("userId", "==", uid));
+    const unsubscribeInvoices = onSnapshot(
+      qInvoices,
+      (snapshot) => {
+        const invoicesList = snapshot.docs.map((doc) => doc.data());
+        const count = invoicesList.length;
+
+        setInvoicesGeneratedCount(count);
+
+        const cleared = invoicesList.filter(
+          (inv) => inv.status === "paid" || inv.status === "sent"
+        ).length;
+        setClearedInvoicesCount(cleared);
+
+        const rejected = invoicesList.filter((inv) => inv.status === "cancelled").length;
+        setRejectedInvoicesCount(rejected);
+
+        setAiConfidenceScore(count > 0 ? 99.8 : 100.0);
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, "invoices");
+      }
+    );
+
+    // Load DMS documents representing contracts
+    const qDocs = query(collection(db, "dms_documents"), where("userId", "==", uid));
+    const unsubscribeDocs = onSnapshot(
+      qDocs,
+      (snapshot) => {
+        setContractsUploadedCount(snapshot.size);
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, "dms_documents");
+      }
+    );
+
+    return () => {
+      unsubscribeInvoices();
+      unsubscribeDocs();
+    };
+  }, [user]);
 
   // Workflow steps: 'upload', 'extract', 'invoice', 'comply', 'submit'
   const [currentStep, setCurrentStep] = useState<"upload" | "extract" | "invoice">("upload");
@@ -206,7 +291,9 @@ export default function ZatcaAi() {
   const [invoiceDateInput, setInvoiceDateInput] = useState("");
 
   // ZATCA invoice options
-  const [invoiceType, setInvoiceType] = useState<"standard" | "tax" | "simplified" | "debit" | "credit">("tax");
+  const [invoiceType, setInvoiceType] = useState<
+    "standard" | "tax" | "simplified" | "debit" | "credit"
+  >("tax");
   const [outputFormat, setOutputFormat] = useState<"pdf" | "xml" | "qr" | "json" | "api">("pdf");
 
   // Compliance generation parameters
@@ -224,8 +311,8 @@ export default function ZatcaAi() {
       role: "assistant",
       content: isAr
         ? "أهلاً بك في نظام ZATCA AI الذكي للتحليل والفوترة المباشرة من العقود. حدد عقداً أو ارفع ملفاً، وسأتولى صياغة الفواتير وتقسيمها والامتثال لشروط الفوترة الإلكترونية."
-        : "Welcome to ZATCA AI smart contract billing portal. Select or upload a contract, and I will handle invoice parsing, split milestone scheduling, and standard cryptographic stamping."
-    }
+        : "Welcome to ZATCA AI smart contract billing portal. Select or upload a contract, and I will handle invoice parsing, split milestone scheduling, and standard cryptographic stamping.",
+    },
   ]);
   const [isAiThinking, setIsAiThinking] = useState(false);
 
@@ -243,7 +330,7 @@ export default function ZatcaAi() {
     hyperpay: false,
     moyasar: false,
     salla: false,
-    zid: false
+    zid: false,
   });
 
   // Calculate math totals
@@ -298,10 +385,10 @@ export default function ZatcaAi() {
       }
 
       const parsedData = await res.json();
-      
+
       clearInterval(interval);
       setOcrProgress(100);
-      
+
       setTimeout(() => {
         setIsOcrProcessing(false);
         setExtractedData(parsedData);
@@ -311,28 +398,25 @@ export default function ZatcaAi() {
         setCurrencyInput(parsedData.currency || "SAR");
         setInvoiceDateInput(parsedData.contractDate || "2026-07-02");
         setCurrentStep("extract");
-        
+
         let missing = 0;
         if (!parsedData.sellerVat) missing++;
         if (!parsedData.buyerVat) missing++;
         setMissingInfoCount(missing);
-        setAiConfidenceScore(missing === 0 ? 99.5 : (missing === 1 ? 88.5 : 76.4));
-        
+        setAiConfidenceScore(missing === 0 ? 99.5 : missing === 1 ? 88.5 : 76.4);
+
         toast.success(
           isAr
             ? `تم تحليل العقد بنجاح بواسطة الذكاء الاصطناعي والتعرف الضوئي!`
             : `Contract parsed and structured successfully via Gemini AI!`
         );
       }, 400);
-
     } catch (err: any) {
       clearInterval(interval);
       setIsOcrProcessing(false);
       console.error(err);
       toast.error(
-        isAr
-          ? `فشل معالجة العقد: ${err.message}`
-          : `Failed to process contract: ${err.message}`
+        isAr ? `فشل معالجة العقد: ${err.message}` : `Failed to process contract: ${err.message}`
       );
     }
   };
@@ -396,7 +480,7 @@ export default function ZatcaAi() {
       vatAmount: vat.toFixed(2),
       xmlHash: randomSha256,
       signature: "MEYCIQCc9rC6pD7vV7A...signature_ecdsa...",
-      publicKey: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEP...pubkey..."
+      publicKey: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEP...pubkey...",
     });
 
     setComplianceData({
@@ -408,7 +492,7 @@ export default function ZatcaAi() {
       canonicalXml: "C14N Exclusive Canonicalization UBL 2.1 Schema compliant",
       invoiceCounter: 1422,
       icv: "ICV-2026-92-ZATCA",
-      cryptographicStamp: "CCSID-SA-9102-REGISTRY-VALID"
+      cryptographicStamp: "CCSID-SA-9102-REGISTRY-VALID",
     });
   }, [extractedData, invoiceDateInput, total, vat]);
 
@@ -439,7 +523,7 @@ export default function ZatcaAi() {
           "الاتصال المباشر ببوابة المطورين بالمنصة التجريبية لـ ZATCA...",
           "الاعتماد والربط بنجاح! تم ختم الفاتورة برقم ترخيص ZATCA...",
           "تصدير الفاتورة الرسمية PDF/A المتوافقة مع النظام المشترك...",
-          "إرسال نسخة بريدية مؤتمتة وتنبيه العملاء..."
+          "إرسال نسخة بريدية مؤتمتة وتنبيه العملاء...",
         ]
       : [
           "Analyzing contract terms & metadata...",
@@ -451,7 +535,7 @@ export default function ZatcaAi() {
           "Transmitting payload to Saudi ZATCA portal API (Sandbox)...",
           "SUCCESS! Cleared and Registered with ZATCA Registry...",
           "Generating compliant PDF/A localized with QR visual badge...",
-          "Dispatching automated invoice email copy to client..."
+          "Dispatching automated invoice email copy to client...",
         ];
 
     const runSeq = (index: number) => {
@@ -501,12 +585,14 @@ export default function ZatcaAi() {
         body: JSON.stringify({
           prompt: prompt,
           history: aiChatHistory,
-          contractContext: extractedData ? {
-            ...extractedData,
-            total: total,
-            subtotal: subtotal,
-            vat: vat,
-          } : null,
+          contractContext: extractedData
+            ? {
+                ...extractedData,
+                total: total,
+                subtotal: subtotal,
+                vat: vat,
+              }
+            : null,
         }),
       });
 
@@ -519,9 +605,7 @@ export default function ZatcaAi() {
     } catch (err: any) {
       console.error(err);
       toast.error(
-        isAr
-          ? "فشل توليد رد من المساعد الذكي."
-          : "Failed to generate response from AI Copilot."
+        isAr ? "فشل توليد رد من المساعد الذكي." : "Failed to generate response from AI Copilot."
       );
       setAiChatHistory((prev) => [
         ...prev,
@@ -540,7 +624,7 @@ export default function ZatcaAi() {
   const toggleIntegration = (key: string) => {
     setIntegrations((prev) => ({
       ...prev,
-      [key]: !prev[key]
+      [key]: !prev[key],
     }));
     toast.success(
       isAr
@@ -560,7 +644,9 @@ export default function ZatcaAi() {
             </div>
             <div>
               <h1 className="text-xl md:text-2xl font-black tracking-tight flex items-center gap-2">
-                {isAr ? "نظام العقود والفوترة الذكية ZATCA AI" : "Contract → ZATCA AI Intelligent Hub"}
+                {isAr
+                  ? "نظام العقود والفوترة الذكية ZATCA AI"
+                  : "Contract → ZATCA AI Intelligent Hub"}
                 <span className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
                   {isAr ? "الجيل الثالث" : "v3.5 Engine"}
                 </span>
@@ -585,7 +671,9 @@ export default function ZatcaAi() {
                 setExtractedData(null);
                 setMissingInfoCount(1);
                 setAiConfidenceScore(98.2);
-                toast.info(isAr ? "تمت تهيئة ساحة التجربة بنجاح" : "Compliance playground re-initialized");
+                toast.info(
+                  isAr ? "تمت تهيئة ساحة التجربة بنجاح" : "Compliance playground re-initialized"
+                );
               }}
               className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 transition-colors"
               title={isAr ? "إعادة تعيين التجربة" : "Reset Playground"}
@@ -640,9 +728,7 @@ export default function ZatcaAi() {
               {isAr ? "الفواتير المرفوضة" : "Rejected"}
             </span>
             <div className="flex justify-between items-baseline mt-2">
-              <span className="text-2xl font-black text-red-500">
-                {rejectedInvoicesCount}
-              </span>
+              <span className="text-2xl font-black text-red-500">{rejectedInvoicesCount}</span>
               <XCircle className="w-5 h-5 text-red-500" />
             </div>
           </div>
@@ -652,9 +738,7 @@ export default function ZatcaAi() {
               {isAr ? "التنبيهات الفنية" : "Warnings"}
             </span>
             <div className="flex justify-between items-baseline mt-2">
-              <span className="text-2xl font-black text-amber-500">
-                {warningsCount}
-              </span>
+              <span className="text-2xl font-black text-amber-500">{warningsCount}</span>
               <AlertTriangle className="w-5 h-5 text-amber-500" />
             </div>
           </div>
@@ -664,9 +748,7 @@ export default function ZatcaAi() {
               {isAr ? "بيانات ضائعة" : "Missing Info"}
             </span>
             <div className="flex justify-between items-baseline mt-2">
-              <span className="text-2xl font-black text-rose-500">
-                {missingInfoCount}
-              </span>
+              <span className="text-2xl font-black text-rose-500">{missingInfoCount}</span>
               <Info className="w-5 h-5 text-rose-500" />
             </div>
           </div>
@@ -706,7 +788,11 @@ export default function ZatcaAi() {
               <button
                 onClick={() => {
                   if (!extractedData) {
-                    toast.error(isAr ? "الرجاء رفع أو تحديد عقد أولاً" : "Please upload or select a contract first");
+                    toast.error(
+                      isAr
+                        ? "الرجاء رفع أو تحديد عقد أولاً"
+                        : "Please upload or select a contract first"
+                    );
                     return;
                   }
                   setCurrentStep("extract");
@@ -723,7 +809,11 @@ export default function ZatcaAi() {
               <button
                 onClick={() => {
                   if (!extractedData) {
-                    toast.error(isAr ? "الرجاء رفع أو تحديد عقد أولاً" : "Please upload or select a contract first");
+                    toast.error(
+                      isAr
+                        ? "الرجاء رفع أو تحديد عقد أولاً"
+                        : "Please upload or select a contract first"
+                    );
                     return;
                   }
                   setCurrentStep("invoice");
@@ -745,36 +835,6 @@ export default function ZatcaAi() {
               {currentStep === "upload" && (
                 <div className="space-y-6">
                   {/* Demo select triggers */}
-                  <div className="bg-zinc-50 dark:bg-zinc-950 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800">
-                    <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3">
-                      {isAr ? "اختر أحد العقود النموذجية للتشغيل السريع بنقرة واحدة" : "Select a pre-loaded sample contract for 1-click execution"}
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      {DEMO_CONTRACTS.map((demo) => (
-                        <button
-                          key={demo.id}
-                          onClick={() => handleSelectDemo(demo)}
-                          className={`p-4 rounded-xl border text-right transition-all flex flex-col justify-between min-h-[120px] ${
-                            activeContract?.id === demo.id
-                              ? "bg-emerald-500/10 border-emerald-500 dark:border-emerald-400 text-emerald-950 dark:text-emerald-300 shadow-md scale-[1.02]"
-                              : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 text-zinc-700 dark:text-zinc-300"
-                          }`}
-                        >
-                          <div>
-                            <span className="text-[10px] font-mono bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md text-zinc-500 block w-fit mb-1">
-                              {demo.type}
-                            </span>
-                            <h4 className="text-xs font-bold line-clamp-2">
-                              {isAr ? demo.nameAr : demo.name}
-                            </h4>
-                          </div>
-                          <span className="text-[10px] font-sans text-zinc-400 mt-2 block">
-                            {isAr ? `اللغة: ${demo.language}` : `Language: ${demo.language}`}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
 
                   {/* Manual File Upload Drag & Drop zone */}
                   <div
@@ -832,7 +892,17 @@ export default function ZatcaAi() {
                                 : "bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 text-zinc-600 dark:text-zinc-400"
                             }`}
                           >
-                            {lang === "arabic" ? (isAr ? "عربي" : "Arabic") : lang === "english" ? (isAr ? "إنجليزي" : "English") : (isAr ? "مشترك" : "Mixed")}
+                            {lang === "arabic"
+                              ? isAr
+                                ? "عربي"
+                                : "Arabic"
+                              : lang === "english"
+                                ? isAr
+                                  ? "إنجليزي"
+                                  : "English"
+                                : isAr
+                                  ? "مشترك"
+                                  : "Mixed"}
                           </button>
                         ))}
                       </div>
@@ -849,7 +919,9 @@ export default function ZatcaAi() {
                       <div className="flex justify-between items-center">
                         <span className="text-xs font-mono text-emerald-400 animate-pulse flex items-center gap-2">
                           <Cpu className="w-4 h-4" />
-                          {isAr ? "جاري تشغيل محرك التعرف الضوئي OCR والذكاء الاصطناعي..." : "AI OCR engine & cognitive parsing running..."}
+                          {isAr
+                            ? "جاري تشغيل محرك التعرف الضوئي OCR والذكاء الاصطناعي..."
+                            : "AI OCR engine & cognitive parsing running..."}
                         </span>
                         <span className="text-xs font-mono text-zinc-400">{ocrProgress}%</span>
                       </div>
@@ -879,19 +951,35 @@ export default function ZatcaAi() {
                           <span>Tables Detected</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className={`${ocrProgress > 30 ? "text-emerald-400" : "text-zinc-600 animate-pulse"}`}>●</span>
+                          <span
+                            className={`${ocrProgress > 30 ? "text-emerald-400" : "text-zinc-600 animate-pulse"}`}
+                          >
+                            ●
+                          </span>
                           <span>Seller Name Clause</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className={`${ocrProgress > 50 ? "text-emerald-400" : "text-zinc-600 animate-pulse"}`}>●</span>
+                          <span
+                            className={`${ocrProgress > 50 ? "text-emerald-400" : "text-zinc-600 animate-pulse"}`}
+                          >
+                            ●
+                          </span>
                           <span>Seller VAT Extract</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className={`${ocrProgress > 70 ? "text-emerald-400" : "text-zinc-600 animate-pulse"}`}>●</span>
+                          <span
+                            className={`${ocrProgress > 70 ? "text-emerald-400" : "text-zinc-600 animate-pulse"}`}
+                          >
+                            ●
+                          </span>
                           <span>Milestones Grid</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className={`${ocrProgress > 90 ? "text-emerald-400" : "text-zinc-600 animate-pulse"}`}>●</span>
+                          <span
+                            className={`${ocrProgress > 90 ? "text-emerald-400" : "text-zinc-600 animate-pulse"}`}
+                          >
+                            ●
+                          </span>
                           <span>Signatures & Seals</span>
                         </div>
                       </div>
@@ -924,7 +1012,9 @@ export default function ZatcaAi() {
                       <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                       <div className="space-y-1">
                         <h4 className="text-xs font-bold text-emerald-900 dark:text-emerald-300">
-                          {isAr ? "تحقق الامتثال المسبق: العقد متطابق تماماً!" : "Pre-Validation Compliance: All fields resolved!"}
+                          {isAr
+                            ? "تحقق الامتثال المسبق: العقد متطابق تماماً!"
+                            : "Pre-Validation Compliance: All fields resolved!"}
                         </h4>
                         <p className="text-xs text-emerald-700 dark:text-emerald-400">
                           {isAr
@@ -939,13 +1029,17 @@ export default function ZatcaAi() {
                   <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl space-y-4">
                     <h3 className="text-sm font-black text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
                       <Settings className="w-4 h-4 text-emerald-500" />
-                      {isAr ? "تحقق الأخطاء واستكمال البيانات الناقصة" : "AI Compliance Resolution & Fix Form"}
+                      {isAr
+                        ? "تحقق الأخطاء واستكمال البيانات الناقصة"
+                        : "AI Compliance Resolution & Fix Form"}
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="text-xs font-bold text-zinc-500 block mb-1">
-                          {isAr ? "الرقم الضريبي للبائع (15 خانة السعودية)" : "Seller VAT Registration (15 Digits)"}
+                          {isAr
+                            ? "الرقم الضريبي للبائع (15 خانة السعودية)"
+                            : "Seller VAT Registration (15 Digits)"}
                         </label>
                         <div className="relative">
                           <input
@@ -955,7 +1049,9 @@ export default function ZatcaAi() {
                             value={sellerVatInput}
                             onChange={(e) => setSellerVatInput(e.target.value)}
                             className={`w-full bg-zinc-50 dark:bg-zinc-950 border rounded-lg p-2 text-xs font-mono ${
-                              !sellerVatInput ? "border-rose-400 focus:ring-rose-400" : "border-zinc-200 dark:border-zinc-800"
+                              !sellerVatInput
+                                ? "border-rose-400 focus:ring-rose-400"
+                                : "border-zinc-200 dark:border-zinc-800"
                             }`}
                           />
                           {!sellerVatInput && (
@@ -968,7 +1064,9 @@ export default function ZatcaAi() {
 
                       <div>
                         <label className="text-xs font-bold text-zinc-500 block mb-1">
-                          {isAr ? "الرقم الضريبي للمشتري (15 خانة السعودية)" : "Buyer VAT Registration (15 Digits)"}
+                          {isAr
+                            ? "الرقم الضريبي للمشتري (15 خانة السعودية)"
+                            : "Buyer VAT Registration (15 Digits)"}
                         </label>
                         <div className="relative">
                           <input
@@ -978,7 +1076,9 @@ export default function ZatcaAi() {
                             value={buyerVatInput}
                             onChange={(e) => setBuyerVatInput(e.target.value)}
                             className={`w-full bg-zinc-50 dark:bg-zinc-950 border rounded-lg p-2 text-xs font-mono ${
-                              !buyerVatInput ? "border-rose-400 focus:ring-rose-400" : "border-zinc-200 dark:border-zinc-800"
+                              !buyerVatInput
+                                ? "border-rose-400 focus:ring-rose-400"
+                                : "border-zinc-200 dark:border-zinc-800"
                             }`}
                           />
                           {!buyerVatInput && (
@@ -1018,7 +1118,9 @@ export default function ZatcaAi() {
                       onClick={handleApplyCorrections}
                       className="w-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-xs font-bold py-2.5 rounded-xl hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
                     >
-                      {isAr ? "تطبيق التحديث وإعادة التحقق" : "Apply Corrections & Rerun Validation Engine"}
+                      {isAr
+                        ? "تطبيق التحديث وإعادة التحقق"
+                        : "Apply Corrections & Rerun Validation Engine"}
                     </button>
                   </div>
 
@@ -1026,28 +1128,46 @@ export default function ZatcaAi() {
                   <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
                     <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 border-b border-zinc-100 dark:border-zinc-800/80">
                       <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
-                        {isAr ? "بيانات الأطراف والتعاقد المستخلصة" : "Extracted Parties & Agreement Specifications"}
+                        {isAr
+                          ? "بيانات الأطراف والتعاقد المستخلصة"
+                          : "Extracted Parties & Agreement Specifications"}
                       </h3>
                     </div>
 
                     <div className="p-4 space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                         <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                          <span className="text-zinc-400 block mb-1">{isAr ? "اسم البائع" : "Seller Name"}</span>
-                          <span className="font-bold text-zinc-800 dark:text-zinc-200">{extractedData.sellerName}</span>
-                        </div>
-                        <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                          <span className="text-zinc-400 block mb-1">{isAr ? "اسم المشتري" : "Buyer Name"}</span>
-                          <span className="font-bold text-zinc-800 dark:text-zinc-200">{extractedData.buyerName}</span>
-                        </div>
-                        <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                          <span className="text-zinc-400 block mb-1">{isAr ? "رقم العقد" : "Contract Number"}</span>
-                          <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200">{extractedData.contractNumber}</span>
-                        </div>
-                        <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
-                          <span className="text-zinc-400 block mb-1">{isAr ? "شروط الدفع والاستقطاع" : "Payment & Retention Terms"}</span>
+                          <span className="text-zinc-400 block mb-1">
+                            {isAr ? "اسم البائع" : "Seller Name"}
+                          </span>
                           <span className="font-bold text-zinc-800 dark:text-zinc-200">
-                            {extractedData.paymentTerms} {extractedData.retention > 0 && `(Retention: ${extractedData.retention}%)`}
+                            {extractedData.sellerName}
+                          </span>
+                        </div>
+                        <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                          <span className="text-zinc-400 block mb-1">
+                            {isAr ? "اسم المشتري" : "Buyer Name"}
+                          </span>
+                          <span className="font-bold text-zinc-800 dark:text-zinc-200">
+                            {extractedData.buyerName}
+                          </span>
+                        </div>
+                        <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                          <span className="text-zinc-400 block mb-1">
+                            {isAr ? "رقم العقد" : "Contract Number"}
+                          </span>
+                          <span className="font-mono font-bold text-zinc-800 dark:text-zinc-200">
+                            {extractedData.contractNumber}
+                          </span>
+                        </div>
+                        <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                          <span className="text-zinc-400 block mb-1">
+                            {isAr ? "شروط الدفع والاستقطاع" : "Payment & Retention Terms"}
+                          </span>
+                          <span className="font-bold text-zinc-800 dark:text-zinc-200">
+                            {extractedData.paymentTerms}{" "}
+                            {extractedData.retention > 0 &&
+                              `(Retention: ${extractedData.retention}%)`}
                           </span>
                         </div>
                       </div>
@@ -1066,13 +1186,25 @@ export default function ZatcaAi() {
                           </thead>
                           <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
                             {extractedData.lineItems.map((item: any) => (
-                              <tr key={item.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                                <td className="p-3 text-left font-bold text-zinc-700 dark:text-zinc-300">{item.name}</td>
+                              <tr
+                                key={item.id}
+                                className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                              >
+                                <td className="p-3 text-left font-bold text-zinc-700 dark:text-zinc-300">
+                                  {item.name}
+                                </td>
                                 <td className="p-3 font-mono">{item.quantity}</td>
-                                <td className="p-3 font-mono">{item.unitPrice.toLocaleString()} {extractedData.currency}</td>
+                                <td className="p-3 font-mono">
+                                  {item.unitPrice.toLocaleString()} {extractedData.currency}
+                                </td>
                                 <td className="p-3 font-mono">{item.vatPercent}%</td>
                                 <td className="p-3 font-mono font-bold text-zinc-800 dark:text-zinc-100">
-                                  {((item.quantity * item.unitPrice) * (1 + item.vatPercent / 100)).toLocaleString()} {extractedData.currency}
+                                  {(
+                                    item.quantity *
+                                    item.unitPrice *
+                                    (1 + item.vatPercent / 100)
+                                  ).toLocaleString()}{" "}
+                                  {extractedData.currency}
                                 </td>
                               </tr>
                             ))}
@@ -1084,14 +1216,23 @@ export default function ZatcaAi() {
                       {extractedData.milestones && extractedData.milestones.length > 0 && (
                         <div>
                           <h4 className="text-xs font-bold text-zinc-400 mb-2 uppercase tracking-wider">
-                            {isAr ? "معالم الدفع المستخلصة وجدول الإنجاز" : "Extracted Milestones & Progress Payments Schedule"}
+                            {isAr
+                              ? "معالم الدفع المستخلصة وجدول الإنجاز"
+                              : "Extracted Milestones & Progress Payments Schedule"}
                           </h4>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             {extractedData.milestones.map((milestone: any, i: number) => (
-                              <div key={i} className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-xs">
+                              <div
+                                key={i}
+                                className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-xs"
+                              >
                                 <div>
-                                  <span className="font-bold text-zinc-800 dark:text-zinc-200 block">{milestone.name}</span>
-                                  <span className="text-[10px] text-zinc-400 block mt-0.5">{milestone.date}</span>
+                                  <span className="font-bold text-zinc-800 dark:text-zinc-200 block">
+                                    {milestone.name}
+                                  </span>
+                                  <span className="text-[10px] text-zinc-400 block mt-0.5">
+                                    {milestone.date}
+                                  </span>
                                 </div>
                                 <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
                                   {milestone.amount.toLocaleString()} {extractedData.currency}
@@ -1132,10 +1273,14 @@ export default function ZatcaAi() {
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {[
-                          { id: "tax", label: "فاتورة ضريبية (B2B)", labelEn: "Standard Tax (B2B)" },
+                          {
+                            id: "tax",
+                            label: "فاتورة ضريبية (B2B)",
+                            labelEn: "Standard Tax (B2B)",
+                          },
                           { id: "simplified", label: "مبسطة (B2C)", labelEn: "Simplified (B2C)" },
                           { id: "debit", label: "إشعار مدين", labelEn: "Debit Note" },
-                          { id: "credit", label: "إشعار دائن", labelEn: "Credit Note" }
+                          { id: "credit", label: "إشعار دائن", labelEn: "Credit Note" },
                         ].map((type) => (
                           <button
                             key={type.id}
@@ -1162,7 +1307,7 @@ export default function ZatcaAi() {
                           { id: "xml", label: "XML (UBL 2.1)" },
                           { id: "qr", label: "QR Code (TLV)" },
                           { id: "json", label: "JSON" },
-                          { id: "api", label: "API Payload" }
+                          { id: "api", label: "API Payload" },
                         ].map((fmt) => (
                           <button
                             key={fmt.id}
@@ -1191,12 +1336,27 @@ export default function ZatcaAi() {
                               {invoiceType === "tax" ? "فاتورة ضريبية" : "فاتورة مبسطة"}
                             </h2>
                             <h3 className="text-zinc-400 text-[10px] uppercase font-bold tracking-wider mt-0.5">
-                              {invoiceType === "tax" ? "Standard Tax Invoice" : "Simplified Tax Invoice"}
+                              {invoiceType === "tax"
+                                ? "Standard Tax Invoice"
+                                : "Simplified Tax Invoice"}
                             </h3>
                             <div className="mt-3 space-y-0.5 text-[10px] text-zinc-500">
-                              <p>رقم الفاتورة / Invoice No: <strong className="text-zinc-800">{extractedData.contractNumber}</strong></p>
-                              <p>تاريخ الإصدار / Issue Date: <strong className="text-zinc-800">{extractedData.contractDate}</strong></p>
-                              <p>تاريخ التوريد / Supply Date: <strong className="text-zinc-800">{invoiceDateInput}</strong></p>
+                              <p>
+                                رقم الفاتورة / Invoice No:{" "}
+                                <strong className="text-zinc-800">
+                                  {extractedData.contractNumber}
+                                </strong>
+                              </p>
+                              <p>
+                                تاريخ الإصدار / Issue Date:{" "}
+                                <strong className="text-zinc-800">
+                                  {extractedData.contractDate}
+                                </strong>
+                              </p>
+                              <p>
+                                تاريخ التوريد / Supply Date:{" "}
+                                <strong className="text-zinc-800">{invoiceDateInput}</strong>
+                              </p>
                             </div>
                           </div>
                           {complianceData && (
@@ -1215,19 +1375,35 @@ export default function ZatcaAi() {
                         {/* Parties row */}
                         <div className="grid grid-cols-2 gap-8 text-[11px]">
                           <div>
-                            <h4 className="font-bold border-b border-zinc-100 pb-1 text-zinc-900">الطرف الأول / Seller (الشركة الموردة)</h4>
+                            <h4 className="font-bold border-b border-zinc-100 pb-1 text-zinc-900">
+                              الطرف الأول / Seller (الشركة الموردة)
+                            </h4>
                             <div className="mt-2 space-y-0.5 text-zinc-600">
                               <p className="font-bold text-zinc-800">{extractedData.sellerName}</p>
-                              <p>الرقم الضريبي / Seller VAT: <strong className="font-mono text-zinc-800">{extractedData.sellerVat || "N/A"}</strong></p>
+                              <p>
+                                الرقم الضريبي / Seller VAT:{" "}
+                                <strong className="font-mono text-zinc-800">
+                                  {extractedData.sellerVat || "N/A"}
+                                </strong>
+                              </p>
                               <p>العنوان / Address: العليا، الرياض، المملكة العربية السعودية</p>
                             </div>
                           </div>
                           <div>
-                            <h4 className="font-bold border-b border-zinc-100 pb-1 text-zinc-900">الطرف الثاني / Buyer (العميل)</h4>
+                            <h4 className="font-bold border-b border-zinc-100 pb-1 text-zinc-900">
+                              الطرف الثاني / Buyer (العميل)
+                            </h4>
                             <div className="mt-2 space-y-0.5 text-zinc-600">
                               <p className="font-bold text-zinc-800">{extractedData.buyerName}</p>
-                              <p>الرقم الضريبي / Buyer VAT: <strong className="font-mono text-zinc-800">{extractedData.buyerVat || "N/A"}</strong></p>
-                              <p>العملة والاتفاقية / Contract terms: {extractedData.paymentTerms}</p>
+                              <p>
+                                الرقم الضريبي / Buyer VAT:{" "}
+                                <strong className="font-mono text-zinc-800">
+                                  {extractedData.buyerVat || "N/A"}
+                                </strong>
+                              </p>
+                              <p>
+                                العملة والاتفاقية / Contract terms: {extractedData.paymentTerms}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -1250,10 +1426,13 @@ export default function ZatcaAi() {
                                   <tr key={item.id}>
                                     <td className="p-3 text-right font-bold">{item.name}</td>
                                     <td className="p-3 text-center font-mono">{item.quantity}</td>
-                                    <td className="p-3 text-right font-mono">{item.unitPrice.toLocaleString()} {extractedData.currency}</td>
+                                    <td className="p-3 text-right font-mono">
+                                      {item.unitPrice.toLocaleString()} {extractedData.currency}
+                                    </td>
                                     <td className="p-3 text-right font-mono">15%</td>
                                     <td className="p-3 text-right font-mono font-bold">
-                                      {((item.quantity * item.unitPrice) * 1.15).toLocaleString()} {extractedData.currency}
+                                      {(item.quantity * item.unitPrice * 1.15).toLocaleString()}{" "}
+                                      {extractedData.currency}
                                     </td>
                                   </tr>
                                 ))}
@@ -1265,16 +1444,26 @@ export default function ZatcaAi() {
                           <div className="flex justify-end">
                             <div className="w-80 space-y-2 text-xs border-t border-zinc-200 pt-4">
                               <div className="flex justify-between">
-                                <span className="text-zinc-500">المجموع الفرعي (غير شامل الضريبة) / Subtotal:</span>
-                                <span className="font-mono font-bold">{subtotal.toLocaleString()} {extractedData.currency}</span>
+                                <span className="text-zinc-500">
+                                  المجموع الفرعي (غير شامل الضريبة) / Subtotal:
+                                </span>
+                                <span className="font-mono font-bold">
+                                  {subtotal.toLocaleString()} {extractedData.currency}
+                                </span>
                               </div>
                               <div className="flex justify-between text-zinc-600">
-                                <span className="text-zinc-500">ضريبة القيمة المضافة (15%) / Total VAT (15%):</span>
-                                <span className="font-mono font-bold text-rose-600">{vat.toLocaleString()} {extractedData.currency}</span>
+                                <span className="text-zinc-500">
+                                  ضريبة القيمة المضافة (15%) / Total VAT (15%):
+                                </span>
+                                <span className="font-mono font-bold text-rose-600">
+                                  {vat.toLocaleString()} {extractedData.currency}
+                                </span>
                               </div>
                               <div className="flex justify-between border-t border-dashed border-zinc-200 pt-2 text-zinc-900 font-black text-sm">
                                 <span>المجموع النهائي شامل الضريبة / Grand Total:</span>
-                                <span className="font-mono text-emerald-600">{total.toLocaleString()} {extractedData.currency}</span>
+                                <span className="font-mono text-emerald-600">
+                                  {total.toLocaleString()} {extractedData.currency}
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -1282,8 +1471,14 @@ export default function ZatcaAi() {
 
                         {/* Legal compliance notice footer */}
                         <div className="border-t border-zinc-100 pt-4 text-[10px] text-zinc-400 text-center leading-relaxed">
-                          <p>تم استخلاص هذه الفاتورة ضريبياً باستخدام معالج ZATCA AI المعتمد لدى الهيئة.</p>
-                          <p className="mt-0.5">Complies with Article 53 of the KSA VAT Implementing Regulations on E-Invoicing requirements.</p>
+                          <p>
+                            تم استخلاص هذه الفاتورة ضريبياً باستخدام معالج ZATCA AI المعتمد لدى
+                            الهيئة.
+                          </p>
+                          <p className="mt-0.5">
+                            Complies with Article 53 of the KSA VAT Implementing Regulations on
+                            E-Invoicing requirements.
+                          </p>
                         </div>
                       </div>
                     )}
@@ -1291,11 +1486,17 @@ export default function ZatcaAi() {
                     {outputFormat === "xml" && complianceData && (
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
-                          <span className="text-xs font-bold text-zinc-500">{isAr ? "كود UBL 2.1 المتوافق مع الفاتورة" : "Generated UBL 2.1 Compliant XML"}</span>
-                          <span className="text-[10px] bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded font-mono font-bold">XML SCHEMA VALID</span>
+                          <span className="text-xs font-bold text-zinc-500">
+                            {isAr
+                              ? "كود UBL 2.1 المتوافق مع الفاتورة"
+                              : "Generated UBL 2.1 Compliant XML"}
+                          </span>
+                          <span className="text-[10px] bg-emerald-500/10 text-emerald-600 px-2 py-0.5 rounded font-mono font-bold">
+                            XML SCHEMA VALID
+                          </span>
                         </div>
                         <pre className="bg-zinc-950 text-emerald-400 p-5 rounded-2xl font-mono text-[11px] overflow-x-auto max-h-[400px] leading-relaxed select-all">
-{`<?xml version="1.0" encoding="UTF-8"?>
+                          {`<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" 
          xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" 
          xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
@@ -1345,28 +1546,36 @@ export default function ZatcaAi() {
                     {outputFormat === "qr" && complianceData && (
                       <div className="space-y-6 flex flex-col items-center justify-center p-8">
                         <h4 className="text-xs font-black text-zinc-700 dark:text-zinc-300 text-center">
-                          {isAr ? "رمز الاستجابة السريع لمرحلة الربط والدمج (Phase 2 TLV QR)" : "Compliant Base64 TLV Encoded 2D Barcode (QR)"}
+                          {isAr
+                            ? "رمز الاستجابة السريع لمرحلة الربط والدمج (Phase 2 TLV QR)"
+                            : "Compliant Base64 TLV Encoded 2D Barcode (QR)"}
                         </h4>
                         <div className="bg-white p-4 rounded-3xl border border-zinc-200 shadow-md flex items-center justify-center">
                           {/* Use standard vector QrCode representing decodable fields */}
                           <QrCode className="w-48 h-48 text-zinc-900" />
                         </div>
                         <div className="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 w-full font-mono text-[10px] break-all text-zinc-500">
-                          <span className="text-zinc-400 block font-bold mb-1 uppercase tracking-wider">{isAr ? "كود التشفير المعتمد (Base64)" : "Raw Base64 TLV Hash string"}</span>
+                          <span className="text-zinc-400 block font-bold mb-1 uppercase tracking-wider">
+                            {isAr ? "كود التشفير المعتمد (Base64)" : "Raw Base64 TLV Hash string"}
+                          </span>
                           {complianceData.qrTlv}
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full text-[10px]">
                           <div className="bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded border border-zinc-200 dark:border-zinc-800">
-                            <span className="text-zinc-400 font-bold">Tag 1 (Seller):</span> {extractedData.sellerName}
+                            <span className="text-zinc-400 font-bold">Tag 1 (Seller):</span>{" "}
+                            {extractedData.sellerName}
                           </div>
                           <div className="bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded border border-zinc-200 dark:border-zinc-800">
-                            <span className="text-zinc-400 font-bold">Tag 2 (Seller VAT):</span> {extractedData.sellerVat}
+                            <span className="text-zinc-400 font-bold">Tag 2 (Seller VAT):</span>{" "}
+                            {extractedData.sellerVat}
                           </div>
                           <div className="bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded border border-zinc-200 dark:border-zinc-800">
-                            <span className="text-zinc-400 font-bold">Tag 3 (Timestamp):</span> {extractedData.contractDate}T11:42:00Z
+                            <span className="text-zinc-400 font-bold">Tag 3 (Timestamp):</span>{" "}
+                            {extractedData.contractDate}T11:42:00Z
                           </div>
                           <div className="bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded border border-zinc-200 dark:border-zinc-800">
-                            <span className="text-zinc-400 font-bold">Tag 4 (Total with VAT):</span> {total.toFixed(2)} {extractedData.currency}
+                            <span className="text-zinc-400 font-bold">Tag 4 (Total with VAT):</span>{" "}
+                            {total.toFixed(2)} {extractedData.currency}
                           </div>
                         </div>
                       </div>
@@ -1381,24 +1590,24 @@ export default function ZatcaAi() {
                               invoiceNumber: extractedData.contractNumber,
                               issueDate: extractedData.contractDate,
                               typeCode: "388",
-                              invoiceType: invoiceType
+                              invoiceType: invoiceType,
                             },
                             sellerParty: {
                               name: extractedData.sellerName,
                               vatNumber: extractedData.sellerVat,
-                              address: "Riyadh, Saudi Arabia"
+                              address: "Riyadh, Saudi Arabia",
                             },
                             buyerParty: {
                               name: extractedData.buyerName,
-                              vatNumber: extractedData.buyerVat
+                              vatNumber: extractedData.buyerVat,
                             },
                             totals: {
                               subtotal: subtotal,
                               vatAmount: vat,
                               grandTotal: total,
-                              currency: extractedData.currency
+                              currency: extractedData.currency,
                             },
-                            lines: extractedData.lineItems
+                            lines: extractedData.lineItems,
                           },
                           null,
                           2
@@ -1409,11 +1618,15 @@ export default function ZatcaAi() {
                     {outputFormat === "api" && complianceData && (
                       <div className="space-y-4">
                         <div className="flex justify-between items-center text-xs font-bold">
-                          <span className="text-zinc-500">{isAr ? "رأس الطلب المتكامل للربط مع ZATCA API" : "HTTP Headers & Request Payload (Compliance clearance)"}</span>
+                          <span className="text-zinc-500">
+                            {isAr
+                              ? "رأس الطلب المتكامل للربط مع ZATCA API"
+                              : "HTTP Headers & Request Payload (Compliance clearance)"}
+                          </span>
                           <span className="text-indigo-500">POST /api/v1/invoices/clearance</span>
                         </div>
                         <pre className="bg-zinc-950 text-indigo-300 p-5 rounded-2xl font-mono text-[11px] overflow-x-auto max-h-[350px]">
-{`Headers: {
+                          {`Headers: {
   "Content-Type": "application/json",
   "X-ZATCA-CCSID": "${complianceData.cryptographicStamp}",
   "X-ZATCA-Signature": "${complianceData.digitalSignature.substring(0, 16)}..."
@@ -1444,7 +1657,9 @@ Payload: {
 
                   <div className="space-y-2.5 text-xs">
                     <div className="flex justify-between items-center p-2 rounded bg-zinc-50 dark:bg-zinc-950">
-                      <span className="text-zinc-600 dark:text-zinc-400">{isAr ? "بنية الرقم الضريبي" : "VAT Numbers Format"}</span>
+                      <span className="text-zinc-600 dark:text-zinc-400">
+                        {isAr ? "بنية الرقم الضريبي" : "VAT Numbers Format"}
+                      </span>
                       {extractedData.sellerVat && extractedData.buyerVat ? (
                         <span className="text-emerald-600 font-bold flex items-center gap-1">
                           <Check className="w-3.5 h-3.5" />
@@ -1459,7 +1674,9 @@ Payload: {
                     </div>
 
                     <div className="flex justify-between items-center p-2 rounded bg-zinc-50 dark:bg-zinc-950">
-                      <span className="text-zinc-600 dark:text-zinc-400">{isAr ? "تطابق مجاميع الفاتورة" : "Invoice Grand Totals"}</span>
+                      <span className="text-zinc-600 dark:text-zinc-400">
+                        {isAr ? "تطابق مجاميع الفاتورة" : "Invoice Grand Totals"}
+                      </span>
                       <span className="text-emerald-600 font-bold flex items-center gap-1">
                         <Check className="w-3.5 h-3.5" />
                         {isAr ? "سليم" : "Pass"}
@@ -1467,7 +1684,9 @@ Payload: {
                     </div>
 
                     <div className="flex justify-between items-center p-2 rounded bg-zinc-50 dark:bg-zinc-950">
-                      <span className="text-zinc-600 dark:text-zinc-400">{isAr ? "حساب قيمة الضريبة (15%)" : "Tax Rates Verified (15%)"}</span>
+                      <span className="text-zinc-600 dark:text-zinc-400">
+                        {isAr ? "حساب قيمة الضريبة (15%)" : "Tax Rates Verified (15%)"}
+                      </span>
                       <span className="text-emerald-600 font-bold flex items-center gap-1">
                         <Check className="w-3.5 h-3.5" />
                         {isAr ? "مطابق" : "Pass"}
@@ -1475,7 +1694,9 @@ Payload: {
                     </div>
 
                     <div className="flex justify-between items-center p-2 rounded bg-zinc-50 dark:bg-zinc-950">
-                      <span className="text-zinc-600 dark:text-zinc-400">{isAr ? "تفادي الفواتير المكررة" : "Sequence Gaps & Duplicates"}</span>
+                      <span className="text-zinc-600 dark:text-zinc-400">
+                        {isAr ? "تفادي الفواتير المكررة" : "Sequence Gaps & Duplicates"}
+                      </span>
                       <span className="text-emerald-600 font-bold flex items-center gap-1">
                         <Check className="w-3.5 h-3.5" />
                         {isAr ? "لا يوجد" : "Pass"}
@@ -1483,7 +1704,9 @@ Payload: {
                     </div>
 
                     <div className="flex justify-between items-center p-2 rounded bg-zinc-50 dark:bg-zinc-950">
-                      <span className="text-zinc-600 dark:text-zinc-400">{isAr ? "الحقول الإلزامية للفاتورة" : "Mandatory Fields Check"}</span>
+                      <span className="text-zinc-600 dark:text-zinc-400">
+                        {isAr ? "الحقول الإلزامية للفاتورة" : "Mandatory Fields Check"}
+                      </span>
                       {missingInfoCount === 0 ? (
                         <span className="text-emerald-600 font-bold flex items-center gap-1">
                           <Check className="w-3.5 h-3.5" />
@@ -1501,10 +1724,24 @@ Payload: {
                   {/* Generated fields info */}
                   {complianceData && (
                     <div className="border-t border-zinc-100 dark:border-zinc-800 pt-3 space-y-1 text-[10px] text-zinc-400">
-                      <p>UUID: <span className="font-mono text-zinc-500">{complianceData.uuid}</span></p>
-                      <p>Hash Chain (PIH): <span className="font-mono text-zinc-500">{complianceData.prevInvoiceHash.substring(0, 16)}...</span></p>
-                      <p>ICV: <span className="font-mono text-zinc-500">{complianceData.icv}</span></p>
-                      <p>Digital Stamp: <span className="font-mono text-zinc-500">{complianceData.cryptographicStamp}</span></p>
+                      <p>
+                        UUID: <span className="font-mono text-zinc-500">{complianceData.uuid}</span>
+                      </p>
+                      <p>
+                        Hash Chain (PIH):{" "}
+                        <span className="font-mono text-zinc-500">
+                          {complianceData.prevInvoiceHash.substring(0, 16)}...
+                        </span>
+                      </p>
+                      <p>
+                        ICV: <span className="font-mono text-zinc-500">{complianceData.icv}</span>
+                      </p>
+                      <p>
+                        Digital Stamp:{" "}
+                        <span className="font-mono text-zinc-500">
+                          {complianceData.cryptographicStamp}
+                        </span>
+                      </p>
                     </div>
                   )}
 
@@ -1527,7 +1764,9 @@ Payload: {
                       ) : (
                         <>
                           <Send className="w-4 h-4" />
-                          <span>{isAr ? "اعتماد وإرسال كبسة واحدة" : "Submit to ZATCA in 1-Click"}</span>
+                          <span>
+                            {isAr ? "اعتماد وإرسال كبسة واحدة" : "Submit to ZATCA in 1-Click"}
+                          </span>
                         </>
                       )}
                     </button>
@@ -1564,9 +1803,13 @@ Payload: {
                 <div className="bg-gradient-to-r from-zinc-900 to-zinc-800 p-4 text-white flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-black">{isAr ? "مساعد العقود الذكي" : "ZATCA AI Copilot"}</span>
+                    <span className="text-xs font-black">
+                      {isAr ? "مساعد العقود الذكي" : "ZATCA AI Copilot"}
+                    </span>
                   </div>
-                  <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-mono">GEMINI 3.5</span>
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-mono">
+                    GEMINI 3.5
+                  </span>
                 </div>
 
                 <div className="flex-1 p-4 overflow-y-auto max-h-[240px] space-y-3 text-xs leading-relaxed no-scrollbar">
@@ -1584,7 +1827,9 @@ Payload: {
                   ))}
                   {isAiThinking && (
                     <div className="text-zinc-400 animate-pulse text-[10px] flex items-center gap-1 font-mono">
-                      <span>●</span><span>●</span><span>●</span>
+                      <span>●</span>
+                      <span>●</span>
+                      <span>●</span>
                       <span>{isAr ? "يفكر المساعد..." : "Copilot is analyzing..."}</span>
                     </div>
                   )}
@@ -1593,10 +1838,19 @@ Payload: {
                 {/* AI Interactive Prompt Chips */}
                 <div className="px-4 pb-2 pt-1 border-t border-zinc-100 dark:border-zinc-800/80 flex flex-wrap gap-1 bg-zinc-50/50 dark:bg-zinc-900/50">
                   {[
-                    { text: isAr ? "صياغة فواتير العقود" : "Create invoices", key: "Create invoices from this contract." },
-                    { text: isAr ? "تقسيم 12 شهر" : "Split 12 Months", key: "Split this yearly contract into 12 monthly invoices." },
-                    { text: isAr ? "حسب المعالم" : "Milestone schedule", key: "Generate invoices according to milestone payments." },
-                    { text: isAr ? "البحث عن أخطاء" : "Check VAT Errors", key: "Find VAT errors." }
+                    {
+                      text: isAr ? "صياغة فواتير العقود" : "Create invoices",
+                      key: "Create invoices from this contract.",
+                    },
+                    {
+                      text: isAr ? "تقسيم 12 شهر" : "Split 12 Months",
+                      key: "Split this yearly contract into 12 monthly invoices.",
+                    },
+                    {
+                      text: isAr ? "حسب المعالم" : "Milestone schedule",
+                      key: "Generate invoices according to milestone payments.",
+                    },
+                    { text: isAr ? "البحث عن أخطاء" : "Check VAT Errors", key: "Find VAT errors." },
                   ].map((chip, idx) => (
                     <button
                       key={idx}
@@ -1635,7 +1889,9 @@ Payload: {
         <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm">
           <h2 className="text-base font-black text-zinc-800 dark:text-zinc-100 mb-2 flex items-center gap-2">
             <Link2 className="w-5 h-5 text-emerald-500" />
-            {isAr ? "سوق الربط والتكامل مع الأنظمة المالية (ERP)" : "Enterprise ERP & API Integrations Hub"}
+            {isAr
+              ? "سوق الربط والتكامل مع الأنظمة المالية (ERP)"
+              : "Enterprise ERP & API Integrations Hub"}
           </h2>
           <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
             {isAr
@@ -1645,18 +1901,78 @@ Payload: {
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {[
-              { id: "zatca", name: "ZATCA API", desc: "Saudi Government Portal", descAr: "البوابة الرسمية الفيدرالية" },
-              { id: "qoyod", name: "Qoyod", desc: "Saudi Cloud ERP", descAr: "دفاتر محاسبية سحابية" },
-              { id: "zoho", name: "Zoho Books", desc: "Standard SME ERP", descAr: "إدارة قيود ودفاتر" },
-              { id: "odoo", name: "Odoo ERP", desc: "Open Enterprise suite", descAr: "نظام إدارة المؤسسة" },
-              { id: "sap", name: "SAP Business", desc: "Corporate Ledger Suite", descAr: "محاسبة الشركات الكبرى" },
-              { id: "oracle", name: "Oracle NetSuite", desc: "Financial ledger sync", descAr: "ترحيل قيود المؤسسة" },
-              { id: "quickbooks", name: "QuickBooks", desc: "Global accounting", descAr: "برامج الحسابات الشاملة" },
-              { id: "xero", name: "Xero Portal", desc: "Cloud ledger platform", descAr: "الحسابات السحابية العالمية" },
-              { id: "stripe", name: "Stripe", desc: "Online payments", descAr: "مدفوعات العملاء العالمية" },
-              { id: "hyperpay", name: "HyperPay", desc: "Saudi Gateway Pay", descAr: "بوابة دفع محلية سعودية" },
-              { id: "moyasar", name: "Moyasar", desc: "Premium GCC checkout", descAr: "ميسر لمعالجة المدفوعات" },
-              { id: "zid", name: "Zid Platform", desc: "E-Commerce sync", descAr: "ربط المبيعات بمتجر زد" }
+              {
+                id: "zatca",
+                name: "ZATCA API",
+                desc: "Saudi Government Portal",
+                descAr: "البوابة الرسمية الفيدرالية",
+              },
+              {
+                id: "qoyod",
+                name: "Qoyod",
+                desc: "Saudi Cloud ERP",
+                descAr: "دفاتر محاسبية سحابية",
+              },
+              {
+                id: "zoho",
+                name: "Zoho Books",
+                desc: "Standard SME ERP",
+                descAr: "إدارة قيود ودفاتر",
+              },
+              {
+                id: "odoo",
+                name: "Odoo ERP",
+                desc: "Open Enterprise suite",
+                descAr: "نظام إدارة المؤسسة",
+              },
+              {
+                id: "sap",
+                name: "SAP Business",
+                desc: "Corporate Ledger Suite",
+                descAr: "محاسبة الشركات الكبرى",
+              },
+              {
+                id: "oracle",
+                name: "Oracle NetSuite",
+                desc: "Financial ledger sync",
+                descAr: "ترحيل قيود المؤسسة",
+              },
+              {
+                id: "quickbooks",
+                name: "QuickBooks",
+                desc: "Global accounting",
+                descAr: "برامج الحسابات الشاملة",
+              },
+              {
+                id: "xero",
+                name: "Xero Portal",
+                desc: "Cloud ledger platform",
+                descAr: "الحسابات السحابية العالمية",
+              },
+              {
+                id: "stripe",
+                name: "Stripe",
+                desc: "Online payments",
+                descAr: "مدفوعات العملاء العالمية",
+              },
+              {
+                id: "hyperpay",
+                name: "HyperPay",
+                desc: "Saudi Gateway Pay",
+                descAr: "بوابة دفع محلية سعودية",
+              },
+              {
+                id: "moyasar",
+                name: "Moyasar",
+                desc: "Premium GCC checkout",
+                descAr: "ميسر لمعالجة المدفوعات",
+              },
+              {
+                id: "zid",
+                name: "Zid Platform",
+                desc: "E-Commerce sync",
+                descAr: "ربط المبيعات بمتجر زد",
+              },
             ].map((app) => (
               <div
                 key={app.id}
@@ -1668,21 +1984,33 @@ Payload: {
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h4 className="text-xs font-bold text-zinc-800 dark:text-zinc-200">{app.name}</h4>
+                    <h4 className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                      {app.name}
+                    </h4>
                     <span className="text-[10px] text-zinc-400 block mt-1">
                       {isAr ? app.descAr : app.desc}
                     </span>
                   </div>
                   <span
                     className={`w-2 h-2 rounded-full ${
-                      integrations[app.id] ? "bg-emerald-500 animate-pulse" : "bg-zinc-300 dark:bg-zinc-700"
+                      integrations[app.id]
+                        ? "bg-emerald-500 animate-pulse"
+                        : "bg-zinc-300 dark:bg-zinc-700"
                     }`}
                   />
                 </div>
 
                 <div className="flex justify-between items-center mt-4">
-                  <span className={`text-[10px] font-bold ${integrations[app.id] ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400"}`}>
-                    {integrations[app.id] ? (isAr ? "متصل" : "Connected") : (isAr ? "غير مفعل" : "Disconnected")}
+                  <span
+                    className={`text-[10px] font-bold ${integrations[app.id] ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400"}`}
+                  >
+                    {integrations[app.id]
+                      ? isAr
+                        ? "متصل"
+                        : "Connected"
+                      : isAr
+                        ? "غير مفعل"
+                        : "Disconnected"}
                   </span>
                   <button
                     onClick={() => toggleIntegration(app.id)}
@@ -1692,7 +2020,11 @@ Payload: {
                   >
                     <span
                       className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        integrations[app.id] ? (isAr ? "-translate-x-4" : "translate-x-4") : "translate-x-0"
+                        integrations[app.id]
+                          ? isAr
+                            ? "-translate-x-4"
+                            : "translate-x-4"
+                          : "translate-x-0"
                       }`}
                     />
                   </button>

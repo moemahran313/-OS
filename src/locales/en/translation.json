@@ -21,10 +21,13 @@
     "contracts": "Contracts",
     "zatca_ai": "Contract → ZATCA AI",
     "attendance": "Attendance",
-    "inventory": "Inventory",
+    "inventory": "Inventory & Warehouses",
     "suppliers": "Suppliers",
     "integrations": "App Marketplace & Integration",
-    "analytics": "Reports & Analytics"
+    "analytics": "Reports & Analytics",
+    "accounting": "General Ledger & Accounting",
+    "compliance": "Compliance & Security",
+    "negotiations": "Smart Negotiations"
   },
   "settings": {
     "tabs": {
@@ -45,5 +48,24 @@
       "title": "Smartphones & Mobile Companion",
       "subtitle": "Real-time iOS and Android simulation to connect with verified partners & manage sales pipelines."
     }
+  },
+  "layout": {
+    "voice_tooltip": "Talk to Mudarij",
+    "select_dialect": "Select Dialect",
+    "voice_placeholder_listening": "Listening...",
+    "voice_placeholder": "Ask Mudarij... (e.g. 'Create invoice' or 'Calculate payroll')",
+    "ai_assistant": "Mudarij AI Assistant",
+    "notifications": "System Alerts",
+    "new": "New",
+    "no_notifications": "No urgent alerts",
+    "email": "Email",
+    "profile": "Profile",
+    "preferences": "Preferences",
+    "logout": "Logout",
+    "mic_not_supported": "Sorry, your browser doesn't support speech recognition.",
+    "mic_permission_denied": "Please allow microphone access or open the app in a new window.",
+    "mic_error": "Speech recognition error occurred. Please try again.",
+    "switch_to_english": "System language switched to English",
+    "switch_to_arabic": "System language switched to Arabic"
   }
 }

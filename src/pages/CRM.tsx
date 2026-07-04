@@ -63,6 +63,7 @@ import {
 import { db, auth } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
 import { useTranslation } from "react-i18next";
+import { handleFirestoreError, OperationType } from "@/src/lib/firestore-errors";
 
 import PayrollComplianceWidget from "@/src/components/PayrollComplianceWidget";
 import { toast } from "sonner";
@@ -197,7 +198,7 @@ export default function CRM() {
         setLoading(false);
       },
       (error) => {
-        console.error("Firestore leads error:", error);
+        handleFirestoreError(error, OperationType.LIST, "leads");
         setLoading(false);
       }
     );
@@ -207,27 +208,45 @@ export default function CRM() {
       where("userId", "==", user.uid),
       orderBy("createdAt", "desc")
     );
-    const unsubRuns = onSnapshot(qRuns, (snapshot) => {
-      setPayrollRuns(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-    });
+    const unsubRuns = onSnapshot(
+      qRuns,
+      (snapshot) => {
+        setPayrollRuns(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, "payroll_runs");
+      }
+    );
 
     const qShipments = query(
       collection(db, "shipments"),
       where("userId", "==", user.uid),
       orderBy("createdAt", "desc")
     );
-    const unsubShipments = onSnapshot(qShipments, (snapshot) => {
-      setShipments(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-    });
+    const unsubShipments = onSnapshot(
+      qShipments,
+      (snapshot) => {
+        setShipments(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, "shipments");
+      }
+    );
 
     const qInvoices = query(
       collection(db, "invoices"),
       where("userId", "==", user.uid),
       orderBy("createdAt", "desc")
     );
-    const unsubInvoices = onSnapshot(qInvoices, (snapshot) => {
-      setInvoices(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
-    });
+    const unsubInvoices = onSnapshot(
+      qInvoices,
+      (snapshot) => {
+        setInvoices(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, "invoices");
+      }
+    );
 
     return () => {
       unsubscribe();

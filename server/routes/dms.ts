@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../middleware/auth.js";
 import { GoogleGenAI, Type } from "@google/genai";
-import { logAudit } from "../services/utils.js";
+import { logAudit, generateContentWithRetry } from "../services/utils.js";
 
 const router = Router();
 
@@ -76,7 +76,7 @@ Provide a concise one-sentence summary of the document contents in Arabic.`;
       ],
     };
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithRetry(ai, {
       model: "gemini-3.5-flash",
       contents: contents,
       config: {
@@ -86,7 +86,8 @@ Provide a concise one-sentence summary of the document contents in Arabic.`;
           properties: {
             documentTypeAr: {
               type: Type.STRING,
-              description: "The categorized document type in Arabic, MUST be one of these exact values: 'عقود الموظفين' or 'السجلات المدنية والجوازات' or 'التراخيص والسجلات (Wathiq)' or 'اتفاقيات الموردين (NDAs)' or 'أخرى'.",
+              description:
+                "The categorized document type in Arabic, MUST be one of these exact values: 'عقود الموظفين' or 'السجلات المدنية والجوازات' or 'التراخيص والسجلات (Wathiq)' or 'اتفاقيات الموردين (NDAs)' or 'أخرى'.",
             },
             extractedTitleAr: {
               type: Type.STRING,
@@ -94,14 +95,21 @@ Provide a concise one-sentence summary of the document contents in Arabic.`;
             },
             extractedExpiryDate: {
               type: Type.STRING,
-              description: "The extracted critical expiry date, formatted as YYYY-MM-DD. If none is found or applicable, return '-'.",
+              description:
+                "The extracted critical expiry date, formatted as YYYY-MM-DD. If none is found or applicable, return '-'.",
             },
             extractedSummaryAr: {
               type: Type.STRING,
-              description: "A short professional one-sentence summary of the document's contents in Arabic.",
+              description:
+                "A short professional one-sentence summary of the document's contents in Arabic.",
             },
           },
-          required: ["documentTypeAr", "extractedTitleAr", "extractedExpiryDate", "extractedSummaryAr"],
+          required: [
+            "documentTypeAr",
+            "extractedTitleAr",
+            "extractedExpiryDate",
+            "extractedSummaryAr",
+          ],
         },
       },
     });

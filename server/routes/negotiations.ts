@@ -23,29 +23,48 @@ function getGeminiClient() {
   });
 }
 
-// Resilient wrapper that catches 503 UNAVAILABLE or high demand errors and retries using gemini-3.1-flash-lite
+// Resilient wrapper that catches 503 UNAVAILABLE or high demand errors and retries using gemini-3.1-flash-lite with exponential backoff
 async function generateWithFallback(ai: any, params: any) {
   const primaryModel = params.model || "gemini-3.5-flash";
-  try {
-    return await ai.models.generateContent(params);
-  } catch (err: any) {
-    const errMsg = (err?.message || "").toLowerCase();
-    const isUnavailable =
-      errMsg.includes("503") ||
-      errMsg.includes("unavailable") ||
-      errMsg.includes("demand") ||
-      errMsg.includes("resource_exhausted") ||
-      errMsg.includes("429");
-    if (isUnavailable && primaryModel !== "gemini-3.1-flash-lite") {
-      console.warn(
-        `Model ${primaryModel} is experiencing high demand or limit. Falling back to gemini-3.1-flash-lite...`
-      );
-      return await ai.models.generateContent({
-        ...params,
-        model: "gemini-3.1-flash-lite",
-      });
+  let attempt = 0;
+  const maxRetries = 3;
+  const delayMs = 1500;
+
+  while (true) {
+    try {
+      return await ai.models.generateContent(params);
+    } catch (err: any) {
+      attempt++;
+      const errMsg = (err?.message || "").toLowerCase();
+      const isUnavailable =
+        errMsg.includes("503") ||
+        errMsg.includes("unavailable") ||
+        errMsg.includes("demand") ||
+        errMsg.includes("resource_exhausted") ||
+        errMsg.includes("429");
+
+      if (isUnavailable) {
+        if (attempt <= maxRetries) {
+          const backoff = delayMs * Math.pow(2, attempt - 1);
+          console.warn(
+            `[Gemini API] 503/UNAVAILABLE/Limit detected on ${primaryModel} (attempt ${attempt}). Retrying in ${backoff}ms...`
+          );
+          await new Promise((resolve) => setTimeout(resolve, backoff));
+          continue;
+        }
+
+        if (primaryModel !== "gemini-3.1-flash-lite") {
+          console.warn(
+            `Model ${primaryModel} is experiencing high demand or limit after retries. Falling back to gemini-3.1-flash-lite...`
+          );
+          return await ai.models.generateContent({
+            ...params,
+            model: "gemini-3.1-flash-lite",
+          });
+        }
+      }
+      throw err;
     }
-    throw err;
   }
 }
 
@@ -244,7 +263,10 @@ router.post("/test-prompt", authenticate, async (req: any, res) => {
         isJson = true;
       } catch (parseErr) {
         // Fallback or retry clean parsing if needed
-        const cleanedText = text.replace(/```json/g, "").replace(/```/g, "").trim();
+        const cleanedText = text
+          .replace(/```json/g, "")
+          .replace(/```/g, "")
+          .trim();
         try {
           jsonPayload = JSON.parse(cleanedText);
           isJson = true;

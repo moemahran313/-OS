@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticate } from "../middleware/auth.js";
-import { logAudit } from "../services/utils.js";
+import { logAudit, generateContentWithRetry } from "../services/utils.js";
 import { db } from "../services/firebase.js";
 import { executeWebhooks } from "../services/webhooks.js";
 import { GoogleGenAI, Type } from "@google/genai";
@@ -121,7 +121,7 @@ Provide:
 1. leadScore: Must be strictly one of "Hot" or "Warm" or "Cold"
 2. leadScoreReason: A short, professional explanation (max 3 sentences) in Arabic (عربي) detailing why this score was assigned and offering actionable next steps.`;
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithRetry(ai, {
       model: "gemini-3.5-flash",
       contents: prompt,
       config: {

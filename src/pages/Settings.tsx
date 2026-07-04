@@ -152,7 +152,11 @@ export default function Settings() {
       label: t("settings.tabs.compliance", "الامتثال والأمان المتقدم"),
       icon: ShieldCheck,
     },
-    { id: "ai_prompts", label: t("settings.tabs.ai_prompts", "موجهات الذكاء الاصطناعي"), icon: Sparkles },
+    {
+      id: "ai_prompts",
+      label: t("settings.tabs.ai_prompts", "موجهات الذكاء الاصطناعي"),
+      icon: Sparkles,
+    },
     { id: "developer", label: t("settings.tabs.developer", "أدوات المطورين"), icon: Code2 },
     { id: "mobile", label: t("settings.tabs.mobile", "تطبيق الجوال والتحكم"), icon: Smartphone },
   ];

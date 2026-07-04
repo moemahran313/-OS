@@ -7,6 +7,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { useSettings } from "@/src/contexts/SettingsContext";
 import { useUser } from "@/src/contexts/UserContext";
 import { db } from "@/src/lib/firebase";
+import { handleFirestoreError, OperationType } from "@/src/lib/firestore-errors";
 import {
   collection,
   query,
@@ -850,7 +851,7 @@ export default function Contracts() {
         }
       },
       (error) => {
-        console.error("Error loading DMS documents", error);
+        handleFirestoreError(error, OperationType.LIST, "dms_documents");
       }
     );
     return () => unsubscribe();
@@ -903,7 +904,7 @@ export default function Contracts() {
         setEmployees(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
       },
       (error) => {
-        console.error("Error loading employees", error);
+        handleFirestoreError(error, OperationType.LIST, "employees");
       }
     );
     return () => unsubscribe();
@@ -926,7 +927,7 @@ export default function Contracts() {
       reader.onload = async () => {
         try {
           const base64String = (reader.result as string).split(",")[1];
-          
+
           const response = await fetch("/api/dms/analyze", {
             method: "POST",
             headers: {
@@ -941,8 +942,9 @@ export default function Contracts() {
 
           const result = await response.json();
           if (result.success) {
-            const { documentTypeAr, extractedTitleAr, extractedExpiryDate, extractedSummaryAr } = result.analysis;
-            
+            const { documentTypeAr, extractedTitleAr, extractedExpiryDate, extractedSummaryAr } =
+              result.analysis;
+
             let status = "valid";
             if (extractedExpiryDate !== "-") {
               const exp = new Date(extractedExpiryDate);
@@ -963,21 +965,21 @@ export default function Contracts() {
               expiryDate: extractedExpiryDate || "-",
               ocrStatus: "تم الاستخراج",
               status: status,
-              summary: extractedSummaryAr || "مستند تمت معالجته تلقائياً باستخدام الذكاء الاصطناعي.",
+              summary:
+                extractedSummaryAr || "مستند تمت معالجته تلقائياً باستخدام الذكاء الاصطناعي.",
               createdAt: new Date().toISOString(),
             };
 
             const uid = user.uid || user.id;
             if (uid === "demo-admin-uid") {
-              setDmsDocuments((prev) => [
-                { id: "demo-" + Date.now(), ...docPayload },
-                ...prev,
-              ]);
+              setDmsDocuments((prev) => [{ id: "demo-" + Date.now(), ...docPayload }, ...prev]);
             } else {
               await addDoc(collection(db, "dms_documents"), docPayload);
             }
 
-            toast.success(`تم رفع وتصنيف المستند تلقائياً كـ "${documentTypeAr}"! ✨`, { id: toastId });
+            toast.success(`تم رفع وتصنيف المستند تلقائياً كـ "${documentTypeAr}"! ✨`, {
+              id: toastId,
+            });
           } else {
             toast.error(result.error || "فشل تحليل المستند.", { id: toastId });
           }
@@ -2630,11 +2632,32 @@ export default function Contracts() {
                       </h4>
                       {[
                         { name: "الكل", count: dmsDocuments.length },
-                        { name: "عقود الموظفين", count: dmsDocuments.filter(d => d.category === "عقود الموظفين").length },
-                        { name: "السجلات المدنية والجوازات", count: dmsDocuments.filter(d => d.category === "السجلات المدنية والجوازات").length },
-                        { name: "التراخيص والسجلات (Wathiq)", count: dmsDocuments.filter(d => d.category === "التراخيص والسجلات (Wathiq)").length },
-                        { name: "اتفاقيات الموردين (NDAs)", count: dmsDocuments.filter(d => d.category === "اتفاقيات الموردين (NDAs)").length },
-                        { name: "أخرى", count: dmsDocuments.filter(d => d.category === "أخرى").length },
+                        {
+                          name: "عقود الموظفين",
+                          count: dmsDocuments.filter((d) => d.category === "عقود الموظفين").length,
+                        },
+                        {
+                          name: "السجلات المدنية والجوازات",
+                          count: dmsDocuments.filter(
+                            (d) => d.category === "السجلات المدنية والجوازات"
+                          ).length,
+                        },
+                        {
+                          name: "التراخيص والسجلات (Wathiq)",
+                          count: dmsDocuments.filter(
+                            (d) => d.category === "التراخيص والسجلات (Wathiq)"
+                          ).length,
+                        },
+                        {
+                          name: "اتفاقيات الموردين (NDAs)",
+                          count: dmsDocuments.filter(
+                            (d) => d.category === "اتفاقيات الموردين (NDAs)"
+                          ).length,
+                        },
+                        {
+                          name: "أخرى",
+                          count: dmsDocuments.filter((d) => d.category === "أخرى").length,
+                        },
                       ].map((folder, i) => {
                         const isActive = selectedDmsFolder === folder.name;
                         return (
@@ -2707,8 +2730,12 @@ export default function Contracts() {
                                       <RotateCw className="w-4 h-4 animate-spin" />
                                     </div>
                                     <div>
-                                      <p className="font-bold text-sm text-emerald-800">جاري تحليل مستند جديد بالذكاء الاصطناعي...</p>
-                                      <p className="text-xs text-emerald-600">يتم تشغيل OCR لاستخراج التصنيف والتواريخ والملخص الذكي.</p>
+                                      <p className="font-bold text-sm text-emerald-800">
+                                        جاري تحليل مستند جديد بالذكاء الاصطناعي...
+                                      </p>
+                                      <p className="text-xs text-emerald-600">
+                                        يتم تشغيل OCR لاستخراج التصنيف والتواريخ والملخص الذكي.
+                                      </p>
                                     </div>
                                   </div>
                                 </td>
@@ -2717,50 +2744,70 @@ export default function Contracts() {
 
                             {(() => {
                               const displayedDocs = dmsDocuments.filter((doc) => {
-                                const matchesFolder = selectedDmsFolder === "الكل" || doc.category === selectedDmsFolder;
+                                const matchesFolder =
+                                  selectedDmsFolder === "الكل" ||
+                                  doc.category === selectedDmsFolder;
                                 const queryText = dmsSearchQuery.trim().toLowerCase();
                                 if (!queryText) return matchesFolder;
                                 return (
                                   matchesFolder &&
                                   (doc.name.toLowerCase().includes(queryText) ||
-                                    (doc.summary && doc.summary.toLowerCase().includes(queryText)) ||
-                                    (doc.category && doc.category.toLowerCase().includes(queryText)))
+                                    (doc.summary &&
+                                      doc.summary.toLowerCase().includes(queryText)) ||
+                                    (doc.category &&
+                                      doc.category.toLowerCase().includes(queryText)))
                                 );
                               });
 
                               if (displayedDocs.length === 0 && !isAnalyzingDoc) {
                                 return (
                                   <tr>
-                                    <td className="py-12 px-4 text-center text-zinc-400" colSpan={4}>
+                                    <td
+                                      className="py-12 px-4 text-center text-zinc-400"
+                                      colSpan={4}
+                                    >
                                       <Folder className="w-12 h-12 mx-auto text-zinc-200 mb-3" />
-                                      <p className="font-bold text-zinc-700 text-sm">لا توجد مستندات مطابقة للبحث أو التصنيف</p>
-                                      <p className="text-xs text-zinc-400 mt-1">ابدأ برفع مستندك الأول وسيقوم مساعدنا الذكي بتصنيفه فوراً!</p>
+                                      <p className="font-bold text-zinc-700 text-sm">
+                                        لا توجد مستندات مطابقة للبحث أو التصنيف
+                                      </p>
+                                      <p className="text-xs text-zinc-400 mt-1">
+                                        ابدأ برفع مستندك الأول وسيقوم مساعدنا الذكي بتصنيفه فوراً!
+                                      </p>
                                     </td>
                                   </tr>
                                 );
                               }
 
                               return displayedDocs.map((file, idx) => {
-                                let badgeColor = "bg-emerald-50 text-emerald-700 border-emerald-100";
+                                let badgeColor =
+                                  "bg-emerald-50 text-emerald-700 border-emerald-100";
                                 if (file.status === "warning") {
                                   badgeColor = "bg-amber-50 text-amber-700 border-amber-100";
                                 } else if (file.status === "expired") {
                                   badgeColor = "bg-rose-50 text-rose-700 border-rose-100";
                                 } else if (file.status === "processing") {
-                                  badgeColor = "bg-blue-50 text-blue-700 border-blue-100 animate-pulse";
+                                  badgeColor =
+                                    "bg-blue-50 text-blue-700 border-blue-100 animate-pulse";
                                 }
 
                                 return (
-                                  <tr key={file.id || idx} className="border-b border-zinc-50 hover:bg-zinc-50/50 transition-colors">
+                                  <tr
+                                    key={file.id || idx}
+                                    className="border-b border-zinc-50 hover:bg-zinc-50/50 transition-colors"
+                                  >
                                     <td className="py-4 px-4">
                                       <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-zinc-100 text-zinc-600 flex items-center justify-center shrink-0">
                                           <FileText className="w-4 h-4" />
                                         </div>
                                         <div>
-                                          <p className="font-bold text-sm text-zinc-900 line-clamp-1">{file.name}</p>
+                                          <p className="font-bold text-sm text-zinc-900 line-clamp-1">
+                                            {file.name}
+                                          </p>
                                           {file.summary && (
-                                            <p className="text-[11px] text-zinc-400 line-clamp-1 font-medium mt-0.5">{file.summary}</p>
+                                            <p className="text-[11px] text-zinc-400 line-clamp-1 font-medium mt-0.5">
+                                              {file.summary}
+                                            </p>
                                           )}
                                         </div>
                                       </div>
@@ -2773,7 +2820,9 @@ export default function Contracts() {
                                     <td className="py-4 px-4">
                                       <div className="flex items-center gap-1.5">
                                         <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-                                        <span className={`text-xs font-bold ${file.status === "warning" || file.status === "expired" ? "text-rose-600 font-black" : "text-zinc-600"}`}>
+                                        <span
+                                          className={`text-xs font-bold ${file.status === "warning" || file.status === "expired" ? "text-rose-600 font-black" : "text-zinc-600"}`}
+                                        >
                                           {file.expiryDate === "-" ? "مفتوح" : file.expiryDate}
                                         </span>
                                       </div>
@@ -5199,8 +5248,12 @@ export default function Contracts() {
                       <FileText className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="font-black text-zinc-900 text-lg line-clamp-1">{previewDoc.name}</h3>
-                      <p className="text-xs text-zinc-400 font-medium">معالجة فورية بالتعرف البصري والذكاء الاصطناعي</p>
+                      <h3 className="font-black text-zinc-900 text-lg line-clamp-1">
+                        {previewDoc.name}
+                      </h3>
+                      <p className="text-xs text-zinc-400 font-medium">
+                        معالجة فورية بالتعرف البصري والذكاء الاصطناعي
+                      </p>
                     </div>
                   </div>
                   <button
@@ -5215,38 +5268,56 @@ export default function Contracts() {
                 <div className="p-6 space-y-6 text-right" dir="rtl">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-100">
-                      <span className="text-xs font-black text-zinc-400 block mb-1">التصنيف التلقائي</span>
+                      <span className="text-xs font-black text-zinc-400 block mb-1">
+                        التصنيف التلقائي
+                      </span>
                       <span className="text-sm font-extrabold text-zinc-800 bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-md inline-block">
                         {previewDoc.category}
                       </span>
                     </div>
                     <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-100">
-                      <span className="text-xs font-black text-zinc-400 block mb-1">تاريخ الانتهاء المستخلص</span>
+                      <span className="text-xs font-black text-zinc-400 block mb-1">
+                        تاريخ الانتهاء المستخلص
+                      </span>
                       <div className="flex items-center gap-1.5 justify-start">
                         <Calendar className="w-4 h-4 text-emerald-500" />
-                        <span className={`text-sm font-extrabold ${previewDoc.status === "warning" || previewDoc.status === "expired" ? "text-rose-600" : "text-zinc-800"}`}>
-                          {previewDoc.expiryDate === "-" ? "مفتوح / غير محدد" : previewDoc.expiryDate}
+                        <span
+                          className={`text-sm font-extrabold ${previewDoc.status === "warning" || previewDoc.status === "expired" ? "text-rose-600" : "text-zinc-800"}`}
+                        >
+                          {previewDoc.expiryDate === "-"
+                            ? "مفتوح / غير محدد"
+                            : previewDoc.expiryDate}
                         </span>
                       </div>
                     </div>
                   </div>
 
                   <div className="bg-emerald-50/30 border border-emerald-100 p-5 rounded-2xl space-y-2">
-                    <span className="text-xs font-black text-emerald-800 block">الملخص الذكي (AI Summary)</span>
-                    <p className="text-sm text-zinc-700 leading-relaxed font-sans">{previewDoc.summary}</p>
+                    <span className="text-xs font-black text-emerald-800 block">
+                      الملخص الذكي (AI Summary)
+                    </span>
+                    <p className="text-sm text-zinc-700 leading-relaxed font-sans">
+                      {previewDoc.summary}
+                    </p>
                   </div>
 
                   <div className="space-y-3">
-                    <span className="text-xs font-black text-zinc-400 block">توصيات وإجراءات المتابعة</span>
+                    <span className="text-xs font-black text-zinc-400 block">
+                      توصيات وإجراءات المتابعة
+                    </span>
                     <ul className="space-y-2 text-xs text-zinc-600 list-inside list-disc font-medium pr-1">
                       {previewDoc.category === "عقود الموظفين" ? (
                         <>
                           <li>مزامنة بيانات هذا الموظف مع سجلات الرواتب لربطه بالنظام الأساسي.</li>
-                          <li>مراجعة بنود العقد بانتظام لضمان توافقه مع نظام العمل السعودي المحدث.</li>
+                          <li>
+                            مراجعة بنود العقد بانتظام لضمان توافقه مع نظام العمل السعودي المحدث.
+                          </li>
                         </>
                       ) : previewDoc.category === "السجلات المدنية والجوازات" ? (
                         <>
-                          <li>إعداد تذكير لتجديد الوثيقة قبل تاريخ انتهائها بـ 60 يوماً على الأقل.</li>
+                          <li>
+                            إعداد تذكير لتجديد الوثيقة قبل تاريخ انتهائها بـ 60 يوماً على الأقل.
+                          </li>
                           <li>تحديث ملف الموظف لتفادي غرامات عدم تجديد رخصة الإقامة.</li>
                         </>
                       ) : previewDoc.category === "التراخيص والسجلات (Wathiq)" ? (
@@ -5266,7 +5337,10 @@ export default function Contracts() {
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-zinc-150 flex items-center justify-between bg-zinc-50" dir="rtl">
+                <div
+                  className="p-6 border-t border-zinc-150 flex items-center justify-between bg-zinc-50"
+                  dir="rtl"
+                >
                   <button
                     onClick={() => handleDeleteDocument(previewDoc.id)}
                     className="text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-100 px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer animate-in duration-200"

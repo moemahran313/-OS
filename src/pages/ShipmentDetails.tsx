@@ -63,6 +63,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
+import { handleFirestoreError, OperationType } from "@/src/lib/firestore-errors";
 import {
   Radar,
   RadarChart,
@@ -91,23 +92,29 @@ export default function ShipmentDetails() {
     if (!id || !user) return;
 
     // Real-time Shipment Data
-    const unsubShipment = onSnapshot(doc(db, "shipments", id), (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        // Fetch sub-collections manually if needed, or use multiple listeners
-        setShipment({
-          id: snap.id,
-          ...data,
-          documents: data.documents || [],
-          comments: data.comments || [],
-          events: data.events || [],
-        });
-        setLoading(false);
-      } else {
-        setShipment(null);
-        setLoading(false);
+    const unsubShipment = onSnapshot(
+      doc(db, "shipments", id),
+      (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          // Fetch sub-collections manually if needed, or use multiple listeners
+          setShipment({
+            id: snap.id,
+            ...data,
+            documents: data.documents || [],
+            comments: data.comments || [],
+            events: data.events || [],
+          });
+          setLoading(false);
+        } else {
+          setShipment(null);
+          setLoading(false);
+        }
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.GET, `shipments/${id}`);
       }
-    });
+    );
 
     // Real-time Comments
     const unsubComments = onSnapshot(
@@ -116,15 +123,24 @@ export default function ShipmentDetails() {
         setShipment((prev: any) =>
           prev ? { ...prev, comments: snap.docs.map((d) => ({ id: d.id, ...d.data() })) } : prev
         );
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, `shipments/${id}/comments`);
       }
     );
 
     // Real-time Documents
-    const unsubDocs = onSnapshot(collection(db, `shipments/${id}/documents`), (snap) => {
-      setShipment((prev: any) =>
-        prev ? { ...prev, documents: snap.docs.map((d) => ({ id: d.id, ...d.data() })) } : prev
-      );
-    });
+    const unsubDocs = onSnapshot(
+      collection(db, `shipments/${id}/documents`),
+      (snap) => {
+        setShipment((prev: any) =>
+          prev ? { ...prev, documents: snap.docs.map((d) => ({ id: d.id, ...d.data() })) } : prev
+        );
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, `shipments/${id}/documents`);
+      }
+    );
 
     // Real-time Events
     const unsubEvents = onSnapshot(
@@ -133,6 +149,9 @@ export default function ShipmentDetails() {
         setShipment((prev: any) =>
           prev ? { ...prev, events: snap.docs.map((d) => ({ id: d.id, ...d.data() })) } : prev
         );
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, `shipments/${id}/events`);
       }
     );
 
@@ -224,9 +243,15 @@ export default function ShipmentDetails() {
     if (!user) return;
     try {
       const q = query(collection(db, "leads"), where("userId", "==", user.uid));
-      onSnapshot(q, (snap) => {
-        setLeads(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      });
+      onSnapshot(
+        q,
+        (snap) => {
+          setLeads(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        },
+        (error) => {
+          handleFirestoreError(error, OperationType.LIST, "leads");
+        }
+      );
     } catch (err) {
       console.error("Leads fetch error", err);
     }
@@ -236,9 +261,15 @@ export default function ShipmentDetails() {
   useEffect(() => {
     if (!user) return;
     const q = query(collection(db, "leads"), where("userId", "==", user.uid));
-    const unsub = onSnapshot(q, (snap) => {
-      setLeads(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setLeads(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, "leads");
+      }
+    );
     return unsub;
   }, [user]);
 

@@ -146,7 +146,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     // @ts-ignore
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("عذراً، متصفحك لا يدعم التعرف على الصوت.");
+      alert(t("layout.mic_not_supported"));
       return;
     }
 
@@ -175,9 +175,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     recognition.onerror = (event: any) => {
       console.error("Speech recognition error", event.error);
       if (event.error === "not-allowed") {
-        toast.error("يرجى السماح بالوصول إلى الميكروفون، أو فتح التطبيق في نافذة جديدة.");
+        toast.error(t("layout.mic_permission_denied"));
       } else {
-        toast.error("حدث خطأ في التعرف على الصوت. الرجاء المحاولة مرة أخرى.");
+        toast.error(t("layout.mic_error"));
       }
       setIsListening(false);
     };
@@ -539,8 +539,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 onKeyDown={handleCommand}
                 placeholder={
                   isListening
-                    ? "جاري الاستماع..."
-                    : "اسأل مدارج... (مثلاً: 'انشئ فاتورة' أو 'احسب الرواتب')"
+                    ? t("layout.voice_placeholder_listening")
+                    : t("layout.voice_placeholder")
                 }
                 className="w-full bg-zinc-100/60 dark:bg-zinc-900/60 hover:bg-zinc-200/50 dark:hover:bg-zinc-900/80 focus:bg-white dark:focus:bg-zinc-900 border border-zinc-200 dark:border-zinc-850 focus:border-emerald-500/50 rounded-2xl py-3 pr-11 pl-4 focus:ring-4 focus:ring-emerald-500/10 transition-all text-[13px] placeholder:text-zinc-500 text-zinc-800 dark:text-zinc-100 font-medium shadow-inner shadow-black/5 dark:shadow-black/30 outline-none"
               />
@@ -555,7 +555,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   >
                     <div className="flex justify-between items-center mb-3 border-b border-zinc-200 dark:border-zinc-800 pb-2">
                       <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-black px-2.5 py-1 rounded-lg flex items-center gap-1.5 border border-emerald-500/20">
-                        <Sparkles className="w-3.5 h-3.5" /> مساعد مدارج الذكي
+                        <Sparkles className="w-3.5 h-3.5" /> {t("layout.ai_assistant")}
                       </span>
                       <button
                         onClick={() => setAiResponse("")}
@@ -581,7 +581,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       ? "bg-rose-100 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 animate-pulse"
                       : "hover:bg-zinc-200 dark:hover:bg-zinc-850 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400"
                   )}
-                  title="تحدث مع مدارج"
+                  title={t("layout.voice_tooltip")}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -621,7 +621,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <button
                   onClick={() => setShowDialects(!showDialects)}
                   className="p-3.5 hover:bg-zinc-200 dark:hover:bg-zinc-850 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors flex items-center justify-center outline-none cursor-pointer"
-                  title="اختر اللهجة"
+                  title={t("layout.select_dialect")}
                 >
                   <span className="text-[10px] font-black uppercase text-zinc-500 dark:text-zinc-400 group-hover:text-emerald-500 dark:group-hover:text-emerald-400 px-1">
                     {dialects.find((d) => d.code === selectedDialect)?.label || "SA"}
@@ -675,8 +675,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 updateSettings({ language: newLang });
                 toast.success(
                   newLang === "ar"
-                    ? "تم تحويل لغة النظام إلى العربية"
-                    : "System language switched to English"
+                    ? t("layout.switch_to_arabic")
+                    : t("layout.switch_to_english")
                 );
               }}
               className="px-4 py-2 rounded-2xl border border-zinc-200 dark:border-zinc-850 bg-zinc-100 dark:bg-zinc-900 text-xs font-black text-zinc-650 dark:text-zinc-300 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-200 dark:hover:bg-zinc-850 hover:border-emerald-500/20 transition-all cursor-pointer flex items-center gap-2 outline-none shadow-sm"
@@ -723,10 +723,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   >
                     <div className="p-4 border-b border-zinc-200 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-950/50 flex justify-between items-center">
                       <h3 className="text-xs font-black text-zinc-800 dark:text-zinc-100">
-                        التنبيهات الإدارية
+                        {t("layout.notifications")}
                       </h3>
                       <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full font-black border border-emerald-500/15">
-                        {notifications.filter((n) => !n.isRead).length} جديد
+                        {notifications.filter((n) => !n.isRead).length} {t("layout.new")}
                       </span>
                     </div>
                     <div className="flex-1 overflow-y-auto no-scrollbar max-h-[300px]">
@@ -734,7 +734,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         <div className="p-8 text-center space-y-2">
                           <CheckCircle2 className="w-8 h-8 text-zinc-300 dark:text-zinc-800 mx-auto animate-pulse" />
                           <p className="text-xs text-zinc-500 font-semibold">
-                            لا توجد تنبيهات عاجلة
+                            {t("layout.no_notifications")}
                           </p>
                         </div>
                       ) : (
@@ -819,7 +819,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   >
                     <div className="p-3 border-b border-zinc-200 dark:border-zinc-800 mb-1.5">
                       <p className="text-[10px] font-black text-zinc-450 dark:text-zinc-500 uppercase tracking-wider mb-1">
-                        البريد الإلكتروني
+                        {t("layout.email")}
                       </p>
                       <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate">
                         {user?.role === "Administrator" ? settings.email : user?.email}
@@ -830,14 +830,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       onClick={() => setShowProfileMenu(false)}
                       className="flex items-center gap-2.5 w-full px-3 py-2.5 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-850 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-xl transition-colors"
                     >
-                      <UserIcon className="w-4 h-4 text-zinc-500" /> الملف الشخصي
+                      <UserIcon className="w-4 h-4 text-zinc-500" /> {t("layout.profile")}
                     </Link>
                     <Link
                       to="/app/settings"
                       onClick={() => setShowProfileMenu(false)}
                       className="flex items-center gap-2.5 w-full px-3 py-2.5 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-850 hover:text-zinc-900 dark:hover:text-zinc-100 rounded-xl transition-colors"
                     >
-                      <Settings className="w-4 h-4 text-zinc-500" /> التفضيلات
+                      <Settings className="w-4 h-4 text-zinc-500" /> {t("layout.preferences")}
                     </Link>
                     <button
                       onClick={() => {
@@ -846,7 +846,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       }}
                       className="flex items-center gap-2.5 w-full px-3 py-2.5 text-xs font-black text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors mt-1"
                     >
-                      <LogOut className="w-4 h-4" /> تسجيل الخروج
+                      <LogOut className="w-4 h-4" /> {t("layout.logout")}
                     </button>
                   </motion.div>
                 )}
@@ -857,7 +857,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <button
               onClick={() => logout()}
               className="flex items-center justify-center w-10 h-10 rounded-2xl border border-rose-200 dark:border-rose-950 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-500 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-150 transition-colors cursor-pointer shrink-0"
-              title="تسجيل الخروج"
+              title={t("layout.logout")}
             >
               <LogOut className="w-4 h-4" />
             </button>

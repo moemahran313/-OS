@@ -63,3 +63,41 @@ export const logAudit = async (module: string, payload: any, result: any, req: a
     console.error("Failed to log audit:", err);
   }
 };
+
+export async function generateContentWithRetry(
+  aiClient: any,
+  params: {
+    model: string;
+    contents: any;
+    config?: any;
+  },
+  maxRetries = 3,
+  delayMs = 1500
+): Promise<any> {
+  let attempt = 0;
+  while (true) {
+    try {
+      return await aiClient.models.generateContent(params);
+    } catch (err: any) {
+      attempt++;
+      const isUnavailable =
+        err?.message?.includes("503") ||
+        err?.message?.includes("UNAVAILABLE") ||
+        err?.status === "UNAVAILABLE" ||
+        err?.code === 503 ||
+        String(err).includes("UNAVAILABLE") ||
+        String(err).includes("503") ||
+        String(err).includes("high demand");
+
+      if (isUnavailable && attempt <= maxRetries) {
+        const backoff = delayMs * Math.pow(2, attempt - 1);
+        console.warn(
+          `[Gemini API] 503/UNAVAILABLE detected on attempt ${attempt}. Retrying in ${backoff}ms...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, backoff));
+        continue;
+      }
+      throw err;
+    }
+  }
+}

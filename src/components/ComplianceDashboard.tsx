@@ -25,7 +25,10 @@ export default function ComplianceDashboard() {
         setEmployees(docs);
       },
       (error) => {
-        console.warn("ComplianceDashboard employees snapshot listener error (handled gracefully):", error);
+        console.warn(
+          "ComplianceDashboard employees snapshot listener error (handled gracefully):",
+          error
+        );
       }
     );
 
