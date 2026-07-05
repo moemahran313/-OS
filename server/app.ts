@@ -28,6 +28,7 @@ import accountingRoutes from "./routes/accounting.js";
 import organizationsRoutes from "./routes/organizations.js";
 import dmsRoutes from "./routes/dms.js";
 import zatcaRoutes from "./routes/zatca.js";
+import projectsRoutes from "./routes/projects.js";
 
 export async function createApp() {
   const app = express();
@@ -68,6 +69,7 @@ export async function createApp() {
   app.use("/api/organizations", organizationsRoutes);
   app.use("/api/dms", dmsRoutes);
   app.use("/api/zatca", zatcaRoutes);
+  app.use("/api/projects", projectsRoutes);
 
   // HR routes like /api/nitaqat/calculate and /api/workpermit/calculate
   app.use("/api", hrRoutes);

@@ -21,6 +21,7 @@ import {
   Video,
   Warehouse,
   Scale,
+  FolderKanban,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Logo } from "@/src/components/Logo";
@@ -47,6 +48,7 @@ const navigationData = [
   { nameKey: "dashboard", id: "Dashboard", href: "/app", icon: LayoutDashboard },
   { nameKey: "sidebar.employees", id: "CRM", href: "/app/crm", icon: Users },
   { nameKey: "sidebar.chat", id: "Chat", href: "/app/chat", icon: MessageSquare },
+  { nameKey: "projects", id: "Projects", href: "/app/projects", icon: FolderKanban },
   { nameKey: "دفتر الأستاذ والقيود", id: "Accounting", href: "/app/accounting", icon: Scale },
   { nameKey: "sidebar.suppliers", id: "Suppliers", href: "/app/suppliers", icon: Truck },
   { nameKey: "sidebar.contracts", id: "Contracts", href: "/app/contracts", icon: FileSignature },
@@ -191,7 +193,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const filteredNavigation = navigationData.filter(
-    (item) => item.id === "SmartNegotiations" || item.id === "Chat" || hasPermission(item.id)
+    (item) => item.id === "SmartNegotiations" || item.id === "Chat" || item.id === "Projects" || hasPermission(item.id)
   );
 
   const handleCommand = async (e: React.KeyboardEvent) => {
@@ -341,7 +343,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         ? settings.language === "ar"
                           ? "مركز الاتصال الموحد"
                           : "Unified Communications"
-                        : t(item.nameKey)}
+                        : item.id === "Projects"
+                          ? settings.language === "ar"
+                            ? "إدارة المشاريع"
+                            : "Project Management"
+                          : t(item.nameKey)}
                   </motion.span>
                 )}
 
@@ -361,7 +367,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         ? settings.language === "ar"
                           ? "مركز الاتصال الموحد"
                           : "Unified Communications"
-                        : t(item.nameKey)}
+                        : item.id === "Projects"
+                          ? settings.language === "ar"
+                            ? "إدارة المشاريع"
+                            : "Project Management"
+                          : t(item.nameKey)}
                   </div>
                 )}
               </Link>
@@ -489,7 +499,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             ? settings.language === "ar"
                               ? "مركز الاتصال الموحد"
                               : "Unified Communications"
-                            : t(item.nameKey)}
+                            : item.id === "Projects"
+                              ? settings.language === "ar"
+                                ? "إدارة المشاريع"
+                                : "Project Management"
+                              : t(item.nameKey)}
                       </span>
                     </Link>
                   );

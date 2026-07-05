@@ -120,6 +120,7 @@ const Chat = lazy(() => import("./pages/Chat"));
 const SmartNegotiations = lazy(() => import("./pages/SmartNegotiations"));
 const Accounting = lazy(() => import("./pages/Accounting"));
 const ZatcaAi = lazy(() => import("./pages/ZatcaAi"));
+const Projects = lazy(() => import("./pages/Projects"));
 
 function LoadingSpinner() {
   return (
@@ -556,6 +557,14 @@ function AppInnerRoutes() {
               element={
                 <PageTransition>
                   <Chat />
+                </PageTransition>
+              }
+            />
+            <Route
+              path="projects"
+              element={
+                <PageTransition>
+                  <Projects />
                 </PageTransition>
               }
             />
