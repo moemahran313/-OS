@@ -22,6 +22,7 @@ import {
   Plus,
   Trash2,
   Globe,
+  Zap,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { db } from "../lib/firebase";
@@ -39,6 +40,14 @@ const INITIAL_CHATS = [
     time: "10:30",
     unread: 2,
     phone: "+966 50 123 4567",
+    closingProbability: 45,
+    dealStage: "lead",
+    outstandingInvoice: "لا يوجد / None",
+    recentActivity: "استفسار عن مسير الرواتب لشهر مايو",
+    priorityBadgeAr: "ℹ️ استفسار عام",
+    priorityBadgeEn: "ℹ️ General Inquiry",
+    suggestedFollowUpAr: "مرحباً مروان، أردت المتابعة معك بخصوص مسير الرواتب لشهر مايو، هل تم مراجعته واعتماده؟ نحن هنا لأي استفسار.",
+    suggestedFollowUpEn: "Hi Marwan, following up regarding May payroll approval. Let us know if you have any questions.",
     messages: [
       { id: 1, text: "مرحباً بكم، أود الاستفسار عن كشف الحساب", sender: "client", time: "09:12" },
       {
@@ -59,6 +68,14 @@ const INITIAL_CHATS = [
     time: "أمس",
     unread: 0,
     phone: "+966 54 987 6543",
+    closingProbability: 95,
+    dealStage: "invoice_pending",
+    outstandingInvoice: "فاتورة رقم #1024 بقيمة 12,500 ر.س (مستحقة منذ 8 أيام)",
+    recentActivity: "أرسل الفاتورة الضريبية ولم يتم التأكيد النهائي بعد",
+    priorityBadgeAr: "🔴 متأخرات مالية",
+    priorityBadgeEn: "🔴 Outstanding Invoice",
+    suggestedFollowUpAr: "أهلاً سارة، بخصوص الفاتورة الضريبية #1024 البالغة 12,500 ر.س، نود تذكيرك بالتحصيل لتفادي الغرامات الضريبية وتسهيل عمليات الشحن والامتثال المالي.",
+    suggestedFollowUpEn: "Hi Sarah, regarding tax invoice #1024 (12,500 SAR), kindly reminder for collection to avoid delays.",
     messages: [
       { id: 1, text: "يرجى مراجعة تفاصيل الشحن والشهادة الصحية", sender: "system", time: "أمس" },
       { id: 2, text: "تم تحويل قيمة الفاتورة الضريبية رقم #1024", sender: "client", time: "أمس" },
@@ -72,6 +89,14 @@ const INITIAL_CHATS = [
     time: "24/05",
     unread: 0,
     phone: "+966 56 111 2222",
+    closingProbability: 88,
+    dealStage: "negotiation",
+    outstandingInvoice: "لا يوجد / None",
+    recentActivity: "طلب تفعيل الدفع الإلكتروني وتجربة بوابة آبل باي الجديدة",
+    priorityBadgeAr: "🔥 صفقة وشيكة",
+    priorityBadgeEn: "🔥 High Closing Prob",
+    suggestedFollowUpAr: "مرحباً بشركائنا في شركة اليمامة، قمنا بإعداد وتفعيل بوابة آبل باي بالكامل لكم على منصة مدارج. يسعدنا جدولة اتصال سريع لتوجيهكم في تشغيلها وحصد عوائد مبيعاتكم فوراً.",
+    suggestedFollowUpEn: "Hi Yamama Contracting, we've set up Apple Pay gateway for you on Mudarij. We would love to schedule a quick call to guide you.",
     messages: [
       {
         id: 1,
@@ -723,24 +748,195 @@ export default function MobileSimulator() {
                   <div className="space-y-3">
                     {selectedChatId === null ? (
                       <>
-                        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-3 rounded-2xl border border-emerald-100 flex items-center gap-2.5">
+                        {/* AI Smart Follow-up Suggestions Block */}
+                        <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-850 rounded-2xl p-3 space-y-2.5">
+                          <div className="flex items-center gap-2 border-b border-zinc-150 dark:border-zinc-800 pb-1.5">
+                            <Zap className="w-4 h-4 text-amber-500 animate-pulse" />
+                            <div className="text-right flex-1">
+                              <h3 className="text-[10px] font-black text-indigo-950 dark:text-zinc-100 uppercase tracking-wider">
+                                {mobileLang === "ar" ? "🤖 مقترحات المتابعة الذكية بالذكاء الاصطناعي" : "🤖 AI Smart Follow-up Suggestions"}
+                              </h3>
+                              <p className="text-[7.5px] text-zinc-500 font-medium">
+                                {mobileLang === "ar"
+                                  ? "تحليل ذكي مصنف بحسب متأخرات الدفع ونسبة نجاح الصفقات"
+                                  : "AI prioritized based on invoice age & close probability"}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            {[...chats]
+                              .sort((a: any, b: any) => {
+                                const aHasInvoice = a.outstandingInvoice && a.outstandingInvoice !== "لا يوجد / None";
+                                const bHasInvoice = b.outstandingInvoice && b.outstandingInvoice !== "لا يوجد / None";
+                                if (aHasInvoice && !bHasInvoice) return -1;
+                                if (!aHasInvoice && bHasInvoice) return 1;
+                                return (b.closingProbability || 0) - (a.closingProbability || 0);
+                              })
+                              .map((chat: any) => {
+                                const isInvoicePriority = chat.outstandingInvoice && chat.outstandingInvoice !== "لا يوجد / None";
+                                const badgeText = mobileLang === "ar" ? chat.priorityBadgeAr : chat.priorityBadgeEn;
+                                const badgeColor = isInvoicePriority
+                                  ? "text-rose-600 bg-rose-50 border-rose-100"
+                                  : chat.closingProbability >= 80
+                                  ? "text-amber-600 bg-amber-50 border-amber-100"
+                                  : "text-zinc-600 bg-zinc-50 border-zinc-100";
+
+                                const suggestedText = mobileLang === "ar" ? chat.suggestedFollowUpAr : chat.suggestedFollowUpEn;
+
+                                // Action to send instantly
+                                const handleSendFollowUp = () => {
+                                  const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                  const updatedChats = chats.map((c: any) => {
+                                    if (c.id === chat.id) {
+                                      return {
+                                        ...c,
+                                        unread: 0,
+                                        lastMessage: suggestedText,
+                                        time: mobileLang === "ar" ? "الآن" : "Now",
+                                        messages: [
+                                          ...c.messages,
+                                          {
+                                            id: c.messages.length + 1,
+                                            text: suggestedText,
+                                            sender: "system", // sender system is merchant/agent
+                                            time: nowStr,
+                                          }
+                                        ]
+                                      };
+                                    }
+                                    return c;
+                                  });
+                                  setChats(updatedChats);
+                                  setSelectedChatId(chat.id);
+                                  toast.success(
+                                    mobileLang === "ar"
+                                      ? `✅ تم إرسال رسالة المتابعة الذكية بنجاح إلى ${chat.name}!`
+                                      : `✅ Smart follow-up sent successfully to ${chat.name}!`
+                                  );
+                                };
+
+                                return (
+                                  <div
+                                    key={`followup-${chat.id}`}
+                                    className="bg-white dark:bg-zinc-950 p-2.5 rounded-xl border border-zinc-150 dark:border-zinc-800 space-y-2 text-right rtl:text-right ltr:text-left transition-all hover:border-indigo-400"
+                                  >
+                                    {/* Card Header */}
+                                    <div className="flex items-center justify-between gap-1">
+                                      <div className="flex items-center gap-1.5 min-w-0">
+                                        <img
+                                          src={chat.avatar}
+                                          alt=""
+                                          className="w-6 h-6 rounded-full object-cover border border-zinc-200 shrink-0"
+                                        />
+                                        <span className="text-[10px] font-bold text-zinc-800 dark:text-zinc-200 truncate">
+                                          {chat.name}
+                                        </span>
+                                      </div>
+                                      <span className={`px-1.5 py-0.5 rounded-md text-[7.5px] font-black border ${badgeColor}`}>
+                                        {badgeText}
+                                      </span>
+                                    </div>
+
+                                    {/* Metadata Details */}
+                                    <div className="text-[7.5px] text-zinc-500 font-semibold space-y-0.5 border-t border-zinc-100 dark:border-zinc-850 pt-1">
+                                      {isInvoicePriority ? (
+                                        <p className="text-rose-600 font-bold">
+                                          ⚠️ {mobileLang === "ar" ? "المستحقات المعلقة:" : "Dues:"} {chat.outstandingInvoice}
+                                        </p>
+                                      ) : (
+                                        <p className="text-amber-600 font-bold">
+                                          🔥 {mobileLang === "ar" ? "احتمالية الإغلاق:" : "Closing Prob:"} {chat.closingProbability}%
+                                        </p>
+                                      )}
+                                      <p>
+                                        💡 {mobileLang === "ar" ? "النشاط الأخير:" : "Last Activity:"} {chat.recentActivity}
+                                      </p>
+                                    </div>
+
+                                    {/* Suggested Message Preview */}
+                                    <div className="bg-zinc-50 dark:bg-zinc-900 p-2 rounded-lg border border-zinc-100 dark:border-zinc-850">
+                                      <p className="text-[8px] text-zinc-600 dark:text-zinc-300 italic leading-relaxed whitespace-pre-wrap">
+                                        "{suggestedText}"
+                                      </p>
+                                    </div>
+
+                                    {/* Action buttons */}
+                                    <div className="flex gap-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={handleSendFollowUp}
+                                        className="flex-1 py-1 px-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md text-[8px] font-bold transition-all shadow-xxs flex items-center justify-center gap-1 cursor-pointer"
+                                      >
+                                        <Zap className="w-3 h-3" />
+                                        {mobileLang === "ar" ? "إرسال فوراً" : "Send Instantly"}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          // Simulate AI rewrite
+                                          const rewritesAr = [
+                                            `أهلاً ${chat.name}، نود المتابعة معك بلطف بخصوص تفعيل معاملتكم والتحصيل، يسعدنا خدمتك والرد على استفساراتك.`,
+                                            `مرحباً ${chat.name}، فريق مدارج يحييك. نأمل مراجعة تفاصيل حسابك المعلق لإتمام الخطوات لتفادي التوقف والتمتع بكافة المزايا.`,
+                                            `أهلاً ${chat.name}، نود تقديم تذكير ودي بشأن المعاملات المفتوحة وحالة السداد لمساعدتك في إغلاق الفترة بنجاح.`
+                                          ];
+                                          const rewritesEn = [
+                                            `Hi ${chat.name}, friendly follow-up regarding your transaction. We are here to support you at any stage.`,
+                                            `Hello ${chat.name}, kindly follow-up regarding pending items to ensure smooth compliance and active setup.`,
+                                            `Hi ${chat.name}, reminder from Mudarij team to review the open invoice details.`
+                                          ];
+                                          const randomText = mobileLang === "ar" 
+                                            ? rewritesAr[Math.floor(Math.random() * rewritesAr.length)]
+                                            : rewritesEn[Math.floor(Math.random() * rewritesEn.length)];
+                                          
+                                          // Update state
+                                          const updatedChats = chats.map((c: any) => {
+                                            if (c.id === chat.id) {
+                                              return {
+                                                ...c,
+                                                suggestedFollowUpAr: mobileLang === "ar" ? randomText : c.suggestedFollowUpAr,
+                                                suggestedFollowUpEn: mobileLang === "en" ? randomText : c.suggestedFollowUpEn,
+                                              };
+                                            }
+                                            return c;
+                                          });
+                                          setChats(updatedChats);
+                                          toast.success(
+                                            mobileLang === "ar"
+                                              ? "✨ تمت إعادة صياغة الرسالة بذكاء اصطناعي أكثر ودية!"
+                                              : "✨ Re-written with a friendly AI tone!"
+                                          );
+                                        }}
+                                        className="py-1 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-md text-[8px] font-black transition-all border border-indigo-100 flex items-center justify-center gap-0.5 cursor-pointer"
+                                      >
+                                        {mobileLang === "ar" ? "إعادة صياغة" : "AI Rewrite"}
+                                      </button>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        </div>
+
+                        {/* Connection status card */}
+                        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-900/40 flex items-center gap-2.5">
                           <MessageSquare className="w-4 h-4 text-emerald-500 shrink-0" />
-                          <div className="text-right">
-                            <p className="text-[10px] font-black text-emerald-950">
+                          <div className="text-right flex-1">
+                            <p className="text-[10px] font-black text-emerald-950 dark:text-zinc-100">
                               {dt.whatsappSub}
                             </p>
-                            <p className="text-[8px] text-emerald-800 mt-0.5">
-                              رسائل WhatsApp فورية متصلة تلقائياً
+                            <p className="text-[8px] text-emerald-800 dark:text-emerald-400 mt-0.5">
+                              {mobileLang === "ar" ? "رسائل WhatsApp فورية متصلة تلقائياً" : "Instant WhatsApp connection automated"}
                             </p>
                           </div>
                         </div>
 
                         <div className="space-y-2">
-                          {chats.map((chat) => (
+                          {chats.map((chat: any) => (
                             <div
                               key={chat.id}
                               onClick={() => setSelectedChatId(chat.id)}
-                              className="bg-white p-3 rounded-xl border border-zinc-100 hover:border-zinc-300 transition-all cursor-pointer flex items-center justify-between gap-2 shadow-xs group"
+                              className="bg-white dark:bg-zinc-950 p-3 rounded-xl border border-zinc-100 dark:border-zinc-850 hover:border-zinc-300 transition-all cursor-pointer flex items-center justify-between gap-2 shadow-xs group"
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
                                 <img
@@ -749,10 +945,10 @@ export default function MobileSimulator() {
                                   className="w-9 h-9 rounded-full object-cover border border-zinc-200 shrink-0"
                                 />
                                 <div className="text-right min-w-0">
-                                  <h4 className="font-bold text-xs text-zinc-900 group-hover:text-amber-600 transition-colors">
+                                  <h4 className="font-bold text-xs text-zinc-900 dark:text-zinc-100 group-hover:text-amber-600 transition-colors">
                                     {chat.name}
                                   </h4>
-                                  <p className="text-[10px] text-zinc-500 truncate mt-0.5">
+                                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate mt-0.5">
                                     {chat.lastMessage}
                                   </p>
                                 </div>

@@ -24,10 +24,23 @@ import {
   Calendar,
   Layers,
   UserCheck,
+  Building2,
+  Briefcase,
+  Percent,
+  PiggyBank,
+  Sparkles,
 } from "lucide-react";
 import { auth } from "../lib/firebase";
 import { useUser } from "../contexts/UserContext";
 import { toast } from "sonner";
+
+import ReceivablesTab from "../components/accounting/ReceivablesTab";
+import PayablesTab from "../components/accounting/PayablesTab";
+import FixedAssetsTab from "../components/accounting/FixedAssetsTab";
+import BankingTab from "../components/accounting/BankingTab";
+import VatTaxTab from "../components/accounting/VatTaxTab";
+import BudgetsTab from "../components/accounting/BudgetsTab";
+import CopilotTab from "../components/accounting/CopilotTab";
 
 interface Account {
   id: string;
@@ -135,7 +148,18 @@ interface ExchangeRate {
 export default function Accounting() {
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState<
-    "accounts" | "journals" | "periods" | "trial" | "statements"
+    | "accounts"
+    | "journals"
+    | "receivables"
+    | "payables"
+    | "banking"
+    | "fixed-assets"
+    | "budgets"
+    | "vat-tax"
+    | "copilot"
+    | "periods"
+    | "trial"
+    | "statements"
   >("accounts");
   const [loading, setLoading] = useState(true);
 
@@ -996,6 +1020,13 @@ export default function Accounting() {
         {[
           { id: "accounts", label: "دليل شجرة الحسابات (COA)", icon: FolderTree },
           { id: "journals", label: "دفتر اليومية المساعد", icon: FileText },
+          { id: "receivables", label: "حسابات العملاء والمدينين (AR)", icon: UserCheck },
+          { id: "payables", label: "حسابات الموردين والدائنين (AP)", icon: Building2 },
+          { id: "banking", label: "الخزينة والربط البنكي", icon: Coins },
+          { id: "fixed-assets", label: "الأصول الثابتة والإهلاك", icon: Briefcase },
+          { id: "budgets", label: "الموازنات التقديرية", icon: PiggyBank },
+          { id: "vat-tax", label: "الضرائب وضريبة القيمة المضافة", icon: Percent },
+          { id: "copilot", label: "المستشار الذكي (AI Copilot)", icon: Sparkles },
           { id: "periods", label: "الأقفال والفترات المالية", icon: Calendar },
           { id: "trial", label: "ميزان المراجعة اللحظي", icon: ArrowRightLeft },
           { id: "statements", label: "القوائم المالية للشركة", icon: FileSpreadsheet },
@@ -1805,6 +1836,145 @@ export default function Accounting() {
                   </div>
                 )}
               </div>
+            </motion.div>
+          )}
+
+          {/* TAB: RECEIVABLES */}
+          {activeTab === "receivables" && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              key="tab-receivables"
+            >
+              <ReceivablesTab accounts={accounts} activeBranchId={activeBranchId} />
+            </motion.div>
+          )}
+
+          {/* TAB: PAYABLES */}
+          {activeTab === "payables" && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              key="tab-payables"
+            >
+              <PayablesTab accounts={accounts} activeBranchId={activeBranchId} />
+            </motion.div>
+          )}
+
+          {/* TAB: BANKING */}
+          {activeTab === "banking" && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              key="tab-banking"
+            >
+              <BankingTab />
+            </motion.div>
+          )}
+
+          {/* TAB: FIXED ASSETS */}
+          {activeTab === "fixed-assets" && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              key="tab-fixed-assets"
+            >
+              <FixedAssetsTab 
+                onPostJournal={(newJr) => {
+                  const created: Journal = {
+                    id: "jr-auto-" + Date.now(),
+                    journalNumber: `JV-AUTO-${journals.length + 101}`,
+                    date: new Date().toISOString().split("T")[0],
+                    description: newJr.description,
+                    status: "Posted",
+                    currency: "SAR",
+                    exchangeRate: 1,
+                    lines: newJr.lines.map((line: any) => ({
+                      accountId: "auto-id",
+                      accountCode: line.accountCode,
+                      accountName: line.accountName,
+                      debit: line.debit,
+                      credit: line.credit,
+                      description: newJr.description,
+                      costCenter: "HQ",
+                      branch: activeBranchId !== "all" ? activeBranchId : "HQ-Branch",
+                      project: "General"
+                    })),
+                    totalDebits: newJr.lines.reduce((sum: number, l: any) => sum + l.debit, 0),
+                    totalCredits: newJr.lines.reduce((sum: number, l: any) => sum + l.credit, 0)
+                  };
+                  setJournals([created, ...journals]);
+                  toast.success("تم ترحيل قيد الإهلاك بنجاح للأستاذ العام");
+                }} 
+              />
+            </motion.div>
+          )}
+
+          {/* TAB: BUDGETS */}
+          {activeTab === "budgets" && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              key="tab-budgets"
+            >
+              <BudgetsTab />
+            </motion.div>
+          )}
+
+          {/* TAB: VAT TAX */}
+          {activeTab === "vat-tax" && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              key="tab-vat-tax"
+            >
+              <VatTaxTab />
+            </motion.div>
+          )}
+
+          {/* TAB: COPILOT */}
+          {activeTab === "copilot" && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              key="tab-copilot"
+            >
+              <CopilotTab 
+                accounts={accounts}
+                onPostJournal={(newJr) => {
+                  const created: Journal = {
+                    id: "jr-copilot-" + Date.now(),
+                    journalNumber: `JV-AI-${journals.length + 101}`,
+                    date: new Date().toISOString().split("T")[0],
+                    description: newJr.description,
+                    status: "Posted",
+                    currency: "SAR",
+                    exchangeRate: 1,
+                    lines: newJr.lines.map((line: any) => ({
+                      accountId: "auto-id",
+                      accountCode: line.accountCode,
+                      accountName: line.name,
+                      debit: line.debit,
+                      credit: line.credit,
+                      description: newJr.description,
+                      costCenter: "HQ",
+                      branch: activeBranchId !== "all" ? activeBranchId : "HQ-Branch",
+                      project: "General"
+                    })),
+                    totalDebits: newJr.lines.reduce((sum: number, l: any) => sum + l.debit, 0),
+                    totalCredits: newJr.lines.reduce((sum: number, l: any) => sum + l.credit, 0)
+                  };
+                  setJournals([created, ...journals]);
+                  toast.success("تم تسجيل ترحيل القيد الذكي الموصى به");
+                }}
+              />
             </motion.div>
           )}
         </AnimatePresence>
