@@ -225,7 +225,7 @@ router.get("/", authenticate, async (req: any, res) => {
         totalAgingDays += diffDays;
       });
       averageAgingDays = Math.round(totalAgingDays / pendingInvoicesList.length);
-      
+
       // Impact of outstanding aging
       if (averageAgingDays > 30) {
         healthScore -= 12;
@@ -241,7 +241,8 @@ router.get("/", authenticate, async (req: any, res) => {
     // 4. Customer Acquisition Cost (CAC) vs Customer Value
     // Simulate CAC based on marketing expenses / leads
     const simulatedMarketingExpense = 3500; // SAR
-    const simulatedCAC = activeLeadsCount > 0 ? Math.round(simulatedMarketingExpense / activeLeadsCount) : 450;
+    const simulatedCAC =
+      activeLeadsCount > 0 ? Math.round(simulatedMarketingExpense / activeLeadsCount) : 450;
     // Standard customer value is around 4500 SAR. If CAC is low (CAC < 1000), add score. If CAC is high, subtract.
     if (simulatedCAC < 600) {
       healthScore += 7;
@@ -261,43 +262,49 @@ router.get("/", authenticate, async (req: any, res) => {
     let recommendationsEn: string[] = [];
 
     if (healthScore >= 85) {
-      explanationAr = "صحة الأعمال ممتازة جداً. يظهر المشروع نمواً قوياً في الإيرادات، مع كفاءة عالية في التحصيل ونسب منخفضة لتكلفة حيازة العملاء. التدفقات النقدية مستقرة ومتينة.";
-      explanationEn = "Business health is excellent. Strong revenue growth is supported by high collection efficiency and low customer acquisition costs. Cash flows are stable and resilient.";
+      explanationAr =
+        "صحة الأعمال ممتازة جداً. يظهر المشروع نمواً قوياً في الإيرادات، مع كفاءة عالية في التحصيل ونسب منخفضة لتكلفة حيازة العملاء. التدفقات النقدية مستقرة ومتينة.";
+      explanationEn =
+        "Business health is excellent. Strong revenue growth is supported by high collection efficiency and low customer acquisition costs. Cash flows are stable and resilient.";
       recommendationsAr = [
         "التوسع في الحملات التسويقية لزيادة حصتك السوقية.",
         "استثمار السيولة الفائضة لتطوير منتجات وخدمات جديدة.",
-        "تقديم عروض حصرية للعملاء المميزين لزيادة ولائهم."
+        "تقديم عروض حصرية للعملاء المميزين لزيادة ولائهم.",
       ];
       recommendationsEn = [
         "Scale marketing campaigns to capture more market share.",
         "Invest surplus cash flow into developing new products and services.",
-        "Offer exclusive rewards to premium clients to boost long-term loyalty."
+        "Offer exclusive rewards to premium clients to boost long-term loyalty.",
       ];
     } else if (healthScore >= 65) {
-      explanationAr = "صحة الأعمال مستقرة، ولكن هناك بعض الجوانب التي تتطلب المتابعة. توجد فواتير معلقة تقترب من مواعيد استحقاقها، وتكلفة حيازة العميل (CAC) معتدلة.";
-      explanationEn = "Business health is stable, but a few areas require attention. There are pending invoices nearing their due dates, and customer acquisition cost (CAC) is moderate.";
+      explanationAr =
+        "صحة الأعمال مستقرة، ولكن هناك بعض الجوانب التي تتطلب المتابعة. توجد فواتير معلقة تقترب من مواعيد استحقاقها، وتكلفة حيازة العميل (CAC) معتدلة.";
+      explanationEn =
+        "Business health is stable, but a few areas require attention. There are pending invoices nearing their due dates, and customer acquisition cost (CAC) is moderate.";
       recommendationsAr = [
         "تفعيل تذكيرات الدفع التلقائية (WhatsApp) لتقليص عمر الفواتير المعلقة.",
         "تحسين قنوات استهداف العملاء لخفض تكلفة حيازة العميل.",
-        "مراجعة شروط السداد للعملاء ذوي الدفع المتأخر."
+        "مراجعة شروط السداد للعملاء ذوي الدفع المتأخر.",
       ];
       recommendationsEn = [
         "Activate automated payment reminders (WhatsApp) to accelerate outstanding invoice collection.",
         "Optimize customer targeting channels to lower customer acquisition cost (CAC).",
-        "Review credit terms for clients with repeated payment delays."
+        "Review credit terms for clients with repeated payment delays.",
       ];
     } else {
-      explanationAr = "انتباه: مؤشر صحة الأعمال منخفض. السيولة قد تتأثر نتيجة تكدس الفواتير غير المحصلة وتراجع وتيرة المبيعات، مع ارتفاع نسبي في تكلفة الاستحواذ على العملاء الجدد.";
-      explanationEn = "Warning: Business health score is critical. Cash flow is impacted by overdue invoices and slow sales velocity, combined with high customer acquisition costs.";
+      explanationAr =
+        "انتباه: مؤشر صحة الأعمال منخفض. السيولة قد تتأثر نتيجة تكدس الفواتير غير المحصلة وتراجع وتيرة المبيعات، مع ارتفاع نسبي في تكلفة الاستحواذ على العملاء الجدد.";
+      explanationEn =
+        "Warning: Business health score is critical. Cash flow is impacted by overdue invoices and slow sales velocity, combined with high customer acquisition costs.";
       recommendationsAr = [
         "إطلاق حملة تحصيل عاجلة والتواصل الفوري مع العملاء عبر الواتساب للمتأخرات.",
         "إيقاف شروط الدفع المؤجل للعملاء غير الملتزمين والتركيز على التحصيل الفوري.",
-        "إعادة هيكلة ميزانية التسويق فوراً لخفض تكلفة حيازة العميل والاعتماد على الإحالات المباشرة."
+        "إعادة هيكلة ميزانية التسويق فوراً لخفض تكلفة حيازة العميل والاعتماد على الإحالات المباشرة.",
       ];
       recommendationsEn = [
         "Launch an urgent collection campaign and contact clients immediately via WhatsApp regarding overdues.",
         "Suspend deferred credit terms for non-compliant accounts and focus on immediate payment.",
-        "Restructure marketing budgets immediately to reduce CAC, prioritizing direct referrals."
+        "Restructure marketing budgets immediately to reduce CAC, prioritizing direct referrals.",
       ];
     }
 
@@ -321,7 +328,7 @@ router.get("/", authenticate, async (req: any, res) => {
         explanationAr,
         explanationEn,
         recommendationsAr,
-        recommendationsEn
+        recommendationsEn,
       },
       pendingInvoices: userInvoices.filter((i) => i.status !== "paid").length,
       config: user?.dashboardConfig

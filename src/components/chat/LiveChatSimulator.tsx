@@ -102,7 +102,10 @@ export default function LiveChatSimulator({
           محاكي ويدجت محادثة الموقع حياً (Client View Simulator)
         </h3>
         <p className="text-[10px] text-zinc-500 font-bold leading-relaxed">
-          هذا المحاكي يتيح لك تجربة تجربة العميل (Customer Experience) كاملة! قم بالكتابة وإرسال الرسائل كزائر للموقع، ثم انتقل لعلامة تبويب <span className="text-primary">صندوق الوارد الموحد</span> لتشاهد كيف تتدفق رسائل العميل وتظهر مع وسم "المحادثة المباشرة" وسنتيمترات الذكاء الاصطناعي.
+          هذا المحاكي يتيح لك تجربة تجربة العميل (Customer Experience) كاملة! قم بالكتابة وإرسال
+          الرسائل كزائر للموقع، ثم انتقل لعلامة تبويب{" "}
+          <span className="text-primary">صندوق الوارد الموحد</span> لتشاهد كيف تتدفق رسائل العميل
+          وتظهر مع وسم "المحادثة المباشرة" وسنتيمترات الذكاء الاصطناعي.
         </p>
       </div>
 
@@ -133,7 +136,8 @@ export default function LiveChatSimulator({
             حول زوار موقعك لصفقات مبيعات وتذاكر دعم مغلقة بنقرة واحدة!
           </h2>
           <p className="text-[11px] text-zinc-500 font-semibold leading-relaxed">
-            الآن مع مدارج OS، يحصل زوار موقعك على استجابة فورية فائقة السرعة بفضل الذكاء الاصطناعي، مع فرز تلقائي لطلبات التسعير وتوليد للفرص في الـ CRM دون مغادرة المحادثة.
+            الآن مع مدارج OS، يحصل زوار موقعك على استجابة فورية فائقة السرعة بفضل الذكاء الاصطناعي،
+            مع فرز تلقائي لطلبات التسعير وتوليد للفرص في الـ CRM دون مغادرة المحادثة.
           </p>
           <div className="flex gap-3">
             <button className="bg-zinc-900 hover:bg-zinc-800 text-white text-[10px] font-black px-4 py-2 rounded-xl transition-all shadow-md">
@@ -187,7 +191,9 @@ export default function LiveChatSimulator({
                   </div>
                   <div>
                     <h4 className="text-xs font-black truncate">{widgetTitle}</h4>
-                    <span className="text-[8px] opacity-80 font-bold block mt-0.5">نشطون حالياً للرد على استفسارك</span>
+                    <span className="text-[8px] opacity-80 font-bold block mt-0.5">
+                      نشطون حالياً للرد على استفسارك
+                    </span>
                   </div>
                 </div>
                 <button
@@ -229,9 +235,18 @@ export default function LiveChatSimulator({
 
                 {isTyping && (
                   <div className="flex items-center gap-1 bg-white border border-zinc-200 px-3 py-2 rounded-2xl max-w-max ml-auto shadow-sm">
-                    <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: "0s" }} />
-                    <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: "0.15s" }} />
-                    <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: "0.3s" }} />
+                    <span
+                      className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce"
+                      style={{ animationDelay: "0s" }}
+                    />
+                    <span
+                      className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce"
+                      style={{ animationDelay: "0.15s" }}
+                    />
+                    <span
+                      className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce"
+                      style={{ animationDelay: "0.3s" }}
+                    />
                   </div>
                 )}
               </div>
@@ -239,12 +254,38 @@ export default function LiveChatSimulator({
               {/* Ratings Panel (CSAT) inside chat */}
               {messages.length >= 2 && !rating && (
                 <div className="p-3 bg-zinc-100 border-t border-zinc-200 text-center space-y-2 shrink-0 animate-fadeIn">
-                  <span className="text-[10px] text-zinc-500 font-black">كيف تقيم جودة إجابتنا؟</span>
+                  <span className="text-[10px] text-zinc-500 font-black">
+                    كيف تقيم جودة إجابتنا؟
+                  </span>
                   <div className="flex justify-center gap-4 text-lg">
-                    <button onClick={() => handleRating(4)} className="hover:scale-125 transition-transform" title="ممتاز">😍</button>
-                    <button onClick={() => handleRating(3)} className="hover:scale-125 transition-transform" title="جيد">🙂</button>
-                    <button onClick={() => handleRating(2)} className="hover:scale-125 transition-transform" title="مقبول">😐</button>
-                    <button onClick={() => handleRating(1)} className="hover:scale-125 transition-transform" title="سيء">😡</button>
+                    <button
+                      onClick={() => handleRating(4)}
+                      className="hover:scale-125 transition-transform"
+                      title="ممتاز"
+                    >
+                      😍
+                    </button>
+                    <button
+                      onClick={() => handleRating(3)}
+                      className="hover:scale-125 transition-transform"
+                      title="جيد"
+                    >
+                      🙂
+                    </button>
+                    <button
+                      onClick={() => handleRating(2)}
+                      className="hover:scale-125 transition-transform"
+                      title="مقبول"
+                    >
+                      😐
+                    </button>
+                    <button
+                      onClick={() => handleRating(1)}
+                      className="hover:scale-125 transition-transform"
+                      title="سيء"
+                    >
+                      😡
+                    </button>
                   </div>
                 </div>
               )}

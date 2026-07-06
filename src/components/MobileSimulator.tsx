@@ -46,8 +46,10 @@ const INITIAL_CHATS = [
     recentActivity: "استفسار عن مسير الرواتب لشهر مايو",
     priorityBadgeAr: "ℹ️ استفسار عام",
     priorityBadgeEn: "ℹ️ General Inquiry",
-    suggestedFollowUpAr: "مرحباً مروان، أردت المتابعة معك بخصوص مسير الرواتب لشهر مايو، هل تم مراجعته واعتماده؟ نحن هنا لأي استفسار.",
-    suggestedFollowUpEn: "Hi Marwan, following up regarding May payroll approval. Let us know if you have any questions.",
+    suggestedFollowUpAr:
+      "مرحباً مروان، أردت المتابعة معك بخصوص مسير الرواتب لشهر مايو، هل تم مراجعته واعتماده؟ نحن هنا لأي استفسار.",
+    suggestedFollowUpEn:
+      "Hi Marwan, following up regarding May payroll approval. Let us know if you have any questions.",
     messages: [
       { id: 1, text: "مرحباً بكم، أود الاستفسار عن كشف الحساب", sender: "client", time: "09:12" },
       {
@@ -74,8 +76,10 @@ const INITIAL_CHATS = [
     recentActivity: "أرسل الفاتورة الضريبية ولم يتم التأكيد النهائي بعد",
     priorityBadgeAr: "🔴 متأخرات مالية",
     priorityBadgeEn: "🔴 Outstanding Invoice",
-    suggestedFollowUpAr: "أهلاً سارة، بخصوص الفاتورة الضريبية #1024 البالغة 12,500 ر.س، نود تذكيرك بالتحصيل لتفادي الغرامات الضريبية وتسهيل عمليات الشحن والامتثال المالي.",
-    suggestedFollowUpEn: "Hi Sarah, regarding tax invoice #1024 (12,500 SAR), kindly reminder for collection to avoid delays.",
+    suggestedFollowUpAr:
+      "أهلاً سارة، بخصوص الفاتورة الضريبية #1024 البالغة 12,500 ر.س، نود تذكيرك بالتحصيل لتفادي الغرامات الضريبية وتسهيل عمليات الشحن والامتثال المالي.",
+    suggestedFollowUpEn:
+      "Hi Sarah, regarding tax invoice #1024 (12,500 SAR), kindly reminder for collection to avoid delays.",
     messages: [
       { id: 1, text: "يرجى مراجعة تفاصيل الشحن والشهادة الصحية", sender: "system", time: "أمس" },
       { id: 2, text: "تم تحويل قيمة الفاتورة الضريبية رقم #1024", sender: "client", time: "أمس" },
@@ -95,8 +99,10 @@ const INITIAL_CHATS = [
     recentActivity: "طلب تفعيل الدفع الإلكتروني وتجربة بوابة آبل باي الجديدة",
     priorityBadgeAr: "🔥 صفقة وشيكة",
     priorityBadgeEn: "🔥 High Closing Prob",
-    suggestedFollowUpAr: "مرحباً بشركائنا في شركة اليمامة، قمنا بإعداد وتفعيل بوابة آبل باي بالكامل لكم على منصة مدارج. يسعدنا جدولة اتصال سريع لتوجيهكم في تشغيلها وحصد عوائد مبيعاتكم فوراً.",
-    suggestedFollowUpEn: "Hi Yamama Contracting, we've set up Apple Pay gateway for you on Mudarij. We would love to schedule a quick call to guide you.",
+    suggestedFollowUpAr:
+      "مرحباً بشركائنا في شركة اليمامة، قمنا بإعداد وتفعيل بوابة آبل باي بالكامل لكم على منصة مدارج. يسعدنا جدولة اتصال سريع لتوجيهكم في تشغيلها وحصد عوائد مبيعاتكم فوراً.",
+    suggestedFollowUpEn:
+      "Hi Yamama Contracting, we've set up Apple Pay gateway for you on Mudarij. We would love to schedule a quick call to guide you.",
     messages: [
       {
         id: 1,
@@ -754,7 +760,9 @@ export default function MobileSimulator() {
                             <Zap className="w-4 h-4 text-amber-500 animate-pulse" />
                             <div className="text-right flex-1">
                               <h3 className="text-[10px] font-black text-indigo-950 dark:text-zinc-100 uppercase tracking-wider">
-                                {mobileLang === "ar" ? "🤖 مقترحات المتابعة الذكية بالذكاء الاصطناعي" : "🤖 AI Smart Follow-up Suggestions"}
+                                {mobileLang === "ar"
+                                  ? "🤖 مقترحات المتابعة الذكية بالذكاء الاصطناعي"
+                                  : "🤖 AI Smart Follow-up Suggestions"}
                               </h3>
                               <p className="text-[7.5px] text-zinc-500 font-medium">
                                 {mobileLang === "ar"
@@ -767,26 +775,37 @@ export default function MobileSimulator() {
                           <div className="space-y-2">
                             {[...chats]
                               .sort((a: any, b: any) => {
-                                const aHasInvoice = a.outstandingInvoice && a.outstandingInvoice !== "لا يوجد / None";
-                                const bHasInvoice = b.outstandingInvoice && b.outstandingInvoice !== "لا يوجد / None";
+                                const aHasInvoice =
+                                  a.outstandingInvoice && a.outstandingInvoice !== "لا يوجد / None";
+                                const bHasInvoice =
+                                  b.outstandingInvoice && b.outstandingInvoice !== "لا يوجد / None";
                                 if (aHasInvoice && !bHasInvoice) return -1;
                                 if (!aHasInvoice && bHasInvoice) return 1;
                                 return (b.closingProbability || 0) - (a.closingProbability || 0);
                               })
                               .map((chat: any) => {
-                                const isInvoicePriority = chat.outstandingInvoice && chat.outstandingInvoice !== "لا يوجد / None";
-                                const badgeText = mobileLang === "ar" ? chat.priorityBadgeAr : chat.priorityBadgeEn;
+                                const isInvoicePriority =
+                                  chat.outstandingInvoice &&
+                                  chat.outstandingInvoice !== "لا يوجد / None";
+                                const badgeText =
+                                  mobileLang === "ar" ? chat.priorityBadgeAr : chat.priorityBadgeEn;
                                 const badgeColor = isInvoicePriority
                                   ? "text-rose-600 bg-rose-50 border-rose-100"
                                   : chat.closingProbability >= 80
-                                  ? "text-amber-600 bg-amber-50 border-amber-100"
-                                  : "text-zinc-600 bg-zinc-50 border-zinc-100";
+                                    ? "text-amber-600 bg-amber-50 border-amber-100"
+                                    : "text-zinc-600 bg-zinc-50 border-zinc-100";
 
-                                const suggestedText = mobileLang === "ar" ? chat.suggestedFollowUpAr : chat.suggestedFollowUpEn;
+                                const suggestedText =
+                                  mobileLang === "ar"
+                                    ? chat.suggestedFollowUpAr
+                                    : chat.suggestedFollowUpEn;
 
                                 // Action to send instantly
                                 const handleSendFollowUp = () => {
-                                  const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                  const nowStr = new Date().toLocaleTimeString([], {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  });
                                   const updatedChats = chats.map((c: any) => {
                                     if (c.id === chat.id) {
                                       return {
@@ -801,8 +820,8 @@ export default function MobileSimulator() {
                                             text: suggestedText,
                                             sender: "system", // sender system is merchant/agent
                                             time: nowStr,
-                                          }
-                                        ]
+                                          },
+                                        ],
                                       };
                                     }
                                     return c;
@@ -833,7 +852,9 @@ export default function MobileSimulator() {
                                           {chat.name}
                                         </span>
                                       </div>
-                                      <span className={`px-1.5 py-0.5 rounded-md text-[7.5px] font-black border ${badgeColor}`}>
+                                      <span
+                                        className={`px-1.5 py-0.5 rounded-md text-[7.5px] font-black border ${badgeColor}`}
+                                      >
                                         {badgeText}
                                       </span>
                                     </div>
@@ -842,15 +863,22 @@ export default function MobileSimulator() {
                                     <div className="text-[7.5px] text-zinc-500 font-semibold space-y-0.5 border-t border-zinc-100 dark:border-zinc-850 pt-1">
                                       {isInvoicePriority ? (
                                         <p className="text-rose-600 font-bold">
-                                          ⚠️ {mobileLang === "ar" ? "المستحقات المعلقة:" : "Dues:"} {chat.outstandingInvoice}
+                                          ⚠️ {mobileLang === "ar" ? "المستحقات المعلقة:" : "Dues:"}{" "}
+                                          {chat.outstandingInvoice}
                                         </p>
                                       ) : (
                                         <p className="text-amber-600 font-bold">
-                                          🔥 {mobileLang === "ar" ? "احتمالية الإغلاق:" : "Closing Prob:"} {chat.closingProbability}%
+                                          🔥{" "}
+                                          {mobileLang === "ar"
+                                            ? "احتمالية الإغلاق:"
+                                            : "Closing Prob:"}{" "}
+                                          {chat.closingProbability}%
                                         </p>
                                       )}
                                       <p>
-                                        💡 {mobileLang === "ar" ? "النشاط الأخير:" : "Last Activity:"} {chat.recentActivity}
+                                        💡{" "}
+                                        {mobileLang === "ar" ? "النشاط الأخير:" : "Last Activity:"}{" "}
+                                        {chat.recentActivity}
                                       </p>
                                     </div>
 
@@ -878,24 +906,35 @@ export default function MobileSimulator() {
                                           const rewritesAr = [
                                             `أهلاً ${chat.name}، نود المتابعة معك بلطف بخصوص تفعيل معاملتكم والتحصيل، يسعدنا خدمتك والرد على استفساراتك.`,
                                             `مرحباً ${chat.name}، فريق مدارج يحييك. نأمل مراجعة تفاصيل حسابك المعلق لإتمام الخطوات لتفادي التوقف والتمتع بكافة المزايا.`,
-                                            `أهلاً ${chat.name}، نود تقديم تذكير ودي بشأن المعاملات المفتوحة وحالة السداد لمساعدتك في إغلاق الفترة بنجاح.`
+                                            `أهلاً ${chat.name}، نود تقديم تذكير ودي بشأن المعاملات المفتوحة وحالة السداد لمساعدتك في إغلاق الفترة بنجاح.`,
                                           ];
                                           const rewritesEn = [
                                             `Hi ${chat.name}, friendly follow-up regarding your transaction. We are here to support you at any stage.`,
                                             `Hello ${chat.name}, kindly follow-up regarding pending items to ensure smooth compliance and active setup.`,
-                                            `Hi ${chat.name}, reminder from Mudarij team to review the open invoice details.`
+                                            `Hi ${chat.name}, reminder from Mudarij team to review the open invoice details.`,
                                           ];
-                                          const randomText = mobileLang === "ar" 
-                                            ? rewritesAr[Math.floor(Math.random() * rewritesAr.length)]
-                                            : rewritesEn[Math.floor(Math.random() * rewritesEn.length)];
-                                          
+                                          const randomText =
+                                            mobileLang === "ar"
+                                              ? rewritesAr[
+                                                  Math.floor(Math.random() * rewritesAr.length)
+                                                ]
+                                              : rewritesEn[
+                                                  Math.floor(Math.random() * rewritesEn.length)
+                                                ];
+
                                           // Update state
                                           const updatedChats = chats.map((c: any) => {
                                             if (c.id === chat.id) {
                                               return {
                                                 ...c,
-                                                suggestedFollowUpAr: mobileLang === "ar" ? randomText : c.suggestedFollowUpAr,
-                                                suggestedFollowUpEn: mobileLang === "en" ? randomText : c.suggestedFollowUpEn,
+                                                suggestedFollowUpAr:
+                                                  mobileLang === "ar"
+                                                    ? randomText
+                                                    : c.suggestedFollowUpAr,
+                                                suggestedFollowUpEn:
+                                                  mobileLang === "en"
+                                                    ? randomText
+                                                    : c.suggestedFollowUpEn,
                                               };
                                             }
                                             return c;
@@ -926,7 +965,9 @@ export default function MobileSimulator() {
                               {dt.whatsappSub}
                             </p>
                             <p className="text-[8px] text-emerald-800 dark:text-emerald-400 mt-0.5">
-                              {mobileLang === "ar" ? "رسائل WhatsApp فورية متصلة تلقائياً" : "Instant WhatsApp connection automated"}
+                              {mobileLang === "ar"
+                                ? "رسائل WhatsApp فورية متصلة تلقائياً"
+                                : "Instant WhatsApp connection automated"}
                             </p>
                           </div>
                         </div>

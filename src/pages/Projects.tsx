@@ -29,7 +29,8 @@ const SEED_PROJECTS: Project[] = [
   {
     id: "proj-zatca-2",
     name: "ربط بوابة ZATCA المرحلة الثانية لجميع الفروع",
-    description: "مشروع وطني استراتيجي لربط واجهات الفوترة الإلكترونية والمبيعات لمنصات Madarij OS مع منصة فاتورة التابعة لهيئة الزكاة والضريبة والجمارك بالمملكة العربية السعودية.",
+    description:
+      "مشروع وطني استراتيجي لربط واجهات الفوترة الإلكترونية والمبيعات لمنصات Madarij OS مع منصة فاتورة التابعة لهيئة الزكاة والضريبة والجمارك بالمملكة العربية السعودية.",
     status: "Active",
     priority: "High",
     startDate: "2026-06-01",
@@ -44,31 +45,86 @@ const SEED_PROJECTS: Project[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     milestones: [
-      { id: "m1", name: "محاكاة الفاتورة وبناء توقيع الـ XML", description: "مطابقة الهياكل المطلوبة لـ ZATCA وبناء الرموز التشفيرية", dueDate: "2026-07-15", status: "completed" },
-      { id: "m2", name: "اجتياز اختبار البيئة التجريبية (Sandbox)", description: "الحصول على الموافقة الفنية للتكامل وتجربة إرسال 100 فاتورة مبدئية", dueDate: "2026-08-30", status: "pending" }
+      {
+        id: "m1",
+        name: "محاكاة الفاتورة وبناء توقيع الـ XML",
+        description: "مطابقة الهياكل المطلوبة لـ ZATCA وبناء الرموز التشفيرية",
+        dueDate: "2026-07-15",
+        status: "completed",
+      },
+      {
+        id: "m2",
+        name: "اجتياز اختبار البيئة التجريبية (Sandbox)",
+        description: "الحصول على الموافقة الفنية للتكامل وتجربة إرسال 100 فاتورة مبدئية",
+        dueDate: "2026-08-30",
+        status: "pending",
+      },
     ],
     epics: [
-      { id: "e1", name: "تكامل التشفير والتوقيع (XML Cryptographic Signing)", description: "تنفيذ الخوارزميات المعتمدة للرموز الأمنية والختم الإلكتروني" }
+      {
+        id: "e1",
+        name: "تكامل التشفير والتوقيع (XML Cryptographic Signing)",
+        description: "تنفيذ الخوارزميات المعتمدة للرموز الأمنية والختم الإلكتروني",
+      },
     ],
     tasks: [
-      { id: "t1", name: "برمجة توليد الرقم الموحد للفاتورة UUID والـ Hash", description: "تحويل هياكل الفاتورة إلى الـ XML القياسي وإجراء الترميز", status: "Done", priority: "High", assignee: "Lead Architect", estimatedHours: 40, actualHours: 45, milestoneId: "m1", epicId: "e1" },
-      { id: "t2", name: "إجراء اختبار التحقق من الامتثال لضوابط الهيئة", description: "فحص الفواتير المبسطة وفواتير ضريبة القيمة المضافة التقليدية", status: "In Progress", priority: "Medium", assignee: "Senior Dev", estimatedHours: 24, actualHours: 12, milestoneId: "m2", epicId: "e1" }
+      {
+        id: "t1",
+        name: "برمجة توليد الرقم الموحد للفاتورة UUID والـ Hash",
+        description: "تحويل هياكل الفاتورة إلى الـ XML القياسي وإجراء الترميز",
+        status: "Done",
+        priority: "High",
+        assignee: "Lead Architect",
+        estimatedHours: 40,
+        actualHours: 45,
+        milestoneId: "m1",
+        epicId: "e1",
+      },
+      {
+        id: "t2",
+        name: "إجراء اختبار التحقق من الامتثال لضوابط الهيئة",
+        description: "فحص الفواتير المبسطة وفواتير ضريبة القيمة المضافة التقليدية",
+        status: "In Progress",
+        priority: "Medium",
+        assignee: "Senior Dev",
+        estimatedHours: 24,
+        actualHours: 12,
+        milestoneId: "m2",
+        epicId: "e1",
+      },
     ],
     resources: [
       { name: "Lead Architect", role: "Architect", allocation: 80, costRate: 250 },
-      { name: "Senior Dev", role: "Developer", allocation: 100, costRate: 180 }
+      { name: "Senior Dev", role: "Developer", allocation: 100, costRate: 180 },
     ],
     timesheets: [
-      { id: "ts1", taskId: "t1", taskName: "برمجة توليد الرقم الموحد للفاتورة UUID والـ Hash", description: "بناء التوقيعات الرقمية ومطابقة كود SHA-256", date: "2026-06-15", hours: 45, costRate: 250, assignee: "Lead Architect", status: "Approved" }
+      {
+        id: "ts1",
+        taskId: "t1",
+        taskName: "برمجة توليد الرقم الموحد للفاتورة UUID والـ Hash",
+        description: "بناء التوقيعات الرقمية ومطابقة كود SHA-256",
+        date: "2026-06-15",
+        hours: 45,
+        costRate: 250,
+        assignee: "Lead Architect",
+        status: "Approved",
+      },
     ],
     expenses: [
-      { id: "exp1", description: "شهادات التشفير الرقمي والختم الأمني الخاص بالهيئة", amount: 1500, date: "2026-06-10", category: "Software License" }
-    ]
+      {
+        id: "exp1",
+        description: "شهادات التشفير الرقمي والختم الأمني الخاص بالهيئة",
+        amount: 1500,
+        date: "2026-06-10",
+        category: "Software License",
+      },
+    ],
   },
   {
     id: "proj-supply-chain",
     name: "ميكنة مخازن سلاسل الإمداد بمستودع جدة",
-    description: "بناء وتكامل نظام إدارة المستودعات والباركود RFID مع الموديول المالي لمحاسبة المخازن والوقوف على تكلفة المبيعات الفعلية لحظياً.",
+    description:
+      "بناء وتكامل نظام إدارة المستودعات والباركود RFID مع الموديول المالي لمحاسبة المخازن والوقوف على تكلفة المبيعات الفعلية لحظياً.",
     status: "Planning",
     priority: "Medium",
     startDate: "2026-08-01",
@@ -83,21 +139,42 @@ const SEED_PROJECTS: Project[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     milestones: [
-      { id: "m1", name: "تهيئة الخوادم وتوزيع أجهزة المسح الذكية", description: "إعداد نقاط التتبع وبدء ميكنة باركود المخزون", dueDate: "2026-09-01", status: "pending" }
+      {
+        id: "m1",
+        name: "تهيئة الخوادم وتوزيع أجهزة المسح الذكية",
+        description: "إعداد نقاط التتبع وبدء ميكنة باركود المخزون",
+        dueDate: "2026-09-01",
+        status: "pending",
+      },
     ],
     epics: [
-      { id: "e1", name: "ربط الباركود مع موديول المشتريات (ERP Procure-to-Pay)", description: "تحويل الحركات التشغيلية بالمستودع إلى قيود محاسبية تلقائية" }
+      {
+        id: "e1",
+        name: "ربط الباركود مع موديول المشتريات (ERP Procure-to-Pay)",
+        description: "تحويل الحركات التشغيلية بالمستودع إلى قيود محاسبية تلقائية",
+      },
     ],
     tasks: [
-      { id: "t1", name: "مزامنة جرد المخزون الفعلي مع موديول المبيعات", description: "تحديث الأرصدة ومنع حدوث بيع مخزون غير متوفر", status: "Todo", priority: "High", assignee: "Lead Architect", estimatedHours: 32, actualHours: 0, milestoneId: "m1", epicId: "e1" }
+      {
+        id: "t1",
+        name: "مزامنة جرد المخزون الفعلي مع موديول المبيعات",
+        description: "تحديث الأرصدة ومنع حدوث بيع مخزون غير متوفر",
+        status: "Todo",
+        priority: "High",
+        assignee: "Lead Architect",
+        estimatedHours: 32,
+        actualHours: 0,
+        milestoneId: "m1",
+        epicId: "e1",
+      },
     ],
     resources: [
       { name: "Lead Architect", role: "Architect", allocation: 40, costRate: 250 },
-      { name: "Senior Dev", role: "Developer", allocation: 80, costRate: 180 }
+      { name: "Senior Dev", role: "Developer", allocation: 80, costRate: 180 },
     ],
     timesheets: [],
-    expenses: []
-  }
+    expenses: [],
+  },
 ];
 
 export default function Projects() {
@@ -106,7 +183,7 @@ export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<any[]>([]); // Won leads from CRM
   const [loading, setLoading] = useState(true);
-  
+
   // Navigation & Drawer States
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
@@ -179,9 +256,11 @@ export default function Projects() {
   // 2. Handle Add Manual Project
   const handleCreateProject = async () => {
     if (!formData.name) return;
-    
+
     const matchedClient = clients.find((c) => c.id === formData.clientId);
-    const clientName = matchedClient ? (matchedClient.company || matchedClient.name) : "Internal Enterprise Project";
+    const clientName = matchedClient
+      ? matchedClient.company || matchedClient.name
+      : "Internal Enterprise Project";
 
     const projectObj: Omit<Project, "id"> = {
       name: formData.name,
@@ -197,17 +276,36 @@ export default function Projects() {
       clientName: clientName,
       health: "On Track",
       milestones: [
-        { id: "m-" + Date.now(), name: "M1: Project Initiation & Requirements sign-off", description: "Establish baseline scope", dueDate: formData.endDate, status: "pending" }
+        {
+          id: "m-" + Date.now(),
+          name: "M1: Project Initiation & Requirements sign-off",
+          description: "Establish baseline scope",
+          dueDate: formData.endDate,
+          status: "pending",
+        },
       ],
       epics: [
-        { id: "e-" + Date.now(), name: "Phase 1 - Implementation Scope", description: "Primary implementation deliverables" }
+        {
+          id: "e-" + Date.now(),
+          name: "Phase 1 - Implementation Scope",
+          description: "Primary implementation deliverables",
+        },
       ],
       tasks: [
-        { id: "t-" + Date.now(), name: "Setup project parameters & blueprints", description: "Initial setup", status: "Todo", priority: "Medium", assignee: "Lead Architect", estimatedHours: 12, actualHours: 0 }
+        {
+          id: "t-" + Date.now(),
+          name: "Setup project parameters & blueprints",
+          description: "Initial setup",
+          status: "Todo",
+          priority: "Medium",
+          assignee: "Lead Architect",
+          estimatedHours: 12,
+          actualHours: 0,
+        },
       ],
       resources: [
         { name: "Lead Architect", role: "Architect", allocation: 100, costRate: 250 },
-        { name: "Senior Dev", role: "Developer", allocation: 100, costRate: 180 }
+        { name: "Senior Dev", role: "Developer", allocation: 100, costRate: 180 },
       ],
       timesheets: [],
       expenses: [],
@@ -219,7 +317,11 @@ export default function Projects() {
     try {
       if (user) {
         await addDoc(collection(db, "projects"), projectObj);
-        toast.success(isRtl ? "تم إطلاق المشروع الجديد بنجاح!" : "Enterprise project plan launched successfully!");
+        toast.success(
+          isRtl
+            ? "تم إطلاق المشروع الجديد بنجاح!"
+            : "Enterprise project plan launched successfully!"
+        );
       } else {
         // Local fallback update
         setProjects([...projects, { id: "proj-" + Date.now(), ...projectObj }]);
@@ -284,7 +386,9 @@ export default function Projects() {
       status: "Planning",
       priority: "High",
       startDate: new Date().toISOString().split("T")[0],
-      endDate: aiPlan.milestones?.[aiPlan.milestones.length - 1]?.dueDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      endDate:
+        aiPlan.milestones?.[aiPlan.milestones.length - 1]?.dueDate ||
+        new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       budget: aiPlan.budget || 150000,
       currency: "SAR",
       billingMethod: "Fixed Price",
@@ -294,7 +398,7 @@ export default function Projects() {
       tasks: aiPlan.tasks || [],
       resources: aiPlan.resources || [
         { name: "Lead Architect", role: "Architect", allocation: 100, costRate: 250 },
-        { name: "Senior Fullstack Engineer", role: "Developer", allocation: 100, costRate: 180 }
+        { name: "Senior Fullstack Engineer", role: "Developer", allocation: 100, costRate: 180 },
       ],
       timesheets: [],
       expenses: [],
@@ -430,7 +534,11 @@ export default function Projects() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder={isRtl ? "مثال: ميكنة واجهة محاسبة مستودع جدة" : "e.g., Warehouse Accounting Sync Jeddah"}
+                  placeholder={
+                    isRtl
+                      ? "مثال: ميكنة واجهة محاسبة مستودع جدة"
+                      : "e.g., Warehouse Accounting Sync Jeddah"
+                  }
                   className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white"
                 />
               </div>
@@ -444,7 +552,11 @@ export default function Projects() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  placeholder={isRtl ? "نطاق المشروع، تفاصيل التسليمات المتوقعة والأهداف..." : "Describe key milestones and expectations..."}
+                  placeholder={
+                    isRtl
+                      ? "نطاق المشروع، تفاصيل التسليمات المتوقعة والأهداف..."
+                      : "Describe key milestones and expectations..."
+                  }
                   className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white resize-none"
                 />
               </div>
@@ -459,10 +571,13 @@ export default function Projects() {
                   onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
                   className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white"
                 >
-                  <option value="">-- {isRtl ? "مشروع داخلي بالمنشأة" : "Internal Corporate Project"} --</option>
+                  <option value="">
+                    -- {isRtl ? "مشروع داخلي بالمنشأة" : "Internal Corporate Project"} --
+                  </option>
                   {clients.map((client) => (
                     <option key={client.id} value={client.id}>
-                      {client.company ? `${client.company} (${client.name})` : client.name} - {client.status === "won" ? "Won Contract" : "Active Opportunity"}
+                      {client.company ? `${client.company} (${client.name})` : client.name} -{" "}
+                      {client.status === "won" ? "Won Contract" : "Active Opportunity"}
                     </option>
                   ))}
                 </select>
@@ -504,11 +619,15 @@ export default function Projects() {
                   </label>
                   <select
                     value={formData.billingMethod}
-                    onChange={(e) => setFormData({ ...formData, billingMethod: e.target.value as any })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, billingMethod: e.target.value as any })
+                    }
                     className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white"
                   >
                     <option value="Fixed Price">{isRtl ? "سعر ثابت" : "Fixed Price"}</option>
-                    <option value="Time & Materials">{isRtl ? "حسب الوقت والمواد" : "Time & Materials"}</option>
+                    <option value="Time & Materials">
+                      {isRtl ? "حسب الوقت والمواد" : "Time & Materials"}
+                    </option>
                   </select>
                 </div>
 

@@ -48,7 +48,12 @@ router.post("/", authenticate, async (req: any, res) => {
       updatedAt: new Date().toISOString(),
     };
     const docRef = await db.collection("projects").add(projectData);
-    await logAudit("PROJECTS", { action: "Create Project", projectId: docRef.id }, projectData, req);
+    await logAudit(
+      "PROJECTS",
+      { action: "Create Project", projectId: docRef.id },
+      projectData,
+      req
+    );
     res.status(201).json({ id: docRef.id, ...projectData });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -167,14 +172,15 @@ If the language requested is "ar" or Arabic, provide all names and descriptions 
       },
     });
 
-    const responseText = response.text || response.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-    
+    const responseText =
+      response.text || response.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+
     // Clean JSON just in case Gemini wrapped it
     let cleanJson = responseText.trim();
     if (cleanJson.startsWith("```")) {
       cleanJson = cleanJson.replace(/^```json\s*/, "").replace(/```$/, "");
     }
-    
+
     const projectStructure = JSON.parse(cleanJson);
     res.json(projectStructure);
   } catch (err: any) {

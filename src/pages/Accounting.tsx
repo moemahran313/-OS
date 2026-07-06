@@ -1883,7 +1883,7 @@ export default function Accounting() {
               exit={{ opacity: 0 }}
               key="tab-fixed-assets"
             >
-              <FixedAssetsTab 
+              <FixedAssetsTab
                 onPostJournal={(newJr) => {
                   const created: Journal = {
                     id: "jr-auto-" + Date.now(),
@@ -1902,14 +1902,14 @@ export default function Accounting() {
                       description: newJr.description,
                       costCenter: "HQ",
                       branch: activeBranchId !== "all" ? activeBranchId : "HQ-Branch",
-                      project: "General"
+                      project: "General",
                     })),
                     totalDebits: newJr.lines.reduce((sum: number, l: any) => sum + l.debit, 0),
-                    totalCredits: newJr.lines.reduce((sum: number, l: any) => sum + l.credit, 0)
+                    totalCredits: newJr.lines.reduce((sum: number, l: any) => sum + l.credit, 0),
                   };
                   setJournals([created, ...journals]);
                   toast.success("تم ترحيل قيد الإهلاك بنجاح للأستاذ العام");
-                }} 
+                }}
               />
             </motion.div>
           )}
@@ -1946,7 +1946,7 @@ export default function Accounting() {
               exit={{ opacity: 0 }}
               key="tab-copilot"
             >
-              <CopilotTab 
+              <CopilotTab
                 accounts={accounts}
                 onPostJournal={(newJr) => {
                   const created: Journal = {
@@ -1966,10 +1966,10 @@ export default function Accounting() {
                       description: newJr.description,
                       costCenter: "HQ",
                       branch: activeBranchId !== "all" ? activeBranchId : "HQ-Branch",
-                      project: "General"
+                      project: "General",
                     })),
                     totalDebits: newJr.lines.reduce((sum: number, l: any) => sum + l.debit, 0),
-                    totalCredits: newJr.lines.reduce((sum: number, l: any) => sum + l.credit, 0)
+                    totalCredits: newJr.lines.reduce((sum: number, l: any) => sum + l.credit, 0),
                   };
                   setJournals([created, ...journals]);
                   toast.success("تم تسجيل ترحيل القيد الذكي الموصى به");

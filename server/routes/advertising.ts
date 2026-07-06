@@ -51,7 +51,7 @@ router.get("/campaigns", authenticate, async (req: any, res) => {
           revenueSAR: 21600,
           automationRules: ["rule_roas_boost"],
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
           name: "Madarij OS ERP Cloud Leads Surge",
@@ -70,7 +70,7 @@ router.get("/campaigns", authenticate, async (req: any, res) => {
           revenueSAR: 114700,
           automationRules: ["rule_cpa_excess"],
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
           name: "HR Automation - TikTok App Installs Hub",
@@ -89,7 +89,7 @@ router.get("/campaigns", authenticate, async (req: any, res) => {
           revenueSAR: 38440,
           automationRules: [],
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
           name: "Riyadh Fintech Summit B2B Sales Prospecting",
@@ -108,7 +108,7 @@ router.get("/campaigns", authenticate, async (req: any, res) => {
           revenueSAR: 66750,
           automationRules: ["rule_roas_boost"],
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
           name: "Snapchat Ramadan Special discount campaign",
@@ -127,8 +127,8 @@ router.get("/campaigns", authenticate, async (req: any, res) => {
           revenueSAR: 33600,
           automationRules: [],
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
-        }
+          createdAt: new Date().toISOString(),
+        },
       ];
 
       const savedList = [];
@@ -158,10 +158,15 @@ router.post("/campaigns", authenticate, async (req: any, res) => {
       roas: req.body.roas || 0,
       revenueSAR: req.body.revenueSAR || 0,
       automationRules: req.body.automationRules || [],
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     const docRef = await db.collection("adv_campaigns").add(campaignData);
-    logAudit("AdvertisingPlatform", { action: "Create Campaign", id: docRef.id }, campaignData, req);
+    logAudit(
+      "AdvertisingPlatform",
+      { action: "Create Campaign", id: docRef.id },
+      campaignData,
+      req
+    );
     res.status(201).json({ id: docRef.id, ...campaignData });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -174,7 +179,8 @@ router.put("/campaigns/:id", authenticate, async (req: any, res) => {
     const ref = db.collection("adv_campaigns").doc(id);
     const snap = await ref.get();
     if (!snap.exists) return res.status(404).json({ error: "Campaign not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     await ref.update(req.body);
     logAudit("AdvertisingPlatform", { action: "Update Campaign", id }, req.body, req);
@@ -190,7 +196,8 @@ router.delete("/campaigns/:id", authenticate, async (req: any, res) => {
     const ref = db.collection("adv_campaigns").doc(id);
     const snap = await ref.get();
     if (!snap.exists) return res.status(404).json({ error: "Campaign not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     await ref.delete();
     logAudit("AdvertisingPlatform", { action: "Delete Campaign", id }, { deleted: true }, req);
@@ -222,7 +229,7 @@ router.get("/adsets", authenticate, async (req: any, res) => {
           status: "Active",
           bidStrategy: "Lowest Cost",
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
           name: "Saudi Startup Founders Lookalike 2% Audience",
@@ -235,7 +242,7 @@ router.get("/adsets", authenticate, async (req: any, res) => {
           status: "Active",
           bidStrategy: "Cost Cap (CPA < 40 SAR)",
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
           name: "Retargeting Website Visitors & Cart Abandoners",
@@ -248,8 +255,8 @@ router.get("/adsets", authenticate, async (req: any, res) => {
           status: "Active",
           bidStrategy: "Lowest Cost",
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
-        }
+          createdAt: new Date().toISOString(),
+        },
       ];
 
       const savedList = [];
@@ -274,7 +281,7 @@ router.post("/adsets", authenticate, async (req: any, res) => {
       clicks: req.body.clicks || 0,
       impressions: req.body.impressions || 0,
       conversions: req.body.conversions || 0,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     const docRef = await db.collection("adv_adsets").add(adsetData);
     res.status(201).json({ id: docRef.id, ...adsetData });
@@ -289,7 +296,8 @@ router.put("/adsets/:id", authenticate, async (req: any, res) => {
     const ref = db.collection("adv_adsets").doc(id);
     const snap = await ref.get();
     if (!snap.exists) return res.status(404).json({ error: "Ad Set not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     await ref.update(req.body);
     res.json({ success: true });
@@ -313,41 +321,44 @@ router.get("/creatives", authenticate, async (req: any, res) => {
           name: "Modern Executive Office Interface Showcase",
           type: "Image",
           headline: "أتمتة الموارد البشرية والرواتب بضغطة زر 💼",
-          bodyText: "نظام مداريج المتكامل لإدارة الموظفين والامتثال لمكتب العمل وحساب الرواتب والمكافآت والبدلات تلقائياً.",
+          bodyText:
+            "نظام مداريج المتكامل لإدارة الموظفين والامتثال لمكتب العمل وحساب الرواتب والمكافآت والبدلات تلقائياً.",
           mediaUrl: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=800",
           status: "Active",
           ctr: 4.85,
           clicks: 1420,
           conversions: 85,
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
           name: "Ramadan Digital Transformation Video Script",
           type: "Video",
           headline: "وفر وقت منشأتك لتنمو أكثر هذا الشهر الكريم 🌙",
-          bodyText: "تخفيضات تصل لـ 40٪ على باقات الشركات المتقدمة في Madarij OS. أتمتة القيود، الفواتير، ومتابعة المشاريع بنظام واحد.",
+          bodyText:
+            "تخفيضات تصل لـ 40٪ على باقات الشركات المتقدمة في Madarij OS. أتمتة القيود، الفواتير، ومتابعة المشاريع بنظام واحد.",
           mediaUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800",
           status: "Active",
           ctr: 6.22,
           clicks: 3410,
           conversions: 245,
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
           name: "Unified Business Suite Carousel Ads",
           type: "Carousel",
           headline: "أذكى نظام سحابي لإدارة الشركات بالسعودية 🚀",
-          bodyText: "تحقق من المحاسبة الذكية، الفواتير المتوافقة مع الزكاة، إدارة سلاسل الإمداد، والدعم الفني الفوري بنقرة واحدة.",
+          bodyText:
+            "تحقق من المحاسبة الذكية، الفواتير المتوافقة مع الزكاة، إدارة سلاسل الإمداد، والدعم الفني الفوري بنقرة واحدة.",
           mediaUrl: "https://images.unsplash.com/photo-1551434678-e076c223a692?w=800",
           status: "Active",
           ctr: 3.12,
           clicks: 980,
           conversions: 42,
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
-        }
+          createdAt: new Date().toISOString(),
+        },
       ];
 
       const savedList = [];
@@ -371,7 +382,7 @@ router.post("/creatives", authenticate, async (req: any, res) => {
       ctr: req.body.ctr || (Math.random() * 5 + 1).toFixed(2),
       clicks: req.body.clicks || 0,
       conversions: req.body.conversions || 0,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     const docRef = await db.collection("adv_creatives").add(creativeData);
     res.status(201).json({ id: docRef.id, ...creativeData });
@@ -400,7 +411,7 @@ router.get("/pixels", authenticate, async (req: any, res) => {
           eventsReceived: 28450,
           lastEventAt: new Date().toISOString(),
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
           name: "Google Ads Tag Integration",
@@ -411,7 +422,7 @@ router.get("/pixels", authenticate, async (req: any, res) => {
           eventsReceived: 45200,
           lastEventAt: new Date().toISOString(),
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
           name: "TikTok Conversion API Engine",
@@ -422,8 +433,8 @@ router.get("/pixels", authenticate, async (req: any, res) => {
           eventsReceived: 18900,
           lastEventAt: new Date().toISOString(),
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
-        }
+          createdAt: new Date().toISOString(),
+        },
       ];
 
       const savedList = [];
@@ -446,7 +457,7 @@ router.post("/pixels", authenticate, async (req: any, res) => {
       userId: req.user.uid,
       eventsReceived: 0,
       lastEventAt: new Date().toISOString(),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     const docRef = await db.collection("adv_pixels").add(pixelData);
     res.status(201).json({ id: docRef.id, ...pixelData });
@@ -474,24 +485,35 @@ router.get("/automations", authenticate, async (req: any, res) => {
           actions: ["Reduce Budget by 20%", "Pause Underperforming Ads", "Notify Marketing Team"],
           status: "Enabled",
           logs: [
-            { timestamp: new Date(Date.now() - 3 * 3600000).toISOString(), message: "Evaluated rule. CPA is 29.83 SAR (within target 45 SAR). No action taken." }
+            {
+              timestamp: new Date(Date.now() - 3 * 3600000).toISOString(),
+              message: "Evaluated rule. CPA is 29.83 SAR (within target 45 SAR). No action taken.",
+            },
           ],
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
           id: "rule_roas_boost",
           name: "ROAS Exceeds 500% Scale Rule",
           trigger: "ROAS > 500%",
           conditions: { metric: "ROAS", operator: "Greater than", threshold: 5.0 },
-          actions: ["Increase Campaign Budget by 30%", "Duplicate Winning Ad Creatives", "Notify Operations Slack"],
+          actions: [
+            "Increase Campaign Budget by 30%",
+            "Duplicate Winning Ad Creatives",
+            "Notify Operations Slack",
+          ],
           status: "Enabled",
           logs: [
-            { timestamp: new Date(Date.now() - 4 * 3600000).toISOString(), message: "ROAS evaluated at 7.5 on LinkedIn Summit campaign. Automatically boosted budget by 30% (+300 SAR daily)." }
+            {
+              timestamp: new Date(Date.now() - 4 * 3600000).toISOString(),
+              message:
+                "ROAS evaluated at 7.5 on LinkedIn Summit campaign. Automatically boosted budget by 30% (+300 SAR daily).",
+            },
           ],
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
-        }
+          createdAt: new Date().toISOString(),
+        },
       ];
 
       const savedList = [];
@@ -514,8 +536,13 @@ router.post("/automations", authenticate, async (req: any, res) => {
     const ruleData = {
       ...req.body,
       userId: req.user.uid,
-      logs: [{ timestamp: new Date().toISOString(), message: "Automation rule successfully initialized." }],
-      createdAt: new Date().toISOString()
+      logs: [
+        {
+          timestamp: new Date().toISOString(),
+          message: "Automation rule successfully initialized.",
+        },
+      ],
+      createdAt: new Date().toISOString(),
     };
     const docRef = await db.collection("adv_automations").add(ruleData);
     res.status(201).json({ id: docRef.id, ...ruleData });
@@ -556,7 +583,8 @@ router.post("/automations/:id/run", authenticate, async (req: any, res) => {
         await batch.commit();
         logMsg = `Successfully triggered! Detected ${scaleCount} campaign(s) (${affectedCampaigns.join(", ")}) with ROAS > 500%. Daily budgets increased by 30% automatically. Slack notification dispatched.`;
       } else {
-        logMsg = "Executed check. No campaign currently has ROAS exceeding 500%. No updates performed.";
+        logMsg =
+          "Executed check. No campaign currently has ROAS exceeding 500%. No updates performed.";
       }
     } else if (id === "rule_cpa_excess") {
       // Find high CPA campaigns
@@ -582,7 +610,7 @@ router.post("/automations/:id/run", authenticate, async (req: any, res) => {
 
     const updatedLogs = [
       { timestamp: new Date().toISOString(), message: logMsg },
-      ...(rule.logs || [])
+      ...(rule.logs || []),
     ].slice(0, 10); // Keep last 10 logs
 
     await ruleRef.update({ logs: updatedLogs });
@@ -602,8 +630,8 @@ router.get("/crm-sync", authenticate, async (req: any, res) => {
     const leadsSnap = await db.collection("leads").where("userId", "==", req.user.uid).get();
     const invoicesSnap = await db.collection("invoices").where("userId", "==", req.user.uid).get();
 
-    const leads = leadsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    const invoices = invoicesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const leads = leadsSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const invoices = invoicesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
     // Form high-fidelity matching
     // Let's create an elegant map matching marketing clicks down to leads and paid invoices
@@ -624,8 +652,8 @@ router.get("/crm-sync", authenticate, async (req: any, res) => {
           firstClick: 100,
           lastClick: 100,
           linear: 33.3,
-          dataDriven: 85.4
-        }
+          dataDriven: 85.4,
+        },
       },
       {
         id: "attr_2",
@@ -643,8 +671,8 @@ router.get("/crm-sync", authenticate, async (req: any, res) => {
           firstClick: 40,
           lastClick: 80,
           linear: 50,
-          dataDriven: 65.0
-        }
+          dataDriven: 65.0,
+        },
       },
       {
         id: "attr_3",
@@ -662,18 +690,21 @@ router.get("/crm-sync", authenticate, async (req: any, res) => {
           firstClick: 100,
           lastClick: 0,
           linear: 25,
-          dataDriven: 45.1
-        }
-      }
+          dataDriven: 45.1,
+        },
+      },
     ];
 
     res.json({
       attributionChain,
       summary: {
-        totalAttributedRevenueSAR: attributionChain.reduce((sum, item) => sum + (item.invoiceStatus === "paid" ? item.invoiceAmountSAR : 0), 0),
+        totalAttributedRevenueSAR: attributionChain.reduce(
+          (sum, item) => sum + (item.invoiceStatus === "paid" ? item.invoiceAmountSAR : 0),
+          0
+        ),
         pipelineValueSAR: attributionChain.reduce((sum, item) => sum + item.valueSAR, 0),
-        matchedLeadsCount: attributionChain.length
-      }
+        matchedLeadsCount: attributionChain.length,
+      },
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -797,9 +828,7 @@ router.post("/ai/generate", authenticate, async (req: any, res) => {
 
     const response = await generateContentWithRetry(ai, {
       model: "gemini-3.5-flash",
-      contents: [
-        { role: "user", parts: [{ text: `${systemContext}\n\n${prompt}` }] }
-      ],
+      contents: [{ role: "user", parts: [{ text: `${systemContext}\n\n${prompt}` }] }],
       config: {
         responseMimeType: "application/json",
       },

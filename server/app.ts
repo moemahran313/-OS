@@ -35,6 +35,7 @@ import leadGenRoutes from "./routes/lead-gen.js";
 import emailMarketingRoutes from "./routes/email-marketing.js";
 import socialMediaRoutes from "./routes/social-media.js";
 import advertisingRoutes from "./routes/advertising.js";
+import demoRoutes from "./routes/demo.js";
 
 export async function createApp() {
   const app = express();
@@ -82,6 +83,7 @@ export async function createApp() {
   app.use("/api/email-marketing", emailMarketingRoutes);
   app.use("/api/social-media", socialMediaRoutes);
   app.use("/api/advertising", advertisingRoutes);
+  app.use("/api/demo", demoRoutes);
 
   // HR routes like /api/nitaqat/calculate and /api/workpermit/calculate
   app.use("/api", hrRoutes);

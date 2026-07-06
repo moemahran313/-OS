@@ -35,14 +35,86 @@ router.get("/accounts", authenticate, async (req: any, res) => {
     // Pre-populate realistic social accounts if none exist
     if (accounts.length === 0) {
       const defaults = [
-        { platform: "linkedin", handle: "Madarij OS", name: "Madarij OS Corporate", avatar: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150", followers: 12500, status: "Connected", userId: req.user.uid, createdAt: new Date().toISOString() },
-        { platform: "instagram", handle: "madarij_os", name: "Madarij OS Lifestyle", avatar: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=150", followers: 28400, status: "Connected", userId: req.user.uid, createdAt: new Date().toISOString() },
-        { platform: "twitter", handle: "Madarij_OS", name: "Madarij OS Tech", avatar: "https://images.unsplash.com/photo-1611605698335-8b15d27e03f3?w=150", followers: 8500, status: "Connected", userId: req.user.uid, createdAt: new Date().toISOString() },
-        { platform: "facebook", handle: "MadarijOS", name: "Madarij OS Business", avatar: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=150", followers: 4500, status: "Connected", userId: req.user.uid, createdAt: new Date().toISOString() },
-        { platform: "tiktok", handle: "madarijos", name: "Madarij Shorts", avatar: "https://images.unsplash.com/photo-1596495578065-6e076baf188f?w=150", followers: 42100, status: "Connected", userId: req.user.uid, createdAt: new Date().toISOString() },
-        { platform: "youtube", handle: "MadarijOS_Tube", name: "Madarij Academy", avatar: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=150", followers: 15400, status: "Connected", userId: req.user.uid, createdAt: new Date().toISOString() },
-        { platform: "threads", handle: "@madarij_os", name: "Madarij Threads", avatar: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=150", followers: 3100, status: "Connected", userId: req.user.uid, createdAt: new Date().toISOString() },
-        { platform: "pinterest", handle: "madarij_pins", name: "Madarij Visuals", avatar: "https://images.unsplash.com/photo-1611606063065-ee7946f0787a?w=150", followers: 1200, status: "Connected", userId: req.user.uid, createdAt: new Date().toISOString() }
+        {
+          platform: "linkedin",
+          handle: "Madarij OS",
+          name: "Madarij OS Corporate",
+          avatar: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150",
+          followers: 12500,
+          status: "Connected",
+          userId: req.user.uid,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          platform: "instagram",
+          handle: "madarij_os",
+          name: "Madarij OS Lifestyle",
+          avatar: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=150",
+          followers: 28400,
+          status: "Connected",
+          userId: req.user.uid,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          platform: "twitter",
+          handle: "Madarij_OS",
+          name: "Madarij OS Tech",
+          avatar: "https://images.unsplash.com/photo-1611605698335-8b15d27e03f3?w=150",
+          followers: 8500,
+          status: "Connected",
+          userId: req.user.uid,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          platform: "facebook",
+          handle: "MadarijOS",
+          name: "Madarij OS Business",
+          avatar: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=150",
+          followers: 4500,
+          status: "Connected",
+          userId: req.user.uid,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          platform: "tiktok",
+          handle: "madarijos",
+          name: "Madarij Shorts",
+          avatar: "https://images.unsplash.com/photo-1596495578065-6e076baf188f?w=150",
+          followers: 42100,
+          status: "Connected",
+          userId: req.user.uid,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          platform: "youtube",
+          handle: "MadarijOS_Tube",
+          name: "Madarij Academy",
+          avatar: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=150",
+          followers: 15400,
+          status: "Connected",
+          userId: req.user.uid,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          platform: "threads",
+          handle: "@madarij_os",
+          name: "Madarij Threads",
+          avatar: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=150",
+          followers: 3100,
+          status: "Connected",
+          userId: req.user.uid,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          platform: "pinterest",
+          handle: "madarij_pins",
+          name: "Madarij Visuals",
+          avatar: "https://images.unsplash.com/photo-1611606063065-ee7946f0787a?w=150",
+          followers: 1200,
+          status: "Connected",
+          userId: req.user.uid,
+          createdAt: new Date().toISOString(),
+        },
       ];
 
       const savedList = [];
@@ -66,7 +138,7 @@ router.post("/accounts", authenticate, async (req: any, res) => {
       userId: req.user.uid,
       status: "Connected",
       followers: req.body.followers || Math.round(Math.random() * 5000 + 100),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     const docRef = await db.collection("social_accounts").add(accountData);
     res.status(201).json({ id: docRef.id, ...accountData });
@@ -82,7 +154,8 @@ router.delete("/accounts/:id", authenticate, async (req: any, res) => {
     const accountRef = db.collection("social_accounts").doc(id);
     const snap = await accountRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Account not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     await accountRef.delete();
     res.json({ success: true });
@@ -90,7 +163,6 @@ router.delete("/accounts/:id", authenticate, async (req: any, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ==========================================
 // SCHEDULER & CALENDAR POSTS
@@ -114,7 +186,8 @@ router.get("/posts", authenticate, async (req: any, res) => {
 
       const defaults = [
         {
-          content: "🚀 يسعدنا الإعلان عن إطلاق ميزة الفوترة الإلكترونية الذكية المتوافقة تماماً مع متطلبات هيئة الزكاة والضريبة والجمارك (المرحلة الثانية)! تحوّل رقمياً اليوم بلمسة زر واحده. #الفوترة_الإلكترونية #زد_سلة #مشاريع_سعودية",
+          content:
+            "🚀 يسعدنا الإعلان عن إطلاق ميزة الفوترة الإلكترونية الذكية المتوافقة تماماً مع متطلبات هيئة الزكاة والضريبة والجمارك (المرحلة الثانية)! تحوّل رقمياً اليوم بلمسة زر واحده. #الفوترة_الإلكترونية #زد_سلة #مشاريع_سعودية",
           platforms: ["linkedin", "twitter", "facebook"],
           status: "Scheduled",
           scheduledAt: tomorrow.toISOString(),
@@ -122,10 +195,11 @@ router.get("/posts", authenticate, async (req: any, res) => {
           userId: req.user.uid,
           authorName: "أحمد العتيبي",
           approvalStatus: "Approved",
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
-          content: "كيف تدير رواتب موظفيك بكفاءة دون أخطاء محاسبية؟ إليك 5 نصائح ذهبية لتبسيط حسابات النطاقات والبدلات عبر نظام الرواتب المؤتمت في Madarij OS. 💼💡 #إدارة_الموارد_البشرية #محاسبة",
+          content:
+            "كيف تدير رواتب موظفيك بكفاءة دون أخطاء محاسبية؟ إليك 5 نصائح ذهبية لتبسيط حسابات النطاقات والبدلات عبر نظام الرواتب المؤتمت في Madarij OS. 💼💡 #إدارة_الموارد_البشرية #محاسبة",
           platforms: ["instagram", "linkedin"],
           status: "Pending Approval",
           scheduledAt: dayAfter.toISOString(),
@@ -133,10 +207,11 @@ router.get("/posts", authenticate, async (req: any, res) => {
           userId: req.user.uid,
           authorName: "سارة القحطاني",
           approvalStatus: "Pending",
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
-          content: "We are thrilled to be featured on TechCloud as one of the most promising enterprise operating systems in the MENA region! A big thank you to our incredible team and partners. 🌟📈 #SaaS #MENAtech #MadarijOS",
+          content:
+            "We are thrilled to be featured on TechCloud as one of the most promising enterprise operating systems in the MENA region! A big thank you to our incredible team and partners. 🌟📈 #SaaS #MENAtech #MadarijOS",
           platforms: ["twitter", "linkedin"],
           status: "Published",
           scheduledAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
@@ -146,8 +221,8 @@ router.get("/posts", authenticate, async (req: any, res) => {
           approvalStatus: "Approved",
           publishedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
           metrics: { reach: 8450, engagement: 912, clicks: 430, shares: 85 },
-          createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
-        }
+          createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        },
       ];
 
       const savedList = [];
@@ -172,7 +247,7 @@ router.post("/posts", authenticate, async (req: any, res) => {
       status: req.body.status || "Scheduled",
       approvalStatus: req.body.approvalStatus || "Pending",
       authorName: req.user.name || "عضو الفريق",
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     const docRef = await db.collection("social_posts").add(postData);
     logAudit("SocialMedia", { action: "Create Scheduled Post", id: docRef.id }, postData, req);
@@ -189,7 +264,8 @@ router.put("/posts/:id", authenticate, async (req: any, res) => {
     const postRef = db.collection("social_posts").doc(id);
     const snap = await postRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Post not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     await postRef.update(req.body);
     res.json({ success: true });
@@ -205,11 +281,12 @@ router.post("/posts/:id/approve", authenticate, async (req: any, res) => {
     const postRef = db.collection("social_posts").doc(id);
     const snap = await postRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Post not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     const updateData = {
       approvalStatus: "Approved",
-      status: "Scheduled"
+      status: "Scheduled",
     };
     await postRef.update(updateData);
     logAudit("SocialMedia", { action: "Approve Post", id }, updateData, req);
@@ -226,7 +303,8 @@ router.delete("/posts/:id", authenticate, async (req: any, res) => {
     const postRef = db.collection("social_posts").doc(id);
     const snap = await postRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Post not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     await postRef.delete();
     res.json({ success: true });
@@ -234,7 +312,6 @@ router.delete("/posts/:id", authenticate, async (req: any, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ==========================================
 // UNIFIED INBOX & COMMENTS
@@ -258,7 +335,7 @@ router.get("/inbox", authenticate, async (req: any, res) => {
           type: "Comment",
           postTitle: "إطلاق ميزة الفوترة الإلكترونية الذكية",
           replies: [],
-          userId: req.user.uid
+          userId: req.user.uid,
         },
         {
           platform: "twitter",
@@ -270,9 +347,13 @@ router.get("/inbox", authenticate, async (req: any, res) => {
           type: "Mention",
           postTitle: "TechCloud Feature",
           replies: [
-            { author: "Madarij OS Support", text: "Thank you Amal! We are delighted to assist your enterprise journey.", timestamp: new Date(Date.now() - 1.8 * 60 * 60 * 1000).toISOString() }
+            {
+              author: "Madarij OS Support",
+              text: "Thank you Amal! We are delighted to assist your enterprise journey.",
+              timestamp: new Date(Date.now() - 1.8 * 60 * 60 * 1000).toISOString(),
+            },
           ],
-          userId: req.user.uid
+          userId: req.user.uid,
         },
         {
           platform: "linkedin",
@@ -283,8 +364,8 @@ router.get("/inbox", authenticate, async (req: any, res) => {
           status: "Unread",
           type: "Direct Message",
           replies: [],
-          userId: req.user.uid
-        }
+          userId: req.user.uid,
+        },
       ];
 
       const savedList = [];
@@ -308,7 +389,8 @@ router.post("/inbox/:id/reply", authenticate, async (req: any, res) => {
     const inboxRef = db.collection("social_inbox").doc(id);
     const snap = await inboxRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Inbox item not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     const currentReplies = snap.data()?.replies || [];
     const updatedReplies = [
@@ -316,13 +398,13 @@ router.post("/inbox/:id/reply", authenticate, async (req: any, res) => {
       {
         author: "Madarij OS Team",
         text: replyText,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     ];
 
     await inboxRef.update({
       replies: updatedReplies,
-      status: "Replied"
+      status: "Replied",
     });
 
     res.json({ success: true, replies: updatedReplies });
@@ -330,7 +412,6 @@ router.post("/inbox/:id/reply", authenticate, async (req: any, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ==========================================
 // BRAND MONITORING & SENTIMENT ANALYSIS
@@ -344,9 +425,36 @@ router.get("/monitoring", authenticate, async (req: any, res) => {
 
     if (mentions.length === 0) {
       const defaults = [
-        { source: "Twitter", author: "@saudi_tech_fan", text: "نظام مداريج OS للأعمال يقدّم تجربة استثنائية في ربط العمليات وتسيير الرواتب تلقائياً. تطور رائع!", sentiment: "Positive", keyword: "مداريج OS", reach: 4500, createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), userId: req.user.uid },
-        { source: "Web Forum", author: "محاسب سعودي محترف", text: "هل واجه أحدكم مشكلة في موازنة القيود الافتتاحية على نظام مداريج الجديد؟ الدعم الفني متجاوب لكن يحتاج لسرعة أكبر.", sentiment: "Neutral", keyword: "مداريج", reach: 1200, createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), userId: req.user.uid },
-        { source: "LinkedIn", author: "Yaser Al-Ghamdi", text: "Empowering Saudi SaaS ecosystems with tools like Madarij OS will speed up digital transformation tremendously.", sentiment: "Positive", keyword: "Madarij OS", reach: 15000, createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), userId: req.user.uid }
+        {
+          source: "Twitter",
+          author: "@saudi_tech_fan",
+          text: "نظام مداريج OS للأعمال يقدّم تجربة استثنائية في ربط العمليات وتسيير الرواتب تلقائياً. تطور رائع!",
+          sentiment: "Positive",
+          keyword: "مداريج OS",
+          reach: 4500,
+          createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
+          userId: req.user.uid,
+        },
+        {
+          source: "Web Forum",
+          author: "محاسب سعودي محترف",
+          text: "هل واجه أحدكم مشكلة في موازنة القيود الافتتاحية على نظام مداريج الجديد؟ الدعم الفني متجاوب لكن يحتاج لسرعة أكبر.",
+          sentiment: "Neutral",
+          keyword: "مداريج",
+          reach: 1200,
+          createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+          userId: req.user.uid,
+        },
+        {
+          source: "LinkedIn",
+          author: "Yaser Al-Ghamdi",
+          text: "Empowering Saudi SaaS ecosystems with tools like Madarij OS will speed up digital transformation tremendously.",
+          sentiment: "Positive",
+          keyword: "Madarij OS",
+          reach: 15000,
+          createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+          userId: req.user.uid,
+        },
       ];
 
       const savedList = [];
@@ -361,7 +469,6 @@ router.get("/monitoring", authenticate, async (req: any, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ==========================================
 // AI-POWERED COPILOT GENERATION ENDPOINTS
@@ -429,9 +536,7 @@ JSON Structure:
 
     const response = await generateContentWithRetry(ai, {
       model: "gemini-3.5-flash",
-      contents: [
-        { role: "user", parts: [{ text: `${systemContext}\n\n${userPrompt}` }] }
-      ],
+      contents: [{ role: "user", parts: [{ text: `${systemContext}\n\n${userPrompt}` }] }],
       config: {
         responseMimeType: "application/json",
       },

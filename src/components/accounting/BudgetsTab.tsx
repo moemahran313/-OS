@@ -1,8 +1,17 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
-import { 
-  PiggyBank, Plus, Search, Calendar, BarChart3, TrendingUp, 
-  AlertTriangle, DollarSign, ArrowRightLeft, ShieldCheck, CheckCircle 
+import {
+  PiggyBank,
+  Plus,
+  Search,
+  Calendar,
+  BarChart3,
+  TrendingUp,
+  AlertTriangle,
+  DollarSign,
+  ArrowRightLeft,
+  ShieldCheck,
+  CheckCircle,
 } from "lucide-react";
 
 interface BudgetAllocation {
@@ -16,10 +25,38 @@ interface BudgetAllocation {
 
 export default function BudgetsTab() {
   const [allocations, setAllocations] = useState<BudgetAllocation[]>([
-    { id: "b-1", accountCode: "501001", accountName: "مصاريف التسويق الرقمي والدعاية", department: "Marketing", annualBudget: 150000, actualSpent: 165000 },
-    { id: "b-2", accountCode: "502005", accountName: "إيجارات المكاتب والفروع", department: "HR & Admin", annualBudget: 450000, actualSpent: 410000 },
-    { id: "b-3", accountCode: "505001", accountName: "البحوث والتطوير والبرمجيات", department: "Engineering", annualBudget: 300000, actualSpent: 120000 },
-    { id: "b-4", accountCode: "504003", accountName: "مصاريف السفر والضيافة التنفيذية", department: "Sales", annualBudget: 60000, actualSpent: 59000 },
+    {
+      id: "b-1",
+      accountCode: "501001",
+      accountName: "مصاريف التسويق الرقمي والدعاية",
+      department: "Marketing",
+      annualBudget: 150000,
+      actualSpent: 165000,
+    },
+    {
+      id: "b-2",
+      accountCode: "502005",
+      accountName: "إيجارات المكاتب والفروع",
+      department: "HR & Admin",
+      annualBudget: 450000,
+      actualSpent: 410000,
+    },
+    {
+      id: "b-3",
+      accountCode: "505001",
+      accountName: "البحوث والتطوير والبرمجيات",
+      department: "Engineering",
+      annualBudget: 300000,
+      actualSpent: 120000,
+    },
+    {
+      id: "b-4",
+      accountCode: "504003",
+      accountName: "مصاريف السفر والضيافة التنفيذية",
+      department: "Sales",
+      annualBudget: 60000,
+      actualSpent: 59000,
+    },
   ]);
 
   const [showAddBudget, setShowAddBudget] = useState(false);
@@ -27,7 +64,7 @@ export default function BudgetsTab() {
     accountCode: "",
     accountName: "",
     department: "Marketing",
-    annualBudget: ""
+    annualBudget: "",
   });
 
   const handleAddBudget = (e: React.FormEvent) => {
@@ -41,7 +78,7 @@ export default function BudgetsTab() {
       accountName: newBudget.accountName,
       department: newBudget.department,
       annualBudget: amt,
-      actualSpent: 0
+      actualSpent: 0,
     };
 
     setAllocations([...allocations, added]);
@@ -58,24 +95,36 @@ export default function BudgetsTab() {
       {/* Metrics Banner */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
-          <span className="text-[10px] text-zinc-400 font-bold uppercase">إجمالي الميزانية السنوية المعتمدة (Total Budget)</span>
+          <span className="text-[10px] text-zinc-400 font-bold uppercase">
+            إجمالي الميزانية السنوية المعتمدة (Total Budget)
+          </span>
           <h4 className="text-xl font-black text-zinc-900 dark:text-zinc-100 font-mono mt-2">
             {totalBudget.toLocaleString()} ر.س
           </h4>
-          <p className="text-[10px] text-zinc-400 font-bold mt-1">تغطي {allocations.length} مراكز بنود تشغيلية رئيسية</p>
+          <p className="text-[10px] text-zinc-400 font-bold mt-1">
+            تغطي {allocations.length} مراكز بنود تشغيلية رئيسية
+          </p>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
-          <span className="text-[10px] text-zinc-400 font-bold uppercase">إجمالي الإنفاق الفعلي (Actual Spent)</span>
+          <span className="text-[10px] text-zinc-400 font-bold uppercase">
+            إجمالي الإنفاق الفعلي (Actual Spent)
+          </span>
           <h4 className="text-xl font-black text-rose-600 font-mono mt-2">
             {totalSpent.toLocaleString()} ر.س
           </h4>
-          <p className="text-[10px] text-zinc-400 font-bold mt-1">يمثل نسبة صرف قدرها {((totalSpent / totalBudget) * 100).toFixed(1)}% من الميزانية</p>
+          <p className="text-[10px] text-zinc-400 font-bold mt-1">
+            يمثل نسبة صرف قدرها {((totalSpent / totalBudget) * 100).toFixed(1)}% من الميزانية
+          </p>
         </div>
 
         <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
-          <span className="text-[10px] text-zinc-400 font-bold uppercase">التباين المتبقي / الوفورات (Variance)</span>
-          <h4 className={`text-xl font-black font-mono mt-2 ${totalVariance >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+          <span className="text-[10px] text-zinc-400 font-bold uppercase">
+            التباين المتبقي / الوفورات (Variance)
+          </span>
+          <h4
+            className={`text-xl font-black font-mono mt-2 ${totalVariance >= 0 ? "text-emerald-600" : "text-rose-600"}`}
+          >
             {totalVariance.toLocaleString()} ر.س
           </h4>
           <p className="text-[10px] text-zinc-400 font-bold mt-1">
@@ -87,8 +136,12 @@ export default function BudgetsTab() {
       {/* Controller Buttons */}
       <div className="flex justify-between items-center bg-zinc-50 dark:bg-zinc-950 p-4 rounded-2xl border border-zinc-150 dark:border-zinc-850">
         <div>
-          <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100">مراقبة وتعديل الموازنات التقديرية للشركة</h3>
-          <p className="text-[10px] text-zinc-400 font-bold">ربط البنود التقديرية بمراكز التكلفة والقطاعات التنظيمية لتجنب الهدر المالي</p>
+          <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100">
+            مراقبة وتعديل الموازنات التقديرية للشركة
+          </h3>
+          <p className="text-[10px] text-zinc-400 font-bold">
+            ربط البنود التقديرية بمراكز التكلفة والقطاعات التنظيمية لتجنب الهدر المالي
+          </p>
         </div>
         <button
           onClick={() => setShowAddBudget(true)}
@@ -119,9 +172,14 @@ export default function BudgetsTab() {
               const isOverspent = variance < 0;
 
               return (
-                <tr key={item.id} className="border-b border-zinc-50 dark:border-zinc-850 hover:bg-zinc-50/20">
+                <tr
+                  key={item.id}
+                  className="border-b border-zinc-50 dark:border-zinc-850 hover:bg-zinc-50/20"
+                >
                   <td className="p-3">
-                    <div className="font-black text-zinc-850 dark:text-zinc-150">{item.accountName}</div>
+                    <div className="font-black text-zinc-850 dark:text-zinc-150">
+                      {item.accountName}
+                    </div>
                   </td>
                   <td className="p-3 font-mono text-zinc-500 font-bold">{item.accountCode}</td>
                   <td className="p-3 font-bold">
@@ -135,15 +193,18 @@ export default function BudgetsTab() {
                   <td className="p-3 text-left font-mono text-zinc-800 dark:text-zinc-200">
                     {item.actualSpent.toLocaleString()} ر.س
                   </td>
-                  <td className={`p-3 text-left font-mono font-black ${isOverspent ? "text-rose-600" : "text-emerald-600"}`}>
-                    {isOverspent ? "" : "+"}{variance.toLocaleString()} ر.س
+                  <td
+                    className={`p-3 text-left font-mono font-black ${isOverspent ? "text-rose-600" : "text-emerald-600"}`}
+                  >
+                    {isOverspent ? "" : "+"}
+                    {variance.toLocaleString()} ر.س
                   </td>
                   <td className="p-3">
                     <div className="flex items-center gap-2 justify-end">
                       <span className="font-mono text-[10px] font-black">{ratio.toFixed(0)}%</span>
                       <div className="w-16 bg-zinc-200 dark:bg-zinc-800 h-1.5 rounded-full">
-                        <div 
-                          className={`h-1.5 rounded-full ${isOverspent ? "bg-rose-500" : ratio > 85 ? "bg-amber-500" : "bg-emerald-500"}`} 
+                        <div
+                          className={`h-1.5 rounded-full ${isOverspent ? "bg-rose-500" : ratio > 85 ? "bg-amber-500" : "bg-emerald-500"}`}
                           style={{ width: `${ratio}%` }}
                         ></div>
                       </div>
@@ -168,7 +229,10 @@ export default function BudgetsTab() {
             <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
               تخصيص بند ميزانية تقديرية جديدة
             </h3>
-            <form onSubmit={handleAddBudget} className="space-y-4 text-xs font-bold text-zinc-700 dark:text-zinc-300">
+            <form
+              onSubmit={handleAddBudget}
+              className="space-y-4 text-xs font-bold text-zinc-700 dark:text-zinc-300"
+            >
               <div className="space-y-1.5">
                 <label>كود الحساب المحاسبي</label>
                 <input
@@ -176,7 +240,7 @@ export default function BudgetsTab() {
                   required
                   placeholder="مثال: 501001"
                   value={newBudget.accountCode}
-                  onChange={(e) => setNewBudget(p => ({ ...p, accountCode: e.target.value }))}
+                  onChange={(e) => setNewBudget((p) => ({ ...p, accountCode: e.target.value }))}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                 />
               </div>
@@ -188,7 +252,7 @@ export default function BudgetsTab() {
                   required
                   placeholder="مثال: ميزانية خدمات التسويق والإعلانات"
                   value={newBudget.accountName}
-                  onChange={(e) => setNewBudget(p => ({ ...p, accountName: e.target.value }))}
+                  onChange={(e) => setNewBudget((p) => ({ ...p, accountName: e.target.value }))}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                 />
               </div>
@@ -198,7 +262,7 @@ export default function BudgetsTab() {
                   <label>المؤسسة / القسم المعني</label>
                   <select
                     value={newBudget.department}
-                    onChange={(e) => setNewBudget(p => ({ ...p, department: e.target.value }))}
+                    onChange={(e) => setNewBudget((p) => ({ ...p, department: e.target.value }))}
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
                   >
                     <option value="Marketing">التسويق والمبيعات (Marketing)</option>
@@ -215,7 +279,7 @@ export default function BudgetsTab() {
                     required
                     placeholder="0.00"
                     value={newBudget.annualBudget}
-                    onChange={(e) => setNewBudget(p => ({ ...p, annualBudget: e.target.value }))}
+                    onChange={(e) => setNewBudget((p) => ({ ...p, annualBudget: e.target.value }))}
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
                   />
                 </div>

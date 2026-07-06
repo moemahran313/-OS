@@ -1,5 +1,15 @@
 import React, { useState } from "react";
-import { Sparkles, Loader2, ArrowRight, Check, Play, ListTodo, Milestone as MileIcon, Users, Calendar } from "lucide-react";
+import {
+  Sparkles,
+  Loader2,
+  ArrowRight,
+  Check,
+  Play,
+  ListTodo,
+  Milestone as MileIcon,
+  Users,
+  Calendar,
+} from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -14,24 +24,34 @@ const PRESETS = [
   {
     titleAr: "بوابة سداد ZATCA المرحلة الثانية",
     titleEn: "ZATCA Phase 2 Invoicing Gate",
-    promptAr: "إنشاء خطة مشروع كاملة لربط نظام مبيعات الشركة مع منصة 'فاتورة' التابعة لـ ZATCA المرحلة الثانية، وتضمين الاختبارات الأمنية ومراجعة الأكواد ومطابقة شروط الفوترة الإلكترونية بالمملكة العربية السعودية.",
-    promptEn: "Create a project plan to integrate the company POS/ERP with Saudi ZATCA Phase 2 'Fatoora' portal, including security clearance, XML signing, cryptographic stamp generation, and end-to-end sandbox testing."
+    promptAr:
+      "إنشاء خطة مشروع كاملة لربط نظام مبيعات الشركة مع منصة 'فاتورة' التابعة لـ ZATCA المرحلة الثانية، وتضمين الاختبارات الأمنية ومراجعة الأكواد ومطابقة شروط الفوترة الإلكترونية بالمملكة العربية السعودية.",
+    promptEn:
+      "Create a project plan to integrate the company POS/ERP with Saudi ZATCA Phase 2 'Fatoora' portal, including security clearance, XML signing, cryptographic stamp generation, and end-to-end sandbox testing.",
   },
   {
     titleAr: "تطبيق متجر إلكتروني متكامل",
     titleEn: "ERP Integrated E-commerce App",
-    promptAr: "خطة تطوير متجر بقالة إلكتروني متكامل مع نظام إدارة المخزون والمستودعات في Madarij OS، يشمل الدفع الإلكتروني (مدى وفيزا) وإرسال الفواتير التلقائي للعملاء.",
-    promptEn: "Plan to build a retail e-commerce application integrated with Madarij OS inventory, containing online payment (Mada/Visa), real-time stock sync, and automated receipt delivery."
+    promptAr:
+      "خطة تطوير متجر بقالة إلكتروني متكامل مع نظام إدارة المخزون والمستودعات في Madarij OS، يشمل الدفع الإلكتروني (مدى وفيزا) وإرسال الفواتير التلقائي للعملاء.",
+    promptEn:
+      "Plan to build a retail e-commerce application integrated with Madarij OS inventory, containing online payment (Mada/Visa), real-time stock sync, and automated receipt delivery.",
   },
   {
     titleAr: "أتمتة مستودعات سلاسل الإمداد",
     titleEn: "Supply Chain Warehouse Automation",
-    promptAr: "خطة لتهيئة وإدخال أنظمة الباركود وتتبع الشحنات عبر الـ RFID في المستودع المركزي بجدة، مع ربط البيانات مع محاسبة التكاليف لإظهار تكلفة البضاعة المباعة بدقة.",
-    promptEn: "Build a project timeline to deploy barcode systems and RFID-based tracking in our primary Jeddah distribution center, syncing with our cost accounting engine to display precise COGS."
-  }
+    promptAr:
+      "خطة لتهيئة وإدخال أنظمة الباركود وتتبع الشحنات عبر الـ RFID في المستودع المركزي بجدة، مع ربط البيانات مع محاسبة التكاليف لإظهار تكلفة البضاعة المباعة بدقة.",
+    promptEn:
+      "Build a project timeline to deploy barcode systems and RFID-based tracking in our primary Jeddah distribution center, syncing with our cost accounting engine to display precise COGS.",
+  },
 ];
 
-export default function ProjectAICopilot({ language, onApplyPlan, onClose }: ProjectAICopilotProps) {
+export default function ProjectAICopilot({
+  language,
+  onApplyPlan,
+  onClose,
+}: ProjectAICopilotProps) {
   const { t } = useTranslation();
   const [promptText, setPromptText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,7 +60,9 @@ export default function ProjectAICopilot({ language, onApplyPlan, onClose }: Pro
   const handleGenerate = async (selectedPrompt?: string) => {
     const activePrompt = selectedPrompt || promptText;
     if (!activePrompt.trim()) {
-      toast.error(language === "ar" ? "الرجاء إدخال وصف للمشروع" : "Please describe your project first");
+      toast.error(
+        language === "ar" ? "الرجاء إدخال وصف للمشروع" : "Please describe your project first"
+      );
       return;
     }
 
@@ -102,7 +124,9 @@ export default function ProjectAICopilot({ language, onApplyPlan, onClose }: Pro
               {isRtl ? "مساعد المشاريع الذكي" : "AI Copilot Project OS"}
             </h3>
             <p className="text-[11px] text-zinc-400">
-              {isRtl ? "توليد خطط مشاريع متكاملة بذكاء اصطناعي" : "Generate complete enterprise project plans"}
+              {isRtl
+                ? "توليد خطط مشاريع متكاملة بذكاء اصطناعي"
+                : "Generate complete enterprise project plans"}
             </p>
           </div>
         </div>
@@ -172,12 +196,18 @@ export default function ProjectAICopilot({ language, onApplyPlan, onClose }: Pro
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>{isRtl ? "جاري التفكير والتخطيط مع Gemini..." : "Gemini is building your plan..."}</span>
+                  <span>
+                    {isRtl
+                      ? "جاري التفكير والتخطيط مع Gemini..."
+                      : "Gemini is building your plan..."}
+                  </span>
                 </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 text-white" />
-                  <span>{isRtl ? "توليد خطة المشروع المتكاملة" : "Generate Complete Project Plan"}</span>
+                  <span>
+                    {isRtl ? "توليد خطة المشروع المتكاملة" : "Generate Complete Project Plan"}
+                  </span>
                 </>
               )}
             </button>
@@ -210,12 +240,20 @@ export default function ProjectAICopilot({ language, onApplyPlan, onClose }: Pro
                 <p className="text-xs text-zinc-400">{generatedPlan.description}</p>
                 <div className="flex items-center gap-4 text-[11px] text-zinc-400 border-t border-zinc-800/60 pt-2 mt-2">
                   <div>
-                    <span className="text-zinc-500 block">{isRtl ? "الميزانية المقدرة" : "Est. Budget"}</span>
-                    <strong className="text-white text-xs">{(generatedPlan.budget || 150000).toLocaleString()} SAR</strong>
+                    <span className="text-zinc-500 block">
+                      {isRtl ? "الميزانية المقدرة" : "Est. Budget"}
+                    </span>
+                    <strong className="text-white text-xs">
+                      {(generatedPlan.budget || 150000).toLocaleString()} SAR
+                    </strong>
                   </div>
                   <div>
-                    <span className="text-zinc-500 block">{isRtl ? "المهام المقترحة" : "Tasks"}</span>
-                    <strong className="text-white text-xs">{generatedPlan.tasks?.length || 0} {isRtl ? "مهام" : "tasks"}</strong>
+                    <span className="text-zinc-500 block">
+                      {isRtl ? "المهام المقترحة" : "Tasks"}
+                    </span>
+                    <strong className="text-white text-xs">
+                      {generatedPlan.tasks?.length || 0} {isRtl ? "مهام" : "tasks"}
+                    </strong>
                   </div>
                 </div>
               </div>
@@ -229,7 +267,10 @@ export default function ProjectAICopilot({ language, onApplyPlan, onClose }: Pro
                   </h4>
                   <div className="space-y-1.5">
                     {generatedPlan.milestones.map((m: any, idx: number) => (
-                      <div key={idx} className="bg-zinc-950 p-2.5 rounded-lg border border-zinc-900 flex items-start justify-between">
+                      <div
+                        key={idx}
+                        className="bg-zinc-950 p-2.5 rounded-lg border border-zinc-900 flex items-start justify-between"
+                      >
                         <div>
                           <p className="font-semibold text-xs text-zinc-200">{m.name}</p>
                           <p className="text-[10px] text-zinc-500">{m.description}</p>
@@ -252,7 +293,10 @@ export default function ProjectAICopilot({ language, onApplyPlan, onClose }: Pro
                   </h4>
                   <div className="space-y-1.5">
                     {generatedPlan.epics.map((e: any, idx: number) => (
-                      <div key={idx} className="bg-zinc-950 p-2.5 rounded-lg border border-zinc-900">
+                      <div
+                        key={idx}
+                        className="bg-zinc-950 p-2.5 rounded-lg border border-zinc-900"
+                      >
                         <p className="font-semibold text-xs text-zinc-200">{e.name}</p>
                         <p className="text-[10px] text-zinc-500">{e.description}</p>
                       </div>
@@ -270,11 +314,16 @@ export default function ProjectAICopilot({ language, onApplyPlan, onClose }: Pro
                   </h4>
                   <div className="grid grid-cols-2 gap-1.5">
                     {generatedPlan.resources.map((r: any, idx: number) => (
-                      <div key={idx} className="bg-zinc-950 p-2 rounded-lg border border-zinc-900 space-y-1">
+                      <div
+                        key={idx}
+                        className="bg-zinc-950 p-2 rounded-lg border border-zinc-900 space-y-1"
+                      >
                         <p className="font-semibold text-xs text-zinc-200">{r.name}</p>
                         <p className="text-[10px] text-zinc-500">{r.role}</p>
                         <div className="flex items-center justify-between text-[9px] pt-1 border-t border-zinc-850">
-                          <span className="text-zinc-500">{isRtl ? "تفرغ" : "Alloc"}: {r.allocation}%</span>
+                          <span className="text-zinc-500">
+                            {isRtl ? "تفرغ" : "Alloc"}: {r.allocation}%
+                          </span>
                           <span className="text-emerald-400/90">{r.costRate} SAR/h</span>
                         </div>
                       </div>

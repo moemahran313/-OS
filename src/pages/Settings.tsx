@@ -1798,7 +1798,10 @@ export default function Settings() {
               </div>
             )}
             {activeTab === "referrals" && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 text-right" dir="rtl">
+              <div
+                className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 text-right"
+                dir="rtl"
+              >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-zinc-100">
                   <div>
                     <h2 className="text-xl font-black text-zinc-900 tracking-tight flex items-center gap-2">
@@ -1806,7 +1809,8 @@ export default function Settings() {
                       برنامج الإحالة والمكافآت المشتركة
                     </h2>
                     <p className="text-sm text-zinc-500 mt-1 font-medium leading-relaxed">
-                      ادعُ أصدقاءك وعملاءك للاشتراك في مدارج؛ ليحصل كل منكما على مكافآت فورية فترات تجريبية ممددة أو خصومات تجديد اشتراك عند الدفع.
+                      ادعُ أصدقاءك وعملاءك للاشتراك في مدارج؛ ليحصل كل منكما على مكافآت فورية فترات
+                      تجريبية ممددة أو خصومات تجديد اشتراك عند الدفع.
                     </p>
                   </div>
                   {loadingReferrals && (
@@ -1826,17 +1830,22 @@ export default function Settings() {
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                        <h3 className="text-sm font-bold text-emerald-900">الرمز ورابط الإحالة المخصص</h3>
+                        <h3 className="text-sm font-bold text-emerald-900">
+                          الرمز ورابط الإحالة المخصص
+                        </h3>
                       </div>
                       <p className="text-xs text-emerald-700/80 mb-4 leading-relaxed font-medium">
-                        خصص رمز إحالتك ليكون معبراً عن شركتك، ثم انسخ الرابط وشاركه للحصول على المكافآت فوراً.
+                        خصص رمز إحالتك ليكون معبراً عن شركتك، ثم انسخ الرابط وشاركه للحصول على
+                        المكافآت فوراً.
                       </p>
                     </div>
 
                     <div className="space-y-4">
                       {/* Code customization input */}
                       <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold text-emerald-800">تخصيص رمز الإحالة</label>
+                        <label className="text-[11px] font-bold text-emerald-800">
+                          تخصيص رمز الإحالة
+                        </label>
                         <div className="flex gap-2">
                           <input
                             type="text"
@@ -1859,13 +1868,16 @@ export default function Settings() {
 
                       {/* Displaying unique links */}
                       <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold text-emerald-800">رابط الإحالة الفعّال</label>
+                        <label className="text-[11px] font-bold text-emerald-800">
+                          رابط الإحالة الفعّال
+                        </label>
                         <div className="flex gap-2">
                           <div
                             className="flex-1 bg-white/80 backdrop-blur-sm border border-emerald-200 text-emerald-950 font-bold text-xs p-3 rounded-xl flex items-center justify-between overflow-x-auto whitespace-nowrap"
                             dir="ltr"
                           >
-                            {window.location.origin}/login?ref={referralStats.referralCode || "PENDING"}
+                            {window.location.origin}/login?ref=
+                            {referralStats.referralCode || "PENDING"}
                           </div>
                           <button
                             onClick={() => {
@@ -1892,7 +1904,8 @@ export default function Settings() {
                         تفضيلات المكافأة الخاصة بك
                       </h3>
                       <p className="text-xs text-zinc-500 mb-4 leading-relaxed font-medium">
-                        اختر المكافأة التي تود تطبيقها تلقائياً على حسابك وصديقك عند حدوث إحالات ناجحة.
+                        اختر المكافأة التي تود تطبيقها تلقائياً على حسابك وصديقك عند حدوث إحالات
+                        ناجحة.
                       </p>
                     </div>
 
@@ -1910,7 +1923,8 @@ export default function Settings() {
                         <div className="flex-1">
                           <h4 className="text-xs font-black">خصومات اشتراكات مالية 💳</h4>
                           <p className="text-[10px] text-zinc-500 mt-1 font-medium leading-normal">
-                            احصل على 150 ريال سعودي خصم فوري على تجديد اشتراكك (وكذلك صديقك) عند التسجيل، وتتضاعف المكافأة عند الدفع الأول للعميل المحال.
+                            احصل على 150 ريال سعودي خصم فوري على تجديد اشتراكك (وكذلك صديقك) عند
+                            التسجيل، وتتضاعف المكافأة عند الدفع الأول للعميل المحال.
                           </p>
                         </div>
                         {referralStats.rewardPreference === "discount" && (
@@ -1931,7 +1945,8 @@ export default function Settings() {
                         <div className="flex-1">
                           <h4 className="text-xs font-black">تمديد الفترات التجريبية ⏳</h4>
                           <p className="text-[10px] text-zinc-500 mt-1 font-medium leading-normal">
-                            احصل على 30 يوماً إضافية مجانية لفترتك التجريبية (وكذلك صديقك) عند التسجيل، وتمتد 30 يوماً إضافية أخرى عند الدفع الأول للإحالة.
+                            احصل على 30 يوماً إضافية مجانية لفترتك التجريبية (وكذلك صديقك) عند
+                            التسجيل، وتمتد 30 يوماً إضافية أخرى عند الدفع الأول للإحالة.
                           </p>
                         </div>
                         {referralStats.rewardPreference === "trial" && (
@@ -1947,7 +1962,9 @@ export default function Settings() {
                       <Sparkles className="w-24 h-24" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-zinc-400 mb-1">المكافآت التراكمية المحققة</h3>
+                      <h3 className="text-sm font-bold text-zinc-400 mb-1">
+                        المكافآت التراكمية المحققة
+                      </h3>
                       <p className="text-xs text-zinc-500 leading-normal font-medium mb-4">
                         إجمالي رصيد المكافآت الحقيقي المطبق على اشتراكك الحالي فوراً.
                       </p>
@@ -1959,7 +1976,8 @@ export default function Settings() {
                           الخصومات المالية
                         </span>
                         <div className="text-2xl font-black text-amber-400">
-                          {referralStats.discountEarnedSar || 0} <span className="text-xs text-zinc-400 font-bold">SAR</span>
+                          {referralStats.discountEarnedSar || 0}{" "}
+                          <span className="text-xs text-zinc-400 font-bold">SAR</span>
                         </div>
                       </div>
 
@@ -1968,13 +1986,15 @@ export default function Settings() {
                           الأيام المضافة مجاناً
                         </span>
                         <div className="text-2xl font-black text-emerald-400">
-                          +{referralStats.trialExtensionDays || 0} <span className="text-xs text-zinc-400 font-bold">يوم</span>
+                          +{referralStats.trialExtensionDays || 0}{" "}
+                          <span className="text-xs text-zinc-400 font-bold">يوم</span>
                         </div>
                       </div>
                     </div>
 
                     <div className="text-[10px] text-zinc-500 font-medium leading-relaxed mt-4 pt-3 border-t border-zinc-900">
-                      * يتم تحديث المكافآت وتطبيقها تلقائياً على فواتيرك وخطتك القادمة بفضل الربط الشامل مع محاسبة مدارج OS.
+                      * يتم تحديث المكافآت وتطبيقها تلقائياً على فواتيرك وخطتك القادمة بفضل الربط
+                      الشامل مع محاسبة مدارج OS.
                     </div>
                   </div>
                 </div>
@@ -1993,11 +2013,16 @@ export default function Settings() {
                       ⚙️ محاكاة واختبار تدفق الإحالات (Sandbox Simulation)
                     </h3>
                     <p className="text-xs text-zinc-500 font-medium leading-relaxed">
-                      بما أنك في بيئة التطوير، تتيح لك هذه الأداة محاكاة دورة حياة العميل المحال بالكامل. أدخل معلومات لإنشاء مستخدم محال وهمي لتشاهد الفواتير، الإشعارات، والخصومات تُضاف في التو واللحظة!
+                      بما أنك في بيئة التطوير، تتيح لك هذه الأداة محاكاة دورة حياة العميل المحال
+                      بالكامل. أدخل معلومات لإنشاء مستخدم محال وهمي لتشاهد الفواتير، الإشعارات،
+                      والخصومات تُضاف في التو واللحظة!
                     </p>
                   </div>
 
-                  <form onSubmit={handleSimulateSignup} className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 items-end">
+                  <form
+                    onSubmit={handleSimulateSignup}
+                    className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 items-end"
+                  >
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold text-zinc-700">اسم الصديق الوهمي</label>
                       <input
@@ -2011,7 +2036,9 @@ export default function Settings() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-zinc-700">البريد الإلكتروني للعميل</label>
+                      <label className="text-xs font-bold text-zinc-700">
+                        البريد الإلكتروني للعميل
+                      </label>
                       <input
                         type="email"
                         required
@@ -2059,7 +2086,9 @@ export default function Settings() {
                         <tbody className="divide-y divide-zinc-100 font-medium">
                           {referralStats.history.map((record: any) => (
                             <tr key={record.id} className="hover:bg-zinc-50/50 transition-colors">
-                              <td className="px-6 py-4 text-zinc-900 font-bold">{record.referredUserName}</td>
+                              <td className="px-6 py-4 text-zinc-900 font-bold">
+                                {record.referredUserName}
+                              </td>
                               <td className="px-6 py-4 text-zinc-500 font-mono text-xs" dir="ltr">
                                 {record.referredUserEmail}
                               </td>
@@ -2096,7 +2125,9 @@ export default function Settings() {
                                     )}
                                   </button>
                                 ) : (
-                                  <span className="text-emerald-600 text-[10px] font-bold">✓ مكتمل وحُصلت المكافآت</span>
+                                  <span className="text-emerald-600 text-[10px] font-bold">
+                                    ✓ مكتمل وحُصلت المكافآت
+                                  </span>
                                 )}
                               </td>
                             </tr>
@@ -2107,7 +2138,10 @@ export default function Settings() {
                       <div className="p-12 text-center text-zinc-400">
                         <Users className="w-12 h-12 mx-auto text-zinc-300 mb-3" />
                         <p className="text-xs font-bold text-zinc-500">لا يوجد سجل إحالات بعد.</p>
-                        <p className="text-[10px] text-zinc-400 mt-1">شارِك رابطك الفريد أعلاه لتشجيع التسجيلات الأولى والحصول على مكافآت ومميزات حصرية!</p>
+                        <p className="text-[10px] text-zinc-400 mt-1">
+                          شارِك رابطك الفريد أعلاه لتشجيع التسجيلات الأولى والحصول على مكافآت
+                          ومميزات حصرية!
+                        </p>
                       </div>
                     )}
                   </div>

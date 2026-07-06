@@ -139,7 +139,9 @@ export default function Support() {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
 
   // Live Chat omni simulator
-  const [activeChannel, setActiveChannel] = useState<"chat" | "whatsapp" | "telegram" | "email">("chat");
+  const [activeChannel, setActiveChannel] = useState<"chat" | "whatsapp" | "telegram" | "email">(
+    "chat"
+  );
   const [chatbotEnabled, setChatbotEnabled] = useState(true);
 
   // New Ticket Form (Agent & Portal)
@@ -204,39 +206,51 @@ export default function Support() {
 
     // Tickets Snapshot
     const qTickets = query(collection(db, "tickets"), where("userId", "==", user.uid));
-    const unsubTickets = onSnapshot(qTickets, (snapshot) => {
-      const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Ticket[];
-      // Sort by updated time
-      list.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-      setTickets(list);
-      setLoading(false);
+    const unsubTickets = onSnapshot(
+      qTickets,
+      (snapshot) => {
+        const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Ticket[];
+        // Sort by updated time
+        list.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        setTickets(list);
+        setLoading(false);
 
-      // Pre-select first ticket if none selected
-      if (list.length > 0 && !selectedTicketId) {
-        setSelectedTicketId(list[0].id);
+        // Pre-select first ticket if none selected
+        if (list.length > 0 && !selectedTicketId) {
+          setSelectedTicketId(list[0].id);
+        }
+      },
+      (err) => {
+        console.error("Firestore sync tickets error:", err);
+        setLoading(false);
       }
-    }, (err) => {
-      console.error("Firestore sync tickets error:", err);
-      setLoading(false);
-    });
+    );
 
     // Knowledge Articles Snapshot
     const qKb = query(collection(db, "knowledge_articles"), where("userId", "==", user.uid));
-    const unsubKb = onSnapshot(qKb, (snapshot) => {
-      const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as KBArticle[];
-      setKbArticles(list);
-    }, (err) => {
-      console.error("Firestore sync articles error:", err);
-    });
+    const unsubKb = onSnapshot(
+      qKb,
+      (snapshot) => {
+        const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as KBArticle[];
+        setKbArticles(list);
+      },
+      (err) => {
+        console.error("Firestore sync articles error:", err);
+      }
+    );
 
     // Fetch actual projects and invoices to link seamlessly!
     const fetchLinkedAssets = async () => {
       try {
-        const projSnap = await getDocs(query(collection(db, "projects"), where("userId", "==", user.uid)));
-        setAvailableProjects(projSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-        
-        const invSnap = await getDocs(query(collection(db, "invoices"), where("userId", "==", user.uid)));
-        setAvailableInvoices(invSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        const projSnap = await getDocs(
+          query(collection(db, "projects"), where("userId", "==", user.uid))
+        );
+        setAvailableProjects(projSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+
+        const invSnap = await getDocs(
+          query(collection(db, "invoices"), where("userId", "==", user.uid))
+        );
+        setAvailableInvoices(invSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
       } catch (err) {
         console.warn("Could not load linked projects/invoices:", err);
       }
@@ -290,7 +304,7 @@ export default function Support() {
         views: 95,
         helpfulCount: 22,
         unhelpfulCount: 0,
-      }
+      },
     ];
 
     const initialTickets = [
@@ -317,8 +331,8 @@ export default function Support() {
             text: "مرحباً فريق الدعم، لدينا مشكلة بخصوص الفاتورة رقم INV-2026-004. لقد قمنا بالتحويل البنكي للمبلغ ولكن حالة الفاتورة لا تزال تظهر قيد الانتظار في حسابنا، يرجى تفعيلها عاجلاً.",
             createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
             read: false,
-          }
-        ]
+          },
+        ],
       },
       {
         ticketNumber: "T-1002",
@@ -351,9 +365,9 @@ export default function Support() {
             text: "وعليكم السلام يا أستاذ خالد. قمنا بالتحقق من ملف ربط جهازك ويبدو أن هناك كود منتهى الصلاحية. هل قمت بإعادة توليد كود الـ OTP مؤخراً؟ يرجى المحاولة وسنتابع معك.",
             createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
             read: true,
-          }
-        ]
-      }
+          },
+        ],
+      },
     ];
 
     try {
@@ -386,14 +400,24 @@ export default function Support() {
       // 's' to switch tabs/views
       if (e.key === "s" || e.key === "S") {
         e.preventDefault();
-        setShowShortcutsInfo(prev => !prev);
+        setShowShortcutsInfo((prev) => !prev);
       }
       // '1', '2', '3', '4', '5' to switch main sub-modules
-      if (e.key === "1") { setActiveTab("workspace"); }
-      if (e.key === "2") { setActiveTab("omnichannel"); }
-      if (e.key === "3") { setActiveTab("portal"); }
-      if (e.key === "4") { setActiveTab("kb"); }
-      if (e.key === "5") { setActiveTab("analytics"); }
+      if (e.key === "1") {
+        setActiveTab("workspace");
+      }
+      if (e.key === "2") {
+        setActiveTab("omnichannel");
+      }
+      if (e.key === "3") {
+        setActiveTab("portal");
+      }
+      if (e.key === "4") {
+        setActiveTab("kb");
+      }
+      if (e.key === "5") {
+        setActiveTab("analytics");
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -432,8 +456,8 @@ export default function Support() {
           text: newTicketData.text,
           createdAt: new Date().toISOString(),
           read: false,
-        }
-      ]
+        },
+      ],
     };
 
     try {
@@ -678,7 +702,13 @@ export default function Support() {
       if (res.ok) {
         toast.success("تم حفظ ونشر مقال قاعدة المعرفة بنجاح!");
         setShowNewArticleModal(false);
-        setNewArticleData({ title: "", category: "عام", content: "", status: "published", isPublic: true });
+        setNewArticleData({
+          title: "",
+          category: "عام",
+          content: "",
+          status: "published",
+          isPublic: true,
+        });
       } else {
         toast.error("فشل حفظ المقال.");
       }
@@ -737,7 +767,7 @@ export default function Support() {
   // Customer Portal Live Chat simulation helpers
   const handleCustomerPortalChatSend = async () => {
     if (!portalChatText.trim()) return;
-    
+
     // Put message onto active customer ticket (simulate T-1001 or first ticket)
     const activeTarget = tickets[0];
     if (!activeTarget) {
@@ -789,23 +819,50 @@ export default function Support() {
   const resolvedTicketsCount = tickets.filter((t) => t.status === "resolved").length;
   const pendingTicketsCount = tickets.filter((t) => t.status === "pending").length;
   const closedTicketsCount = tickets.filter((t) => t.status === "closed").length;
-  const urgentTicketsCount = tickets.filter((t) => t.priority === "urgent" || t.priority === "high").length;
+  const urgentTicketsCount = tickets.filter(
+    (t) => t.priority === "urgent" || t.priority === "high"
+  ).length;
 
-  const slaCompliance = totalTickets > 0 ? Math.round(((resolvedTicketsCount + closedTicketsCount) / totalTickets) * 100) : 100;
-  
+  const slaCompliance =
+    totalTickets > 0
+      ? Math.round(((resolvedTicketsCount + closedTicketsCount) / totalTickets) * 100)
+      : 100;
+
   // Chart Data preparation
   const categoryChartData = [
-    { name: "الدعم الفني", value: tickets.filter(t => t.category === "Technical Support").length },
-    { name: "المالية والفوترة", value: tickets.filter(t => t.category === "Billing" || t.category === "Refund").length },
-    { name: "المبيعات والطلبات", value: tickets.filter(t => t.category === "Sales Inquiry").length },
-    { name: "اقتراح ميزة", value: tickets.filter(t => t.category === "Feature Request").length },
-  ].filter(c => c.value > 0);
+    {
+      name: "الدعم الفني",
+      value: tickets.filter((t) => t.category === "Technical Support").length,
+    },
+    {
+      name: "المالية والفوترة",
+      value: tickets.filter((t) => t.category === "Billing" || t.category === "Refund").length,
+    },
+    {
+      name: "المبيعات والطلبات",
+      value: tickets.filter((t) => t.category === "Sales Inquiry").length,
+    },
+    { name: "اقتراح ميزة", value: tickets.filter((t) => t.category === "Feature Request").length },
+  ].filter((c) => c.value > 0);
 
   const satisfactionData = [
-    { rating: "ممتاز (5⭐)", count: tickets.filter(t => t.rating?.score === 5 || t.predictedCsat === 5).length },
-    { rating: "جيد جداً (4⭐)", count: tickets.filter(t => t.rating?.score === 4 || t.predictedCsat === 4).length },
-    { rating: "مقبول (3⭐)", count: tickets.filter(t => t.rating?.score === 3 || t.predictedCsat === 3).length },
-    { rating: "سيء (2-1⭐)", count: tickets.filter(t => (t.rating?.score || 0) <= 2 && (t.predictedCsat || 0) <= 2).length },
+    {
+      rating: "ممتاز (5⭐)",
+      count: tickets.filter((t) => t.rating?.score === 5 || t.predictedCsat === 5).length,
+    },
+    {
+      rating: "جيد جداً (4⭐)",
+      count: tickets.filter((t) => t.rating?.score === 4 || t.predictedCsat === 4).length,
+    },
+    {
+      rating: "مقبول (3⭐)",
+      count: tickets.filter((t) => t.rating?.score === 3 || t.predictedCsat === 3).length,
+    },
+    {
+      rating: "سيء (2-1⭐)",
+      count: tickets.filter((t) => (t.rating?.score || 0) <= 2 && (t.predictedCsat || 0) <= 2)
+        .length,
+    },
   ];
 
   const SLAColors = ["#10B981", "#3B82F6", "#F59E0B", "#EF4444"];
@@ -820,7 +877,10 @@ export default function Support() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
-              منصة الدعم الفني الذكي <span className="text-xs text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400 px-2.5 py-1 rounded-full font-semibold mr-2">Madarij Support OS</span>
+              منصة الدعم الفني الذكي{" "}
+              <span className="text-xs text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400 px-2.5 py-1 rounded-full font-semibold mr-2">
+                Madarij Support OS
+              </span>
             </h1>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
               إدارة تذاكر الدعم، القنوات المتعددة، وبوابة الخدمة الذاتية المعززة بالذكاء الاصطناعي
@@ -908,12 +968,29 @@ export default function Support() {
       {/* Shortcuts Help Panel bar */}
       <div className="bg-zinc-100 dark:bg-zinc-900/60 border-b border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-500 dark:text-zinc-400 px-6 py-1.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="font-semibold text-zinc-700 dark:text-zinc-300">💡 اختصارات لوحة المفاتيح المفعلة:</span>
-          <span>اضغط <kbd className="bg-white border dark:bg-zinc-800 px-1 rounded shadow-xs font-mono">C</kbd> لتذكرة جديدة</span>
+          <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+            💡 اختصارات لوحة المفاتيح المفعلة:
+          </span>
+          <span>
+            اضغط{" "}
+            <kbd className="bg-white border dark:bg-zinc-800 px-1 rounded shadow-xs font-mono">
+              C
+            </kbd>{" "}
+            لتذكرة جديدة
+          </span>
           <span>•</span>
-          <span>اضغط الأرقام <kbd className="bg-white border dark:bg-zinc-800 px-1 rounded shadow-xs font-mono">1-5</kbd> للتنقل السريع بين النوافذ</span>
+          <span>
+            اضغط الأرقام{" "}
+            <kbd className="bg-white border dark:bg-zinc-800 px-1 rounded shadow-xs font-mono">
+              1-5
+            </kbd>{" "}
+            للتنقل السريع بين النوافذ
+          </span>
         </div>
-        <button onClick={() => setShowShortcutsInfo(prev => !prev)} className="text-indigo-600 dark:text-indigo-400 hover:underline">
+        <button
+          onClick={() => setShowShortcutsInfo((prev) => !prev)}
+          className="text-indigo-600 dark:text-indigo-400 hover:underline"
+        >
           عرض الدليل السريع
         </button>
       </div>
@@ -935,18 +1012,17 @@ export default function Support() {
               transition={{ duration: 0.2 }}
               className="h-full"
             >
-              
               {/* ------------------ TAB 1: WORKSPACE / AGENT TICKET HUB ------------------ */}
               {activeTab === "workspace" && (
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full overflow-hidden">
-                  
                   {/* Left Column: Tickets List */}
                   <div className="lg:col-span-1 flex flex-col bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden h-full">
-                    
                     {/* Header + Search */}
                     <div className="p-4 border-b border-zinc-150 dark:border-zinc-800 space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">قائمة التذاكر ({filteredTickets.length})</span>
+                        <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                          قائمة التذاكر ({filteredTickets.length})
+                        </span>
                         <button
                           onClick={() => setShowNewTicketModal(true)}
                           className="flex items-center gap-1 bg-indigo-600 text-white px-2 py-1 rounded-lg text-[11px] font-bold hover:bg-indigo-700 transition"
@@ -997,7 +1073,9 @@ export default function Support() {
                     {/* Scrollable list */}
                     <div className="flex-1 overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800/60">
                       {filteredTickets.length === 0 ? (
-                        <div className="p-8 text-center text-zinc-400 text-xs">لا توجد تذاكر تطابق خيارات البحث.</div>
+                        <div className="p-8 text-center text-zinc-400 text-xs">
+                          لا توجد تذاكر تطابق خيارات البحث.
+                        </div>
                       ) : (
                         filteredTickets.map((t) => {
                           const isSelected = t.id === selectedTicketId;
@@ -1013,21 +1091,36 @@ export default function Support() {
                               )}
                             >
                               <div className="flex items-center justify-between gap-2">
-                                <span className="font-mono text-[10px] text-zinc-400 font-bold">{t.ticketNumber}</span>
+                                <span className="font-mono text-[10px] text-zinc-400 font-bold">
+                                  {t.ticketNumber}
+                                </span>
                                 <span
                                   className={cn(
                                     "text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full",
-                                    t.priority === "urgent" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
-                                    t.priority === "high" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
-                                    t.priority === "medium" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
-                                    "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                                    t.priority === "urgent"
+                                      ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                      : t.priority === "high"
+                                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                        : t.priority === "medium"
+                                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                          : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
                                   )}
                                 >
-                                  {t.priority === "urgent" ? "قصوى" : t.priority === "high" ? "عالية" : t.priority === "medium" ? "متوسطة" : "منخفضة"}
+                                  {t.priority === "urgent"
+                                    ? "قصوى"
+                                    : t.priority === "high"
+                                      ? "عالية"
+                                      : t.priority === "medium"
+                                        ? "متوسطة"
+                                        : "منخفضة"}
                                 </span>
                               </div>
-                              <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 mt-1 truncate">{t.customerName}</h4>
-                              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">{t.messages[0]?.text || ""}</p>
+                              <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 mt-1 truncate">
+                                {t.customerName}
+                              </h4>
+                              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
+                                {t.messages[0]?.text || ""}
+                              </p>
                               <div className="flex items-center justify-between mt-2.5">
                                 <span className="text-[9px] text-zinc-400 flex items-center gap-1">
                                   <Clock className="w-3 h-3" />
@@ -1036,13 +1129,22 @@ export default function Support() {
                                 <span
                                   className={cn(
                                     "text-[9px] font-bold px-1.5 py-0.5 rounded",
-                                    t.status === "open" ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400" :
-                                    t.status === "pending" ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" :
-                                    t.status === "resolved" ? "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400" :
-                                    "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                                    t.status === "open"
+                                      ? "bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400"
+                                      : t.status === "pending"
+                                        ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
+                                        : t.status === "resolved"
+                                          ? "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400"
+                                          : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
                                   )}
                                 >
-                                  {t.status === "open" ? "مفتوحة" : t.status === "pending" ? "قيد الانتظار" : t.status === "resolved" ? "محلولة" : "مغلقة"}
+                                  {t.status === "open"
+                                    ? "مفتوحة"
+                                    : t.status === "pending"
+                                      ? "قيد الانتظار"
+                                      : t.status === "resolved"
+                                        ? "محلولة"
+                                        : "مغلقة"}
                                 </span>
                               </div>
                             </div>
@@ -1056,19 +1158,26 @@ export default function Support() {
                   <div className="lg:col-span-2 flex flex-col bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden h-full">
                     {activeTicket ? (
                       <div className="flex flex-col h-full overflow-hidden">
-                        
                         {/* Conversation Header */}
                         <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 flex items-center justify-between">
                           <div className="flex items-center gap-2.5">
                             <div className="p-1.5 bg-zinc-100 dark:bg-zinc-800 rounded">
-                              <span className="font-mono text-xs font-extrabold text-zinc-600 dark:text-zinc-400">{activeTicket.ticketNumber}</span>
+                              <span className="font-mono text-xs font-extrabold text-zinc-600 dark:text-zinc-400">
+                                {activeTicket.ticketNumber}
+                              </span>
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">{activeTicket.customerName}</h3>
-                                <span className="text-[10px] text-zinc-400">{activeTicket.companyName}</span>
+                                <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                                  {activeTicket.customerName}
+                                </h3>
+                                <span className="text-[10px] text-zinc-400">
+                                  {activeTicket.companyName}
+                                </span>
                               </div>
-                              <p className="text-[10px] text-zinc-500 dark:text-zinc-400">القسم: {activeTicket.department} | الفئة: {activeTicket.category}</p>
+                              <p className="text-[10px] text-zinc-500 dark:text-zinc-400">
+                                القسم: {activeTicket.department} | الفئة: {activeTicket.category}
+                              </p>
                             </div>
                           </div>
 
@@ -1084,7 +1193,9 @@ export default function Support() {
                             {/* Options */}
                             <select
                               value={activeTicket.status}
-                              onChange={(e) => handleUpdateTicketStatus(activeTicket.id, e.target.value as any)}
+                              onChange={(e) =>
+                                handleUpdateTicketStatus(activeTicket.id, e.target.value as any)
+                              }
                               className="text-xs bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-1.5 text-zinc-700 dark:text-zinc-300"
                             >
                               <option value="open">مفتوحة</option>
@@ -1108,7 +1219,9 @@ export default function Support() {
                           <div className="px-4 py-3 bg-indigo-50/50 dark:bg-indigo-950/10 border-b border-indigo-100 dark:border-indigo-950/30 flex items-start gap-2 text-xs text-indigo-900 dark:text-indigo-400 leading-relaxed">
                             <Sparkles className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
                             <div>
-                              <span className="font-extrabold block text-[10px] text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-0.5">تلخيص الذكاء الاصطناعي التلقائي</span>
+                              <span className="font-extrabold block text-[10px] text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-0.5">
+                                تلخيص الذكاء الاصطناعي التلقائي
+                              </span>
                               <p>{activeTicket.aiSummary}</p>
                             </div>
                           </div>
@@ -1137,16 +1250,29 @@ export default function Support() {
                                 key={m.id || idx}
                                 className={cn(
                                   "flex gap-3 max-w-[85%]",
-                                  isCustomer ? "mr-0 ml-auto flex-row" : "mr-auto ml-0 flex-row-reverse"
+                                  isCustomer
+                                    ? "mr-0 ml-auto flex-row"
+                                    : "mr-auto ml-0 flex-row-reverse"
                                 )}
                               >
                                 <div className="w-8 h-8 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center flex-shrink-0 text-xs font-bold text-zinc-600 dark:text-zinc-400 border">
-                                  {isBot ? <Bot className="w-4 h-4 text-indigo-500" /> : m.senderName[0]}
+                                  {isBot ? (
+                                    <Bot className="w-4 h-4 text-indigo-500" />
+                                  ) : (
+                                    m.senderName[0]
+                                  )}
                                 </div>
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-2 justify-end">
-                                    <span className="text-[10px] text-zinc-400">{new Date(m.createdAt).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}</span>
-                                    <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{m.senderName}</span>
+                                    <span className="text-[10px] text-zinc-400">
+                                      {new Date(m.createdAt).toLocaleTimeString("ar-SA", {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </span>
+                                    <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                                      {m.senderName}
+                                    </span>
                                   </div>
                                   <div
                                     className={cn(
@@ -1154,8 +1280,8 @@ export default function Support() {
                                       isCustomer
                                         ? "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-tr-none"
                                         : isBot
-                                        ? "bg-indigo-50/70 dark:bg-indigo-900/20 text-indigo-900 dark:text-indigo-400 border border-indigo-150 dark:border-indigo-900/30 rounded-tl-none"
-                                        : "bg-zinc-900 text-white dark:bg-zinc-850 dark:text-zinc-100 rounded-tl-none"
+                                          ? "bg-indigo-50/70 dark:bg-indigo-900/20 text-indigo-900 dark:text-indigo-400 border border-indigo-150 dark:border-indigo-900/30 rounded-tl-none"
+                                          : "bg-zinc-900 text-white dark:bg-zinc-850 dark:text-zinc-100 rounded-tl-none"
                                     )}
                                   >
                                     <p>{m.text}</p>
@@ -1193,13 +1319,14 @@ export default function Support() {
                                 </button>
                               </div>
                             </div>
-                            <p className="text-xs text-zinc-600 dark:text-zinc-350 bg-white dark:bg-zinc-900 p-2 border rounded-lg whitespace-pre-wrap leading-relaxed">{aiDraftedReplyText}</p>
+                            <p className="text-xs text-zinc-600 dark:text-zinc-350 bg-white dark:bg-zinc-900 p-2 border rounded-lg whitespace-pre-wrap leading-relaxed">
+                              {aiDraftedReplyText}
+                            </p>
                           </div>
                         )}
 
                         {/* Reply Input Area */}
                         <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3">
-                          
                           {/* Toggle Options */}
                           <div className="flex items-center justify-between text-xs text-zinc-500">
                             <div className="flex items-center gap-4">
@@ -1210,7 +1337,13 @@ export default function Support() {
                                   onChange={(e) => setIsInternalNote(e.target.checked)}
                                   className="rounded border-zinc-350 text-indigo-600 focus:ring-indigo-500"
                                 />
-                                <span className={cn(isInternalNote && "font-bold text-amber-600 dark:text-amber-400")}>إرسال كملاحظة داخلية (مخفية للعميل)</span>
+                                <span
+                                  className={cn(
+                                    isInternalNote && "font-bold text-amber-600 dark:text-amber-400"
+                                  )}
+                                >
+                                  إرسال كملاحظة داخلية (مخفية للعميل)
+                                </span>
                               </label>
                             </div>
 
@@ -1254,30 +1387,41 @@ export default function Support() {
                                   handleSendMessage();
                                 }
                               }}
-                              placeholder={isInternalNote ? "اكتب ملاحظتك الداخلية هنا..." : "اكتب ردك للعميل والحل التقني المقترح..."}
+                              placeholder={
+                                isInternalNote
+                                  ? "اكتب ملاحظتك الداخلية هنا..."
+                                  : "اكتب ردك للعميل والحل التقني المقترح..."
+                              }
                               className={cn(
                                 "flex-1 px-3 py-2 text-xs border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-zinc-50 dark:bg-zinc-950",
-                                isInternalNote ? "border-amber-200/60 focus:ring-amber-500" : "border-zinc-200 dark:border-zinc-850"
+                                isInternalNote
+                                  ? "border-amber-200/60 focus:ring-amber-500"
+                                  : "border-zinc-200 dark:border-zinc-850"
                               )}
                             />
                             <button
                               onClick={handleSendMessage}
                               className={cn(
                                 "p-2.5 text-white rounded-xl transition-all shadow-xs",
-                                isInternalNote ? "bg-amber-600 hover:bg-amber-700" : "bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                                isInternalNote
+                                  ? "bg-amber-600 hover:bg-amber-700"
+                                  : "bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-800 dark:hover:bg-zinc-700"
                               )}
                             >
                               <Send className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
-
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full p-8 text-center text-zinc-400">
                         <LifeBuoy className="w-10 h-10 mb-3 text-zinc-300" />
-                        <h3 className="font-bold text-xs text-zinc-700 dark:text-zinc-300">لم يتم اختيار أي تذكرة</h3>
-                        <p className="text-[11px] mt-1">اختر تذكرة من القائمة الجانبية أو أنشئ تذكرة جديدة للبدء.</p>
+                        <h3 className="font-bold text-xs text-zinc-700 dark:text-zinc-300">
+                          لم يتم اختيار أي تذكرة
+                        </h3>
+                        <p className="text-[11px] mt-1">
+                          اختر تذكرة من القائمة الجانبية أو أنشئ تذكرة جديدة للبدء.
+                        </p>
                       </div>
                     )}
                   </div>
@@ -1295,25 +1439,39 @@ export default function Support() {
                       <div className="space-y-4">
                         {/* Customer Metadata */}
                         <div className="bg-zinc-50 dark:bg-zinc-950/40 p-3 rounded-xl space-y-2 border">
-                          <span className="text-[10px] font-extrabold text-zinc-400 uppercase">بيانات العميل</span>
+                          <span className="text-[10px] font-extrabold text-zinc-400 uppercase">
+                            بيانات العميل
+                          </span>
                           <div className="text-xs space-y-1">
-                            <p className="text-zinc-900 dark:text-zinc-100 font-bold">{activeTicket.customerName}</p>
-                            <p className="text-zinc-500 dark:text-zinc-400">{activeTicket.customerEmail}</p>
-                            <p className="text-zinc-500 dark:text-zinc-400 font-mono">{activeTicket.contactPhone || "لا يتوفر هاتف"}</p>
-                            <p className="text-zinc-500 dark:text-zinc-400">{activeTicket.companyName}</p>
+                            <p className="text-zinc-900 dark:text-zinc-100 font-bold">
+                              {activeTicket.customerName}
+                            </p>
+                            <p className="text-zinc-500 dark:text-zinc-400">
+                              {activeTicket.customerEmail}
+                            </p>
+                            <p className="text-zinc-500 dark:text-zinc-400 font-mono">
+                              {activeTicket.contactPhone || "لا يتوفر هاتف"}
+                            </p>
+                            <p className="text-zinc-500 dark:text-zinc-400">
+                              {activeTicket.companyName}
+                            </p>
                           </div>
                         </div>
 
                         {/* CRM Linking Actions */}
                         <div className="bg-zinc-50 dark:bg-zinc-950/40 p-3 rounded-xl space-y-3 border">
-                          <span className="text-[10px] font-extrabold text-zinc-400 uppercase">إجراءات الأتمتة السريعة</span>
-                          
+                          <span className="text-[10px] font-extrabold text-zinc-400 uppercase">
+                            إجراءات الأتمتة السريعة
+                          </span>
+
                           <div className="space-y-2">
                             <button
                               onClick={handleConvertToTask}
                               className="w-full text-right flex items-center justify-between text-xs p-2 bg-white dark:bg-zinc-900 border rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/50"
                             >
-                              <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded font-bold">مهمة</span>
+                              <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded font-bold">
+                                مهمة
+                              </span>
                               <span>تحويل لمشروع مرتبط</span>
                             </button>
 
@@ -1321,7 +1479,9 @@ export default function Support() {
                               onClick={handleApproveRefund}
                               className="w-full text-right flex items-center justify-between text-xs p-2 bg-white dark:bg-zinc-900 border rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/50"
                             >
-                              <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded font-bold">صرف مالي</span>
+                              <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded font-bold">
+                                صرف مالي
+                              </span>
                               <span>اعتماد طلب الاسترداد المالي</span>
                             </button>
                           </div>
@@ -1329,8 +1489,10 @@ export default function Support() {
 
                         {/* Project / Assets Linking Display */}
                         <div className="bg-zinc-50 dark:bg-zinc-950/40 p-3 rounded-xl space-y-2.5 border text-xs">
-                          <span className="text-[10px] font-extrabold text-zinc-400 uppercase block">الأصول المرتبطة</span>
-                          
+                          <span className="text-[10px] font-extrabold text-zinc-400 uppercase block">
+                            الأصول المرتبطة
+                          </span>
+
                           <div className="space-y-1.5">
                             <div>
                               <span className="text-zinc-400 text-[10px]">المشروع المربوط:</span>
@@ -1360,31 +1522,44 @@ export default function Support() {
 
                         {/* Customer Health Check */}
                         <div className="p-3 bg-indigo-50/30 dark:bg-indigo-950/10 border border-indigo-100 dark:border-indigo-900/30 rounded-xl space-y-1.5">
-                          <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-extrabold block uppercase">مؤشرات الرعاية (CSAT)</span>
+                          <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-extrabold block uppercase">
+                            مؤشرات الرعاية (CSAT)
+                          </span>
                           <div className="text-xs text-zinc-600 dark:text-zinc-400">
-                            <p>الحالة الضريبية: <span className="font-bold text-green-600">متوافقة (ZATCA)</span></p>
-                            <p>قيمة الصفقات الكلية: <span className="font-bold text-zinc-900 dark:text-zinc-100">45,000 SAR</span></p>
-                            <p>مستوى المخاطر: <span className="font-bold text-green-600">منخفض</span></p>
+                            <p>
+                              الحالة الضريبية:{" "}
+                              <span className="font-bold text-green-600">متوافقة (ZATCA)</span>
+                            </p>
+                            <p>
+                              قيمة الصفقات الكلية:{" "}
+                              <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                                45,000 SAR
+                              </span>
+                            </p>
+                            <p>
+                              مستوى المخاطر: <span className="font-bold text-green-600">منخفض</span>
+                            </p>
                           </div>
                         </div>
                       </div>
                     ) : (
-                      <p className="text-xs text-zinc-400 text-center">لا توجد تذكرة نشطة لعرض تفاصيل الـ CRM.</p>
+                      <p className="text-xs text-zinc-400 text-center">
+                        لا توجد تذكرة نشطة لعرض تفاصيل الـ CRM.
+                      </p>
                     )}
                   </div>
-
                 </div>
               )}
-
 
               {/* ------------------ TAB 2: OMNICHANNEL INBOX / LIVE CHAT ------------------ */}
               {activeTab === "omnichannel" && (
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full overflow-hidden">
-                  
                   {/* Channels selector sidebar */}
                   <div className="lg:col-span-1 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-4">
-                    <h3 className="text-xs font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">صناديق البريد المتكامل</h3>
-                    
+                    <h3 className="text-xs font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">
+                      صناديق البريد المتكامل
+                    </h3>
+
                     <div className="space-y-1.5">
                       <button
                         onClick={() => setActiveChannel("chat")}
@@ -1395,7 +1570,9 @@ export default function Support() {
                             : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100"
                         )}
                       >
-                        <span className="text-[10px] bg-indigo-100 dark:bg-indigo-950/30 text-indigo-800 px-1.5 py-0.5 rounded-full font-bold">نشط</span>
+                        <span className="text-[10px] bg-indigo-100 dark:bg-indigo-950/30 text-indigo-800 px-1.5 py-0.5 rounded-full font-bold">
+                          نشط
+                        </span>
                         <span className="flex items-center gap-2">
                           دردشة الويب المباشرة
                           <MessageSquare className="w-4 h-4 text-indigo-600" />
@@ -1411,7 +1588,9 @@ export default function Support() {
                             : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100"
                         )}
                       >
-                        <span className="text-[10px] bg-green-100 dark:bg-green-950/30 text-green-800 px-1.5 py-0.5 rounded-full font-bold">1</span>
+                        <span className="text-[10px] bg-green-100 dark:bg-green-950/30 text-green-800 px-1.5 py-0.5 rounded-full font-bold">
+                          1
+                        </span>
                         <span className="flex items-center gap-2">
                           تكامل الواتساب (WhatsApp)
                           <CornerDownLeft className="w-4 h-4 text-green-600" />
@@ -1427,7 +1606,9 @@ export default function Support() {
                             : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100"
                         )}
                       >
-                        <span className="text-[10px] bg-blue-100 dark:bg-blue-950/30 text-blue-800 px-1.5 py-0.5 rounded-full font-bold">جديد</span>
+                        <span className="text-[10px] bg-blue-100 dark:bg-blue-950/30 text-blue-800 px-1.5 py-0.5 rounded-full font-bold">
+                          جديد
+                        </span>
                         <span className="flex items-center gap-2">
                           تليجرام بوت (Telegram)
                           <Share2 className="w-4 h-4 text-blue-500" />
@@ -1443,7 +1624,9 @@ export default function Support() {
                             : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100"
                         )}
                       >
-                        <span className="text-[10px] bg-purple-100 dark:bg-purple-950/30 text-purple-800 px-1.5 py-0.5 rounded-full font-bold">0</span>
+                        <span className="text-[10px] bg-purple-100 dark:bg-purple-950/30 text-purple-800 px-1.5 py-0.5 rounded-full font-bold">
+                          0
+                        </span>
                         <span className="flex items-center gap-2">
                           صندوق البريد الإلكتروني (Email)
                           <FileText className="w-4 h-4 text-purple-600" />
@@ -1462,9 +1645,14 @@ export default function Support() {
                           />
                           <div className="w-9 h-5 bg-zinc-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-350 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
                         </label>
-                        <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">الرد الآلي ومساعد الذكاء الاصطناعي (AI Bot)</span>
+                        <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                          الرد الآلي ومساعد الذكاء الاصطناعي (AI Bot)
+                        </span>
                       </div>
-                      <p className="text-[10px] text-zinc-500 text-right leading-relaxed">عند التفعيل، يقوم مساعد الذكاء الاصطناعي بصياغة ردود فورية مستنداً إلى قاعدة المعرفة والوثائق التقنية المتاحة لديه.</p>
+                      <p className="text-[10px] text-zinc-500 text-right leading-relaxed">
+                        عند التفعيل، يقوم مساعد الذكاء الاصطناعي بصياغة ردود فورية مستنداً إلى قاعدة
+                        المعرفة والوثائق التقنية المتاحة لديه.
+                      </p>
                     </div>
                   </div>
 
@@ -1472,8 +1660,15 @@ export default function Support() {
                   <div className="lg:col-span-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 flex flex-col h-full overflow-hidden">
                     <div className="p-4 border-b bg-zinc-50 dark:bg-zinc-900/40 flex items-center justify-between">
                       <div className="text-right">
-                        <h3 className="text-xs font-bold text-zinc-900 dark:text-white">محاكي المحادثات المتعددة</h3>
-                        <p className="text-[10px] text-zinc-500">القناة النشطة الحالية: <span className="font-bold text-indigo-600 dark:text-indigo-400 capitalize">{activeChannel}</span></p>
+                        <h3 className="text-xs font-bold text-zinc-900 dark:text-white">
+                          محاكي المحادثات المتعددة
+                        </h3>
+                        <p className="text-[10px] text-zinc-500">
+                          القناة النشطة الحالية:{" "}
+                          <span className="font-bold text-indigo-600 dark:text-indigo-400 capitalize">
+                            {activeChannel}
+                          </span>
+                        </p>
                       </div>
                       <span className="flex items-center gap-1.5 text-xs text-green-600 font-bold bg-green-50 dark:bg-green-950/30 px-2 py-1 rounded-full">
                         <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping" />
@@ -1482,19 +1677,27 @@ export default function Support() {
                     </div>
 
                     <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-zinc-50/30 dark:bg-zinc-950/10">
-                      <div className="flex justify-center text-[10px] text-zinc-400">تحديثات متزامنة في الوقت الفعلي</div>
-                      
+                      <div className="flex justify-center text-[10px] text-zinc-400">
+                        تحديثات متزامنة في الوقت الفعلي
+                      </div>
+
                       {activeChannel === "chat" && (
                         <>
                           <div className="flex gap-2 max-w-[80%] mr-0 ml-auto flex-row">
                             <div className="p-3 bg-white dark:bg-zinc-900 border rounded-2xl rounded-tr-none text-xs text-right">
-                              مرحباً، أواجه صعوبة في العثور على القيود السنوية للإقفال، هل من دليل سريع؟
+                              مرحباً، أواجه صعوبة في العثور على القيود السنوية للإقفال، هل من دليل
+                              سريع؟
                             </div>
                           </div>
                           <div className="flex gap-2 max-w-[80%] mr-auto ml-0 flex-row-reverse">
                             <div className="p-3 bg-indigo-50/80 dark:bg-indigo-900/20 text-indigo-900 dark:text-indigo-400 border border-indigo-200/50 rounded-2xl rounded-tl-none text-xs text-right">
-                              <span className="text-[9px] text-indigo-600 font-extrabold block mb-1">المجيب الذكي تلقائياً:</span>
-                              بناءً على قاعدة المعرفة لدينا، يمكنك موازنة وإقفال القيود السنوية في لوحة المحاسبة عن طريق التأكد من تسوية البنوك والمطابقات أولاً، ثم توليد ميزان المراجعة قبل الإقفال والضغط على "إجراء قيد الإقفال السنوي".
+                              <span className="text-[9px] text-indigo-600 font-extrabold block mb-1">
+                                المجيب الذكي تلقائياً:
+                              </span>
+                              بناءً على قاعدة المعرفة لدينا، يمكنك موازنة وإقفال القيود السنوية في
+                              لوحة المحاسبة عن طريق التأكد من تسوية البنوك والمطابقات أولاً، ثم
+                              توليد ميزان المراجعة قبل الإقفال والضغط على "إجراء قيد الإقفال
+                              السنوي".
                             </div>
                           </div>
                         </>
@@ -1504,23 +1707,30 @@ export default function Support() {
                         <>
                           <div className="flex gap-2 max-w-[80%] mr-0 ml-auto flex-row">
                             <div className="p-3 bg-white dark:bg-zinc-900 border rounded-2xl rounded-tr-none text-xs text-right">
-                              أهلاً، هل يمكنني طلب استرجاع مبلغ الفاتورة التكرارية؟ تم سحبها مرتين بالخطأ.
+                              أهلاً، هل يمكنني طلب استرجاع مبلغ الفاتورة التكرارية؟ تم سحبها مرتين
+                              بالخطأ.
                             </div>
                           </div>
                           <div className="flex gap-2 max-w-[80%] mr-auto ml-0 flex-row-reverse">
                             <div className="p-3 bg-zinc-900 text-white dark:bg-zinc-800 rounded-2xl rounded-tl-none text-xs text-right">
-                              أهلاً بك. تم استلام طلبك وجاري مراجعته من قبل بندر المطيري، يمكنك تتبع الطلب عبر التذكرة رقم #T-1001. سنقوم بإبلاغك حال الموافقة لإصدار إشعار دائن فوري.
+                              أهلاً بك. تم استلام طلبك وجاري مراجعته من قبل بندر المطيري، يمكنك تتبع
+                              الطلب عبر التذكرة رقم #T-1001. سنقوم بإبلاغك حال الموافقة لإصدار إشعار
+                              دائن فوري.
                             </div>
                           </div>
                         </>
                       )}
 
                       {activeChannel === "telegram" && (
-                        <div className="text-center text-zinc-400 text-xs p-8">لا توجد رسائل نشطة على قناة تليجرام حالياً.</div>
+                        <div className="text-center text-zinc-400 text-xs p-8">
+                          لا توجد رسائل نشطة على قناة تليجرام حالياً.
+                        </div>
                       )}
 
                       {activeChannel === "email" && (
-                        <div className="text-center text-zinc-400 text-xs p-8">كل رسائل البريد الإلكتروني مأرشفة ومربوطة بالتذاكر بنجاح.</div>
+                        <div className="text-center text-zinc-400 text-xs p-8">
+                          كل رسائل البريد الإلكتروني مأرشفة ومربوطة بالتذاكر بنجاح.
+                        </div>
                       )}
                     </div>
 
@@ -1535,10 +1745,8 @@ export default function Support() {
                       </button>
                     </div>
                   </div>
-
                 </div>
               )}
-
 
               {/* ------------------ TAB 3: CUSTOMER PORTAL SIMULATOR ------------------ */}
               {activeTab === "portal" && (
@@ -1547,24 +1755,37 @@ export default function Support() {
                   <div className="bg-zinc-900 text-white p-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-ping" />
-                      <span className="text-xs font-bold">بوابة العميل الرقمية (محاكاة حساب العميل)</span>
+                      <span className="text-xs font-bold">
+                        بوابة العميل الرقمية (محاكاة حساب العميل)
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => setPortalView("home")}
-                        className={cn("px-2.5 py-1 text-[11px] rounded transition", portalView === "home" ? "bg-white/10" : "text-zinc-400 hover:text-white")}
+                        className={cn(
+                          "px-2.5 py-1 text-[11px] rounded transition",
+                          portalView === "home" ? "bg-white/10" : "text-zinc-400 hover:text-white"
+                        )}
                       >
                         الرئيسية
                       </button>
                       <button
                         onClick={() => setPortalView("tickets")}
-                        className={cn("px-2.5 py-1 text-[11px] rounded transition", portalView === "tickets" ? "bg-white/10" : "text-zinc-400 hover:text-white")}
+                        className={cn(
+                          "px-2.5 py-1 text-[11px] rounded transition",
+                          portalView === "tickets"
+                            ? "bg-white/10"
+                            : "text-zinc-400 hover:text-white"
+                        )}
                       >
                         تذاكري
                       </button>
                       <button
                         onClick={() => setPortalView("kb")}
-                        className={cn("px-2.5 py-1 text-[11px] rounded transition", portalView === "kb" ? "bg-white/10" : "text-zinc-400 hover:text-white")}
+                        className={cn(
+                          "px-2.5 py-1 text-[11px] rounded transition",
+                          portalView === "kb" ? "bg-white/10" : "text-zinc-400 hover:text-white"
+                        )}
                       >
                         دليل المعرفة
                       </button>
@@ -1579,13 +1800,17 @@ export default function Support() {
 
                   {/* Portal body */}
                   <div className="flex-1 overflow-y-auto p-6 bg-white dark:bg-zinc-900">
-                    
                     {portalView === "home" && (
                       <div className="space-y-6">
                         <div className="text-center max-w-xl mx-auto space-y-2.5 py-4">
-                          <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">مرحباً بك في مركز رعاية عملاء مدارج</h2>
-                          <p className="text-xs text-zinc-500 leading-relaxed">ابحث في قاعدة المعرفة عن حلول سريعة لمشاكلك الضريبية والمالية، أو ارفع تذكرة دعم وسيتولى فريقنا الفني مساعدتك فوراً.</p>
-                          
+                          <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
+                            مرحباً بك في مركز رعاية عملاء مدارج
+                          </h2>
+                          <p className="text-xs text-zinc-500 leading-relaxed">
+                            ابحث في قاعدة المعرفة عن حلول سريعة لمشاكلك الضريبية والمالية، أو ارفع
+                            تذكرة دعم وسيتولى فريقنا الفني مساعدتك فوراً.
+                          </p>
+
                           <div className="relative max-w-md mx-auto mt-2">
                             <Search className="absolute right-3 top-3 w-4 h-4 text-zinc-400" />
                             <input
@@ -1600,22 +1825,41 @@ export default function Support() {
 
                         {/* Portal Quick Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="p-4 border rounded-xl bg-zinc-50 hover:bg-zinc-100/50 transition cursor-pointer" onClick={() => setPortalView("new_ticket")}>
+                          <div
+                            className="p-4 border rounded-xl bg-zinc-50 hover:bg-zinc-100/50 transition cursor-pointer"
+                            onClick={() => setPortalView("new_ticket")}
+                          >
                             <HelpCircle className="w-5 h-5 text-indigo-600 mb-2" />
                             <h4 className="text-xs font-bold text-zinc-900">إنشاء طلب جديد</h4>
-                            <p className="text-[10px] text-zinc-500 mt-1">ارسل استفسارك أو مشكلتك الفنية لفريق الدعم المتخصص.</p>
-                          </div>
-                          
-                          <div className="p-4 border rounded-xl bg-zinc-50 hover:bg-zinc-100/50 transition cursor-pointer" onClick={() => setPortalView("tickets")}>
-                            <Clock className="w-5 h-5 text-amber-600 mb-2" />
-                            <h4 className="text-xs font-bold text-zinc-900">تتبع الطلبات القائمة</h4>
-                            <p className="text-[10px] text-zinc-500 mt-1">تابع تقدم حلول تذاكرك السابقة والردود المحدثة عليها.</p>
+                            <p className="text-[10px] text-zinc-500 mt-1">
+                              ارسل استفسارك أو مشكلتك الفنية لفريق الدعم المتخصص.
+                            </p>
                           </div>
 
-                          <div className="p-4 border rounded-xl bg-zinc-50 hover:bg-zinc-100/50 transition cursor-pointer" onClick={() => setPortalView("kb")}>
+                          <div
+                            className="p-4 border rounded-xl bg-zinc-50 hover:bg-zinc-100/50 transition cursor-pointer"
+                            onClick={() => setPortalView("tickets")}
+                          >
+                            <Clock className="w-5 h-5 text-amber-600 mb-2" />
+                            <h4 className="text-xs font-bold text-zinc-900">
+                              تتبع الطلبات القائمة
+                            </h4>
+                            <p className="text-[10px] text-zinc-500 mt-1">
+                              تابع تقدم حلول تذاكرك السابقة والردود المحدثة عليها.
+                            </p>
+                          </div>
+
+                          <div
+                            className="p-4 border rounded-xl bg-zinc-50 hover:bg-zinc-100/50 transition cursor-pointer"
+                            onClick={() => setPortalView("kb")}
+                          >
                             <BookOpen className="w-5 h-5 text-green-600 mb-2" />
-                            <h4 className="text-xs font-bold text-zinc-900">الربط الضريبي والزكاة</h4>
-                            <p className="text-[10px] text-zinc-500 mt-1">تصفح أدلة استخدام الربط وتوليد فواتير ZATCA المتوافقة.</p>
+                            <h4 className="text-xs font-bold text-zinc-900">
+                              الربط الضريبي والزكاة
+                            </h4>
+                            <p className="text-[10px] text-zinc-500 mt-1">
+                              تصفح أدلة استخدام الربط وتوليد فواتير ZATCA المتوافقة.
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -1623,21 +1867,35 @@ export default function Support() {
 
                     {portalView === "tickets" && (
                       <div className="space-y-4">
-                        <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">تذاكر الدعم والطلبات الخاصة بك</h3>
-                        
+                        <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                          تذاكر الدعم والطلبات الخاصة بك
+                        </h3>
+
                         <div className="border rounded-xl divide-y">
                           {tickets.map((t) => (
-                            <div key={t.id} className="p-4 flex items-center justify-between text-xs hover:bg-zinc-50 transition">
+                            <div
+                              key={t.id}
+                              className="p-4 flex items-center justify-between text-xs hover:bg-zinc-50 transition"
+                            >
                               <div className="flex items-center gap-3">
-                                <span className="font-mono text-zinc-400 font-bold">{t.ticketNumber}</span>
+                                <span className="font-mono text-zinc-400 font-bold">
+                                  {t.ticketNumber}
+                                </span>
                                 <div>
                                   <h4 className="font-bold text-zinc-800">{t.category}</h4>
-                                  <p className="text-[10px] text-zinc-500">مفتوحة بتاريخ {new Date(t.createdAt).toLocaleDateString("ar-SA")}</p>
+                                  <p className="text-[10px] text-zinc-500">
+                                    مفتوحة بتاريخ{" "}
+                                    {new Date(t.createdAt).toLocaleDateString("ar-SA")}
+                                  </p>
                                 </div>
                               </div>
                               <div className="flex items-center gap-3">
-                                <span className="px-2 py-0.5 text-[10px] bg-indigo-50 text-indigo-700 font-semibold rounded-full">{t.assignedAgent}</span>
-                                <span className="px-2 py-0.5 text-[10px] bg-green-50 text-green-700 font-bold rounded">{t.status === "open" ? "نشط" : "قيد المعالجة"}</span>
+                                <span className="px-2 py-0.5 text-[10px] bg-indigo-50 text-indigo-700 font-semibold rounded-full">
+                                  {t.assignedAgent}
+                                </span>
+                                <span className="px-2 py-0.5 text-[10px] bg-green-50 text-green-700 font-bold rounded">
+                                  {t.status === "open" ? "نشط" : "قيد المعالجة"}
+                                </span>
                               </div>
                             </div>
                           ))}
@@ -1647,14 +1905,20 @@ export default function Support() {
 
                     {portalView === "kb" && (
                       <div className="space-y-4">
-                        <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">أدلة ووثائق المساعدة الذاتية</h3>
-                        
+                        <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                          أدلة ووثائق المساعدة الذاتية
+                        </h3>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {kbArticles.map((art) => (
                             <div key={art.id} className="p-4 border rounded-xl space-y-2">
-                              <span className="text-[9px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded font-extrabold">{art.category}</span>
+                              <span className="text-[9px] bg-green-100 text-green-800 px-1.5 py-0.5 rounded font-extrabold">
+                                {art.category}
+                              </span>
                               <h4 className="text-xs font-bold text-zinc-900">{art.title}</h4>
-                              <p className="text-[11px] text-zinc-500 leading-relaxed truncate">{art.content}</p>
+                              <p className="text-[11px] text-zinc-500 leading-relaxed truncate">
+                                {art.content}
+                              </p>
                             </div>
                           ))}
                         </div>
@@ -1663,36 +1927,56 @@ export default function Support() {
 
                     {portalView === "new_ticket" && (
                       <div className="max-w-lg mx-auto space-y-4">
-                        <h3 className="text-sm font-bold text-zinc-900">إنشاء تذكرة دعم فني جديدة للعميل</h3>
-                        
+                        <h3 className="text-sm font-bold text-zinc-900">
+                          إنشاء تذكرة دعم فني جديدة للعميل
+                        </h3>
+
                         <div className="space-y-3">
                           <div>
-                            <label className="block text-xs font-bold text-zinc-700 mb-1">الاسم الكامل</label>
+                            <label className="block text-xs font-bold text-zinc-700 mb-1">
+                              الاسم الكامل
+                            </label>
                             <input
                               type="text"
                               value={newTicketData.customerName}
-                              onChange={(e) => setNewTicketData(prev => ({ ...prev, customerName: e.target.value }))}
+                              onChange={(e) =>
+                                setNewTicketData((prev) => ({
+                                  ...prev,
+                                  customerName: e.target.value,
+                                }))
+                              }
                               placeholder="أدخل اسمك الكريم"
                               className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 focus:outline-none"
                             />
                           </div>
 
                           <div>
-                            <label className="block text-xs font-bold text-zinc-700 mb-1">البريد الإلكتروني للرد والمتابعة</label>
+                            <label className="block text-xs font-bold text-zinc-700 mb-1">
+                              البريد الإلكتروني للرد والمتابعة
+                            </label>
                             <input
                               type="email"
                               value={newTicketData.customerEmail}
-                              onChange={(e) => setNewTicketData(prev => ({ ...prev, customerEmail: e.target.value }))}
+                              onChange={(e) =>
+                                setNewTicketData((prev) => ({
+                                  ...prev,
+                                  customerEmail: e.target.value,
+                                }))
+                              }
                               placeholder="yourname@domain.com"
                               className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 focus:outline-none"
                             />
                           </div>
 
                           <div>
-                            <label className="block text-xs font-bold text-zinc-700 mb-1">فئة المشكلة أو الدعم المطلوب</label>
+                            <label className="block text-xs font-bold text-zinc-700 mb-1">
+                              فئة المشكلة أو الدعم المطلوب
+                            </label>
                             <select
                               value={newTicketData.category}
-                              onChange={(e) => setNewTicketData(prev => ({ ...prev, category: e.target.value }))}
+                              onChange={(e) =>
+                                setNewTicketData((prev) => ({ ...prev, category: e.target.value }))
+                              }
                               className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 focus:outline-none"
                             >
                               <option value="Technical Support">مشكلة فنية أو برمجية</option>
@@ -1703,11 +1987,15 @@ export default function Support() {
                           </div>
 
                           <div>
-                            <label className="block text-xs font-bold text-zinc-700 mb-1">شرح مفصل للاستفسار أو المشكلة الفنية</label>
+                            <label className="block text-xs font-bold text-zinc-700 mb-1">
+                              شرح مفصل للاستفسار أو المشكلة الفنية
+                            </label>
                             <textarea
                               rows={4}
                               value={newTicketData.text}
-                              onChange={(e) => setNewTicketData(prev => ({ ...prev, text: e.target.value }))}
+                              onChange={(e) =>
+                                setNewTicketData((prev) => ({ ...prev, text: e.target.value }))
+                              }
                               placeholder="يرجى كتابة كل التفاصيل والخطوات اللازمة لإعادة إظهار المشكلة لمساعدتنا على حلها سريعاً..."
                               className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 focus:outline-none"
                             />
@@ -1722,13 +2010,12 @@ export default function Support() {
                         </div>
                       </div>
                     )}
-
                   </div>
 
                   {/* Floating Client Webchat widget Simulator button */}
                   <div className="absolute bottom-6 left-6 z-25">
                     <button
-                      onClick={() => setPortalChatOpen(prev => !prev)}
+                      onClick={() => setPortalChatOpen((prev) => !prev)}
                       className="p-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg flex items-center gap-2"
                     >
                       <MessageSquare className="w-5 h-5" />
@@ -1740,31 +2027,42 @@ export default function Support() {
                   {portalChatOpen && (
                     <div className="absolute bottom-20 left-6 w-80 bg-white border dark:bg-zinc-900 dark:border-zinc-800 rounded-2xl shadow-2xl flex flex-col h-[400px] z-30 text-right overflow-hidden border-indigo-200">
                       <div className="bg-indigo-600 text-white p-3 flex items-center justify-between">
-                        <span className="text-xs font-bold">مساعد مدارج الذكي (AI Support Bot)</span>
-                        <button onClick={() => setPortalChatOpen(false)} className="text-white hover:text-zinc-200">✕</button>
+                        <span className="text-xs font-bold">
+                          مساعد مدارج الذكي (AI Support Bot)
+                        </span>
+                        <button
+                          onClick={() => setPortalChatOpen(false)}
+                          className="text-white hover:text-zinc-200"
+                        >
+                          ✕
+                        </button>
                       </div>
-                      
+
                       {/* Chat screen */}
                       <div className="flex-1 p-3 overflow-y-auto space-y-3 bg-zinc-50">
                         <div className="p-2.5 bg-indigo-50 text-indigo-900 border text-[11px] rounded-xl rounded-tl-none">
-                          مرحباً! أنا مساعد مدارج الذكي لخدمة العملاء. كيف يمكنني مساعدتك اليوم بخصوص نظام الفوترة أو المحاسبة أو الربط الضريبي؟
+                          مرحباً! أنا مساعد مدارج الذكي لخدمة العملاء. كيف يمكنني مساعدتك اليوم
+                          بخصوص نظام الفوترة أو المحاسبة أو الربط الضريبي؟
                         </div>
 
                         {/* Customer simulated conversation */}
-                        {tickets[0] && tickets[0].messages.slice(1).map((m, idx) => (
-                          <div
-                            key={idx}
-                            className={cn(
-                              "p-2.5 text-[11px] rounded-xl max-w-[90%] border",
-                              m.sender === "customer"
-                                ? "bg-white text-zinc-800 rounded-tr-none mr-0 ml-auto"
-                                : "bg-indigo-50 text-indigo-900 border-indigo-150 rounded-tl-none mr-auto ml-0"
-                            )}
-                          >
-                            <span className="text-[9px] font-bold block mb-0.5 text-zinc-500">{m.senderName}</span>
-                            {m.text}
-                          </div>
-                        ))}
+                        {tickets[0] &&
+                          tickets[0].messages.slice(1).map((m, idx) => (
+                            <div
+                              key={idx}
+                              className={cn(
+                                "p-2.5 text-[11px] rounded-xl max-w-[90%] border",
+                                m.sender === "customer"
+                                  ? "bg-white text-zinc-800 rounded-tr-none mr-0 ml-auto"
+                                  : "bg-indigo-50 text-indigo-900 border-indigo-150 rounded-tl-none mr-auto ml-0"
+                              )}
+                            >
+                              <span className="text-[9px] font-bold block mb-0.5 text-zinc-500">
+                                {m.senderName}
+                              </span>
+                              {m.text}
+                            </div>
+                          ))}
                       </div>
 
                       {/* Input */}
@@ -1788,15 +2086,12 @@ export default function Support() {
                       </div>
                     </div>
                   )}
-
                 </div>
               )}
-
 
               {/* ------------------ TAB 4: KNOWLEDGE BASE (KB) ------------------ */}
               {activeTab === "kb" && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full overflow-hidden">
-                  
                   {/* Left Column: Manage articles */}
                   <div className="lg:col-span-1 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-4 flex flex-col h-full">
                     <div className="flex items-center justify-between border-b pb-2">
@@ -1807,15 +2102,22 @@ export default function Support() {
                         <Plus className="w-3.5 h-3.5" />
                         مقال جديد
                       </button>
-                      <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">مقالات الدعم المعرفية</span>
+                      <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                        مقالات الدعم المعرفية
+                      </span>
                     </div>
 
                     <div className="flex-1 overflow-y-auto space-y-2">
                       {kbArticles.length === 0 ? (
-                        <p className="text-xs text-zinc-400 text-center py-8">لا تتوفر مقالات حالياً.</p>
+                        <p className="text-xs text-zinc-400 text-center py-8">
+                          لا تتوفر مقالات حالياً.
+                        </p>
                       ) : (
                         kbArticles.map((art) => (
-                          <div key={art.id} className="p-3 bg-zinc-50 dark:bg-zinc-950/40 rounded-xl border text-right space-y-2 relative">
+                          <div
+                            key={art.id}
+                            className="p-3 bg-zinc-50 dark:bg-zinc-950/40 rounded-xl border text-right space-y-2 relative"
+                          >
                             <div className="flex items-center justify-between">
                               <button
                                 onClick={() => handleDeleteArticle(art.id)}
@@ -1824,13 +2126,21 @@ export default function Support() {
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
-                              <span className="text-[9px] bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 px-1.5 py-0.5 rounded font-extrabold">{art.category}</span>
+                              <span className="text-[9px] bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 px-1.5 py-0.5 rounded font-extrabold">
+                                {art.category}
+                              </span>
                             </div>
-                            <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate">{art.title}</h4>
-                            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate leading-relaxed">{art.content}</p>
+                            <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                              {art.title}
+                            </h4>
+                            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate leading-relaxed">
+                              {art.content}
+                            </p>
                             <div className="flex items-center justify-between text-[10px] text-zinc-400 mt-2 border-t pt-1.5">
                               <span>مشاهدات: {art.views || 0}</span>
-                              <span>تحديث: {new Date(art.updatedAt).toLocaleDateString("ar-SA")}</span>
+                              <span>
+                                تحديث: {new Date(art.updatedAt).toLocaleDateString("ar-SA")}
+                              </span>
                             </div>
                           </div>
                         ))
@@ -1841,17 +2151,23 @@ export default function Support() {
                   {/* Right Column: AI Knowledge Base Writer helper */}
                   <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 space-y-4 h-full overflow-y-auto text-right">
                     <div className="flex items-center gap-2 justify-end text-zinc-800 dark:text-zinc-200 border-b pb-2">
-                      <span className="text-xs font-bold">توليد وثيقة معرفية بالذكاء الاصطناعي (AI Document Generator)</span>
+                      <span className="text-xs font-bold">
+                        توليد وثيقة معرفية بالذكاء الاصطناعي (AI Document Generator)
+                      </span>
                       <Sparkles className="w-4 h-4 text-indigo-500" />
                     </div>
 
                     <div className="space-y-4">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">فئة المقال الجديد</label>
+                          <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                            فئة المقال الجديد
+                          </label>
                           <select
                             value={newArticleData.category}
-                            onChange={(e) => setNewArticleData((prev) => ({ ...prev, category: e.target.value }))}
+                            onChange={(e) =>
+                              setNewArticleData((prev) => ({ ...prev, category: e.target.value }))
+                            }
                             className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
                           >
                             <option value="الربط الفني">الربط الفني والزكاة</option>
@@ -1862,11 +2178,15 @@ export default function Support() {
                         </div>
 
                         <div>
-                          <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">عنوان المقال التعليمي المطلوب</label>
+                          <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                            عنوان المقال التعليمي المطلوب
+                          </label>
                           <input
                             type="text"
                             value={newArticleData.title}
-                            onChange={(e) => setNewArticleData((prev) => ({ ...prev, title: e.target.value }))}
+                            onChange={(e) =>
+                              setNewArticleData((prev) => ({ ...prev, title: e.target.value }))
+                            }
                             placeholder="مثال: كيفية إدخال أصول المنشأة السنوية..."
                             className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
                           />
@@ -1878,22 +2198,30 @@ export default function Support() {
                         disabled={aiGeneratingArticle || !newArticleData.title}
                         className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 shadow-xs"
                       >
-                        {aiGeneratingArticle ? "جاري صياغة المقال والحل الفني..." : "صياغة المقال المتكامل بالذكاء الاصطناعي"}
+                        {aiGeneratingArticle
+                          ? "جاري صياغة المقال والحل الفني..."
+                          : "صياغة المقال المتكامل بالذكاء الاصطناعي"}
                         <Sparkles className="w-4 h-4" />
                       </button>
 
                       {newArticleData.content && (
                         <div className="space-y-2 border-t pt-4">
-                          <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">محتوى المقال التوليدي المقترح:</label>
+                          <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                            محتوى المقال التوليدي المقترح:
+                          </label>
                           <textarea
                             rows={10}
                             value={newArticleData.content}
-                            onChange={(e) => setNewArticleData((prev) => ({ ...prev, content: e.target.value }))}
+                            onChange={(e) =>
+                              setNewArticleData((prev) => ({ ...prev, content: e.target.value }))
+                            }
                             className="w-full p-4 text-xs font-mono border rounded-xl bg-zinc-50 dark:bg-zinc-950 focus:outline-none leading-relaxed"
                           />
                           <div className="flex gap-2 justify-end">
                             <button
-                              onClick={() => setNewArticleData(prev => ({ ...prev, content: "" }))}
+                              onClick={() =>
+                                setNewArticleData((prev) => ({ ...prev, content: "" }))
+                              }
                               className="px-4 py-1.5 border rounded-lg text-xs hover:bg-zinc-50"
                             >
                               مسح المسودة
@@ -1909,57 +2237,81 @@ export default function Support() {
                       )}
                     </div>
                   </div>
-
                 </div>
               )}
-
 
               {/* ------------------ TAB 5: ANALYTICS & REPORTS ------------------ */}
               {activeTab === "analytics" && (
                 <div className="space-y-6 h-full overflow-y-auto pb-8">
-                  
                   {/* KPI overview row */}
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     <div className="p-4 bg-white dark:bg-zinc-900 border rounded-xl text-right">
-                      <span className="text-[10px] text-zinc-400 font-extrabold uppercase">إجمالي تذاكر الدعم</span>
-                      <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">{totalTickets}</h3>
+                      <span className="text-[10px] text-zinc-400 font-extrabold uppercase">
+                        إجمالي تذاكر الدعم
+                      </span>
+                      <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mt-1">
+                        {totalTickets}
+                      </h3>
                     </div>
 
                     <div className="p-4 bg-white dark:bg-zinc-900 border rounded-xl text-right">
-                      <span className="text-[10px] text-zinc-400 font-extrabold uppercase">تذاكر مفتوحة حالياً</span>
+                      <span className="text-[10px] text-zinc-400 font-extrabold uppercase">
+                        تذاكر مفتوحة حالياً
+                      </span>
                       <h3 className="text-xl font-bold text-green-600 mt-1">{openTicketsCount}</h3>
                     </div>
 
                     <div className="p-4 bg-white dark:bg-zinc-900 border rounded-xl text-right">
-                      <span className="text-[10px] text-zinc-400 font-extrabold uppercase">تذاكر قيد المعالجة</span>
-                      <h3 className="text-xl font-bold text-amber-600 mt-1">{pendingTicketsCount}</h3>
+                      <span className="text-[10px] text-zinc-400 font-extrabold uppercase">
+                        تذاكر قيد المعالجة
+                      </span>
+                      <h3 className="text-xl font-bold text-amber-600 mt-1">
+                        {pendingTicketsCount}
+                      </h3>
                     </div>
 
                     <div className="p-4 bg-white dark:bg-zinc-900 border rounded-xl text-right">
-                      <span className="text-[10px] text-zinc-400 font-extrabold uppercase">نسبة التزام SLAs</span>
+                      <span className="text-[10px] text-zinc-400 font-extrabold uppercase">
+                        نسبة التزام SLAs
+                      </span>
                       <h3 className="text-xl font-bold text-indigo-600 mt-1">{slaCompliance}%</h3>
                     </div>
 
                     <div className="p-4 bg-white dark:bg-zinc-900 border rounded-xl text-right">
-                      <span className="text-[10px] text-zinc-400 font-extrabold uppercase">تذاكر محلولة تلقائياً بالـ Bot</span>
+                      <span className="text-[10px] text-zinc-400 font-extrabold uppercase">
+                        تذاكر محلولة تلقائياً بالـ Bot
+                      </span>
                       <h3 className="text-xl font-bold text-purple-600 mt-1">42%</h3>
                     </div>
                   </div>
 
                   {/* Charts Grid */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    
                     {/* SLA compliance bar */}
                     <div className="p-5 bg-white dark:bg-zinc-900 border rounded-xl space-y-3">
-                      <h3 className="text-xs font-bold text-zinc-800 dark:text-zinc-200 text-right">توزيع التذاكر حسب الأولوية ومستوى الاستجابة</h3>
+                      <h3 className="text-xs font-bold text-zinc-800 dark:text-zinc-200 text-right">
+                        توزيع التذاكر حسب الأولوية ومستوى الاستجابة
+                      </h3>
                       <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart
                             data={[
-                              { priority: "منخفضة", count: tickets.filter(t => t.priority === "low").length || 1 },
-                              { priority: "متوسطة", count: tickets.filter(t => t.priority === "medium").length || 2 },
-                              { priority: "عالية", count: tickets.filter(t => t.priority === "high").length || 1 },
-                              { priority: "قصوى", count: tickets.filter(t => t.priority === "urgent").length || 1 },
+                              {
+                                priority: "منخفضة",
+                                count: tickets.filter((t) => t.priority === "low").length || 1,
+                              },
+                              {
+                                priority: "متوسطة",
+                                count: tickets.filter((t) => t.priority === "medium").length || 2,
+                              },
+                              {
+                                priority: "عالية",
+                                count: tickets.filter((t) => t.priority === "high").length || 1,
+                              },
+                              {
+                                priority: "قصوى",
+                                count: tickets.filter((t) => t.priority === "urgent").length || 1,
+                              },
                             ]}
                             margin={{ top: 10, right: 10, left: 10, bottom: 5 }}
                           >
@@ -1969,7 +2321,10 @@ export default function Support() {
                             <Tooltip />
                             <Bar dataKey="count" fill="#4f46e5" radius={[4, 4, 0, 0]}>
                               {tickets.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={SLAColors[index % SLAColors.length]} />
+                                <Cell
+                                  key={`cell-${index}`}
+                                  fill={SLAColors[index % SLAColors.length]}
+                                />
                               ))}
                             </Bar>
                           </BarChart>
@@ -1979,7 +2334,9 @@ export default function Support() {
 
                     {/* Customer Satisfaction Pie */}
                     <div className="p-5 bg-white dark:bg-zinc-900 border rounded-xl space-y-3">
-                      <h3 className="text-xs font-bold text-zinc-800 dark:text-zinc-200 text-right">مؤشرات رضا العملاء وتنبؤات CSAT</h3>
+                      <h3 className="text-xs font-bold text-zinc-800 dark:text-zinc-200 text-right">
+                        مؤشرات رضا العملاء وتنبؤات CSAT
+                      </h3>
                       <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
@@ -1988,13 +2345,18 @@ export default function Support() {
                               cx="50%"
                               cy="50%"
                               labelLine={false}
-                              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                              label={({ name, percent }) =>
+                                `${name} ${(percent * 100).toFixed(0)}%`
+                              }
                               outerRadius={80}
                               fill="#8884d8"
                               dataKey="count"
                             >
                               {satisfactionData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={SLAColors[index % SLAColors.length]} />
+                                <Cell
+                                  key={`cell-${index}`}
+                                  fill={SLAColors[index % SLAColors.length]}
+                                />
                               ))}
                             </Pie>
                             <Tooltip />
@@ -2003,23 +2365,25 @@ export default function Support() {
                         </ResponsiveContainer>
                       </div>
                     </div>
-
                   </div>
                 </div>
               )}
-
 
               {/* ------------------ TAB 6: SLA & ESCALATION RULES (AUTOMATION CONTROL CENTER) ------------------ */}
               {activeTab === "automations" && (
                 <div className="space-y-6 h-full overflow-y-auto pb-8 text-right">
                   <div className="p-5 bg-white dark:bg-zinc-900 border rounded-xl space-y-4">
                     <div>
-                      <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">محرك قواعد التشغيل والأتمتة (Workflows & SLAs Engine)</h3>
-                      <p className="text-xs text-zinc-500 mt-0.5">تهيئة شروط إحالة التذاكر وتنبيهات تجاوز المهلة المحددة لحل المشاكل الفنية والمالية للعملاء.</p>
+                      <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                        محرك قواعد التشغيل والأتمتة (Workflows & SLAs Engine)
+                      </h3>
+                      <p className="text-xs text-zinc-500 mt-0.5">
+                        تهيئة شروط إحالة التذاكر وتنبيهات تجاوز المهلة المحددة لحل المشاكل الفنية
+                        والمالية للعملاء.
+                      </p>
                     </div>
 
                     <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                      
                       {/* Rule 1 */}
                       <div className="py-3.5 flex items-center justify-between text-xs gap-4 flex-row-reverse">
                         <div className="flex items-center gap-3">
@@ -2027,11 +2391,18 @@ export default function Support() {
                             <ShieldAlert className="w-4 h-4" />
                           </div>
                           <div>
-                            <h4 className="font-bold text-zinc-900 dark:text-zinc-100">التذاكر ذات الأولوية القصوى (Urgent SLAs)</h4>
-                            <p className="text-[10px] text-zinc-500 mt-0.5">تنبيه المدير المباشر عبر الجوال، الإحالة التلقائية لأخصائي أول، وبدء مؤقت الاستجابة (15 دقيقة).</p>
+                            <h4 className="font-bold text-zinc-900 dark:text-zinc-100">
+                              التذاكر ذات الأولوية القصوى (Urgent SLAs)
+                            </h4>
+                            <p className="text-[10px] text-zinc-500 mt-0.5">
+                              تنبيه المدير المباشر عبر الجوال، الإحالة التلقائية لأخصائي أول، وبدء
+                              مؤقت الاستجابة (15 دقيقة).
+                            </p>
                           </div>
                         </div>
-                        <span className="text-[10px] bg-green-50 text-green-700 font-bold px-2 py-0.5 rounded-full">مفعلة ونشطة</span>
+                        <span className="text-[10px] bg-green-50 text-green-700 font-bold px-2 py-0.5 rounded-full">
+                          مفعلة ونشطة
+                        </span>
                       </div>
 
                       {/* Rule 2 */}
@@ -2041,11 +2412,18 @@ export default function Support() {
                             <DollarSign className="w-4 h-4" />
                           </div>
                           <div>
-                            <h4 className="font-bold text-zinc-900 dark:text-zinc-100">أتمتة الفواتير والاسترداد (Refund Flows)</h4>
-                            <p className="text-[10px] text-zinc-500 mt-0.5">عند اعتماد طلب استرداد مالي، يتم إصدار إشعار دائن (Credit Note) تجريبي وإرساله آلياً للمحاسبة.</p>
+                            <h4 className="font-bold text-zinc-900 dark:text-zinc-100">
+                              أتمتة الفواتير والاسترداد (Refund Flows)
+                            </h4>
+                            <p className="text-[10px] text-zinc-500 mt-0.5">
+                              عند اعتماد طلب استرداد مالي، يتم إصدار إشعار دائن (Credit Note) تجريبي
+                              وإرساله آلياً للمحاسبة.
+                            </p>
                           </div>
                         </div>
-                        <span className="text-[10px] bg-green-50 text-green-700 font-bold px-2 py-0.5 rounded-full">مفعلة ونشطة</span>
+                        <span className="text-[10px] bg-green-50 text-green-700 font-bold px-2 py-0.5 rounded-full">
+                          مفعلة ونشطة
+                        </span>
                       </div>
 
                       {/* Rule 3 */}
@@ -2055,18 +2433,23 @@ export default function Support() {
                             <Bot className="w-4 h-4" />
                           </div>
                           <div>
-                            <h4 className="font-bold text-zinc-900 dark:text-zinc-100">الفرز والتصنيف الآلي بالذكاء الاصطناعي</h4>
-                            <p className="text-[10px] text-zinc-500 mt-0.5">تحليل لغة العميل واستخراج فئة التذكرة، مستوى الإلحاح، وتحليل مشاعر العميل بمجرد الإرسال.</p>
+                            <h4 className="font-bold text-zinc-900 dark:text-zinc-100">
+                              الفرز والتصنيف الآلي بالذكاء الاصطناعي
+                            </h4>
+                            <p className="text-[10px] text-zinc-500 mt-0.5">
+                              تحليل لغة العميل واستخراج فئة التذكرة، مستوى الإلحاح، وتحليل مشاعر
+                              العميل بمجرد الإرسال.
+                            </p>
                           </div>
                         </div>
-                        <span className="text-[10px] bg-green-50 text-green-700 font-bold px-2 py-0.5 rounded-full">مفعلة ونشطة</span>
+                        <span className="text-[10px] bg-green-50 text-green-700 font-bold px-2 py-0.5 rounded-full">
+                          مفعلة ونشطة
+                        </span>
                       </div>
-
                     </div>
                   </div>
                 </div>
               )}
-
             </motion.div>
           </AnimatePresence>
         )}
@@ -2074,36 +2457,54 @@ export default function Support() {
 
       {/* ----------------- MODAL: CREATE NEW TICKET ----------------- */}
       {showNewTicketModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" dir="rtl">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          dir="rtl"
+        >
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white dark:bg-zinc-900 border dark:border-zinc-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl text-right flex flex-col max-h-[90vh]"
           >
             <div className="p-4 border-b flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/60">
-              <h3 className="text-sm font-bold text-zinc-900 dark:text-white">إنشاء تذكرة دعم فني جديدة</h3>
-              <button onClick={() => setShowNewTicketModal(false)} className="text-zinc-400 hover:text-zinc-600">✕</button>
+              <h3 className="text-sm font-bold text-zinc-900 dark:text-white">
+                إنشاء تذكرة دعم فني جديدة
+              </h3>
+              <button
+                onClick={() => setShowNewTicketModal(false)}
+                className="text-zinc-400 hover:text-zinc-600"
+              >
+                ✕
+              </button>
             </div>
 
             <div className="p-6 space-y-4 overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">اسم العميل</label>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    اسم العميل
+                  </label>
                   <input
                     type="text"
                     value={newTicketData.customerName}
-                    onChange={(e) => setNewTicketData((prev) => ({ ...prev, customerName: e.target.value }))}
+                    onChange={(e) =>
+                      setNewTicketData((prev) => ({ ...prev, customerName: e.target.value }))
+                    }
                     placeholder="سليمان الأحمد..."
                     className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">البريد الإلكتروني للعميل</label>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    البريد الإلكتروني للعميل
+                  </label>
                   <input
                     type="email"
                     value={newTicketData.customerEmail}
-                    onChange={(e) => setNewTicketData((prev) => ({ ...prev, customerEmail: e.target.value }))}
+                    onChange={(e) =>
+                      setNewTicketData((prev) => ({ ...prev, customerEmail: e.target.value }))
+                    }
                     placeholder="customer@domain.com"
                     className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
                   />
@@ -2112,22 +2513,30 @@ export default function Support() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">اسم المنشأة/الشركة</label>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    اسم المنشأة/الشركة
+                  </label>
                   <input
                     type="text"
                     value={newTicketData.companyName}
-                    onChange={(e) => setNewTicketData((prev) => ({ ...prev, companyName: e.target.value }))}
+                    onChange={(e) =>
+                      setNewTicketData((prev) => ({ ...prev, companyName: e.target.value }))
+                    }
                     placeholder="مؤسسة التقنية للتوريد..."
                     className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">هاتف الاتصال</label>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    هاتف الاتصال
+                  </label>
                   <input
                     type="text"
                     value={newTicketData.contactPhone}
-                    onChange={(e) => setNewTicketData((prev) => ({ ...prev, contactPhone: e.target.value }))}
+                    onChange={(e) =>
+                      setNewTicketData((prev) => ({ ...prev, contactPhone: e.target.value }))
+                    }
                     placeholder="050XXXXXXXX"
                     className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
                   />
@@ -2136,10 +2545,14 @@ export default function Support() {
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">أولوية التذكرة</label>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    أولوية التذكرة
+                  </label>
                   <select
                     value={newTicketData.priority}
-                    onChange={(e) => setNewTicketData((prev) => ({ ...prev, priority: e.target.value as any }))}
+                    onChange={(e) =>
+                      setNewTicketData((prev) => ({ ...prev, priority: e.target.value as any }))
+                    }
                     className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
                   >
                     <option value="low">منخفضة</option>
@@ -2150,10 +2563,14 @@ export default function Support() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">تصنيف المشكلة</label>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    تصنيف المشكلة
+                  </label>
                   <select
                     value={newTicketData.category}
-                    onChange={(e) => setNewTicketData((prev) => ({ ...prev, category: e.target.value }))}
+                    onChange={(e) =>
+                      setNewTicketData((prev) => ({ ...prev, category: e.target.value }))
+                    }
                     className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
                   >
                     <option value="Technical Support">مشكلة فنية أو برمجية</option>
@@ -2164,10 +2581,14 @@ export default function Support() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">الإحالة للقسم</label>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    الإحالة للقسم
+                  </label>
                   <select
                     value={newTicketData.department}
-                    onChange={(e) => setNewTicketData((prev) => ({ ...prev, department: e.target.value }))}
+                    onChange={(e) =>
+                      setNewTicketData((prev) => ({ ...prev, department: e.target.value }))
+                    }
                     className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
                   >
                     <option value="IT Support">قسم الدعم الفني والبرمجي</option>
@@ -2179,30 +2600,42 @@ export default function Support() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">ربط بمشروع من الـ CRM</label>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    ربط بمشروع من الـ CRM
+                  </label>
                   <select
                     value={newTicketData.linkedProject}
-                    onChange={(e) => setNewTicketData((prev) => ({ ...prev, linkedProject: e.target.value }))}
+                    onChange={(e) =>
+                      setNewTicketData((prev) => ({ ...prev, linkedProject: e.target.value }))
+                    }
                     className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
                   >
                     <option value="">-- اختر مشروعاً لربطه تلقائياً --</option>
-                    {availableProjects.map(p => (
-                      <option key={p.id} value={p.name || p.title}>{p.name || p.title}</option>
+                    {availableProjects.map((p) => (
+                      <option key={p.id} value={p.name || p.title}>
+                        {p.name || p.title}
+                      </option>
                     ))}
                     <option value="مشروع تطوير ZATCA">مشروع تطوير ربط ZATCA التجاري</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">ربط بفاتورة مالية</label>
+                  <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                    ربط بفاتورة مالية
+                  </label>
                   <select
                     value={newTicketData.linkedInvoice}
-                    onChange={(e) => setNewTicketData((prev) => ({ ...prev, linkedInvoice: e.target.value }))}
+                    onChange={(e) =>
+                      setNewTicketData((prev) => ({ ...prev, linkedInvoice: e.target.value }))
+                    }
                     className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
                   >
                     <option value="">-- اختر فاتورة لربطها --</option>
-                    {availableInvoices.map(inv => (
-                      <option key={inv.id} value={inv.invoiceNumber || inv.id}>{inv.invoiceNumber || inv.id} ({inv.total || inv.amount} SAR)</option>
+                    {availableInvoices.map((inv) => (
+                      <option key={inv.id} value={inv.invoiceNumber || inv.id}>
+                        {inv.invoiceNumber || inv.id} ({inv.total || inv.amount} SAR)
+                      </option>
                     ))}
                     <option value="INV-2026-004">INV-2026-004 (15,000 SAR)</option>
                   </select>
@@ -2210,7 +2643,9 @@ export default function Support() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">شرح مفصل للمشكلة</label>
+                <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                  شرح مفصل للمشكلة
+                </label>
                 <textarea
                   rows={4}
                   value={newTicketData.text}
@@ -2241,41 +2676,70 @@ export default function Support() {
 
       {/* ----------------- SHORTCUTS DIALOG ----------------- */}
       {showShortcutsInfo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" dir="rtl">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          dir="rtl"
+        >
           <div className="bg-white dark:bg-zinc-900 border dark:border-zinc-800 rounded-2xl w-full max-w-sm p-6 text-right space-y-4 shadow-2xl">
             <h3 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2 justify-end">
               دليل اختصارات لوحة المفاتيح
               <Zap className="w-4 h-4 text-indigo-500 animate-bounce" />
             </h3>
-            
+
             <div className="space-y-2.5 text-xs">
               <div className="flex items-center justify-between border-b pb-2">
-                <kbd className="bg-zinc-100 dark:bg-zinc-800 border px-2 py-0.5 rounded font-mono shadow-xs text-[11px]">C</kbd>
-                <span className="text-zinc-600 dark:text-zinc-400">إنشاء تذكرة دعم جديدة فوراً</span>
+                <kbd className="bg-zinc-100 dark:bg-zinc-800 border px-2 py-0.5 rounded font-mono shadow-xs text-[11px]">
+                  C
+                </kbd>
+                <span className="text-zinc-600 dark:text-zinc-400">
+                  إنشاء تذكرة دعم جديدة فوراً
+                </span>
               </div>
               <div className="flex items-center justify-between border-b pb-2">
-                <kbd className="bg-zinc-100 dark:bg-zinc-800 border px-2 py-0.5 rounded font-mono shadow-xs text-[11px]">S</kbd>
+                <kbd className="bg-zinc-100 dark:bg-zinc-800 border px-2 py-0.5 rounded font-mono shadow-xs text-[11px]">
+                  S
+                </kbd>
                 <span className="text-zinc-600 dark:text-zinc-400">فتح/إغلاق دليل الاختصارات</span>
               </div>
               <div className="flex items-center justify-between border-b pb-2">
-                <kbd className="bg-zinc-100 dark:bg-zinc-800 border px-2 py-0.5 rounded font-mono shadow-xs text-[11px]">1</kbd>
-                <span className="text-zinc-600 dark:text-zinc-400">الانتقال لمساحة عمل الأخصائي والتذاكر</span>
+                <kbd className="bg-zinc-100 dark:bg-zinc-800 border px-2 py-0.5 rounded font-mono shadow-xs text-[11px]">
+                  1
+                </kbd>
+                <span className="text-zinc-600 dark:text-zinc-400">
+                  الانتقال لمساحة عمل الأخصائي والتذاكر
+                </span>
               </div>
               <div className="flex items-center justify-between border-b pb-2">
-                <kbd className="bg-zinc-100 dark:bg-zinc-800 border px-2 py-0.5 rounded font-mono shadow-xs text-[11px]">2</kbd>
-                <span className="text-zinc-600 dark:text-zinc-400">الانتقال للبريد الوارد المتكامل</span>
+                <kbd className="bg-zinc-100 dark:bg-zinc-800 border px-2 py-0.5 rounded font-mono shadow-xs text-[11px]">
+                  2
+                </kbd>
+                <span className="text-zinc-600 dark:text-zinc-400">
+                  الانتقال للبريد الوارد المتكامل
+                </span>
               </div>
               <div className="flex items-center justify-between border-b pb-2">
-                <kbd className="bg-zinc-100 dark:bg-zinc-800 border px-2 py-0.5 rounded font-mono shadow-xs text-[11px]">3</kbd>
-                <span className="text-zinc-600 dark:text-zinc-400">الانتقال لبوابة الخدمة الذاتية للعملاء</span>
+                <kbd className="bg-zinc-100 dark:bg-zinc-800 border px-2 py-0.5 rounded font-mono shadow-xs text-[11px]">
+                  3
+                </kbd>
+                <span className="text-zinc-600 dark:text-zinc-400">
+                  الانتقال لبوابة الخدمة الذاتية للعملاء
+                </span>
               </div>
               <div className="flex items-center justify-between border-b pb-2">
-                <kbd className="bg-zinc-100 dark:bg-zinc-800 border px-2 py-0.5 rounded font-mono shadow-xs text-[11px]">4</kbd>
-                <span className="text-zinc-600 dark:text-zinc-400">الانتقال لقسم صياغة ونشر أدلة المساعدة</span>
+                <kbd className="bg-zinc-100 dark:bg-zinc-800 border px-2 py-0.5 rounded font-mono shadow-xs text-[11px]">
+                  4
+                </kbd>
+                <span className="text-zinc-600 dark:text-zinc-400">
+                  الانتقال لقسم صياغة ونشر أدلة المساعدة
+                </span>
               </div>
               <div className="flex items-center justify-between">
-                <kbd className="bg-zinc-100 dark:bg-zinc-800 border px-2 py-0.5 rounded font-mono shadow-xs text-[11px]">5</kbd>
-                <span className="text-zinc-600 dark:text-zinc-400">الانتقال لقسم التحليلات وخرائط الأداء</span>
+                <kbd className="bg-zinc-100 dark:bg-zinc-800 border px-2 py-0.5 rounded font-mono shadow-xs text-[11px]">
+                  5
+                </kbd>
+                <span className="text-zinc-600 dark:text-zinc-400">
+                  الانتقال لقسم التحليلات وخرائط الأداء
+                </span>
               </div>
             </div>
 
@@ -2288,7 +2752,6 @@ export default function Support() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

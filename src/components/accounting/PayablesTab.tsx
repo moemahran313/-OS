@@ -1,8 +1,17 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
-import { 
-  Building2, Plus, Search, FileSpreadsheet, ArrowDownLeft, TrendingDown, 
-  AlertTriangle, DollarSign, ArrowRightLeft, ShieldCheck, CheckCircle 
+import {
+  Building2,
+  Plus,
+  Search,
+  FileSpreadsheet,
+  ArrowDownLeft,
+  TrendingDown,
+  AlertTriangle,
+  DollarSign,
+  ArrowRightLeft,
+  ShieldCheck,
+  CheckCircle,
 } from "lucide-react";
 
 interface Supplier {
@@ -28,29 +37,98 @@ interface Bill {
 
 export default function PayablesTab({
   accounts = [],
-  activeBranchId = "all"
+  activeBranchId = "all",
 }: {
   accounts?: any[];
   activeBranchId?: string;
 }) {
   const [suppliers, setSuppliers] = useState<Supplier[]>([
-    { id: "supp-1", nameAr: "مؤسسة التوريدات اللوجستية", nameEn: "Logistics Supplies Est.", vatNumber: "310334455600003", status: "Active", balance: 65000, unpaidBillsCount: 2 },
-    { id: "supp-2", nameAr: "شركة الخرسانة المتكاملة", nameEn: "Integrated Concrete Co.", vatNumber: "300445566700003", status: "Active", balance: 140000, unpaidBillsCount: 3 },
-    { id: "supp-3", nameAr: "عالم التقنية للاستيراد", nameEn: "Import Tech World Ltd.", vatNumber: "310556677800003", status: "Active", balance: 0, unpaidBillsCount: 0 },
-    { id: "supp-4", nameAr: "مصنع الرياض لقطع الغيار", nameEn: "Riyadh Spare Parts Factory", vatNumber: "300667788900003", status: "Active", balance: 35000, unpaidBillsCount: 1 },
+    {
+      id: "supp-1",
+      nameAr: "مؤسسة التوريدات اللوجستية",
+      nameEn: "Logistics Supplies Est.",
+      vatNumber: "310334455600003",
+      status: "Active",
+      balance: 65000,
+      unpaidBillsCount: 2,
+    },
+    {
+      id: "supp-2",
+      nameAr: "شركة الخرسانة المتكاملة",
+      nameEn: "Integrated Concrete Co.",
+      vatNumber: "300445566700003",
+      status: "Active",
+      balance: 140000,
+      unpaidBillsCount: 3,
+    },
+    {
+      id: "supp-3",
+      nameAr: "عالم التقنية للاستيراد",
+      nameEn: "Import Tech World Ltd.",
+      vatNumber: "310556677800003",
+      status: "Active",
+      balance: 0,
+      unpaidBillsCount: 0,
+    },
+    {
+      id: "supp-4",
+      nameAr: "مصنع الرياض لقطع الغيار",
+      nameEn: "Riyadh Spare Parts Factory",
+      vatNumber: "300667788900003",
+      status: "Active",
+      balance: 35000,
+      unpaidBillsCount: 1,
+    },
   ]);
 
   const [bills, setBills] = useState<Bill[]>([
-    { id: "bill-201", billNo: "BILL-2026-081", supplierName: "مؤسسة التوريدات اللوجستية", date: "2026-05-01", dueDate: "2026-06-01", amount: 40000, tax: 6000, status: "Unpaid" },
-    { id: "bill-202", billNo: "BILL-2026-082", supplierName: "شركة الخرسانة المتكاملة", date: "2026-04-10", dueDate: "2026-05-10", amount: 90000, tax: 13500, status: "Overdue" },
-    { id: "bill-203", billNo: "BILL-2026-083", supplierName: "مصنع الرياض لقطع الغيار", date: "2026-05-12", dueDate: "2026-06-12", amount: 35000, tax: 5250, status: "Unpaid" },
+    {
+      id: "bill-201",
+      billNo: "BILL-2026-081",
+      supplierName: "مؤسسة التوريدات اللوجستية",
+      date: "2026-05-01",
+      dueDate: "2026-06-01",
+      amount: 40000,
+      tax: 6000,
+      status: "Unpaid",
+    },
+    {
+      id: "bill-202",
+      billNo: "BILL-2026-082",
+      supplierName: "شركة الخرسانة المتكاملة",
+      date: "2026-04-10",
+      dueDate: "2026-05-10",
+      amount: 90000,
+      tax: 13500,
+      status: "Overdue",
+    },
+    {
+      id: "bill-203",
+      billNo: "BILL-2026-083",
+      supplierName: "مصنع الرياض لقطع الغيار",
+      date: "2026-05-12",
+      dueDate: "2026-06-12",
+      amount: 35000,
+      tax: 5250,
+      status: "Unpaid",
+    },
   ]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddSupplier, setShowAddSupplier] = useState(false);
-  const [newSupplier, setNewSupplier] = useState({ nameAr: "", nameEn: "", vatNumber: "", status: "Active" as const });
+  const [newSupplier, setNewSupplier] = useState({
+    nameAr: "",
+    nameEn: "",
+    vatNumber: "",
+    status: "Active" as const,
+  });
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentForm, setPaymentForm] = useState({ supplierId: "", amount: "", method: "Bank Transfer", description: "" });
+  const [paymentForm, setPaymentForm] = useState({
+    supplierId: "",
+    amount: "",
+    method: "Bank Transfer",
+    description: "",
+  });
 
   const handleAddSupplier = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +140,7 @@ export default function PayablesTab({
       vatNumber: newSupplier.vatNumber || undefined,
       status: newSupplier.status,
       balance: 0,
-      unpaidBillsCount: 0
+      unpaidBillsCount: 0,
     };
     setSuppliers([...suppliers, added]);
     setNewSupplier({ nameAr: "", nameEn: "", vatNumber: "", status: "Active" });
@@ -74,27 +152,30 @@ export default function PayablesTab({
     const amt = parseFloat(paymentForm.amount);
     if (!paymentForm.supplierId || isNaN(amt) || amt <= 0) return;
 
-    setSuppliers(prev => prev.map(s => {
-      if (s.id === paymentForm.supplierId) {
-        return { ...s, balance: Math.max(0, s.balance - amt) };
-      }
-      return s;
-    }));
+    setSuppliers((prev) =>
+      prev.map((s) => {
+        if (s.id === paymentForm.supplierId) {
+          return { ...s, balance: Math.max(0, s.balance - amt) };
+        }
+        return s;
+      })
+    );
 
     setShowPaymentModal(false);
     setPaymentForm({ supplierId: "", amount: "", method: "Bank Transfer", description: "" });
   };
 
-  const filteredSuppliers = suppliers.filter(s => 
-    s.nameAr.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    s.nameEn.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredSuppliers = suppliers.filter(
+    (s) =>
+      s.nameAr.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.nameEn.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const totalBalance = suppliers.reduce((sum, s) => sum + s.balance, 0);
-  const currentAging = Math.round(totalBalance * 0.40);
+  const currentAging = Math.round(totalBalance * 0.4);
   const aging30 = Math.round(totalBalance * 0.35);
   const aging60 = Math.round(totalBalance * 0.15);
-  const aging90Plus = Math.round(totalBalance * 0.10);
+  const aging90Plus = Math.round(totalBalance * 0.1);
 
   return (
     <div className="space-y-6 text-right">
@@ -105,14 +186,16 @@ export default function PayablesTab({
             <div className="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center dark:bg-rose-950/50 dark:text-rose-400">
               <DollarSign className="w-5 h-5" />
             </div>
-            <span className="text-[10px] text-zinc-400 font-bold uppercase">إجمالي الذمم الدائنة</span>
+            <span className="text-[10px] text-zinc-400 font-bold uppercase">
+              إجمالي الذمم الدائنة
+            </span>
           </div>
           <div className="mt-4">
             <h4 className="text-xl font-black text-zinc-900 dark:text-zinc-100 font-mono">
               {totalBalance.toLocaleString()} ر.س
             </h4>
             <p className="text-[10px] text-zinc-400 font-bold mt-1">
-              مستحقة لـ {suppliers.filter(s => s.balance > 0).length} موردين نشطين
+              مستحقة لـ {suppliers.filter((s) => s.balance > 0).length} موردين نشطين
             </p>
           </div>
         </div>
@@ -122,13 +205,17 @@ export default function PayablesTab({
             <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center dark:bg-amber-950/50 dark:text-amber-400">
               <AlertTriangle className="w-5 h-5" />
             </div>
-            <span className="text-[10px] text-zinc-400 font-bold uppercase">فواتير مستحقة الدفع قريباً</span>
+            <span className="text-[10px] text-zinc-400 font-bold uppercase">
+              فواتير مستحقة الدفع قريباً
+            </span>
           </div>
           <div className="mt-4">
             <h4 className="text-xl font-black text-amber-600 font-mono">
               {(totalBalance * 0.6).toLocaleString()} ر.س
             </h4>
-            <p className="text-[10px] text-zinc-400 font-bold mt-1">تستحق خلال الـ 14 يوماً القادمة</p>
+            <p className="text-[10px] text-zinc-400 font-bold mt-1">
+              تستحق خلال الـ 14 يوماً القادمة
+            </p>
           </div>
         </div>
 
@@ -137,13 +224,17 @@ export default function PayablesTab({
             <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center dark:bg-emerald-950/50 dark:text-emerald-400">
               <CheckCircle className="w-5 h-5" />
             </div>
-            <span className="text-[10px] text-zinc-400 font-bold uppercase">المدفوعات المسددة هذا الشهر</span>
+            <span className="text-[10px] text-zinc-400 font-bold uppercase">
+              المدفوعات المسددة هذا الشهر
+            </span>
           </div>
           <div className="mt-4">
             <h4 className="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
               315,000 ر.س
             </h4>
-            <p className="text-[10px] text-zinc-400 font-bold mt-1">عبر التحويلات والاعتمادات المستندية</p>
+            <p className="text-[10px] text-zinc-400 font-bold mt-1">
+              عبر التحويلات والاعتمادات المستندية
+            </p>
           </div>
         </div>
 
@@ -152,13 +243,17 @@ export default function PayablesTab({
             <div className="w-10 h-10 bg-zinc-50 text-zinc-600 rounded-xl flex items-center justify-center dark:bg-zinc-800 dark:text-zinc-300">
               <FileSpreadsheet className="w-5 h-5" />
             </div>
-            <span className="text-[10px] text-zinc-400 font-bold uppercase">فواتير شراء قيد الانتظار</span>
+            <span className="text-[10px] text-zinc-400 font-bold uppercase">
+              فواتير شراء قيد الانتظار
+            </span>
           </div>
           <div className="mt-4">
             <h4 className="text-xl font-black text-zinc-950 dark:text-zinc-5 font-mono">
               {bills.length} فواتير معلقة
             </h4>
-            <p className="text-[10px] text-zinc-400 font-bold mt-1">بانتظار مطابقة الفحص والفوترة</p>
+            <p className="text-[10px] text-zinc-400 font-bold mt-1">
+              بانتظار مطابقة الفحص والفوترة
+            </p>
           </div>
         </div>
       </div>
@@ -169,7 +264,9 @@ export default function PayablesTab({
           <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100">
             تقرير أعمار ديون الموردين (Aging Account Payables Summary)
           </h3>
-          <p className="text-[10px] text-zinc-400 font-bold">جدولة مستحقات الموردين لدعم تخطيط التدفق النقدي التشغيلي</p>
+          <p className="text-[10px] text-zinc-400 font-bold">
+            جدولة مستحقات الموردين لدعم تخطيط التدفق النقدي التشغيلي
+          </p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
@@ -221,7 +318,9 @@ export default function PayablesTab({
                 <Building2 className="w-4 h-4 text-rose-500" />
                 سجل الموردين التجاريين (Business Suppliers Register)
               </h3>
-              <p className="text-[10px] text-zinc-400 font-bold">الحسابات الدائنة المخصصة لأستاذ الموردين الفرعي</p>
+              <p className="text-[10px] text-zinc-400 font-bold">
+                الحسابات الدائنة المخصصة لأستاذ الموردين الفرعي
+              </p>
             </div>
 
             <div className="flex gap-2 w-full sm:w-auto">
@@ -258,18 +357,27 @@ export default function PayablesTab({
               </thead>
               <tbody>
                 {filteredSuppliers.map((supp) => (
-                  <tr key={supp.id} className="border-b border-zinc-50 dark:border-zinc-850 hover:bg-zinc-50/20">
+                  <tr
+                    key={supp.id}
+                    className="border-b border-zinc-50 dark:border-zinc-850 hover:bg-zinc-50/20"
+                  >
                     <td className="p-3">
-                      <div className="font-black text-zinc-800 dark:text-zinc-200">{supp.nameAr}</div>
-                      <div className="text-[10px] text-zinc-400 font-mono mt-0.5">{supp.nameEn}</div>
+                      <div className="font-black text-zinc-800 dark:text-zinc-200">
+                        {supp.nameAr}
+                      </div>
+                      <div className="text-[10px] text-zinc-400 font-mono mt-0.5">
+                        {supp.nameEn}
+                      </div>
                     </td>
                     <td className="p-3 font-mono text-zinc-500">{supp.vatNumber || "—"}</td>
                     <td className="p-3">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-black ${
-                        supp.status === "Active" 
-                          ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400" 
-                          : "bg-zinc-100 text-zinc-400"
-                      }`}>
+                      <span
+                        className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-black ${
+                          supp.status === "Active"
+                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400"
+                            : "bg-zinc-100 text-zinc-400"
+                        }`}
+                      >
                         {supp.status === "Active" ? "نشط" : "موقوف"}
                       </span>
                     </td>
@@ -280,9 +388,9 @@ export default function PayablesTab({
                       {supp.balance.toLocaleString()} ر.س
                     </td>
                     <td className="p-3 text-center space-x-1">
-                      <button 
+                      <button
                         onClick={() => {
-                          setPaymentForm(p => ({ ...p, supplierId: supp.id }));
+                          setPaymentForm((p) => ({ ...p, supplierId: supp.id }));
                           setShowPaymentModal(true);
                         }}
                         className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-[10px] font-bold rounded-lg text-rose-600 dark:bg-rose-950/30 dark:text-rose-400"
@@ -304,12 +412,14 @@ export default function PayablesTab({
               <FileSpreadsheet className="w-4 h-4 text-rose-500" />
               أحدث فواتير المشتريات المعلقة
             </h3>
-            <p className="text-[10px] text-zinc-400 font-bold">فواتير مخصصة للصرف تتبع الموازنة الإدارية</p>
+            <p className="text-[10px] text-zinc-400 font-bold">
+              فواتير مخصصة للصرف تتبع الموازنة الإدارية
+            </p>
           </div>
 
           <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
             {bills.map((bill) => (
-              <div 
+              <div
                 key={bill.id}
                 className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-850 p-3 rounded-xl hover:border-zinc-200 dark:hover:border-zinc-800 transition-all space-y-2"
               >
@@ -317,11 +427,13 @@ export default function PayablesTab({
                   <span className="font-mono text-xs font-black text-rose-600 dark:text-rose-400">
                     {bill.billNo}
                   </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
-                    bill.status === "Overdue" 
-                      ? "bg-rose-50 text-rose-600 dark:bg-rose-950/30" 
-                      : "bg-amber-50 text-amber-600 dark:bg-amber-950/30"
-                  }`}>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
+                      bill.status === "Overdue"
+                        ? "bg-rose-50 text-rose-600 dark:bg-rose-950/30"
+                        : "bg-amber-50 text-amber-600 dark:bg-amber-950/30"
+                    }`}
+                  >
                     {bill.status === "Overdue" ? "متأخرة" : "غير مدفوعة"}
                   </span>
                 </div>
@@ -352,12 +464,15 @@ export default function PayablesTab({
             <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
               تسجيل سداد دفعة جديدة لمورد
             </h3>
-            <form onSubmit={handlePaymentSubmit} className="space-y-4 text-xs font-bold text-zinc-700 dark:text-zinc-300">
+            <form
+              onSubmit={handlePaymentSubmit}
+              className="space-y-4 text-xs font-bold text-zinc-700 dark:text-zinc-300"
+            >
               <div className="space-y-1.5">
                 <label>وسيلة الدفع والتمويل</label>
                 <select
                   value={paymentForm.method}
-                  onChange={(e) => setPaymentForm(p => ({ ...p, method: e.target.value }))}
+                  onChange={(e) => setPaymentForm((p) => ({ ...p, method: e.target.value }))}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
                 >
                   <option value="Bank Transfer">تحويل بنكي (Bank Transfer)</option>
@@ -375,7 +490,7 @@ export default function PayablesTab({
                   required
                   placeholder="0.00"
                   value={paymentForm.amount}
-                  onChange={(e) => setPaymentForm(p => ({ ...p, amount: e.target.value }))}
+                  onChange={(e) => setPaymentForm((p) => ({ ...p, amount: e.target.value }))}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
                 />
               </div>
@@ -387,7 +502,7 @@ export default function PayablesTab({
                   required
                   placeholder="مثال: تسوية دفعة الحساب رقم TR-9824"
                   value={paymentForm.description}
-                  onChange={(e) => setPaymentForm(p => ({ ...p, description: e.target.value }))}
+                  onChange={(e) => setPaymentForm((p) => ({ ...p, description: e.target.value }))}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                 />
               </div>
@@ -424,7 +539,10 @@ export default function PayablesTab({
             <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
               إضافة مورد تجاري جديد
             </h3>
-            <form onSubmit={handleAddSupplier} className="space-y-4 text-xs font-bold text-zinc-700 dark:text-zinc-300">
+            <form
+              onSubmit={handleAddSupplier}
+              className="space-y-4 text-xs font-bold text-zinc-700 dark:text-zinc-300"
+            >
               <div className="space-y-1.5">
                 <label>اسم المورد بالعربي</label>
                 <input
@@ -432,7 +550,7 @@ export default function PayablesTab({
                   required
                   placeholder="مثال: شركة تكرير البترول والمصانع"
                   value={newSupplier.nameAr}
-                  onChange={(e) => setNewSupplier(p => ({ ...p, nameAr: e.target.value }))}
+                  onChange={(e) => setNewSupplier((p) => ({ ...p, nameAr: e.target.value }))}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                 />
               </div>
@@ -444,7 +562,7 @@ export default function PayablesTab({
                   required
                   placeholder="E.g. Petroleum Refining Co."
                   value={newSupplier.nameEn}
-                  onChange={(e) => setNewSupplier(p => ({ ...p, nameEn: e.target.value }))}
+                  onChange={(e) => setNewSupplier((p) => ({ ...p, nameEn: e.target.value }))}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                 />
               </div>
@@ -456,7 +574,7 @@ export default function PayablesTab({
                   placeholder="3005XXXXXXXXXXX"
                   maxLength={15}
                   value={newSupplier.vatNumber}
-                  onChange={(e) => setNewSupplier(p => ({ ...p, vatNumber: e.target.value }))}
+                  onChange={(e) => setNewSupplier((p) => ({ ...p, vatNumber: e.target.value }))}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
                 />
               </div>

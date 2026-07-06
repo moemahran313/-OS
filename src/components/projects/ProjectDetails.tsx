@@ -20,7 +20,16 @@ import {
   Send,
   Zap,
 } from "lucide-react";
-import { Project, Task, Milestone, Epic, Resource, Timesheet, ProjectExpense, SubTask } from "../../types/projects";
+import {
+  Project,
+  Task,
+  Milestone,
+  Epic,
+  Resource,
+  Timesheet,
+  ProjectExpense,
+  SubTask,
+} from "../../types/projects";
 import { cn } from "@/src/lib/utils";
 import { toast } from "sonner";
 import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
@@ -33,10 +42,17 @@ interface ProjectDetailsProps {
   onUpdateProject: (updated: Project) => void;
 }
 
-export default function ProjectDetails({ project, language, onBack, onUpdateProject }: ProjectDetailsProps) {
-  const [activeTab, setActiveTab] = useState<"tasks" | "timeline" | "timesheets" | "resources" | "financials">("tasks");
+export default function ProjectDetails({
+  project,
+  language,
+  onBack,
+  onUpdateProject,
+}: ProjectDetailsProps) {
+  const [activeTab, setActiveTab] = useState<
+    "tasks" | "timeline" | "timesheets" | "resources" | "financials"
+  >("tasks");
   const [viewMode, setViewMode] = useState<"list" | "board">("list");
-  
+
   // Modal states
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -55,14 +71,14 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
     actualHours: 0,
     milestoneId: "",
     epicId: "",
-    subTasks: []
+    subTasks: [],
   });
 
   const [newExpense, setNewExpense] = useState<Partial<ProjectExpense>>({
     description: "",
     amount: 0,
     date: new Date().toISOString().split("T")[0],
-    category: "Software License"
+    category: "Software License",
   });
 
   const [newTimesheet, setNewTimesheet] = useState<Partial<Timesheet>>({
@@ -70,19 +86,19 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
     description: "",
     hours: 4,
     date: new Date().toISOString().split("T")[0],
-    assignee: "Lead Architect"
+    assignee: "Lead Architect",
   });
 
   const [newMilestone, setNewMilestone] = useState<Partial<Milestone>>({
     name: "",
     description: "",
     dueDate: new Date().toISOString().split("T")[0],
-    status: "pending"
+    status: "pending",
   });
 
   const [newEpic, setNewEpic] = useState<Partial<Epic>>({
     name: "",
-    description: ""
+    description: "",
   });
 
   const isRtl = language === "ar";
@@ -110,13 +126,20 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
       actualHours: 0,
       milestoneId: newTask.milestoneId || undefined,
       epicId: newTask.epicId || undefined,
-      subTasks: []
+      subTasks: [],
     };
 
     const updatedTasks = [...(project.tasks || []), taskObj];
     onUpdateProject({ ...project, tasks: updatedTasks });
     setShowTaskModal(false);
-    setNewTask({ name: "", description: "", status: "Todo", priority: "Medium", assignee: "Lead Architect", estimatedHours: 8 });
+    setNewTask({
+      name: "",
+      description: "",
+      status: "Todo",
+      priority: "Medium",
+      assignee: "Lead Architect",
+      estimatedHours: 8,
+    });
     toast.success(isRtl ? "تم إضافة المهمة بنجاح" : "Task added successfully");
   };
 
@@ -129,7 +152,9 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
       return t;
     });
     onUpdateProject({ ...project, tasks: updatedTasks });
-    toast.info(isRtl ? `تم تحديث حالة المهمة إلى: ${nextStatus}` : `Task status updated to ${nextStatus}`);
+    toast.info(
+      isRtl ? `تم تحديث حالة المهمة إلى: ${nextStatus}` : `Task status updated to ${nextStatus}`
+    );
   };
 
   // Add Subtask Checklist
@@ -140,7 +165,7 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
         const subs = t.subTasks || [];
         return {
           ...t,
-          subTasks: [...subs, { id: "sub-" + Date.now(), name, completed: false }]
+          subTasks: [...subs, { id: "sub-" + Date.now(), name, completed: false }],
         };
       }
       return t;
@@ -172,7 +197,7 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
       name: newMilestone.name,
       description: newMilestone.description || "",
       dueDate: newMilestone.dueDate || new Date().toISOString().split("T")[0],
-      status: "pending"
+      status: "pending",
     };
     onUpdateProject({ ...project, milestones: [...(project.milestones || []), mileObj] });
     setShowMilestoneModal(false);
@@ -184,7 +209,8 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
   const handleToggleMilestone = (mileId: string) => {
     const updatedMiles = (project.milestones || []).map((m) => {
       if (m.id === mileId) {
-        const nextStatus: "pending" | "completed" = m.status === "completed" ? "pending" : "completed";
+        const nextStatus: "pending" | "completed" =
+          m.status === "completed" ? "pending" : "completed";
         return { ...m, status: nextStatus };
       }
       return m;
@@ -199,7 +225,7 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
     const epicObj: Epic = {
       id: "epic-" + Date.now(),
       name: newEpic.name,
-      description: newEpic.description || ""
+      description: newEpic.description || "",
     };
     onUpdateProject({ ...project, epics: [...(project.epics || []), epicObj] });
     setShowEpicModal(false);
@@ -211,9 +237,11 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
   const handleAddTimesheet = () => {
     if (!newTimesheet.taskId || !newTimesheet.hours) return;
     const matchedTask = project.tasks.find((t) => t.id === newTimesheet.taskId);
-    
+
     // Find cost rate from active resources
-    const matchedResource = project.resources.find((r) => r.name === (newTimesheet.assignee || "Lead Architect"));
+    const matchedResource = project.resources.find(
+      (r) => r.name === (newTimesheet.assignee || "Lead Architect")
+    );
     const costRate = matchedResource ? matchedResource.costRate : 150;
 
     const tsObj: Timesheet = {
@@ -225,13 +253,22 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
       hours: Number(newTimesheet.hours),
       costRate: costRate,
       assignee: newTimesheet.assignee || "Lead Architect",
-      status: "Pending"
+      status: "Pending",
     };
 
     onUpdateProject({ ...project, timesheets: [...(project.timesheets || []), tsObj] });
     setShowTimesheetModal(false);
-    setNewTimesheet({ taskId: "", description: "", hours: 4, date: new Date().toISOString().split("T")[0] });
-    toast.success(isRtl ? "تم تسجيل الوقت بنجاح (بانتظار موافقة المدير)" : "Time logged successfully (Pending Approval)");
+    setNewTimesheet({
+      taskId: "",
+      description: "",
+      hours: 4,
+      date: new Date().toISOString().split("T")[0],
+    });
+    toast.success(
+      isRtl
+        ? "تم تسجيل الوقت بنجاح (بانتظار موافقة المدير)"
+        : "Time logged successfully (Pending Approval)"
+    );
   };
 
   // Approve Timesheet Log (trigges cost re-calculation)
@@ -256,7 +293,9 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
     }
 
     onUpdateProject({ ...project, timesheets: updatedTimesheets, tasks: updatedTasks });
-    toast.success(isRtl ? "تمت الموافقة على سجل الوقت واحتساب التكاليف" : "Timesheet approved & costs updated");
+    toast.success(
+      isRtl ? "تمت الموافقة على سجل الوقت واحتساب التكاليف" : "Timesheet approved & costs updated"
+    );
   };
 
   // Add Expense
@@ -267,13 +306,20 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
       description: newExpense.description,
       amount: Number(newExpense.amount),
       date: newExpense.date || new Date().toISOString().split("T")[0],
-      category: newExpense.category || "General"
+      category: newExpense.category || "General",
     };
 
     onUpdateProject({ ...project, expenses: [...(project.expenses || []), expObj] });
     setShowExpenseModal(false);
-    setNewExpense({ description: "", amount: 0, date: new Date().toISOString().split("T")[0], category: "Software License" });
-    toast.success(isRtl ? "تم تسجيل المصروف في المشروع بنجاح" : "Expense logged in project financial database");
+    setNewExpense({
+      description: "",
+      amount: 0,
+      date: new Date().toISOString().split("T")[0],
+      category: "Software License",
+    });
+    toast.success(
+      isRtl ? "تم تسجيل المصروف في المشروع بنجاح" : "Expense logged in project financial database"
+    );
   };
 
   // BRIDGING: Generate Real Invoice in Accounting Engine
@@ -298,7 +344,7 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
             quantity: 1,
             unitPrice: project.budget,
             taxRate: 15,
-          }
+          },
         ],
         notes: `Generated automatically from Project OS. Connected to Project ID: ${project.id}.`,
         createdAt: new Date().toISOString(),
@@ -306,7 +352,7 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
 
       // Create doc in 'invoices' collection
       await addDoc(collection(db, "invoices"), invoiceData);
-      
+
       toast.success(
         isRtl
           ? "تم توليد فاتورة رسمية بنجاح وربطها بدفتر الأستاذ والقيود!"
@@ -329,29 +375,45 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
           >
             <ArrowLeft className={`w-4 h-4 ${isRtl ? "rotate-180" : ""}`} />
           </button>
-          
+
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-black tracking-widest text-emerald-500 uppercase">
-                {project.billingMethod === "Fixed Price" ? (isRtl ? "سعر ثابت" : "FIXED PRICE") : (isRtl ? "حسب الوقت والمواد" : "TIME & MATERIALS")}
+                {project.billingMethod === "Fixed Price"
+                  ? isRtl
+                    ? "سعر ثابت"
+                    : "FIXED PRICE"
+                  : isRtl
+                    ? "حسب الوقت والمواد"
+                    : "TIME & MATERIALS"}
               </span>
               <span className="text-zinc-300 dark:text-zinc-800">•</span>
-              <span className="text-[10px] font-bold text-zinc-400 font-mono">ID: {project.id}</span>
+              <span className="text-[10px] font-bold text-zinc-400 font-mono">
+                ID: {project.id}
+              </span>
             </div>
-            <h2 className="text-lg font-black text-zinc-900 dark:text-zinc-100 mt-0.5">{project.name}</h2>
+            <h2 className="text-lg font-black text-zinc-900 dark:text-zinc-100 mt-0.5">
+              {project.name}
+            </h2>
           </div>
         </div>
 
         {/* Dynamic Financial Banner summary */}
         <div className="flex items-center gap-6 bg-zinc-50 dark:bg-zinc-900 px-5 py-3 rounded-xl border border-zinc-200/40 dark:border-zinc-800/40 text-xs">
           <div>
-            <span className="text-zinc-500 block">{isRtl ? "ميزانية المشروع" : "Project Budget"}</span>
-            <strong className="text-zinc-900 dark:text-zinc-100 text-sm">{project.budget.toLocaleString()} SAR</strong>
+            <span className="text-zinc-500 block">
+              {isRtl ? "ميزانية المشروع" : "Project Budget"}
+            </span>
+            <strong className="text-zinc-900 dark:text-zinc-100 text-sm">
+              {project.budget.toLocaleString()} SAR
+            </strong>
           </div>
           <div className="h-8 w-[1px] bg-zinc-200 dark:bg-zinc-800" />
           <div>
             <span className="text-zinc-500 block">{isRtl ? "هامش الأرباح" : "Net Profit"}</span>
-            <strong className={cn("text-sm", projectMargin > 0 ? "text-emerald-500" : "text-rose-500")}>
+            <strong
+              className={cn("text-sm", projectMargin > 0 ? "text-emerald-500" : "text-rose-500")}
+            >
               {projectMargin.toLocaleString()} SAR ({marginPct}%)
             </strong>
           </div>
@@ -364,7 +426,9 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
           onClick={() => setActiveTab("tasks")}
           className={cn(
             "pb-3 px-4 border-b-2 transition-all cursor-pointer",
-            activeTab === "tasks" ? "border-emerald-500 text-emerald-500" : "border-transparent text-zinc-400 hover:text-zinc-200"
+            activeTab === "tasks"
+              ? "border-emerald-500 text-emerald-500"
+              : "border-transparent text-zinc-400 hover:text-zinc-200"
           )}
         >
           {isRtl ? "المهام والعمليات" : "Tasks & Checklist"}
@@ -373,7 +437,9 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
           onClick={() => setActiveTab("timeline")}
           className={cn(
             "pb-3 px-4 border-b-2 transition-all cursor-pointer",
-            activeTab === "timeline" ? "border-emerald-500 text-emerald-500" : "border-transparent text-zinc-400 hover:text-zinc-200"
+            activeTab === "timeline"
+              ? "border-emerald-500 text-emerald-500"
+              : "border-transparent text-zinc-400 hover:text-zinc-200"
           )}
         >
           {isRtl ? "المخطط الزمني (Gantt)" : "Gantt Timeline"}
@@ -382,7 +448,9 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
           onClick={() => setActiveTab("timesheets")}
           className={cn(
             "pb-3 px-4 border-b-2 transition-all cursor-pointer",
-            activeTab === "timesheets" ? "border-emerald-500 text-emerald-500" : "border-transparent text-zinc-400 hover:text-zinc-200"
+            activeTab === "timesheets"
+              ? "border-emerald-500 text-emerald-500"
+              : "border-transparent text-zinc-400 hover:text-zinc-200"
           )}
         >
           {isRtl ? "تسجيل وإقرار الساعات" : "Timesheets & Approval"}
@@ -391,7 +459,9 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
           onClick={() => setActiveTab("resources")}
           className={cn(
             "pb-3 px-4 border-b-2 transition-all cursor-pointer",
-            activeTab === "resources" ? "border-emerald-500 text-emerald-500" : "border-transparent text-zinc-400 hover:text-zinc-200"
+            activeTab === "resources"
+              ? "border-emerald-500 text-emerald-500"
+              : "border-transparent text-zinc-400 hover:text-zinc-200"
           )}
         >
           {isRtl ? "الموارد البشرية" : "Team Workload"}
@@ -400,7 +470,9 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
           onClick={() => setActiveTab("financials")}
           className={cn(
             "pb-3 px-4 border-b-2 transition-all cursor-pointer",
-            activeTab === "financials" ? "border-emerald-500 text-emerald-500" : "border-transparent text-zinc-400 hover:text-zinc-200"
+            activeTab === "financials"
+              ? "border-emerald-500 text-emerald-500"
+              : "border-transparent text-zinc-400 hover:text-zinc-200"
           )}
         >
           {isRtl ? "المصروفات والفوترة" : "Financials & Invoice"}
@@ -416,13 +488,23 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setViewMode("list")}
-                  className={cn("px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border", viewMode === "list" ? "bg-zinc-900 border-zinc-800 text-white" : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-900 text-zinc-500")}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border",
+                    viewMode === "list"
+                      ? "bg-zinc-900 border-zinc-800 text-white"
+                      : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-900 text-zinc-500"
+                  )}
                 >
                   {isRtl ? "طريقة القائمة" : "List View"}
                 </button>
                 <button
                   onClick={() => setViewMode("board")}
-                  className={cn("px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border", viewMode === "board" ? "bg-zinc-900 border-zinc-800 text-white" : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-900 text-zinc-500")}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border",
+                    viewMode === "board"
+                      ? "bg-zinc-900 border-zinc-800 text-white"
+                      : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-900 text-zinc-500"
+                  )}
                 >
                   {isRtl ? "لوحة كانبان" : "Kanban Board"}
                 </button>
@@ -458,7 +540,9 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                     <tr>
                       <th className="py-3 px-4 text-left">{isRtl ? "المهمة" : "Task Name"}</th>
                       <th className="py-3 px-4 text-left">{isRtl ? "المسؤول" : "Assignee"}</th>
-                      <th className="py-3 px-4 text-left">{isRtl ? "المحطة / المجموعة" : "Milestone / Epic"}</th>
+                      <th className="py-3 px-4 text-left">
+                        {isRtl ? "المحطة / المجموعة" : "Milestone / Epic"}
+                      </th>
                       <th className="py-3 px-4 text-left">{isRtl ? "الأولوية" : "Priority"}</th>
                       <th className="py-3 px-4 text-left">{isRtl ? "التقدير" : "Est."}</th>
                       <th className="py-3 px-4 text-left">{isRtl ? "الحالة" : "Status"}</th>
@@ -470,11 +554,16 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                       const matchedEpic = project.epics.find((e) => e.id === task.epicId);
 
                       return (
-                        <tr key={task.id} className="hover:bg-zinc-50/40 dark:hover:bg-zinc-900/30 transition-colors">
+                        <tr
+                          key={task.id}
+                          className="hover:bg-zinc-50/40 dark:hover:bg-zinc-900/30 transition-colors"
+                        >
                           <td className="py-3 px-4 font-semibold text-zinc-800 dark:text-zinc-200">
                             <div>
                               <span>{task.name}</span>
-                              <p className="text-[10px] text-zinc-400 font-normal mt-0.5">{task.description}</p>
+                              <p className="text-[10px] text-zinc-400 font-normal mt-0.5">
+                                {task.description}
+                              </p>
                             </div>
                             {/* Inner Subtasks checklist */}
                             <div className="mt-2 space-y-1">
@@ -484,15 +573,25 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                                   onClick={() => handleToggleSubtask(task.id, sub.id)}
                                   className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-medium hover:text-emerald-500 cursor-pointer"
                                 >
-                                  {sub.completed ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> : <Circle className="w-3.5 h-3.5 text-zinc-400" />}
-                                  <span className={sub.completed ? "line-through text-zinc-500" : ""}>{sub.name}</span>
+                                  {sub.completed ? (
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                                  ) : (
+                                    <Circle className="w-3.5 h-3.5 text-zinc-400" />
+                                  )}
+                                  <span
+                                    className={sub.completed ? "line-through text-zinc-500" : ""}
+                                  >
+                                    {sub.name}
+                                  </span>
                                 </button>
                               ))}
                               {/* Quick subtask add */}
                               <div className="flex items-center gap-1.5 mt-1">
                                 <input
                                   type="text"
-                                  placeholder={isRtl ? "إضافة بند فرعي..." : "Add checklist item..."}
+                                  placeholder={
+                                    isRtl ? "إضافة بند فرعي..." : "Add checklist item..."
+                                  }
                                   onKeyDown={(e) => {
                                     if (e.key === "Enter") {
                                       handleAddSubtask(task.id, e.currentTarget.value);
@@ -506,23 +605,51 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                           </td>
                           <td className="py-3 px-4 font-medium text-zinc-500">{task.assignee}</td>
                           <td className="py-3 px-4 font-mono text-[10px] text-zinc-500">
-                            {matchedMile && <span className="bg-blue-500/5 text-blue-500 px-1.5 py-0.5 rounded border border-blue-500/10 block mb-1 text-center">{matchedMile.name}</span>}
-                            {matchedEpic && <span className="bg-purple-500/5 text-purple-500 px-1.5 py-0.5 rounded border border-purple-500/10 block text-center">{matchedEpic.name}</span>}
+                            {matchedMile && (
+                              <span className="bg-blue-500/5 text-blue-500 px-1.5 py-0.5 rounded border border-blue-500/10 block mb-1 text-center">
+                                {matchedMile.name}
+                              </span>
+                            )}
+                            {matchedEpic && (
+                              <span className="bg-purple-500/5 text-purple-500 px-1.5 py-0.5 rounded border border-purple-500/10 block text-center">
+                                {matchedEpic.name}
+                              </span>
+                            )}
                             {!matchedMile && !matchedEpic && "-"}
                           </td>
                           <td className="py-3 px-4">
-                            <span className={cn(
-                              "px-1.5 py-0.5 rounded text-[10px] font-black border",
-                              task.priority === "High" ? "bg-rose-500/5 text-rose-500 border-rose-500/15" : task.priority === "Medium" ? "bg-amber-500/5 text-amber-500 border-amber-500/15" : "bg-blue-500/5 text-blue-500 border-blue-500/15"
-                            )}>
-                              {task.priority === "High" ? (isRtl ? "عالي" : "High") : task.priority === "Medium" ? (isRtl ? "متوسط" : "Medium") : (isRtl ? "منخفض" : "Low")}
+                            <span
+                              className={cn(
+                                "px-1.5 py-0.5 rounded text-[10px] font-black border",
+                                task.priority === "High"
+                                  ? "bg-rose-500/5 text-rose-500 border-rose-500/15"
+                                  : task.priority === "Medium"
+                                    ? "bg-amber-500/5 text-amber-500 border-amber-500/15"
+                                    : "bg-blue-500/5 text-blue-500 border-blue-500/15"
+                              )}
+                            >
+                              {task.priority === "High"
+                                ? isRtl
+                                  ? "عالي"
+                                  : "High"
+                                : task.priority === "Medium"
+                                  ? isRtl
+                                    ? "متوسط"
+                                    : "Medium"
+                                  : isRtl
+                                    ? "منخفض"
+                                    : "Low"}
                             </span>
                           </td>
-                          <td className="py-3 px-4 font-mono text-zinc-500">{task.estimatedHours}h</td>
+                          <td className="py-3 px-4 font-mono text-zinc-500">
+                            {task.estimatedHours}h
+                          </td>
                           <td className="py-3 px-4">
                             <select
                               value={task.status}
-                              onChange={(e) => handleToggleTaskStatus(task.id, e.target.value as Task["status"])}
+                              onChange={(e) =>
+                                handleToggleTaskStatus(task.id, e.target.value as Task["status"])
+                              }
                               className="px-2 py-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-[10px] outline-none"
                             >
                               <option value="Backlog">Backlog</option>
@@ -543,42 +670,69 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
             {/* BOARD VIEW */}
             {viewMode === "board" && (
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                {(["Backlog", "Todo", "In Progress", "Review", "Done"] as Task["status"][]).map((status) => {
-                  const tasksInLane = project.tasks.filter((t) => t.status === status);
-                  return (
-                    <div key={status} className="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-2xl border border-zinc-200/60 dark:border-zinc-900 flex flex-col min-h-[400px] space-y-3">
-                      <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-900 pb-2">
-                        <span className="font-black text-xs text-zinc-700 dark:text-zinc-200 tracking-wider uppercase">{status}</span>
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-900 text-zinc-500">{tasksInLane.length}</span>
-                      </div>
-                      
-                      <div className="flex-1 space-y-2 overflow-y-auto">
-                        {tasksInLane.map((t) => (
-                          <div key={t.id} className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800 shadow-sm hover:border-emerald-500/20 transition-all space-y-2">
-                            <h5 className="font-bold text-xs text-zinc-800 dark:text-zinc-200">{t.name}</h5>
-                            <p className="text-[10px] text-zinc-400 line-clamp-2">{t.description}</p>
-                            <div className="flex items-center justify-between text-[10px] pt-2 border-t border-zinc-100 dark:border-zinc-800/60 text-zinc-500">
-                              <span>{t.assignee}</span>
-                              <span className="font-mono">{t.estimatedHours}h</span>
+                {(["Backlog", "Todo", "In Progress", "Review", "Done"] as Task["status"][]).map(
+                  (status) => {
+                    const tasksInLane = project.tasks.filter((t) => t.status === status);
+                    return (
+                      <div
+                        key={status}
+                        className="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-2xl border border-zinc-200/60 dark:border-zinc-900 flex flex-col min-h-[400px] space-y-3"
+                      >
+                        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-900 pb-2">
+                          <span className="font-black text-xs text-zinc-700 dark:text-zinc-200 tracking-wider uppercase">
+                            {status}
+                          </span>
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-900 text-zinc-500">
+                            {tasksInLane.length}
+                          </span>
+                        </div>
+
+                        <div className="flex-1 space-y-2 overflow-y-auto">
+                          {tasksInLane.map((t) => (
+                            <div
+                              key={t.id}
+                              className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800 shadow-sm hover:border-emerald-500/20 transition-all space-y-2"
+                            >
+                              <h5 className="font-bold text-xs text-zinc-800 dark:text-zinc-200">
+                                {t.name}
+                              </h5>
+                              <p className="text-[10px] text-zinc-400 line-clamp-2">
+                                {t.description}
+                              </p>
+                              <div className="flex items-center justify-between text-[10px] pt-2 border-t border-zinc-100 dark:border-zinc-800/60 text-zinc-500">
+                                <span>{t.assignee}</span>
+                                <span className="font-mono">{t.estimatedHours}h</span>
+                              </div>
+
+                              {/* Fast transition buttons */}
+                              <div className="flex items-center gap-1 pt-1.5 border-t border-zinc-100 dark:border-zinc-800/60">
+                                {status !== "Done" && (
+                                  <button
+                                    onClick={() =>
+                                      handleToggleTaskStatus(
+                                        t.id,
+                                        status === "Backlog"
+                                          ? "Todo"
+                                          : status === "Todo"
+                                            ? "In Progress"
+                                            : status === "In Progress"
+                                              ? "Review"
+                                              : "Done"
+                                      )
+                                    }
+                                    className="w-full text-center py-1 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-500 rounded border border-emerald-500/10 text-[9px] font-bold"
+                                  >
+                                    {isRtl ? "ترقية للحالة التالية" : "Advance →"}
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                            
-                            {/* Fast transition buttons */}
-                            <div className="flex items-center gap-1 pt-1.5 border-t border-zinc-100 dark:border-zinc-800/60">
-                              {status !== "Done" && (
-                                <button
-                                  onClick={() => handleToggleTaskStatus(t.id, status === "Backlog" ? "Todo" : status === "Todo" ? "In Progress" : status === "In Progress" ? "Review" : "Done")}
-                                  className="w-full text-center py-1 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-500 rounded border border-emerald-500/10 text-[9px] font-bold"
-                                >
-                                  {isRtl ? "ترقية للحالة التالية" : "Advance →"}
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  }
+                )}
               </div>
             )}
           </div>
@@ -592,7 +746,9 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                 {isRtl ? "المخطط الزمني للأهداف والمهام" : "Milestones & Tasks Gantt chart"}
               </h3>
               <p className="text-[10px] text-zinc-400">
-                {isRtl ? "يرسم المخطط بشكل ديناميكي بناءً على مواعيد البداية والنهاية." : "Constructed automatically from start and end dates."}
+                {isRtl
+                  ? "يرسم المخطط بشكل ديناميكي بناءً على مواعيد البداية والنهاية."
+                  : "Constructed automatically from start and end dates."}
               </p>
             </div>
 
@@ -611,15 +767,26 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                       onClick={() => handleToggleMilestone(m.id)}
                       className={cn(
                         "absolute -left-[30px] top-1 w-4.5 h-4.5 rounded-full flex items-center justify-center border transition-all cursor-pointer",
-                        m.status === "completed" ? "bg-emerald-500 border-emerald-600 text-white shadow" : "bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700"
+                        m.status === "completed"
+                          ? "bg-emerald-500 border-emerald-600 text-white shadow"
+                          : "bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700"
                       )}
                     >
-                      {m.status === "completed" && <Check className="w-3 h-3 text-white font-black" />}
+                      {m.status === "completed" && (
+                        <Check className="w-3 h-3 text-white font-black" />
+                      )}
                     </button>
-                    
+
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
                       <div>
-                        <p className={cn("font-bold text-xs", m.status === "completed" ? "text-zinc-400 line-through" : "text-zinc-850 dark:text-zinc-200")}>
+                        <p
+                          className={cn(
+                            "font-bold text-xs",
+                            m.status === "completed"
+                              ? "text-zinc-400 line-through"
+                              : "text-zinc-850 dark:text-zinc-200"
+                          )}
+                        >
                           {m.name}
                         </p>
                         <p className="text-[10px] text-zinc-400">{m.description}</p>
@@ -643,21 +810,41 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
               <div className="space-y-2 pt-2">
                 {project.tasks.map((task) => (
                   <div key={task.id} className="flex items-center gap-4 text-xs">
-                    <span className="w-28 shrink-0 font-semibold text-zinc-700 dark:text-zinc-300 line-clamp-1">{task.name}</span>
+                    <span className="w-28 shrink-0 font-semibold text-zinc-700 dark:text-zinc-300 line-clamp-1">
+                      {task.name}
+                    </span>
                     <div className="flex-1 bg-zinc-50 dark:bg-zinc-900 p-1.5 rounded-lg border border-zinc-100 dark:border-zinc-900 flex items-center">
                       <div className="w-full h-4 bg-zinc-100 dark:bg-zinc-850 rounded overflow-hidden relative">
                         {/* Bar offset simulating timeline */}
                         <div
                           className={cn(
                             "h-full rounded transition-all duration-500 flex items-center justify-center text-[9px] font-black text-white",
-                            task.status === "Done" ? "bg-emerald-500" : task.status === "In Progress" ? "bg-blue-500" : "bg-zinc-400"
+                            task.status === "Done"
+                              ? "bg-emerald-500"
+                              : task.status === "In Progress"
+                                ? "bg-blue-500"
+                                : "bg-zinc-400"
                           )}
                           style={{
-                            width: task.status === "Done" ? "100%" : task.status === "In Progress" ? "60%" : "20%",
-                            marginLeft: task.status === "In Progress" ? "15%" : task.status === "Done" ? "0%" : "5%"
+                            width:
+                              task.status === "Done"
+                                ? "100%"
+                                : task.status === "In Progress"
+                                  ? "60%"
+                                  : "20%",
+                            marginLeft:
+                              task.status === "In Progress"
+                                ? "15%"
+                                : task.status === "Done"
+                                  ? "0%"
+                                  : "5%",
                           }}
                         >
-                          {task.status === "Done" ? "100%" : task.status === "In Progress" ? "60%" : "Planning"}
+                          {task.status === "Done"
+                            ? "100%"
+                            : task.status === "In Progress"
+                              ? "60%"
+                              : "Planning"}
                         </div>
                       </div>
                     </div>
@@ -676,10 +863,12 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
               <h3 className="font-bold text-xs text-zinc-400 uppercase tracking-wider">
                 {isRtl ? "تسجيل ساعات العمل" : "Submit Employee Timesheet"}
               </h3>
-              
+
               <div className="space-y-3 text-xs">
                 <div>
-                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "المهمة المرتبطة" : "Associated Task"}</label>
+                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                    {isRtl ? "المهمة المرتبطة" : "Associated Task"}
+                  </label>
                   <select
                     value={newTimesheet.taskId}
                     onChange={(e) => setNewTimesheet({ ...newTimesheet, taskId: e.target.value })}
@@ -687,36 +876,48 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                   >
                     <option value="">{isRtl ? "اختر مهمة..." : "Select a task..."}</option>
                     {project.tasks.map((t) => (
-                      <option key={t.id} value={t.id}>{t.name} ({t.status})</option>
+                      <option key={t.id} value={t.id}>
+                        {t.name} ({t.status})
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "العضو المنفذ" : "Team Member"}</label>
+                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                    {isRtl ? "العضو المنفذ" : "Team Member"}
+                  </label>
                   <select
                     value={newTimesheet.assignee}
                     onChange={(e) => setNewTimesheet({ ...newTimesheet, assignee: e.target.value })}
                     className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none"
                   >
                     {project.resources.map((r, idx) => (
-                      <option key={idx} value={r.name}>{r.name} ({r.role})</option>
+                      <option key={idx} value={r.name}>
+                        {r.name} ({r.role})
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "عدد الساعات" : "Hours"}</label>
+                    <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                      {isRtl ? "عدد الساعات" : "Hours"}
+                    </label>
                     <input
                       type="number"
                       value={newTimesheet.hours || ""}
-                      onChange={(e) => setNewTimesheet({ ...newTimesheet, hours: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setNewTimesheet({ ...newTimesheet, hours: Number(e.target.value) })
+                      }
                       className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "التاريخ" : "Date"}</label>
+                    <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                      {isRtl ? "التاريخ" : "Date"}
+                    </label>
                     <input
                       type="date"
                       value={newTimesheet.date}
@@ -727,11 +928,19 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "تفاصيل النشاط" : "Work Description"}</label>
+                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                    {isRtl ? "تفاصيل النشاط" : "Work Description"}
+                  </label>
                   <textarea
                     value={newTimesheet.description}
-                    onChange={(e) => setNewTimesheet({ ...newTimesheet, description: e.target.value })}
-                    placeholder={isRtl ? "ما الذي تم إنجازه خلال الساعات..." : "Describe the accomplishments..."}
+                    onChange={(e) =>
+                      setNewTimesheet({ ...newTimesheet, description: e.target.value })
+                    }
+                    placeholder={
+                      isRtl
+                        ? "ما الذي تم إنجازه خلال الساعات..."
+                        : "Describe the accomplishments..."
+                    }
                     rows={3}
                     className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none resize-none"
                   />
@@ -757,9 +966,13 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                   <thead className="bg-zinc-50 dark:bg-zinc-900 text-zinc-400 font-bold border-b border-zinc-200 dark:border-zinc-900">
                     <tr>
                       <th className="py-2 px-3 text-left">{isRtl ? "المسؤول" : "Member"}</th>
-                      <th className="py-2 px-3 text-left">{isRtl ? "المهمة والنشاط" : "Task / Activity"}</th>
+                      <th className="py-2 px-3 text-left">
+                        {isRtl ? "المهمة والنشاط" : "Task / Activity"}
+                      </th>
                       <th className="py-2 px-3 text-left">{isRtl ? "الساعات" : "Hrs"}</th>
-                      <th className="py-2 px-3 text-left">{isRtl ? "التكلفة (SAR)" : "Cost Rate"}</th>
+                      <th className="py-2 px-3 text-left">
+                        {isRtl ? "التكلفة (SAR)" : "Cost Rate"}
+                      </th>
                       <th className="py-2 px-3 text-left">{isRtl ? "الحالة" : "Approval"}</th>
                     </tr>
                   </thead>
@@ -771,13 +984,19 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                           <span className="block text-[10px] text-zinc-400">{t.date}</span>
                         </td>
                         <td className="py-2.5 px-3">
-                          <p className="font-semibold text-zinc-800 dark:text-zinc-200">{t.taskName}</p>
+                          <p className="font-semibold text-zinc-800 dark:text-zinc-200">
+                            {t.taskName}
+                          </p>
                           <p className="text-[10px] text-zinc-400 mt-0.5">{t.description}</p>
                         </td>
-                        <td className="py-2.5 px-3 font-mono font-bold text-zinc-800 dark:text-white">{t.hours}h</td>
+                        <td className="py-2.5 px-3 font-mono font-bold text-zinc-800 dark:text-white">
+                          {t.hours}h
+                        </td>
                         <td className="py-2.5 px-3 font-mono text-zinc-500">
                           {t.costRate} SAR/h
-                          <span className="block text-[10px] text-zinc-400 font-normal">Total: {(t.hours * t.costRate).toLocaleString()} SAR</span>
+                          <span className="block text-[10px] text-zinc-400 font-normal">
+                            Total: {(t.hours * t.costRate).toLocaleString()} SAR
+                          </span>
                         </td>
                         <td className="py-2.5 px-3">
                           {t.status === "Approved" ? (
@@ -810,7 +1029,9 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                 {isRtl ? "مؤشر لود العمل والقدرة الاستيعابية" : "Resource Allocation Workloads"}
               </h3>
               <p className="text-[10px] text-zinc-400">
-                {isRtl ? "معدلات التكلفة والتفرغ للمشروع." : "Displays hourly cost rates and project allocation %."}
+                {isRtl
+                  ? "معدلات التكلفة والتفرغ للمشروع."
+                  : "Displays hourly cost rates and project allocation %."}
               </p>
             </div>
 
@@ -823,31 +1044,56 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                 const isOverload = res.allocation > 100;
 
                 return (
-                  <div key={idx} className="bg-zinc-50 dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 space-y-4">
+                  <div
+                    key={idx}
+                    className="bg-zinc-50 dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 space-y-4"
+                  >
                     <div className="flex items-start justify-between">
                       <div>
-                        <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{res.name}</h4>
-                        <span className="text-[10px] text-zinc-400 font-bold uppercase">{res.role}</span>
+                        <h4 className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                          {res.name}
+                        </h4>
+                        <span className="text-[10px] text-zinc-400 font-bold uppercase">
+                          {res.role}
+                        </span>
                       </div>
-                      <span className={cn(
-                        "px-2 py-0.5 rounded text-[10px] font-black border",
-                        isOverload ? "bg-rose-500/5 text-rose-500 border-rose-500/10" : "bg-emerald-500/5 text-emerald-500 border-emerald-500/10"
-                      )}>
-                        {isOverload ? (isRtl ? "حمل مفرط" : "Overallocated") : (isRtl ? "حمل مثالي" : "Healthy Load")}
+                      <span
+                        className={cn(
+                          "px-2 py-0.5 rounded text-[10px] font-black border",
+                          isOverload
+                            ? "bg-rose-500/5 text-rose-500 border-rose-500/10"
+                            : "bg-emerald-500/5 text-emerald-500 border-emerald-500/10"
+                        )}
+                      >
+                        {isOverload
+                          ? isRtl
+                            ? "حمل مفرط"
+                            : "Overallocated"
+                          : isRtl
+                            ? "حمل مثالي"
+                            : "Healthy Load"}
                       </span>
                     </div>
 
                     <div className="space-y-2 text-xs">
                       {/* Cost details */}
                       <div className="flex items-center justify-between border-b border-zinc-200/40 dark:border-zinc-800/40 pb-2">
-                        <span className="text-zinc-400">{isRtl ? "تكلفة العمل المباشرة" : "Hourly Direct Cost"}</span>
-                        <strong className="text-zinc-800 dark:text-zinc-200">{res.costRate} SAR / hr</strong>
+                        <span className="text-zinc-400">
+                          {isRtl ? "تكلفة العمل المباشرة" : "Hourly Direct Cost"}
+                        </span>
+                        <strong className="text-zinc-800 dark:text-zinc-200">
+                          {res.costRate} SAR / hr
+                        </strong>
                       </div>
 
                       {/* Logged cumulative */}
                       <div className="flex items-center justify-between border-b border-zinc-200/40 dark:border-zinc-800/40 pb-2">
-                        <span className="text-zinc-400">{isRtl ? "إجمالي ساعات المنفذة" : "Total Hrs Completed"}</span>
-                        <strong className="text-zinc-800 dark:text-zinc-200">{totalLoggedHours} hrs</strong>
+                        <span className="text-zinc-400">
+                          {isRtl ? "إجمالي ساعات المنفذة" : "Total Hrs Completed"}
+                        </span>
+                        <strong className="text-zinc-800 dark:text-zinc-200">
+                          {totalLoggedHours} hrs
+                        </strong>
                       </div>
 
                       {/* Allocation Load bar */}
@@ -858,7 +1104,10 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                         </div>
                         <div className="w-full h-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                           <div
-                            className={cn("h-full transition-all", isOverload ? "bg-rose-500" : "bg-emerald-500")}
+                            className={cn(
+                              "h-full transition-all",
+                              isOverload ? "bg-rose-500" : "bg-emerald-500"
+                            )}
                             style={{ width: `${Math.min(100, res.allocation)}%` }}
                           />
                         </div>
@@ -883,29 +1132,52 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
               <div className="space-y-4 text-xs">
                 {/* Budget */}
                 <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850">
-                  <span className="text-[10px] font-bold text-zinc-400 block uppercase tracking-wider">{isRtl ? "ميزانية العقد الكلية" : "Total Project Contract Value"}</span>
-                  <strong className="text-zinc-800 dark:text-zinc-100 text-lg font-black font-mono">{project.budget.toLocaleString()} SAR</strong>
+                  <span className="text-[10px] font-bold text-zinc-400 block uppercase tracking-wider">
+                    {isRtl ? "ميزانية العقد الكلية" : "Total Project Contract Value"}
+                  </span>
+                  <strong className="text-zinc-800 dark:text-zinc-100 text-lg font-black font-mono">
+                    {project.budget.toLocaleString()} SAR
+                  </strong>
                 </div>
 
                 {/* Expenses accum */}
                 <div className="flex justify-between items-center py-2 border-b border-zinc-100 dark:border-zinc-900">
-                  <span className="text-zinc-500">{isRtl ? "تكلفة العمل المباشرة (Timesheets)" : "Direct Labor Costs"}</span>
-                  <strong className="font-mono text-zinc-800 dark:text-white">{approvedTimesheetCost.toLocaleString()} SAR</strong>
+                  <span className="text-zinc-500">
+                    {isRtl ? "تكلفة العمل المباشرة (Timesheets)" : "Direct Labor Costs"}
+                  </span>
+                  <strong className="font-mono text-zinc-800 dark:text-white">
+                    {approvedTimesheetCost.toLocaleString()} SAR
+                  </strong>
                 </div>
 
                 <div className="flex justify-between items-center py-2 border-b border-zinc-100 dark:border-zinc-900">
-                  <span className="text-zinc-500">{isRtl ? "المصروفات والمشتريات" : "Material & Category Expenses"}</span>
-                  <strong className="font-mono text-zinc-800 dark:text-white">{totalExpenseCost.toLocaleString()} SAR</strong>
+                  <span className="text-zinc-500">
+                    {isRtl ? "المصروفات والمشتريات" : "Material & Category Expenses"}
+                  </span>
+                  <strong className="font-mono text-zinc-800 dark:text-white">
+                    {totalExpenseCost.toLocaleString()} SAR
+                  </strong>
                 </div>
 
                 <div className="flex justify-between items-center py-2 border-b border-zinc-100 dark:border-zinc-900">
-                  <span className="text-zinc-500">{isRtl ? "إجمالي التكلفة الكلية للمشروع" : "Total Direct Spend"}</span>
-                  <strong className="font-mono text-zinc-800 dark:text-white">{totalProjectCost.toLocaleString()} SAR</strong>
+                  <span className="text-zinc-500">
+                    {isRtl ? "إجمالي التكلفة الكلية للمشروع" : "Total Direct Spend"}
+                  </span>
+                  <strong className="font-mono text-zinc-800 dark:text-white">
+                    {totalProjectCost.toLocaleString()} SAR
+                  </strong>
                 </div>
 
                 <div className="flex justify-between items-center py-2.5">
-                  <span className="text-zinc-500 font-bold">{isRtl ? "صافي هامش الربح المتوقع" : "Project Net Profit Margin"}</span>
-                  <strong className={cn("font-mono text-sm font-black", projectMargin > 0 ? "text-emerald-500" : "text-rose-500")}>
+                  <span className="text-zinc-500 font-bold">
+                    {isRtl ? "صافي هامش الربح المتوقع" : "Project Net Profit Margin"}
+                  </span>
+                  <strong
+                    className={cn(
+                      "font-mono text-sm font-black",
+                      projectMargin > 0 ? "text-emerald-500" : "text-rose-500"
+                    )}
+                  >
                     {projectMargin.toLocaleString()} SAR ({marginPct}%)
                   </strong>
                 </div>
@@ -917,10 +1189,14 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                     className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
                   >
                     <Send className="w-4 h-4 text-white" />
-                    <span>{isRtl ? "توليد فاتورة في نظام المحاسبة" : "Generate Invoice in ERP"}</span>
+                    <span>
+                      {isRtl ? "توليد فاتورة في نظام المحاسبة" : "Generate Invoice in ERP"}
+                    </span>
                   </button>
                   <span className="text-[9px] text-zinc-400 block text-center mt-2">
-                    {isRtl ? "يولد هذا الإجراء فاتورة رسمية بنسبة 15% ضريبة مضافة ويربطها مباشرة بدفتر الأستاذ والعملاء." : "Generates an official invoice in 'invoices' collection connected to the active CRM Client."}
+                    {isRtl
+                      ? "يولد هذا الإجراء فاتورة رسمية بنسبة 15% ضريبة مضافة ويربطها مباشرة بدفتر الأستاذ والعملاء."
+                      : "Generates an official invoice in 'invoices' collection connected to the active CRM Client."}
                   </span>
                 </div>
               </div>
@@ -947,7 +1223,9 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                       <th className="py-2 px-3 text-left">{isRtl ? "المصروف" : "Description"}</th>
                       <th className="py-2 px-3 text-left">{isRtl ? "التاريخ" : "Date"}</th>
                       <th className="py-2 px-3 text-left">{isRtl ? "التصنيف" : "Category"}</th>
-                      <th className="py-2 px-3 text-right">{isRtl ? "المبلغ (SAR)" : "Amount (SAR)"}</th>
+                      <th className="py-2 px-3 text-right">
+                        {isRtl ? "المبلغ (SAR)" : "Amount (SAR)"}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900 text-zinc-700 dark:text-zinc-300">
@@ -978,10 +1256,14 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
       {showMilestoneModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-850 p-6 w-full max-w-md space-y-4">
-            <h3 className="font-bold text-sm text-zinc-800 dark:text-white">{isRtl ? "إضافة محطة أداء رئيسية للمشروع" : "Add Key Project Milestone"}</h3>
+            <h3 className="font-bold text-sm text-zinc-800 dark:text-white">
+              {isRtl ? "إضافة محطة أداء رئيسية للمشروع" : "Add Key Project Milestone"}
+            </h3>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "اسم المحطة" : "Milestone Name"}</label>
+                <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                  {isRtl ? "اسم المحطة" : "Milestone Name"}
+                </label>
                 <input
                   type="text"
                   value={newMilestone.name}
@@ -991,16 +1273,22 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "الوصف" : "Description"}</label>
+                <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                  {isRtl ? "الوصف" : "Description"}
+                </label>
                 <textarea
                   value={newMilestone.description}
-                  onChange={(e) => setNewMilestone({ ...newMilestone, description: e.target.value })}
+                  onChange={(e) =>
+                    setNewMilestone({ ...newMilestone, description: e.target.value })
+                  }
                   rows={2}
                   className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none resize-none"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "تاريخ الاستحقاق" : "Due Date"}</label>
+                <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                  {isRtl ? "تاريخ الاستحقاق" : "Due Date"}
+                </label>
                 <input
                   type="date"
                   value={newMilestone.dueDate}
@@ -1031,10 +1319,14 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
       {showEpicModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-850 p-6 w-full max-w-md space-y-4">
-            <h3 className="font-bold text-sm text-zinc-800 dark:text-white">{isRtl ? "إضافة مجموعة برمجية كبرى" : "Add Project Epic"}</h3>
+            <h3 className="font-bold text-sm text-zinc-800 dark:text-white">
+              {isRtl ? "إضافة مجموعة برمجية كبرى" : "Add Project Epic"}
+            </h3>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "اسم المجموعة" : "Epic Title"}</label>
+                <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                  {isRtl ? "اسم المجموعة" : "Epic Title"}
+                </label>
                 <input
                   type="text"
                   value={newEpic.name}
@@ -1044,7 +1336,9 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "وصف ميزاتها" : "Scope Details"}</label>
+                <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                  {isRtl ? "وصف ميزاتها" : "Scope Details"}
+                </label>
                 <textarea
                   value={newEpic.description}
                   onChange={(e) => setNewEpic({ ...newEpic, description: e.target.value })}
@@ -1075,10 +1369,14 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
       {showTaskModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-850 p-6 w-full max-w-lg space-y-4">
-            <h3 className="font-bold text-sm text-zinc-800 dark:text-white">{isRtl ? "إنشاء مهمة عمل جديدة" : "Create New Task"}</h3>
+            <h3 className="font-bold text-sm text-zinc-800 dark:text-white">
+              {isRtl ? "إنشاء مهمة عمل جديدة" : "Create New Task"}
+            </h3>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "اسم المهمة" : "Task Title"}</label>
+                <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                  {isRtl ? "اسم المهمة" : "Task Title"}
+                </label>
                 <input
                   type="text"
                   value={newTask.name}
@@ -1087,7 +1385,9 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "شرح المهمة بالتفصيل" : "Implementation Details"}</label>
+                <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                  {isRtl ? "شرح المهمة بالتفصيل" : "Implementation Details"}
+                </label>
                 <textarea
                   value={newTask.description}
                   onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
@@ -1098,7 +1398,9 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "ربط بمحطة" : "Link Milestone"}</label>
+                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                    {isRtl ? "ربط بمحطة" : "Link Milestone"}
+                  </label>
                   <select
                     value={newTask.milestoneId}
                     onChange={(e) => setNewTask({ ...newTask, milestoneId: e.target.value })}
@@ -1106,12 +1408,16 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                   >
                     <option value="">-- {isRtl ? "لا يوجد" : "None"} --</option>
                     {project.milestones.map((m) => (
-                      <option key={m.id} value={m.id}>{m.name}</option>
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "ربط بمجموعة" : "Link Epic"}</label>
+                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                    {isRtl ? "ربط بمجموعة" : "Link Epic"}
+                  </label>
                   <select
                     value={newTask.epicId}
                     onChange={(e) => setNewTask({ ...newTask, epicId: e.target.value })}
@@ -1119,7 +1425,9 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                   >
                     <option value="">-- {isRtl ? "لا يوجد" : "None"} --</option>
                     {project.epics.map((e) => (
-                      <option key={e.id} value={e.id}>{e.name}</option>
+                      <option key={e.id} value={e.id}>
+                        {e.name}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -1127,31 +1435,43 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
 
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "المسؤول" : "Assignee"}</label>
+                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                    {isRtl ? "المسؤول" : "Assignee"}
+                  </label>
                   <select
                     value={newTask.assignee}
                     onChange={(e) => setNewTask({ ...newTask, assignee: e.target.value })}
                     className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                   >
                     {project.resources.map((r, idx) => (
-                      <option key={idx} value={r.name}>{r.name}</option>
+                      <option key={idx} value={r.name}>
+                        {r.name}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "ساعات تقديرية" : "Est. Hours"}</label>
+                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                    {isRtl ? "ساعات تقديرية" : "Est. Hours"}
+                  </label>
                   <input
                     type="number"
                     value={newTask.estimatedHours || ""}
-                    onChange={(e) => setNewTask({ ...newTask, estimatedHours: Number(e.target.value) })}
+                    onChange={(e) =>
+                      setNewTask({ ...newTask, estimatedHours: Number(e.target.value) })
+                    }
                     className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "الأولوية" : "Priority"}</label>
+                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                    {isRtl ? "الأولوية" : "Priority"}
+                  </label>
                   <select
                     value={newTask.priority}
-                    onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as Task["priority"] })}
+                    onChange={(e) =>
+                      setNewTask({ ...newTask, priority: e.target.value as Task["priority"] })
+                    }
                     className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                   >
                     <option value="High">{isRtl ? "عالي" : "High"}</option>
@@ -1184,10 +1504,14 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
       {showExpenseModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-850 p-6 w-full max-w-md space-y-4">
-            <h3 className="font-bold text-sm text-zinc-800 dark:text-white">{isRtl ? "تسجيل مصروف مالي للمشروع" : "Log Project Expense"}</h3>
+            <h3 className="font-bold text-sm text-zinc-800 dark:text-white">
+              {isRtl ? "تسجيل مصروف مالي للمشروع" : "Log Project Expense"}
+            </h3>
             <div className="space-y-3 text-xs">
               <div>
-                <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "وصف المصروف" : "Expense Description"}</label>
+                <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                  {isRtl ? "وصف المصروف" : "Expense Description"}
+                </label>
                 <input
                   type="text"
                   value={newExpense.description}
@@ -1198,16 +1522,22 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "المبلغ (SAR)" : "Amount"}</label>
+                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                    {isRtl ? "المبلغ (SAR)" : "Amount"}
+                  </label>
                   <input
                     type="number"
                     value={newExpense.amount || ""}
-                    onChange={(e) => setNewExpense({ ...newExpense, amount: Number(e.target.value) })}
+                    onChange={(e) =>
+                      setNewExpense({ ...newExpense, amount: Number(e.target.value) })
+                    }
                     className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "التصنيف" : "Category"}</label>
+                  <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                    {isRtl ? "التصنيف" : "Category"}
+                  </label>
                   <select
                     value={newExpense.category}
                     onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
@@ -1221,7 +1551,9 @@ export default function ProjectDetails({ project, language, onBack, onUpdateProj
                 </div>
               </div>
               <div>
-                <label className="text-[10px] font-bold text-zinc-400 block mb-1">{isRtl ? "التاريخ" : "Date"}</label>
+                <label className="text-[10px] font-bold text-zinc-400 block mb-1">
+                  {isRtl ? "التاريخ" : "Date"}
+                </label>
                 <input
                   type="date"
                   value={newExpense.date}

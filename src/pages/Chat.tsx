@@ -12,14 +12,7 @@ import {
 import { cn } from "@/src/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
-import {
-  collection,
-  query,
-  where,
-  onSnapshot,
-  updateDoc,
-  doc,
-} from "firebase/firestore";
+import { collection, query, where, onSnapshot, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
 import { useSettings } from "@/src/contexts/SettingsContext";
@@ -59,7 +52,9 @@ export default function Chat() {
   const { settings, updateSettings } = useSettings();
 
   // Selected Hub View State
-  const [currentTab, setCurrentTab] = useState<"inbox" | "simulator" | "analytics" | "workflows" | "channels">("inbox");
+  const [currentTab, setCurrentTab] = useState<
+    "inbox" | "simulator" | "analytics" | "workflows" | "channels"
+  >("inbox");
 
   // Core Sync States
   const [leads, setLeads] = useState<ChatLead[]>([]);
@@ -245,7 +240,8 @@ export default function Chat() {
               "تسلم يدك، ممتاز. سنرسل لكم الكشوفات المطلوبة غداً صباحاً.",
             ];
 
-            const responseText = aiClientResponses[Math.floor(Math.random() * aiClientResponses.length)];
+            const responseText =
+              aiClientResponses[Math.floor(Math.random() * aiClientResponses.length)];
 
             const autoClientMessage: ChatMessage = {
               id: `msg_auto_${Date.now()}`,
@@ -307,7 +303,8 @@ export default function Chat() {
           </span>
           <h2 className="text-xl font-extrabold text-zinc-800 mt-2">Unified Communications Hub</h2>
           <p className="text-[11px] text-zinc-500 font-bold mt-0.5">
-            صندوق وارد متكامل لرسائل واتساب، تيليجرام، والبريد الإلكتروني مع ربط كامل بالـ CRM والذكاء الاصطناعي
+            صندوق وارد متكامل لرسائل واتساب، تيليجرام، والبريد الإلكتروني مع ربط كامل بالـ CRM
+            والذكاء الاصطناعي
           </p>
         </div>
 
@@ -359,22 +356,14 @@ export default function Chat() {
         )}
 
         {currentTab === "simulator" && (
-          <LiveChatSimulator
-            onSimulateClientMessage={handleSimulateClientMessage}
-          />
+          <LiveChatSimulator onSimulateClientMessage={handleSimulateClientMessage} />
         )}
 
-        {currentTab === "analytics" && (
-          <AnalyticsView />
-        )}
+        {currentTab === "analytics" && <AnalyticsView />}
 
-        {currentTab === "workflows" && (
-          <WorkflowsView />
-        )}
+        {currentTab === "workflows" && <WorkflowsView />}
 
-        {currentTab === "channels" && (
-          <ChannelsView />
-        )}
+        {currentTab === "channels" && <ChannelsView />}
       </div>
     </div>
   );

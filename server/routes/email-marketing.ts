@@ -34,9 +34,13 @@ router.get("/contacts", authenticate, async (req: any, res) => {
 
     // If empty, let's pre-populate some high quality active contacts from the CRM leads to be helpful
     if (contacts.length === 0) {
-      const leadsSnap = await db.collection("leads").where("userId", "==", req.user.uid).limit(10).get();
+      const leadsSnap = await db
+        .collection("leads")
+        .where("userId", "==", req.user.uid)
+        .limit(10)
+        .get();
       const defaultContacts = [];
-      
+
       if (!leadsSnap.empty) {
         for (const doc of leadsSnap.docs) {
           const l = doc.data();
@@ -47,7 +51,7 @@ router.get("/contacts", authenticate, async (req: any, res) => {
             status: "Active",
             segmentTags: l.leadScore === "Hot" ? ["High Value", "Qualified"] : ["Warm"],
             userId: req.user.uid,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
           };
           const saved = await db.collection("email_contacts").add(contactObj);
           defaultContacts.push({ id: saved.id, ...contactObj });
@@ -56,10 +60,42 @@ router.get("/contacts", authenticate, async (req: any, res) => {
       } else {
         // Fallback robust default contacts
         const list = [
-          { name: "أحمد الفهد", email: "a.fahad@aramco.com", company: "Aramco", status: "Active", segmentTags: ["High Value", "Tech Stack"], userId: req.user.uid, createdAt: new Date().toISOString() },
-          { name: "منى الدوسري", email: "m.dosari@salla.sa", company: "Salla", status: "Active", segmentTags: ["E-commerce", "Active"], userId: req.user.uid, createdAt: new Date().toISOString() },
-          { name: "عمر الحربي", email: "o.harbi@lean.sa", company: "Lean Tech", status: "Active", segmentTags: ["Developer", "Warm"], userId: req.user.uid, createdAt: new Date().toISOString() },
-          { name: "فاطمة العمودي", email: "f.amoudi@foodics.com", company: "Foodics", status: "Active", segmentTags: ["Retail", "High Value"], userId: req.user.uid, createdAt: new Date().toISOString() }
+          {
+            name: "أحمد الفهد",
+            email: "a.fahad@aramco.com",
+            company: "Aramco",
+            status: "Active",
+            segmentTags: ["High Value", "Tech Stack"],
+            userId: req.user.uid,
+            createdAt: new Date().toISOString(),
+          },
+          {
+            name: "منى الدوسري",
+            email: "m.dosari@salla.sa",
+            company: "Salla",
+            status: "Active",
+            segmentTags: ["E-commerce", "Active"],
+            userId: req.user.uid,
+            createdAt: new Date().toISOString(),
+          },
+          {
+            name: "عمر الحربي",
+            email: "o.harbi@lean.sa",
+            company: "Lean Tech",
+            status: "Active",
+            segmentTags: ["Developer", "Warm"],
+            userId: req.user.uid,
+            createdAt: new Date().toISOString(),
+          },
+          {
+            name: "فاطمة العمودي",
+            email: "f.amoudi@foodics.com",
+            company: "Foodics",
+            status: "Active",
+            segmentTags: ["Retail", "High Value"],
+            userId: req.user.uid,
+            createdAt: new Date().toISOString(),
+          },
         ];
         for (const contact of list) {
           const saved = await db.collection("email_contacts").add(contact);
@@ -82,7 +118,7 @@ router.post("/contacts", authenticate, async (req: any, res) => {
       userId: req.user.uid,
       status: req.body.status || "Active",
       segmentTags: req.body.segmentTags || [],
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     const docRef = await db.collection("email_contacts").add(contactData);
     res.status(201).json({ id: docRef.id, ...contactData });
@@ -98,7 +134,8 @@ router.put("/contacts/:id", authenticate, async (req: any, res) => {
     const contactRef = db.collection("email_contacts").doc(id);
     const snap = await contactRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Contact not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     await contactRef.update(req.body);
     res.json({ success: true });
@@ -114,7 +151,8 @@ router.delete("/contacts/:id", authenticate, async (req: any, res) => {
     const contactRef = db.collection("email_contacts").doc(id);
     const snap = await contactRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Contact not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     await contactRef.delete();
     res.json({ success: true });
@@ -122,7 +160,6 @@ router.delete("/contacts/:id", authenticate, async (req: any, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ==========================================
 // CAMPAIGNS & NEWSLETTERS
@@ -149,7 +186,7 @@ router.get("/campaigns", authenticate, async (req: any, res) => {
           revenueGenerated: 45000,
           targetSegment: "High Value",
           createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-          userId: req.user.uid
+          userId: req.user.uid,
         },
         {
           name: "رسالة الترحيب الأسبوعية بالعملاء الجدد",
@@ -163,7 +200,7 @@ router.get("/campaigns", authenticate, async (req: any, res) => {
           revenueGenerated: 28000,
           targetSegment: "Warm",
           createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-          userId: req.user.uid
+          userId: req.user.uid,
         },
         {
           name: "حملة استعادة السلال المتروكة",
@@ -177,8 +214,8 @@ router.get("/campaigns", authenticate, async (req: any, res) => {
           revenueGenerated: 0,
           targetSegment: "Inactive",
           createdAt: new Date().toISOString(),
-          userId: req.user.uid
-        }
+          userId: req.user.uid,
+        },
       ];
 
       const savedList = [];
@@ -207,7 +244,7 @@ router.post("/campaigns", authenticate, async (req: any, res) => {
       bounceCount: 0,
       spamCount: 0,
       revenueGenerated: 0,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     const docRef = await db.collection("email_campaigns").add(campaignData);
     logAudit("EmailMarketing", { action: "Create Campaign", id: docRef.id }, campaignData, req);
@@ -224,7 +261,8 @@ router.put("/campaigns/:id", authenticate, async (req: any, res) => {
     const campaignRef = db.collection("email_campaigns").doc(id);
     const snap = await campaignRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Campaign not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     await campaignRef.update(req.body);
     res.json({ success: true });
@@ -240,16 +278,20 @@ router.post("/campaigns/:id/send", authenticate, async (req: any, res) => {
     const campaignRef = db.collection("email_campaigns").doc(id);
     const snap = await campaignRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Campaign not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     // Fetch total active contacts
-    const contactsSnap = await db.collection("email_contacts").where("userId", "==", req.user.uid).get();
+    const contactsSnap = await db
+      .collection("email_contacts")
+      .where("userId", "==", req.user.uid)
+      .get();
     const totalContacts = contactsSnap.empty ? 2500 : contactsSnap.size * 125; // amplify to simulate list
 
     // Realistic stats
     const openRate = 0.35 + Math.random() * 0.15; // 35% - 50%
     const clickRate = 0.12 + Math.random() * 0.08; // 12% - 20%
-    const bounceRate = 0.005 + Math.random() * 0.01; 
+    const bounceRate = 0.005 + Math.random() * 0.01;
     const spamRate = 0.001;
     const conversionRate = 0.03 + Math.random() * 0.04; // 3% - 7%
 
@@ -268,7 +310,7 @@ router.post("/campaigns/:id/send", authenticate, async (req: any, res) => {
       bounceCount,
       spamCount,
       revenueGenerated,
-      sentAt: new Date().toISOString()
+      sentAt: new Date().toISOString(),
     };
 
     await campaignRef.update(updateData);
@@ -287,7 +329,8 @@ router.delete("/campaigns/:id", authenticate, async (req: any, res) => {
     const campaignRef = db.collection("email_campaigns").doc(id);
     const snap = await campaignRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Campaign not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     await campaignRef.delete();
     res.json({ success: true });
@@ -295,7 +338,6 @@ router.delete("/campaigns/:id", authenticate, async (req: any, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ==========================================
 // EMAIL TEMPLATES
@@ -317,13 +359,23 @@ router.get("/templates", authenticate, async (req: any, res) => {
           jsonStructure: {
             blocks: [
               { type: "header", text: "مرحباً بك في عائلة Madarij" },
-              { type: "image", url: "https://images.unsplash.com/photo-1557200134-90327ee9fafa?w=800" },
-              { type: "text", text: "يسعدنا انضمامك إلينا لبدء رحلتك الاستثمارية وبناء مستقبلك المالي بكل ثقة وكفاءة." },
-              { type: "button", text: "ابدأ جولتك التعريفية الآن", url: "https://madarij.sa/get-started" }
-            ]
+              {
+                type: "image",
+                url: "https://images.unsplash.com/photo-1557200134-90327ee9fafa?w=800",
+              },
+              {
+                type: "text",
+                text: "يسعدنا انضمامك إلينا لبدء رحلتك الاستثمارية وبناء مستقبلك المالي بكل ثقة وكفاءة.",
+              },
+              {
+                type: "button",
+                text: "ابدأ جولتك التعريفية الآن",
+                url: "https://madarij.sa/get-started",
+              },
+            ],
           },
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
           name: "قالب عرض تخفيضات التجارة الإلكترونية",
@@ -332,14 +384,17 @@ router.get("/templates", authenticate, async (req: any, res) => {
           jsonStructure: {
             blocks: [
               { type: "header", text: "خصم خاص ومحدود فقط لك!" },
-              { type: "text", text: "استمتع بخصم فوري 20% على جميع باقات التشغيل الفورية باستخدام هذا الكود المخصص." },
+              {
+                type: "text",
+                text: "استمتع بخصم فوري 20% على جميع باقات التشغيل الفورية باستخدام هذا الكود المخصص.",
+              },
               { type: "code", code: "MADARIJ20" },
-              { type: "button", text: "احصل على العرض اليوم", url: "https://madarij.sa/pricing" }
-            ]
+              { type: "button", text: "احصل على العرض اليوم", url: "https://madarij.sa/pricing" },
+            ],
           },
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
-        }
+          createdAt: new Date().toISOString(),
+        },
       ];
 
       const savedList = [];
@@ -361,7 +416,7 @@ router.post("/templates", authenticate, async (req: any, res) => {
     const templateData = {
       ...req.body,
       userId: req.user.uid,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     const docRef = await db.collection("email_templates").add(templateData);
     res.status(201).json({ id: docRef.id, ...templateData });
@@ -369,7 +424,6 @@ router.post("/templates", authenticate, async (req: any, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ==========================================
 // AUTOMATION WORKFLOWS
@@ -392,14 +446,21 @@ router.get("/automations", authenticate, async (req: any, res) => {
           steps: [
             { id: "1", type: "email", label: "إرسال رسالة الترحيب الأولى", delayDays: 0 },
             { id: "2", type: "wait", label: "انتظار يومين", value: 2 },
-            { id: "3", type: "condition", label: "هل تم فتح الرسالة؟", field: "opened", yesSteps: [
-              { id: "3a", type: "email", label: "إرسال كود خصم تفعيل النظام", delayDays: 0 }
-            ], noSteps: [
-              { id: "3b", type: "email", label: "تذكير بفوائد المنصة الرئيسية", delayDays: 1 }
-            ] }
+            {
+              id: "3",
+              type: "condition",
+              label: "هل تم فتح الرسالة؟",
+              field: "opened",
+              yesSteps: [
+                { id: "3a", type: "email", label: "إرسال كود خصم تفعيل النظام", delayDays: 0 },
+              ],
+              noSteps: [
+                { id: "3b", type: "email", label: "تذكير بفوائد المنصة الرئيسية", delayDays: 1 },
+              ],
+            },
           ],
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         },
         {
           name: "حملة استعادة السلال المتروكة",
@@ -411,11 +472,11 @@ router.get("/automations", authenticate, async (req: any, res) => {
             { id: "1", type: "wait", label: "انتظار ساعة واحدة", value: 1 },
             { id: "2", type: "email", label: "أشياء رائعة تنتظرك في سلتك", delayDays: 0 },
             { id: "3", type: "wait", label: "انتظار 24 ساعة", value: 24 },
-            { id: "4", type: "email", label: "تخفيض نهائي 15% لإكمال الشراء", delayDays: 0 }
+            { id: "4", type: "email", label: "تخفيض نهائي 15% لإكمال الشراء", delayDays: 0 },
           ],
           userId: req.user.uid,
-          createdAt: new Date().toISOString()
-        }
+          createdAt: new Date().toISOString(),
+        },
       ];
 
       const savedList = [];
@@ -440,7 +501,7 @@ router.post("/automations", authenticate, async (req: any, res) => {
       status: req.body.status || "Inactive",
       enrolledCount: 0,
       completedCount: 0,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
     const docRef = await db.collection("email_automations").add(automationData);
     logAudit("EmailMarketing", { action: "Create Automation", id: docRef.id }, automationData, req);
@@ -457,7 +518,8 @@ router.put("/automations/:id", authenticate, async (req: any, res) => {
     const autRef = db.collection("email_automations").doc(id);
     const snap = await autRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Automation not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     await autRef.update(req.body);
     res.json({ success: true });
@@ -473,7 +535,8 @@ router.delete("/automations/:id", authenticate, async (req: any, res) => {
     const autRef = db.collection("email_automations").doc(id);
     const snap = await autRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Automation not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     await autRef.delete();
     res.json({ success: true });
@@ -481,7 +544,6 @@ router.delete("/automations/:id", authenticate, async (req: any, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ==========================================
 // AI-POWERED COPILOT GENERATION ENDPOINTS

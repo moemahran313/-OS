@@ -1,9 +1,9 @@
-const fs = require('fs');
-const enPath = 'src/locales/en/translation.json';
-const arPath = 'src/locales/ar/translation.json';
+const fs = require("fs");
+const enPath = "src/locales/en/translation.json";
+const arPath = "src/locales/ar/translation.json";
 
-const en = JSON.parse(fs.readFileSync(enPath, 'utf8'));
-const ar = JSON.parse(fs.readFileSync(arPath, 'utf8'));
+const en = JSON.parse(fs.readFileSync(enPath, "utf8"));
+const ar = JSON.parse(fs.readFileSync(arPath, "utf8"));
 
 en.sidebar.accounting = "General Ledger & Accounting";
 ar.sidebar.accounting = "دفتر الأستاذ والقيود";
@@ -29,7 +29,7 @@ en.layout = {
   email: "Email",
   profile: "Profile",
   preferences: "Preferences",
-  logout: "Logout"
+  logout: "Logout",
 };
 
 ar.layout = {
@@ -44,7 +44,7 @@ ar.layout = {
   email: "البريد الإلكتروني",
   profile: "الملف الشخصي",
   preferences: "التفضيلات",
-  logout: "تسجيل الخروج"
+  logout: "تسجيل الخروج",
 };
 
 fs.writeFileSync(enPath, JSON.stringify(en, null, 2));

@@ -34,7 +34,11 @@ const defaultRules: AutomationRule[] = [
     id: "rule-2",
     name: "التصعيد التلقائي الفوري للعميل الغاضب",
     trigger: "sentiment_angry",
-    actions: ["تغيير الأولوية إلى 'عاجل جداً'", "تحويل مباشر لمشرف الدعم", "تنبيه عبر قناة Slack للمشرفين"],
+    actions: [
+      "تغيير الأولوية إلى 'عاجل جداً'",
+      "تحويل مباشر لمشرف الدعم",
+      "تنبيه عبر قناة Slack للمشرفين",
+    ],
     isActive: true,
   },
   {
@@ -42,7 +46,11 @@ const defaultRules: AutomationRule[] = [
     name: "مستشار المبيعات التلقائي (AI Sales Agent)",
     trigger: "message_received",
     triggerDetail: "تضمين كلمات 'أسعار / اشتراك / عرض سعر'",
-    actions: ["إنشاء فرصة مبيعات في الـ CRM تلقائياً", "إرسال بروشور الخدمات والأسعار (PDF)", "إدراج رابط حجز موعد هاتفياً"],
+    actions: [
+      "إنشاء فرصة مبيعات في الـ CRM تلقائياً",
+      "إرسال بروشور الخدمات والأسعار (PDF)",
+      "إدراج رابط حجز موعد هاتفياً",
+    ],
     isActive: true,
   },
   {
@@ -125,7 +133,8 @@ export default function WorkflowsView() {
             قواعد الفرز الذكي والأتمتة التلقائية (AI Workflows)
           </h3>
           <p className="text-[10px] text-zinc-500 font-bold mt-0.5">
-            قم بصياغة شروط ذكية لتوجيه المحادثات، وتعديل بطاقات الـ CRM، والرد تلقائياً على مدار الساعة
+            قم بصياغة شروط ذكية لتوجيه المحادثات، وتعديل بطاقات الـ CRM، والرد تلقائياً على مدار
+            الساعة
           </p>
         </div>
 
@@ -152,7 +161,9 @@ export default function WorkflowsView() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-black text-zinc-500 block mb-1.5">اسم القاعدة</label>
+                <label className="text-[10px] font-black text-zinc-500 block mb-1.5">
+                  اسم القاعدة
+                </label>
                 <input
                   type="text"
                   value={newName}
@@ -163,14 +174,18 @@ export default function WorkflowsView() {
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-zinc-500 block mb-1.5">نوع المحفّز (Trigger)</label>
+                <label className="text-[10px] font-black text-zinc-500 block mb-1.5">
+                  نوع المحفّز (Trigger)
+                </label>
                 <select
                   value={newTrigger}
                   onChange={(e) => setNewTrigger(e.target.value as AutomationRule["trigger"])}
                   className="w-full text-xs font-bold px-3.5 py-2.5 bg-white border border-zinc-200 rounded-xl focus:border-primary/50 focus:outline-none"
                 >
                   <option value="message_received">عند تلقي أي رسالة عميل</option>
-                  <option value="sentiment_angry">عند كشف نبرة غضب أو استياء (AI Angry Sentiment)</option>
+                  <option value="sentiment_angry">
+                    عند كشف نبرة غضب أو استياء (AI Angry Sentiment)
+                  </option>
                   <option value="keyword_detected">عند مطابقة كلمات دلالية معينة</option>
                   <option value="off_hours">خارج أوقات العمل الرسمية للمؤسسة</option>
                 </select>
@@ -183,7 +198,9 @@ export default function WorkflowsView() {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-white border border-zinc-200 rounded-2xl p-4"
               >
-                <label className="text-[10px] font-black text-zinc-500 block mb-1.5">الكلمات المفتاحية المطلوبة (مفصولة بـ فاصلة)</label>
+                <label className="text-[10px] font-black text-zinc-500 block mb-1.5">
+                  الكلمات المفتاحية المطلوبة (مفصولة بـ فاصلة)
+                </label>
                 <input
                   type="text"
                   value={newTriggerDetail}
@@ -196,7 +213,9 @@ export default function WorkflowsView() {
 
             {/* Actions list designer */}
             <div className="bg-white border border-zinc-200 rounded-2xl p-4 space-y-3">
-              <label className="text-[10px] font-black text-zinc-500 block mb-1.5">الإجراءات المتتالية (Actions Sequence)</label>
+              <label className="text-[10px] font-black text-zinc-500 block mb-1.5">
+                الإجراءات المتتالية (Actions Sequence)
+              </label>
 
               <div className="flex gap-2">
                 <input
@@ -271,7 +290,9 @@ export default function WorkflowsView() {
               <div className="flex justify-between items-start">
                 <div>
                   <h4 className="font-extrabold text-sm text-zinc-800 leading-tight">{r.name}</h4>
-                  <span className="text-[10px] text-zinc-400 font-bold block mt-1">توليد بواسطة: أتمتة النظام</span>
+                  <span className="text-[10px] text-zinc-400 font-bold block mt-1">
+                    توليد بواسطة: أتمتة النظام
+                  </span>
                 </div>
                 <button
                   onClick={() => handleToggleRule(r.id)}
@@ -293,10 +314,12 @@ export default function WorkflowsView() {
                   <Clock className="w-3.5 h-3.5 text-zinc-550" /> الشرط / المحفّز (IF)
                 </span>
                 <span className="text-xs font-extrabold text-zinc-700 block">
-                  {r.trigger === "sentiment_angry" && "كشف نبرة غضب أو شكوى شديدة اللهجة بالذكاء الاصطناعي"}
+                  {r.trigger === "sentiment_angry" &&
+                    "كشف نبرة غضب أو شكوى شديدة اللهجة بالذكاء الاصطناعي"}
                   {r.trigger === "message_received" && "استلام رسالة جديدة من العميل عبر أي وسيلة"}
                   {r.trigger === "keyword_detected" && "العثور على كلمات دلالية ومفتاحية محددة"}
-                  {r.trigger === "off_hours" && "استلام رسالة في غير ساعات العمل (الجمعة/السبت أو 6م - 8ص)"}
+                  {r.trigger === "off_hours" &&
+                    "استلام رسالة في غير ساعات العمل (الجمعة/السبت أو 6م - 8ص)"}
                 </span>
                 {r.triggerDetail && (
                   <span className="text-[10px] font-bold bg-primary/5 text-primary border border-primary/10 px-2 py-0.5 rounded-lg inline-block">
@@ -308,11 +331,15 @@ export default function WorkflowsView() {
               {/* Actions details list */}
               <div className="space-y-2">
                 <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-1">
-                  <Play className="w-3.5 h-3.5 text-primary rotate-180" /> الإجراءات المتتالية (THEN)
+                  <Play className="w-3.5 h-3.5 text-primary rotate-180" /> الإجراءات المتتالية
+                  (THEN)
                 </span>
                 <div className="space-y-1.5">
                   {r.actions.map((act, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs font-bold text-zinc-600">
+                    <div
+                      key={idx}
+                      className="flex items-center gap-2 text-xs font-bold text-zinc-600"
+                    >
                       <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                       <span>{act}</span>
                     </div>

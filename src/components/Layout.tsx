@@ -52,7 +52,12 @@ const navigationData = [
   { nameKey: "dashboard", id: "Dashboard", href: "/app", icon: LayoutDashboard },
   { nameKey: "sidebar.employees", id: "CRM", href: "/app/crm", icon: Users },
   { nameKey: "sidebar.lead_gen", id: "LeadGen", href: "/app/lead-gen", icon: Magnet },
-  { nameKey: "sidebar.email_marketing", id: "EmailMarketing", href: "/app/email-marketing", icon: Mail },
+  {
+    nameKey: "sidebar.email_marketing",
+    id: "EmailMarketing",
+    href: "/app/email-marketing",
+    icon: Mail,
+  },
   { nameKey: "sidebar.social_media", id: "SocialMedia", href: "/app/social-media", icon: Share2 },
   { nameKey: "sidebar.advertising", id: "Advertising", href: "/app/advertising", icon: Sparkles },
   { nameKey: "sidebar.chat", id: "Chat", href: "/app/chat", icon: MessageSquare },
@@ -202,7 +207,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   };
 
   const filteredNavigation = navigationData.filter(
-    (item) => item.id === "SmartNegotiations" || item.id === "Chat" || item.id === "Projects" || hasPermission(item.id)
+    (item) =>
+      item.id === "SmartNegotiations" ||
+      item.id === "Chat" ||
+      item.id === "Projects" ||
+      hasPermission(item.id)
   );
 
   const handleCommand = async (e: React.KeyboardEvent) => {
@@ -742,9 +751,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 const newLang = settings.language === "ar" ? "en" : "ar";
                 updateSettings({ language: newLang });
                 toast.success(
-                  newLang === "ar"
-                    ? t("layout.switch_to_arabic")
-                    : t("layout.switch_to_english")
+                  newLang === "ar" ? t("layout.switch_to_arabic") : t("layout.switch_to_english")
                 );
               }}
               className="px-4 py-2 rounded-2xl border border-zinc-200 dark:border-zinc-850 bg-zinc-100 dark:bg-zinc-900 text-xs font-black text-zinc-650 dark:text-zinc-300 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-200 dark:hover:bg-zinc-850 hover:border-emerald-500/20 transition-all cursor-pointer flex items-center gap-2 outline-none shadow-sm"

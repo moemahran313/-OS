@@ -67,7 +67,7 @@ router.put("/:id", authenticate, async (req: any, res) => {
     };
 
     await db.collection("tickets").doc(ticketId).update(updateData);
-    
+
     // Fetch updated ticket to log or apply automation checks
     const updatedDoc = await db.collection("tickets").doc(ticketId).get();
     const updatedTicket = updatedDoc.data();
@@ -100,10 +100,10 @@ router.post("/:id/messages", authenticate, async (req: any, res) => {
   try {
     const ticketId = req.params.id;
     const message = req.body; // { text: string, sender: "customer"|"agent"|"system"|"bot", senderName: string, id: string, createdAt: string }
-    
+
     const docRef = db.collection("tickets").doc(ticketId);
     const ticketDoc = await docRef.get();
-    
+
     if (!ticketDoc.exists) {
       return res.status(404).json({ error: "Ticket not found" });
     }
@@ -128,9 +128,14 @@ router.post("/:id/messages", authenticate, async (req: any, res) => {
           if (!ai) return;
 
           // Search knowledge base
-          const articlesSnap = await db.collection("knowledge_articles").where("userId", "==", req.user.uid).get();
-          const articles = articlesSnap.docs.map(doc => doc.data());
-          const kbContext = articles.map(a => `Title: ${a.title}\nCategory: ${a.category}\nContent: ${a.content}`).join("\n\n");
+          const articlesSnap = await db
+            .collection("knowledge_articles")
+            .where("userId", "==", req.user.uid)
+            .get();
+          const articles = articlesSnap.docs.map((doc) => doc.data());
+          const kbContext = articles
+            .map((a) => `Title: ${a.title}\nCategory: ${a.category}\nContent: ${a.content}`)
+            .join("\n\n");
 
           const botPrompt = `You are an elegant AI Chatbot for Madarij OS Support.
 A customer sent this message: "${message.text}"
@@ -154,7 +159,7 @@ Do NOT use system jargon. No markdown headers like '#', keep formatting minimal.
             senderName: "مساعد الذكاء الاصطناعي",
             text: responseText,
             createdAt: new Date().toISOString(),
-            read: false
+            read: false,
           };
 
           // Append bot reply
@@ -163,7 +168,6 @@ Do NOT use system jargon. No markdown headers like '#', keep formatting minimal.
             messages: finalMessages,
             updatedAt: new Date().toISOString(),
           });
-
         } catch (botErr) {
           console.error("AI Chatbot reply simulation error:", botErr);
         }
@@ -225,9 +229,14 @@ router.post("/:id/copilot/suggest-reply", authenticate, async (req: any, res) =>
       .map((m: any) => `${m.senderName} (${m.sender}): ${m.text}`)
       .join("\n");
 
-    const kbSnap = await db.collection("knowledge_articles").where("userId", "==", req.user.uid).get();
-    const articles = kbSnap.docs.map(doc => doc.data());
-    const kbContext = articles.map(a => `Article: ${a.title}\nContent: ${a.content}`).join("\n\n");
+    const kbSnap = await db
+      .collection("knowledge_articles")
+      .where("userId", "==", req.user.uid)
+      .get();
+    const articles = kbSnap.docs.map((doc) => doc.data());
+    const kbContext = articles
+      .map((a) => `Article: ${a.title}\nContent: ${a.content}`)
+      .join("\n\n");
 
     const prompt = `You are an elite support co-pilot. Suggest a high-quality, professional email/chat reply to the last message of this customer.
 Customer: ${ticketData.customerName}
@@ -291,9 +300,9 @@ Provide analysis results:
             sentiment: { type: Type.STRING },
             predictedCsat: { type: Type.INTEGER },
           },
-          required: ["category", "priority", "department", "urgency", "sentiment", "predictedCsat"]
-        }
-      }
+          required: ["category", "priority", "department", "urgency", "sentiment", "predictedCsat"],
+        },
+      },
     });
 
     const analysis = JSON.parse(result.text);
@@ -328,11 +337,13 @@ Output ONLY the translated text. No explanations or extra words.`;
   }
 });
 
-
 // KNOWLEDGE ARTICLES
 router.get("/kb", authenticate, async (req: any, res) => {
   try {
-    const snap = await db.collection("knowledge_articles").where("userId", "==", req.user.uid).get();
+    const snap = await db
+      .collection("knowledge_articles")
+      .where("userId", "==", req.user.uid)
+      .get();
     const articles = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     res.json(articles);
   } catch (err: any) {
@@ -416,7 +427,6 @@ Format of the article:
   }
 });
 
-
 // SLA & AUTOMATION REACTION LOGIC
 async function triggerAutomations(userId: string, ticketId: string, ticket: any, req: any) {
   try {
@@ -430,7 +440,7 @@ async function triggerAutomations(userId: string, ticketId: string, ticket: any,
         createdAt: new Date().toISOString(),
         type: "support_sla_alert",
       };
-      
+
       // Save notification to firestore
       await db.collection("notifications").add(notificationPayload);
     }
@@ -445,17 +455,19 @@ async function triggerAutomations(userId: string, ticketId: string, ticket: any,
         senderName: "النظام المالي الآلي",
         text: "تنبيه آلي: تمت الموافقة على طلب الاسترداد. تم إنشاء إشعار دائن (Credit Note) تجريبي وإرسال إشعار لقسم المحاسبة لصرف المبلغ.",
         createdAt: new Date().toISOString(),
-        read: false
+        read: false,
       };
 
       // Check if this notification/message was already added so we don't repeat infinitely
-      const hasSystemMessage = (ticket.messages || []).some((m: any) => m.text.includes("إشعار دائن"));
+      const hasSystemMessage = (ticket.messages || []).some((m: any) =>
+        m.text.includes("إشعار دائن")
+      );
       if (!hasSystemMessage) {
         const docRef = db.collection("tickets").doc(ticketId);
         const currentMessages = ticket.messages || [];
         await docRef.update({
           messages: [...currentMessages, systemMessage],
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
         });
 
         // Add a finance notification
@@ -483,15 +495,14 @@ async function triggerAutomations(userId: string, ticketId: string, ticket: any,
         priority: ticket.priority,
         createdAt: new Date().toISOString(),
       };
-      
+
       await db.collection("project_tasks").add(taskData);
-      
+
       // Update ticket to reset flag
       await db.collection("tickets").doc(ticketId).update({
-        createProjectTask: false
+        createProjectTask: false,
       });
     }
-
   } catch (err) {
     console.error("Error executing support automation rules:", err);
   }

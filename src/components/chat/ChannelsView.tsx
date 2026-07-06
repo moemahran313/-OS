@@ -137,7 +137,9 @@ export default function ChannelsView() {
       <div className="bg-white border border-zinc-200 rounded-3xl p-5 shadow-sm space-y-4">
         <div>
           <h3 className="font-extrabold text-sm text-zinc-800">قنوات الاتصال الموحدة</h3>
-          <p className="text-[10px] text-zinc-500 font-bold mt-0.5">اختر القناة لتهيئة الربط وفحص الحالة</p>
+          <p className="text-[10px] text-zinc-500 font-bold mt-0.5">
+            اختر القناة لتهيئة الربط وفحص الحالة
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -188,8 +190,18 @@ export default function ChannelsView() {
             قنوات قادمة للتفعيل (Future Channels):
           </span>
           <div className="grid grid-cols-2 gap-1.5 text-[10px] font-bold text-zinc-500">
-            {["Slack Direct", "Microsoft Teams", "Apple Messages", "WeChat Business", "Discord Bot", "Google Maps Chat"].map((fc) => (
-              <span key={fc} className="bg-white border border-zinc-200/40 px-2 py-1 rounded-lg truncate flex items-center gap-1.5">
+            {[
+              "Slack Direct",
+              "Microsoft Teams",
+              "Apple Messages",
+              "WeChat Business",
+              "Discord Bot",
+              "Google Maps Chat",
+            ].map((fc) => (
+              <span
+                key={fc}
+                className="bg-white border border-zinc-200/40 px-2 py-1 rounded-lg truncate flex items-center gap-1.5"
+              >
                 <span className="w-1 h-1 rounded-full bg-zinc-300" />
                 {fc}
               </span>
@@ -211,8 +223,12 @@ export default function ChannelsView() {
             >
               <div className="border-b border-zinc-100 pb-4 flex justify-between items-center">
                 <div>
-                  <h3 className="font-extrabold text-sm text-zinc-800">إعدادات ربط WhatsApp Cloud API</h3>
-                  <p className="text-[10px] text-zinc-500 font-bold mt-0.5">اربط رقم شركتك الرسمي لإرسال واستلام محادثات واتساب بخصوصية تامة</p>
+                  <h3 className="font-extrabold text-sm text-zinc-800">
+                    إعدادات ربط WhatsApp Cloud API
+                  </h3>
+                  <p className="text-[10px] text-zinc-500 font-bold mt-0.5">
+                    اربط رقم شركتك الرسمي لإرسال واستلام محادثات واتساب بخصوصية تامة
+                  </p>
                 </div>
                 <div className="px-2.5 py-1 text-[9px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
@@ -222,7 +238,9 @@ export default function ChannelsView() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">رقم هاتف الواتساب الموثّق</label>
+                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">
+                    رقم هاتف الواتساب الموثّق
+                  </label>
                   <input
                     type="text"
                     value={waPhone}
@@ -232,7 +250,9 @@ export default function ChannelsView() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">رمز توثيق الوصول (Access Token)</label>
+                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">
+                    رمز توثيق الوصول (Access Token)
+                  </label>
                   <input
                     type="password"
                     value={waToken}
@@ -248,9 +268,12 @@ export default function ChannelsView() {
                   <QrCode className="w-24 h-24 text-zinc-800" />
                 </div>
                 <div className="space-y-1 text-center md:text-right">
-                  <h4 className="text-xs font-black text-zinc-800">امسح رمز الاستجابة السريعة (QR Code) لربط الجهاز</h4>
+                  <h4 className="text-xs font-black text-zinc-800">
+                    امسح رمز الاستجابة السريعة (QR Code) لربط الجهاز
+                  </h4>
                   <p className="text-[10px] text-zinc-500 font-bold leading-relaxed">
-                    افتح تطبيق الواتساب بهاتفك {`->`} الأجهزة المرتبطة {`->`} ربط جهاز، ومسح الرمز الموضّح أعلاه لربط تطبيق الويب مباشرة دون توقف.
+                    افتح تطبيق الواتساب بهاتفك {`->`} الأجهزة المرتبطة {`->`} ربط جهاز، ومسح الرمز
+                    الموضّح أعلاه لربط تطبيق الويب مباشرة دون توقف.
                   </p>
                   <button
                     onClick={() => toast.success("تم تحديث رمز QR لربط واتساب")}
@@ -295,12 +318,17 @@ export default function ChannelsView() {
             >
               <div className="border-b border-zinc-100 pb-4">
                 <h3 className="font-extrabold text-sm text-zinc-800">إعدادات Telegram Bot API</h3>
-                <p className="text-[10px] text-zinc-500 font-bold mt-0.5">اربط معرف البوت التابع لشركتك لاستلام رسائل المجموعات والمحادثات الخاصة فوراً في صندوق الوارد</p>
+                <p className="text-[10px] text-zinc-500 font-bold mt-0.5">
+                  اربط معرف البوت التابع لشركتك لاستلام رسائل المجموعات والمحادثات الخاصة فوراً في
+                  صندوق الوارد
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">معرّف البوت (Bot Token)</label>
+                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">
+                    معرّف البوت (Bot Token)
+                  </label>
                   <input
                     type="password"
                     value={tgBotToken}
@@ -310,7 +338,9 @@ export default function ChannelsView() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">اسم مستخدم البوت (Bot Username)</label>
+                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">
+                    اسم مستخدم البوت (Bot Username)
+                  </label>
                   <input
                     type="text"
                     value={tgBotUsername}
@@ -326,8 +356,11 @@ export default function ChannelsView() {
                   <Bot className="w-4 h-4" /> تعليمات الحصول على Token:
                 </h4>
                 <p className="leading-relaxed">
-                  1. افتح تطبيق تيليجرام وابحث عن حساب <span className="font-black">@BotFather</span>.<br />
-                  2. أرسل الأمر <span className="font-black">/newbot</span> واتبع الخطوات لتسمية البوت.<br />
+                  1. افتح تطبيق تيليجرام وابحث عن حساب{" "}
+                  <span className="font-black">@BotFather</span>.<br />
+                  2. أرسل الأمر <span className="font-black">/newbot</span> واتبع الخطوات لتسمية
+                  البوت.
+                  <br />
                   3. الصق رمز الـ HTTP API (Token) الموفر في الحقل أعلاه، واحفظ الإعدادات!
                 </p>
               </div>
@@ -364,13 +397,20 @@ export default function ChannelsView() {
               className="space-y-6"
             >
               <div className="border-b border-zinc-100 pb-4">
-                <h3 className="font-extrabold text-sm text-zinc-800">إعدادات البريد المشترك (SMTP / IMAP)</h3>
-                <p className="text-[10px] text-zinc-500 font-bold mt-0.5">قم بربط بريد الدعم الفني أو المبيعات لاستلام البريد وتحويله لتذاكر أو محادثات مع الـ CRM تلقائياً</p>
+                <h3 className="font-extrabold text-sm text-zinc-800">
+                  إعدادات البريد المشترك (SMTP / IMAP)
+                </h3>
+                <p className="text-[10px] text-zinc-500 font-bold mt-0.5">
+                  قم بربط بريد الدعم الفني أو المبيعات لاستلام البريد وتحويله لتذاكر أو محادثات مع
+                  الـ CRM تلقائياً
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">خادم البريد الوارد (IMAP Server)</label>
+                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">
+                    خادم البريد الوارد (IMAP Server)
+                  </label>
                   <input
                     type="text"
                     value={smtpServer}
@@ -380,7 +420,9 @@ export default function ChannelsView() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">عنوان البريد الإلكتروني</label>
+                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">
+                    عنوان البريد الإلكتروني
+                  </label>
                   <input
                     type="email"
                     value={smtpUser}
@@ -422,13 +464,20 @@ export default function ChannelsView() {
               className="space-y-6"
             >
               <div className="border-b border-zinc-100 pb-4">
-                <h3 className="font-extrabold text-sm text-zinc-800">إعدادات بوابة Twilio / Vonage SMS</h3>
-                <p className="text-[10px] text-zinc-500 font-bold mt-0.5">قم بربط حساب Twilio أو مزود محلي لإرسال رسائل الـ OTP والتحقق الثنائي وإشعارات الفواتير العاجلة</p>
+                <h3 className="font-extrabold text-sm text-zinc-800">
+                  إعدادات بوابة Twilio / Vonage SMS
+                </h3>
+                <p className="text-[10px] text-zinc-500 font-bold mt-0.5">
+                  قم بربط حساب Twilio أو مزود محلي لإرسال رسائل الـ OTP والتحقق الثنائي وإشعارات
+                  الفواتير العاجلة
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">Twilio Account SID</label>
+                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">
+                    Twilio Account SID
+                  </label>
                   <input
                     type="text"
                     value={smsSid}
@@ -439,7 +488,9 @@ export default function ChannelsView() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">Twilio Auth Token</label>
+                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">
+                    Twilio Auth Token
+                  </label>
                   <input
                     type="password"
                     placeholder="••••••••••••••••••••••••••••••••"
@@ -474,13 +525,20 @@ export default function ChannelsView() {
               className="space-y-6"
             >
               <div className="border-b border-zinc-100 pb-4">
-                <h3 className="font-extrabold text-sm text-zinc-800">تضمين ويدجت المحادثة المباشرة (Website Widget)</h3>
-                <p className="text-[10px] text-zinc-500 font-bold mt-0.5">انسخ الكود البرمجي وضعه في موقعك الإلكتروني لتبدأ في تلقي استفسارات الزوار والربط بالـ CRM فوراً</p>
+                <h3 className="font-extrabold text-sm text-zinc-800">
+                  تضمين ويدجت المحادثة المباشرة (Website Widget)
+                </h3>
+                <p className="text-[10px] text-zinc-500 font-bold mt-0.5">
+                  انسخ الكود البرمجي وضعه في موقعك الإلكتروني لتبدأ في تلقي استفسارات الزوار والربط
+                  بالـ CRM فوراً
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">لون الويدجت الرئيسي (Brand Color)</label>
+                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">
+                    لون الويدجت الرئيسي (Brand Color)
+                  </label>
                   <div className="flex gap-2 items-center">
                     <input
                       type="color"
@@ -498,7 +556,9 @@ export default function ChannelsView() {
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">عنوان الويدجت الترحيبي</label>
+                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">
+                    عنوان الويدجت الترحيبي
+                  </label>
                   <input
                     type="text"
                     value={widgetTitle}
@@ -510,7 +570,9 @@ export default function ChannelsView() {
 
               {/* Embed Code Copy Box */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-zinc-500 block">كود التضمين في الـ HTML (Embed Code):</label>
+                <label className="text-[10px] font-black text-zinc-500 block">
+                  كود التضمين في الـ HTML (Embed Code):
+                </label>
                 <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 font-mono text-[10px] text-zinc-300 relative select-all leading-relaxed max-h-36 overflow-y-auto">
                   <pre className="whitespace-pre-wrap">{widgetEmbedCode}</pre>
                   <button
@@ -524,7 +586,8 @@ export default function ChannelsView() {
                   </button>
                 </div>
                 <span className="text-[9px] text-zinc-400 font-bold block">
-                  * ضَع هذا الكود قبل وسم {`</body>`} مباشرة في جميع صفحات موقعك الإلكتروني لتبدأ المحادثات الفورية بالتدفق.
+                  * ضَع هذا الكود قبل وسم {`</body>`} مباشرة في جميع صفحات موقعك الإلكتروني لتبدأ
+                  المحادثات الفورية بالتدفق.
                 </span>
               </div>
 

@@ -88,13 +88,25 @@ export default function InboxView({
   // Channel Mapping helper
   const getChannelDetails = (lead: any) => {
     if (lead.status === "new") {
-      return { label: "المحادثة المباشرة", icon: Globe, color: "text-blue-500 bg-blue-50 border-blue-100" };
+      return {
+        label: "المحادثة المباشرة",
+        icon: Globe,
+        color: "text-blue-500 bg-blue-50 border-blue-100",
+      };
     }
     if (lead.status === "opportunity") {
-      return { label: "واتساب", icon: MessageSquare, color: "text-emerald-500 bg-emerald-50 border-emerald-100" };
+      return {
+        label: "واتساب",
+        icon: MessageSquare,
+        color: "text-emerald-500 bg-emerald-50 border-emerald-100",
+      };
     }
     if (lead.status === "contacted") {
-      return { label: "البريد الإلكتروني", icon: Mail, color: "text-rose-500 bg-rose-50 border-rose-100" };
+      return {
+        label: "البريد الإلكتروني",
+        icon: Mail,
+        color: "text-rose-500 bg-rose-50 border-rose-100",
+      };
     }
     return { label: "تيليجرام", icon: Send, color: "text-sky-500 bg-sky-50 border-sky-100" };
   };
@@ -132,9 +144,9 @@ export default function InboxView({
     if (!activeLead) return;
     setIsAiDrafting(true);
     setTimeout(() => {
-      const lastClientMsg = [...(activeLead.messages || [])]
-        .reverse()
-        .find((m) => m.sender === "client")?.text || "مرحباً";
+      const lastClientMsg =
+        [...(activeLead.messages || [])].reverse().find((m) => m.sender === "client")?.text ||
+        "مرحباً";
 
       let generated = "";
       if (lastClientMsg.includes("رابط دفع") || lastClientMsg.includes("فاتورة")) {
@@ -197,7 +209,9 @@ export default function InboxView({
   // Convert to support ticket simulator
   const handleCreateSupportTicket = () => {
     if (!activeLead) return;
-    toast.success(`تم فتح تذكرة دعم فني جديدة رقم #TK-${Math.floor(1000 + Math.random() * 9000)} للعميل ${activeLead.name}!`);
+    toast.success(
+      `تم فتح تذكرة دعم فني جديدة رقم #TK-${Math.floor(1000 + Math.random() * 9000)} للعميل ${activeLead.name}!`
+    );
   };
 
   const handleCreateInvoice = () => {
@@ -237,7 +251,9 @@ export default function InboxView({
                 onClick={() => setActiveTab(t.id as any)}
                 className={cn(
                   "flex-1 text-[10px] font-black py-1.5 rounded-lg transition-all cursor-pointer",
-                  activeTab === t.id ? "bg-white text-zinc-800 shadow-sm" : "text-zinc-500 hover:text-zinc-800"
+                  activeTab === t.id
+                    ? "bg-white text-zinc-800 shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-800"
                 )}
               >
                 {t.label}
@@ -257,7 +273,8 @@ export default function InboxView({
             filteredLeads.map((l) => {
               const isSelected = l.id === activeLeadId;
               const ch = getChannelDetails(l);
-              const lastMsg = l.messages && l.messages.length > 0 ? l.messages[l.messages.length - 1] : null;
+              const lastMsg =
+                l.messages && l.messages.length > 0 ? l.messages[l.messages.length - 1] : null;
 
               return (
                 <button
@@ -280,9 +297,16 @@ export default function InboxView({
 
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-1">
-                      <span className="font-extrabold text-xs text-zinc-800 truncate">{l.name}</span>
+                      <span className="font-extrabold text-xs text-zinc-800 truncate">
+                        {l.name}
+                      </span>
                       <span className="text-[9px] text-zinc-400 font-bold shrink-0">
-                        {lastMsg ? new Date(lastMsg.timestamp).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" }) : ""}
+                        {lastMsg
+                          ? new Date(lastMsg.timestamp).toLocaleTimeString("ar-SA", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : ""}
                       </span>
                     </div>
 
@@ -336,8 +360,15 @@ export default function InboxView({
 
               {/* Header Channel badges */}
               <div className="flex items-center gap-2">
-                <span className={cn("px-2.5 py-1 text-[9px] font-black rounded-full border flex items-center gap-1", getChannelDetails(activeLead).color)}>
-                  {React.createElement(getChannelDetails(activeLead).icon, { className: "w-3 h-3" })}
+                <span
+                  className={cn(
+                    "px-2.5 py-1 text-[9px] font-black rounded-full border flex items-center gap-1",
+                    getChannelDetails(activeLead).color
+                  )}
+                >
+                  {React.createElement(getChannelDetails(activeLead).icon, {
+                    className: "w-3 h-3",
+                  })}
                   <span>قناة: {getChannelDetails(activeLead).label}</span>
                 </span>
                 <button
@@ -358,23 +389,48 @@ export default function InboxView({
 
                 if (isNote) {
                   return (
-                    <div key={m.id} className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3 max-w-[90%] mx-auto shadow-sm text-amber-800 text-xs font-bold space-y-1 animate-fadeIn">
+                    <div
+                      key={m.id}
+                      className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3 max-w-[90%] mx-auto shadow-sm text-amber-800 text-xs font-bold space-y-1 animate-fadeIn"
+                    >
                       <div className="flex justify-between items-center border-b border-amber-200/40 pb-1 mb-1.5">
-                        <span className="text-[9px] font-black uppercase text-amber-600 tracking-wider">🔒 ملاحظة داخلية للموظفين</span>
-                        <span className="text-[8px] text-amber-500">مكتوب بواسطة: {m.authorName}</span>
+                        <span className="text-[9px] font-black uppercase text-amber-600 tracking-wider">
+                          🔒 ملاحظة داخلية للموظفين
+                        </span>
+                        <span className="text-[8px] text-amber-500">
+                          مكتوب بواسطة: {m.authorName}
+                        </span>
                       </div>
-                      <p className="leading-relaxed">{m.text.replace("[ملاحظة داخلية للموظفين]:", "")}</p>
+                      <p className="leading-relaxed">
+                        {m.text.replace("[ملاحظة داخلية للموظفين]:", "")}
+                      </p>
                     </div>
                   );
                 }
 
                 return (
-                  <div key={m.id} className={cn("flex flex-col max-w-[80%]", isClient ? "mr-auto items-end" : "ml-auto items-start")}>
-                    <div className={cn("p-3.5 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm", isClient ? "bg-white border border-zinc-200/80 text-zinc-800 rounded-br-none" : "bg-primary text-white rounded-bl-none")}>
+                  <div
+                    key={m.id}
+                    className={cn(
+                      "flex flex-col max-w-[80%]",
+                      isClient ? "mr-auto items-end" : "ml-auto items-start"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "p-3.5 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm",
+                        isClient
+                          ? "bg-white border border-zinc-200/80 text-zinc-800 rounded-br-none"
+                          : "bg-primary text-white rounded-bl-none"
+                      )}
+                    >
                       {m.text}
                     </div>
                     <span className="text-[8px] text-zinc-400 font-bold mt-1.5 px-1.5 tracking-wider flex items-center gap-1">
-                      {new Date(m.timestamp).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
+                      {new Date(m.timestamp).toLocaleTimeString("ar-SA", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                       {!isClient && <CheckCheck className="w-3 h-3 text-emerald-400" />}
                     </span>
                   </div>
@@ -383,9 +439,18 @@ export default function InboxView({
 
               {isDraftingReply && (
                 <div className="bg-white border border-zinc-200 px-3 py-2.5 rounded-2xl max-w-max mr-auto shadow-sm flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: "0s" }} />
-                  <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: "0.15s" }} />
-                  <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce" style={{ animationDelay: "0.3s" }} />
+                  <span
+                    className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "0s" }}
+                  />
+                  <span
+                    className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.15s" }}
+                  />
+                  <span
+                    className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-bounce"
+                    style={{ animationDelay: "0.3s" }}
+                  />
                 </div>
               )}
               <div ref={messagesEndRef} />
@@ -426,7 +491,9 @@ export default function InboxView({
                     onClick={() => setComposerMode("reply")}
                     className={cn(
                       "text-[10px] font-black px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer",
-                      composerMode === "reply" ? "bg-white text-zinc-800 shadow-sm" : "text-zinc-500 hover:text-zinc-800"
+                      composerMode === "reply"
+                        ? "bg-white text-zinc-800 shadow-sm"
+                        : "text-zinc-500 hover:text-zinc-800"
                     )}
                   >
                     💬 الرد على العميل
@@ -435,7 +502,9 @@ export default function InboxView({
                     onClick={() => setComposerMode("note")}
                     className={cn(
                       "text-[10px] font-black px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer",
-                      composerMode === "note" ? "bg-amber-500 text-white shadow-sm" : "text-zinc-500 hover:text-amber-600"
+                      composerMode === "note"
+                        ? "bg-amber-500 text-white shadow-sm"
+                        : "text-zinc-500 hover:text-amber-600"
                     )}
                   >
                     🔒 ملاحظة داخلية
@@ -470,7 +539,11 @@ export default function InboxView({
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSendAction()}
-                  placeholder={composerMode === "note" ? "اكتب ملاحظة داخلية خاصة بالموظفين..." : "اكتب ردك للعميل هنا..."}
+                  placeholder={
+                    composerMode === "note"
+                      ? "اكتب ملاحظة داخلية خاصة بالموظفين..."
+                      : "اكتب ردك للعميل هنا..."
+                  }
                   className={cn(
                     "flex-1 text-xs font-bold px-3.5 py-3 rounded-xl border focus:outline-none transition-all shadow-inner",
                     composerMode === "note"
@@ -482,7 +555,9 @@ export default function InboxView({
                   onClick={handleSendAction}
                   className={cn(
                     "text-white text-xs font-black px-5 rounded-xl transition-all shadow-md flex items-center justify-center cursor-pointer active:scale-95",
-                    composerMode === "note" ? "bg-amber-500 hover:bg-amber-600" : "bg-primary hover:bg-primary/95"
+                    composerMode === "note"
+                      ? "bg-amber-500 hover:bg-amber-600"
+                      : "bg-primary hover:bg-primary/95"
                   )}
                 >
                   <Send className="w-3.5 h-3.5 rotate-180 ml-1.5" />
@@ -493,10 +568,16 @@ export default function InboxView({
               {/* Footer Toolbar mock uploads */}
               <div className="flex justify-between items-center text-[10px] text-zinc-400 font-bold">
                 <div className="flex gap-3">
-                  <button onClick={() => toast.info("مرفقات الصور/الملفات مفعلة حياً")} className="flex items-center gap-1 hover:text-zinc-600 cursor-pointer">
+                  <button
+                    onClick={() => toast.info("مرفقات الصور/الملفات مفعلة حياً")}
+                    className="flex items-center gap-1 hover:text-zinc-600 cursor-pointer"
+                  >
                     <FileUp className="w-3.5 h-3.5" /> ملفات
                   </button>
-                  <button onClick={() => setInputText(inputText + " 👍")} className="flex items-center gap-1 hover:text-zinc-600 cursor-pointer">
+                  <button
+                    onClick={() => setInputText(inputText + " 👍")}
+                    className="flex items-center gap-1 hover:text-zinc-600 cursor-pointer"
+                  >
                     <Smile className="w-3.5 h-3.5" /> إيموجي
                   </button>
                 </div>
@@ -509,7 +590,9 @@ export default function InboxView({
             <MessageSquare className="w-16 h-16 text-zinc-200 animate-pulse" />
             <div>
               <h3 className="font-extrabold text-sm text-zinc-800">صندوق الوارد الموحد</h3>
-              <p className="text-xs text-zinc-400 font-bold mt-1">اختر محادثة عميل من القائمة الجانبية لبدء التواصل</p>
+              <p className="text-xs text-zinc-400 font-bold mt-1">
+                اختر محادثة عميل من القائمة الجانبية لبدء التواصل
+              </p>
             </div>
           </div>
         )}
@@ -556,24 +639,36 @@ export default function InboxView({
                   onClick={() => toggleSection("financials")}
                   className="w-full flex justify-between items-center p-3 text-right bg-zinc-50/50 cursor-pointer"
                 >
-                  <span className="text-[10px] font-black text-zinc-700">العمليات المالية والفواتير</span>
-                  {expandedSection === "financials" ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  <span className="text-[10px] font-black text-zinc-700">
+                    العمليات المالية والفواتير
+                  </span>
+                  {expandedSection === "financials" ? (
+                    <ChevronUp className="w-3.5 h-3.5" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  )}
                 </button>
                 {expandedSection === "financials" && (
                   <div className="p-3 border-t border-zinc-100 text-[10px] font-bold space-y-2">
                     <div className="flex justify-between items-center text-zinc-500 pb-2 border-b border-zinc-50">
                       <span>القيمة المقدرة:</span>
-                      <span className="text-zinc-800 font-black">{(activeLead.value || 0).toLocaleString("ar-SA")} ر.س</span>
+                      <span className="text-zinc-800 font-black">
+                        {(activeLead.value || 0).toLocaleString("ar-SA")} ر.س
+                      </span>
                     </div>
                     {/* Mock Invoices list */}
                     <div className="space-y-1.5 pt-1">
                       <div className="flex justify-between items-center p-2 bg-zinc-50 border border-zinc-200/50 rounded-xl">
                         <span>فاتورة #INV-9023</span>
-                        <span className="px-1.5 py-0.5 text-[8px] bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-md">مدفوعة</span>
+                        <span className="px-1.5 py-0.5 text-[8px] bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-md">
+                          مدفوعة
+                        </span>
                       </div>
                       <div className="flex justify-between items-center p-2 bg-zinc-50 border border-zinc-200/50 rounded-xl">
                         <span>عرض سعر #QT-109</span>
-                        <span className="px-1.5 py-0.5 text-[8px] bg-amber-50 text-amber-600 border border-amber-100 rounded-md">مقبول</span>
+                        <span className="px-1.5 py-0.5 text-[8px] bg-amber-50 text-amber-600 border border-amber-100 rounded-md">
+                          مقبول
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -590,7 +685,11 @@ export default function InboxView({
                     <Sparkles className="w-3.5 h-3.5 text-purple-500 animate-pulse" />
                     تحليل الذكاء الاصطناعي والتنبؤ
                   </span>
-                  {expandedSection === "predictive" ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  {expandedSection === "predictive" ? (
+                    <ChevronUp className="w-3.5 h-3.5" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  )}
                 </button>
                 {expandedSection === "predictive" && (
                   <div className="p-3 border-t border-zinc-100 text-[10px] font-bold space-y-3">
@@ -607,7 +706,9 @@ export default function InboxView({
 
                     {/* Sentiment Analysis */}
                     <div className="space-y-1 bg-zinc-50 p-2.5 rounded-xl border border-zinc-200/50">
-                      <span className="text-[9px] font-black text-zinc-400 block">نبرة الحديث الأخيرة (Sentiment):</span>
+                      <span className="text-[9px] font-black text-zinc-400 block">
+                        نبرة الحديث الأخيرة (Sentiment):
+                      </span>
                       <span className="text-zinc-800 font-extrabold flex items-center gap-1">
                         😊 إيجابية ومتفاعلة (Positive)
                       </span>
@@ -630,18 +731,28 @@ export default function InboxView({
                   onClick={() => toggleSection("contact")}
                   className="w-full flex justify-between items-center p-3 text-right bg-zinc-50/50 cursor-pointer"
                 >
-                  <span className="text-[10px] font-black text-zinc-700">بيانات الاتصال والتوزيع الجغرافي</span>
-                  {expandedSection === "contact" ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  <span className="text-[10px] font-black text-zinc-700">
+                    بيانات الاتصال والتوزيع الجغرافي
+                  </span>
+                  {expandedSection === "contact" ? (
+                    <ChevronUp className="w-3.5 h-3.5" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  )}
                 </button>
                 {expandedSection === "contact" && (
                   <div className="p-3 border-t border-zinc-100 text-[10px] font-bold space-y-2">
                     <div className="space-y-1">
                       <span className="text-zinc-400 text-[9px] block">البريد الإلكتروني:</span>
-                      <span className="text-zinc-800 truncate block">{activeLead.email || "support@madarij-os.com"}</span>
+                      <span className="text-zinc-800 truncate block">
+                        {activeLead.email || "support@madarij-os.com"}
+                      </span>
                     </div>
                     <div className="space-y-1">
                       <span className="text-zinc-400 text-[9px] block">الدولة واللغة:</span>
-                      <span className="text-zinc-800 block">المملكة العربية السعودية | العربية (ناجدي)</span>
+                      <span className="text-zinc-800 block">
+                        المملكة العربية السعودية | العربية (ناجدي)
+                      </span>
                     </div>
                   </div>
                 )}
@@ -649,7 +760,9 @@ export default function InboxView({
             </div>
           </div>
         ) : (
-          <div className="p-8 text-center text-zinc-400 text-xs font-bold">لا يوجد عميل نشط لعرض بياناته</div>
+          <div className="p-8 text-center text-zinc-400 text-xs font-bold">
+            لا يوجد عميل نشط لعرض بياناته
+          </div>
         )}
       </div>
     </div>

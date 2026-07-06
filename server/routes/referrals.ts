@@ -16,20 +16,23 @@ router.get("/my-stats", authenticate, async (req: any, res) => {
     }
 
     const userData = userDoc.data() || {};
-    
+
     // Auto-generate a referral code if they don't have one
     let referralCode = userData.referralCode;
     if (!referralCode) {
       referralCode = `MUD-${userId.substring(0, 6).toUpperCase()}`;
-      await db.collection("users").doc(userId).set(
-        {
-          referralCode,
-          rewardPreference: userData.rewardPreference || "discount",
-          discountEarnedSar: userData.discountEarnedSar || 0,
-          trialExtensionDays: userData.trialExtensionDays || 0,
-        },
-        { merge: true }
-      );
+      await db
+        .collection("users")
+        .doc(userId)
+        .set(
+          {
+            referralCode,
+            rewardPreference: userData.rewardPreference || "discount",
+            discountEarnedSar: userData.discountEarnedSar || 0,
+            trialExtensionDays: userData.trialExtensionDays || 0,
+          },
+          { merge: true }
+        );
     }
 
     const rewardPreference = userData.rewardPreference || "discount";
@@ -37,10 +40,7 @@ router.get("/my-stats", authenticate, async (req: any, res) => {
     const trialExtensionDays = userData.trialExtensionDays || 0;
 
     // Query referrals where this user is the referrer
-    const referralsSnap = await db
-      .collection("referrals")
-      .where("referrerId", "==", userId)
-      .get();
+    const referralsSnap = await db.collection("referrals").where("referrerId", "==", userId).get();
 
     const history: any[] = [];
     referralsSnap.forEach((doc: any) => {
@@ -74,17 +74,17 @@ router.post("/generate-code", authenticate, async (req: any, res) => {
     }
 
     // Sanitize code: uppercase, trim, alphanumeric
-    customCode = customCode.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "");
+    customCode = customCode
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9_-]/g, "");
 
     if (customCode.length < 3 || customCode.length > 15) {
       return res.status(400).json({ error: "يجب أن يكون الرمز بين 3 إلى 15 حرفاً أو رقماً" });
     }
 
     // Check if code is already taken by someone else
-    const takenSnap = await db
-      .collection("users")
-      .where("referralCode", "==", customCode)
-      .get();
+    const takenSnap = await db.collection("users").where("referralCode", "==", customCode).get();
 
     let isTaken = false;
     takenSnap.forEach((doc: any) => {
@@ -133,7 +133,9 @@ router.post("/simulate-signup", authenticate, async (req: any, res) => {
     const { email, name, referrerCode } = req.body;
 
     if (!email || !name || !referrerCode) {
-      return res.status(400).json({ error: "البريد الإلكتروني والاسم والرمز مطلوبون لتجربة المحاكاة" });
+      return res
+        .status(400)
+        .json({ error: "البريد الإلكتروني والاسم والرمز مطلوبون لتجربة المحاكاة" });
     }
 
     // 1. Get the referrer user data
@@ -145,7 +147,7 @@ router.post("/simulate-signup", authenticate, async (req: any, res) => {
 
     // 2. Create the mock referred user in local_fallback / firestore
     const mockReferredUserId = "mock_ref_" + Math.random().toString(36).substring(2, 9);
-    
+
     // Referred friend gets 30 days extended trial for registering through link
     const originalTrialEnd = new Date();
     originalTrialEnd.setDate(originalTrialEnd.getDate() + 14); // standard 14 days trial
@@ -176,17 +178,17 @@ router.post("/simulate-signup", authenticate, async (req: any, res) => {
     if (referrerPreference === "trial") {
       updatedTrialDays += 30; // 30 days trial reward
       rewardDesc = "تمديد الفترة التجريبية مجاناً لمدة 30 يوماً";
-      await db.collection("users").doc(referrerId).set(
-        { trialExtensionDays: updatedTrialDays },
-        { merge: true }
-      );
+      await db
+        .collection("users")
+        .doc(referrerId)
+        .set({ trialExtensionDays: updatedTrialDays }, { merge: true });
     } else {
       updatedDiscount += 150; // 150 SAR discount reward
       rewardDesc = "خصم 150 ريال سعودي على التجديد القادم";
-      await db.collection("users").doc(referrerId).set(
-        { discountEarnedSar: updatedDiscount },
-        { merge: true }
-      );
+      await db
+        .collection("users")
+        .doc(referrerId)
+        .set({ discountEarnedSar: updatedDiscount }, { merge: true });
     }
 
     // 4. Create the referral tracking record
@@ -271,17 +273,17 @@ router.post("/simulate-payment", authenticate, async (req: any, res) => {
     if (rewardPreference === "trial") {
       updatedTrialDays += 30; // extra 30 days
       additionalRewardDesc = "تمديد إضافي لـ 30 يوماً مجاناً";
-      await db.collection("users").doc(referrerId).set(
-        { trialExtensionDays: updatedTrialDays },
-        { merge: true }
-      );
+      await db
+        .collection("users")
+        .doc(referrerId)
+        .set({ trialExtensionDays: updatedTrialDays }, { merge: true });
     } else {
       updatedDiscount += 150; // extra 150 SAR discount
       additionalRewardDesc = "خصم إضافي بقيمة 150 ريال سعودي";
-      await db.collection("users").doc(referrerId).set(
-        { discountEarnedSar: updatedDiscount },
-        { merge: true }
-      );
+      await db
+        .collection("users")
+        .doc(referrerId)
+        .set({ discountEarnedSar: updatedDiscount }, { merge: true });
     }
 
     // 3. Update referred user subscription status to Paid and give friend credit/reward
@@ -295,14 +297,17 @@ router.post("/simulate-payment", authenticate, async (req: any, res) => {
 
     // 4. Update referral record status
     const currentRewardVal = referralData.rewardValueDescription;
-    await db.collection("referrals").doc(referralDoc.id).set(
-      {
-        status: "completed",
-        completedAt: new Date().toISOString(),
-        rewardValueDescription: `${currentRewardVal} + ${additionalRewardDesc} (دفعة أولى)`,
-      },
-      { merge: true }
-    );
+    await db
+      .collection("referrals")
+      .doc(referralDoc.id)
+      .set(
+        {
+          status: "completed",
+          completedAt: new Date().toISOString(),
+          rewardValueDescription: `${currentRewardVal} + ${additionalRewardDesc} (دفعة أولى)`,
+        },
+        { merge: true }
+      );
 
     // 5. Send Notification to Referrer
     await db.collection("notifications").add({

@@ -1,8 +1,17 @@
 import React, { useState } from "react";
 import { motion } from "motion/react";
-import { 
-  Users, Plus, Search, FileText, ArrowUpRight, TrendingUp, 
-  AlertTriangle, DollarSign, ArrowRightLeft, ShieldCheck, CheckCircle 
+import {
+  Users,
+  Plus,
+  Search,
+  FileText,
+  ArrowUpRight,
+  TrendingUp,
+  AlertTriangle,
+  DollarSign,
+  ArrowRightLeft,
+  ShieldCheck,
+  CheckCircle,
 } from "lucide-react";
 
 interface Customer {
@@ -28,30 +37,108 @@ interface Invoice {
 
 export default function ReceivablesTab({
   accounts = [],
-  activeBranchId = "all"
+  activeBranchId = "all",
 }: {
   accounts?: any[];
   activeBranchId?: string;
 }) {
   const [customers, setCustomers] = useState<Customer[]>([
-    { id: "cust-1", nameAr: "مجموعة الشايع التجارية", nameEn: "Alshaya Trading Group", vatNumber: "310123456700003", status: "Active", balance: 145000, unpaidInvoicesCount: 3 },
-    { id: "cust-2", nameAr: "شركة المراعي المحدودة", nameEn: "Almarai Company Ltd.", vatNumber: "300055443300003", status: "Active", balance: 89000, unpaidInvoicesCount: 1 },
-    { id: "cust-3", nameAr: "مؤسسة الحلول الرقمية", nameEn: "Digital Solutions Est.", vatNumber: "310987654300003", status: "Active", balance: 0, unpaidInvoicesCount: 0 },
-    { id: "cust-4", nameAr: "مستشفيات رعاية الصحية", nameEn: "Riyadh Care Hospitals", vatNumber: "300556677800003", status: "Active", balance: 240000, unpaidInvoicesCount: 4 },
+    {
+      id: "cust-1",
+      nameAr: "مجموعة الشايع التجارية",
+      nameEn: "Alshaya Trading Group",
+      vatNumber: "310123456700003",
+      status: "Active",
+      balance: 145000,
+      unpaidInvoicesCount: 3,
+    },
+    {
+      id: "cust-2",
+      nameAr: "شركة المراعي المحدودة",
+      nameEn: "Almarai Company Ltd.",
+      vatNumber: "300055443300003",
+      status: "Active",
+      balance: 89000,
+      unpaidInvoicesCount: 1,
+    },
+    {
+      id: "cust-3",
+      nameAr: "مؤسسة الحلول الرقمية",
+      nameEn: "Digital Solutions Est.",
+      vatNumber: "310987654300003",
+      status: "Active",
+      balance: 0,
+      unpaidInvoicesCount: 0,
+    },
+    {
+      id: "cust-4",
+      nameAr: "مستشفيات رعاية الصحية",
+      nameEn: "Riyadh Care Hospitals",
+      vatNumber: "300556677800003",
+      status: "Active",
+      balance: 240000,
+      unpaidInvoicesCount: 4,
+    },
   ]);
 
   const [invoices, setInvoices] = useState<Invoice[]>([
-    { id: "inv-101", invoiceNo: "INV-2026-001", customerName: "مجموعة الشايع التجارية", date: "2026-05-10", dueDate: "2026-06-10", amount: 45000, tax: 6750, status: "Unpaid" },
-    { id: "inv-102", invoiceNo: "INV-2026-002", customerName: "شركة المراعي المحدودة", date: "2026-05-15", dueDate: "2026-06-15", amount: 89000, tax: 13350, status: "Unpaid" },
-    { id: "inv-103", invoiceNo: "INV-2026-003", customerName: "مستشفيات رعاية الصحية", date: "2026-04-01", dueDate: "2026-05-01", amount: 120000, tax: 18000, status: "Overdue" },
-    { id: "inv-104", invoiceNo: "INV-2026-004", customerName: "مجموعة الشايع التجارية", date: "2026-05-20", dueDate: "2026-06-20", amount: 100000, tax: 15000, status: "Unpaid" },
+    {
+      id: "inv-101",
+      invoiceNo: "INV-2026-001",
+      customerName: "مجموعة الشايع التجارية",
+      date: "2026-05-10",
+      dueDate: "2026-06-10",
+      amount: 45000,
+      tax: 6750,
+      status: "Unpaid",
+    },
+    {
+      id: "inv-102",
+      invoiceNo: "INV-2026-002",
+      customerName: "شركة المراعي المحدودة",
+      date: "2026-05-15",
+      dueDate: "2026-06-15",
+      amount: 89000,
+      tax: 13350,
+      status: "Unpaid",
+    },
+    {
+      id: "inv-103",
+      invoiceNo: "INV-2026-003",
+      customerName: "مستشفيات رعاية الصحية",
+      date: "2026-04-01",
+      dueDate: "2026-05-01",
+      amount: 120000,
+      tax: 18000,
+      status: "Overdue",
+    },
+    {
+      id: "inv-104",
+      invoiceNo: "INV-2026-004",
+      customerName: "مجموعة الشايع التجارية",
+      date: "2026-05-20",
+      dueDate: "2026-06-20",
+      amount: 100000,
+      tax: 15000,
+      status: "Unpaid",
+    },
   ]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddCustomer, setShowAddCustomer] = useState(false);
-  const [newCustomer, setNewCustomer] = useState({ nameAr: "", nameEn: "", vatNumber: "", status: "Active" as const });
+  const [newCustomer, setNewCustomer] = useState({
+    nameAr: "",
+    nameEn: "",
+    vatNumber: "",
+    status: "Active" as const,
+  });
   const [showNoteModal, setShowNoteModal] = useState(false);
-  const [noteForm, setNoteForm] = useState({ customerId: "", type: "Credit" as const, amount: "", description: "" });
+  const [noteForm, setNoteForm] = useState({
+    customerId: "",
+    type: "Credit" as const,
+    amount: "",
+    description: "",
+  });
 
   const handleAddCustomer = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +150,7 @@ export default function ReceivablesTab({
       vatNumber: newCustomer.vatNumber || undefined,
       status: newCustomer.status,
       balance: 0,
-      unpaidInvoicesCount: 0
+      unpaidInvoicesCount: 0,
     };
     setCustomers([...customers, added]);
     setNewCustomer({ nameAr: "", nameEn: "", vatNumber: "", status: "Active" });
@@ -75,30 +162,33 @@ export default function ReceivablesTab({
     const amt = parseFloat(noteForm.amount);
     if (!noteForm.customerId || isNaN(amt) || amt <= 0) return;
 
-    setCustomers(prev => prev.map(c => {
-      if (c.id === noteForm.customerId) {
-        const adjustment = noteForm.type === "Credit" ? -amt : amt;
-        return { ...c, balance: Math.max(0, c.balance + adjustment) };
-      }
-      return c;
-    }));
+    setCustomers((prev) =>
+      prev.map((c) => {
+        if (c.id === noteForm.customerId) {
+          const adjustment = noteForm.type === "Credit" ? -amt : amt;
+          return { ...c, balance: Math.max(0, c.balance + adjustment) };
+        }
+        return c;
+      })
+    );
 
     // Optionally update local unpaid invoices or log it
     setShowNoteModal(false);
     setNoteForm({ customerId: "", type: "Credit", amount: "", description: "" });
   };
 
-  const filteredCustomers = customers.filter(c => 
-    c.nameAr.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    c.nameEn.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCustomers = customers.filter(
+    (c) =>
+      c.nameAr.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.nameEn.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Simple Aging Calculations
   const totalBalance = customers.reduce((sum, c) => sum + c.balance, 0);
   const currentAging = Math.round(totalBalance * 0.45);
-  const aging30 = Math.round(totalBalance * 0.30);
+  const aging30 = Math.round(totalBalance * 0.3);
   const aging60 = Math.round(totalBalance * 0.15);
-  const aging90Plus = Math.round(totalBalance * 0.10);
+  const aging90Plus = Math.round(totalBalance * 0.1);
 
   return (
     <div className="space-y-6 text-right">
@@ -109,14 +199,16 @@ export default function ReceivablesTab({
             <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center dark:bg-indigo-950/50 dark:text-indigo-400">
               <DollarSign className="w-5 h-5" />
             </div>
-            <span className="text-[10px] text-zinc-400 font-bold uppercase">إجمالي الذمم المدينة</span>
+            <span className="text-[10px] text-zinc-400 font-bold uppercase">
+              إجمالي الذمم المدينة
+            </span>
           </div>
           <div className="mt-4">
             <h4 className="text-xl font-black text-zinc-900 dark:text-zinc-100 font-mono">
               {totalBalance.toLocaleString()} ر.س
             </h4>
             <p className="text-[10px] text-zinc-400 font-bold mt-1">
-              مستحقة من {customers.filter(c => c.balance > 0).length} عملاء نشطين
+              مستحقة من {customers.filter((c) => c.balance > 0).length} عملاء نشطين
             </p>
           </div>
         </div>
@@ -126,13 +218,17 @@ export default function ReceivablesTab({
             <div className="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center dark:bg-rose-950/50 dark:text-rose-400">
               <AlertTriangle className="w-5 h-5 animate-pulse" />
             </div>
-            <span className="text-[10px] text-zinc-400 font-bold uppercase">المتأخرات الحرجة (+90 يوم)</span>
+            <span className="text-[10px] text-zinc-400 font-bold uppercase">
+              المتأخرات الحرجة (+90 يوم)
+            </span>
           </div>
           <div className="mt-4">
             <h4 className="text-xl font-black text-rose-600 dark:text-rose-400 font-mono">
               {aging90Plus.toLocaleString()} ر.س
             </h4>
-            <p className="text-[10px] text-zinc-400 font-bold mt-1">تتطلب متابعة قانونية أو خصم ديون</p>
+            <p className="text-[10px] text-zinc-400 font-bold mt-1">
+              تتطلب متابعة قانونية أو خصم ديون
+            </p>
           </div>
         </div>
 
@@ -141,13 +237,17 @@ export default function ReceivablesTab({
             <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center dark:bg-emerald-950/50 dark:text-emerald-400">
               <TrendingUp className="w-5 h-5" />
             </div>
-            <span className="text-[10px] text-zinc-400 font-bold uppercase">معدل التحصيل (Collection Rate)</span>
+            <span className="text-[10px] text-zinc-400 font-bold uppercase">
+              معدل التحصيل (Collection Rate)
+            </span>
           </div>
           <div className="mt-4">
             <h4 className="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
               92.4%
             </h4>
-            <p className="text-[10px] text-zinc-400 font-bold mt-1">ارتفاع بـ 1.2% عن الربع السابق</p>
+            <p className="text-[10px] text-zinc-400 font-bold mt-1">
+              ارتفاع بـ 1.2% عن الربع السابق
+            </p>
           </div>
         </div>
 
@@ -156,7 +256,9 @@ export default function ReceivablesTab({
             <div className="w-10 h-10 bg-zinc-50 text-zinc-600 rounded-xl flex items-center justify-center dark:bg-zinc-800 dark:text-zinc-300">
               <FileText className="w-5 h-5" />
             </div>
-            <span className="text-[10px] text-zinc-400 font-bold uppercase">فواتير جاري تحصيلها</span>
+            <span className="text-[10px] text-zinc-400 font-bold uppercase">
+              فواتير جاري تحصيلها
+            </span>
           </div>
           <div className="mt-4">
             <h4 className="text-xl font-black text-zinc-950 dark:text-zinc-50 font-mono">
@@ -175,7 +277,9 @@ export default function ReceivablesTab({
           <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100">
             تقرير أعمار ديون العملاء (Aging Account Receivables Summary)
           </h3>
-          <p className="text-[10px] text-zinc-400 font-bold">توزيع الذمم المستحقة بناءً على فترات استحقاق الفواتير المعتمدة</p>
+          <p className="text-[10px] text-zinc-400 font-bold">
+            توزيع الذمم المستحقة بناءً على فترات استحقاق الفواتير المعتمدة
+          </p>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
@@ -228,7 +332,9 @@ export default function ReceivablesTab({
                 <Users className="w-4 h-4 text-emerald-500" />
                 سجل العملاء التجاريين (Business Customers Register)
               </h3>
-              <p className="text-[10px] text-zinc-400 font-bold">الحسابات المدينة المخصصة لأستاذ العملاء الفرعي</p>
+              <p className="text-[10px] text-zinc-400 font-bold">
+                الحسابات المدينة المخصصة لأستاذ العملاء الفرعي
+              </p>
             </div>
 
             <div className="flex gap-2 w-full sm:w-auto">
@@ -265,18 +371,27 @@ export default function ReceivablesTab({
               </thead>
               <tbody>
                 {filteredCustomers.map((cust) => (
-                  <tr key={cust.id} className="border-b border-zinc-50 dark:border-zinc-850 hover:bg-zinc-50/20">
+                  <tr
+                    key={cust.id}
+                    className="border-b border-zinc-50 dark:border-zinc-850 hover:bg-zinc-50/20"
+                  >
                     <td className="p-3">
-                      <div className="font-black text-zinc-800 dark:text-zinc-200">{cust.nameAr}</div>
-                      <div className="text-[10px] text-zinc-400 font-mono mt-0.5">{cust.nameEn}</div>
+                      <div className="font-black text-zinc-800 dark:text-zinc-200">
+                        {cust.nameAr}
+                      </div>
+                      <div className="text-[10px] text-zinc-400 font-mono mt-0.5">
+                        {cust.nameEn}
+                      </div>
                     </td>
                     <td className="p-3 font-mono text-zinc-500">{cust.vatNumber || "—"}</td>
                     <td className="p-3">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-black ${
-                        cust.status === "Active" 
-                          ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400" 
-                          : "bg-zinc-100 text-zinc-400"
-                      }`}>
+                      <span
+                        className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-black ${
+                          cust.status === "Active"
+                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400"
+                            : "bg-zinc-100 text-zinc-400"
+                        }`}
+                      >
                         {cust.status === "Active" ? "نشط" : "موقوف"}
                       </span>
                     </td>
@@ -287,9 +402,9 @@ export default function ReceivablesTab({
                       {cust.balance.toLocaleString()} ر.س
                     </td>
                     <td className="p-3 text-center space-x-1">
-                      <button 
+                      <button
                         onClick={() => {
-                          setNoteForm(p => ({ ...p, customerId: cust.id }));
+                          setNoteForm((p) => ({ ...p, customerId: cust.id }));
                           setShowNoteModal(true);
                         }}
                         className="px-2 py-1 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-750 text-[10px] font-bold rounded-lg text-zinc-600 dark:text-zinc-300"
@@ -311,12 +426,14 @@ export default function ReceivablesTab({
               <FileText className="w-4 h-4 text-indigo-500" />
               أحدث الفواتير المستحقة
             </h3>
-            <p className="text-[10px] text-zinc-400 font-bold">الفواتير الضريبية المباعة جاري متابعتها مالياً</p>
+            <p className="text-[10px] text-zinc-400 font-bold">
+              الفواتير الضريبية المباعة جاري متابعتها مالياً
+            </p>
           </div>
 
           <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
             {invoices.map((inv) => (
-              <div 
+              <div
                 key={inv.id}
                 className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-850 p-3 rounded-xl hover:border-zinc-200 dark:hover:border-zinc-800 transition-all space-y-2"
               >
@@ -324,11 +441,13 @@ export default function ReceivablesTab({
                   <span className="font-mono text-xs font-black text-indigo-600 dark:text-indigo-400">
                     {inv.invoiceNo}
                   </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
-                    inv.status === "Overdue" 
-                      ? "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 animate-pulse" 
-                      : "bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400"
-                  }`}>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
+                      inv.status === "Overdue"
+                        ? "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400 animate-pulse"
+                        : "bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-400"
+                    }`}
+                  >
                     {inv.status === "Overdue" ? "متأخرة" : "غير مدفوعة"}
                   </span>
                 </div>
@@ -359,12 +478,15 @@ export default function ReceivablesTab({
             <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
               إصدار إشعار مدين / دائن للعميل
             </h3>
-            <form onSubmit={handleNoteSubmit} className="space-y-4 text-xs font-bold text-zinc-700 dark:text-zinc-300">
+            <form
+              onSubmit={handleNoteSubmit}
+              className="space-y-4 text-xs font-bold text-zinc-700 dark:text-zinc-300"
+            >
               <div className="space-y-1.5">
                 <label>نوع الحركة</label>
                 <select
                   value={noteForm.type}
-                  onChange={(e) => setNoteForm(p => ({ ...p, type: e.target.value as any }))}
+                  onChange={(e) => setNoteForm((p) => ({ ...p, type: e.target.value as any }))}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
                 >
                   <option value="Credit">إشعار دائن (Credit Note) - تقليل المديونية</option>
@@ -380,7 +502,7 @@ export default function ReceivablesTab({
                   required
                   placeholder="0.00"
                   value={noteForm.amount}
-                  onChange={(e) => setNoteForm(p => ({ ...p, amount: e.target.value }))}
+                  onChange={(e) => setNoteForm((p) => ({ ...p, amount: e.target.value }))}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
                 />
               </div>
@@ -392,7 +514,7 @@ export default function ReceivablesTab({
                   required
                   placeholder="مثال: خصم إضافي معتمد لمجموعة الشايع"
                   value={noteForm.description}
-                  onChange={(e) => setNoteForm(p => ({ ...p, description: e.target.value }))}
+                  onChange={(e) => setNoteForm((p) => ({ ...p, description: e.target.value }))}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                 />
               </div>
@@ -429,7 +551,10 @@ export default function ReceivablesTab({
             <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
               إضافة حساب عميل جديد
             </h3>
-            <form onSubmit={handleAddCustomer} className="space-y-4 text-xs font-bold text-zinc-700 dark:text-zinc-300">
+            <form
+              onSubmit={handleAddCustomer}
+              className="space-y-4 text-xs font-bold text-zinc-700 dark:text-zinc-300"
+            >
               <div className="space-y-1.5">
                 <label>اسم المنشأة بالعربي</label>
                 <input
@@ -437,7 +562,7 @@ export default function ReceivablesTab({
                   required
                   placeholder="مثال: شركة بنده للتجزئة"
                   value={newCustomer.nameAr}
-                  onChange={(e) => setNewCustomer(p => ({ ...p, nameAr: e.target.value }))}
+                  onChange={(e) => setNewCustomer((p) => ({ ...p, nameAr: e.target.value }))}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                 />
               </div>
@@ -449,7 +574,7 @@ export default function ReceivablesTab({
                   required
                   placeholder="E.g. Panda Retail Company"
                   value={newCustomer.nameEn}
-                  onChange={(e) => setNewCustomer(p => ({ ...p, nameEn: e.target.value }))}
+                  onChange={(e) => setNewCustomer((p) => ({ ...p, nameEn: e.target.value }))}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                 />
               </div>
@@ -461,7 +586,7 @@ export default function ReceivablesTab({
                   placeholder="3000XXXXXXXXXXX"
                   maxLength={15}
                   value={newCustomer.vatNumber}
-                  onChange={(e) => setNewCustomer(p => ({ ...p, vatNumber: e.target.value }))}
+                  onChange={(e) => setNewCustomer((p) => ({ ...p, vatNumber: e.target.value }))}
                   className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
                 />
               </div>

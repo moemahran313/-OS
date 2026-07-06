@@ -31,7 +31,7 @@ import {
   Ghost,
   Search,
   MessageCircle,
-  Layers
+  Layers,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
@@ -50,7 +50,7 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend
+  Legend,
 } from "recharts";
 
 // ========================================================
@@ -120,7 +120,9 @@ export default function SocialMedia() {
   const txt = (en: string, ar: string) => (isAr ? ar : en);
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<"calendar" | "scheduler" | "ai" | "inbox" | "monitoring" | "competitors">("calendar");
+  const [activeTab, setActiveTab] = useState<
+    "calendar" | "scheduler" | "ai" | "inbox" | "monitoring" | "competitors"
+  >("calendar");
 
   // Loading States
   const [loading, setLoading] = useState(true);
@@ -138,7 +140,9 @@ export default function SocialMedia() {
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("10:00");
   const [postImage, setPostImage] = useState("");
-  const [postStatus, setPostStatus] = useState<"Draft" | "Pending Approval" | "Scheduled">("Scheduled");
+  const [postStatus, setPostStatus] = useState<"Draft" | "Pending Approval" | "Scheduled">(
+    "Scheduled"
+  );
 
   // AI Assistant State
   const [aiPrompt, setAiPrompt] = useState("");
@@ -156,7 +160,12 @@ export default function SocialMedia() {
   const [competitors, setCompetitors] = useState([
     { name: txt("Competitor A", "المنافس أ"), followers: 45000, engagement: 3.2, frequency: 12 },
     { name: txt("Competitor B", "المنافس ب"), followers: 68000, engagement: 2.1, frequency: 18 },
-    { name: txt("Madarij OS (Us)", "مداريج (نحن)"), followers: 115900, engagement: 4.8, frequency: 22 }
+    {
+      name: txt("Madarij OS (Us)", "مداريج (نحن)"),
+      followers: 115900,
+      engagement: 4.8,
+      frequency: 22,
+    },
   ]);
   const [newCompetitorName, setNewCompetitorName] = useState("");
 
@@ -173,7 +182,7 @@ export default function SocialMedia() {
     youtube: Youtube,
     threads: AtSign,
     pinterest: PinIcon,
-    snapchat: Ghost
+    snapchat: Ghost,
   };
 
   function PinIcon(props: any) {
@@ -215,7 +224,7 @@ export default function SocialMedia() {
         fetch("/api/social-media/accounts"),
         fetch("/api/social-media/posts"),
         fetch("/api/social-media/inbox"),
-        fetch("/api/social-media/monitoring")
+        fetch("/api/social-media/monitoring"),
       ]);
 
       if (accountsRes.ok) setAccounts(await accountsRes.json());
@@ -240,12 +249,14 @@ export default function SocialMedia() {
       const res = await fetch("/api/social-media/accounts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ platform, handle, name })
+        body: JSON.stringify({ platform, handle, name }),
       });
       if (res.ok) {
         const newAcc = await res.json();
         setAccounts((prev) => [...prev, newAcc]);
-        toast.success(txt(`Successfully connected ${platform} account!`, `تم ربط حساب ${platform} بنجاح!`));
+        toast.success(
+          txt(`Successfully connected ${platform} account!`, `تم ربط حساب ${platform} بنجاح!`)
+        );
       } else {
         throw new Error();
       }
@@ -272,13 +283,13 @@ export default function SocialMedia() {
         status: postStatus,
         approvalStatus: postStatus === "Pending Approval" ? "Pending" : "Approved",
         scheduledAt: scheduledDateTime,
-        imageUrl: postImage || undefined
+        imageUrl: postImage || undefined,
       };
 
       const res = await fetch("/api/social-media/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -304,11 +315,13 @@ export default function SocialMedia() {
     try {
       setActionLoading(true);
       const res = await fetch(`/api/social-media/posts/${postId}/approve`, {
-        method: "POST"
+        method: "POST",
       });
       if (res.ok) {
         setPosts((prev) =>
-          prev.map((p) => (p.id === postId ? { ...p, approvalStatus: "Approved", status: "Scheduled" } : p))
+          prev.map((p) =>
+            p.id === postId ? { ...p, approvalStatus: "Approved", status: "Scheduled" } : p
+          )
         );
         toast.success(txt("Post approved successfully!", "تمت الموافقة على المنشور بنجاح!"));
         setSelectedPreviewPost(null);
@@ -324,11 +337,19 @@ export default function SocialMedia() {
 
   // Cancel / Delete scheduled post
   const handleDeletePost = async (postId: string) => {
-    if (!confirm(txt("Are you sure you want to cancel this scheduled post?", "هل أنت متأكد من إلغاء جدولة هذا المنشور؟"))) return;
+    if (
+      !confirm(
+        txt(
+          "Are you sure you want to cancel this scheduled post?",
+          "هل أنت متأكد من إلغاء جدولة هذا المنشور؟"
+        )
+      )
+    )
+      return;
     try {
       setActionLoading(true);
       const res = await fetch(`/api/social-media/posts/${postId}`, {
-        method: "DELETE"
+        method: "DELETE",
       });
       if (res.ok) {
         setPosts((prev) => prev.filter((p) => p.id !== postId));
@@ -361,20 +382,29 @@ export default function SocialMedia() {
           platform: selectedPlatforms[0] || "linkedin",
           promptText: aiPrompt,
           tone: aiTone,
-          language: aiLang
-        })
+          language: aiLang,
+        }),
       });
 
       if (res.ok) {
         const data = await res.json();
         setAiResult(data);
-        toast.success(txt("AI Copilot generated amazing content!", "قام مساعد الذكاء الاصطناعي بتوليد المحتوى بنجاح!"));
+        toast.success(
+          txt(
+            "AI Copilot generated amazing content!",
+            "قام مساعد الذكاء الاصطناعي بتوليد المحتوى بنجاح!"
+          )
+        );
       } else {
         const errData = await res.json();
-        toast.error(errData.error || txt("AI generation failed", "فشل توليد المحتوى بالذكاء الاصطناعي"));
+        toast.error(
+          errData.error || txt("AI generation failed", "فشل توليد المحتوى بالذكاء الاصطناعي")
+        );
       }
     } catch {
-      toast.error(txt("Network error during AI generation", "خطأ في الشبكة أثناء توليد الذكاء الاصطناعي"));
+      toast.error(
+        txt("Network error during AI generation", "خطأ في الشبكة أثناء توليد الذكاء الاصطناعي")
+      );
     } finally {
       setActionLoading(false);
     }
@@ -390,17 +420,23 @@ export default function SocialMedia() {
       const res = await fetch(`/api/social-media/inbox/${selectedInboxItem.id}/reply`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ replyText })
+        body: JSON.stringify({ replyText }),
       });
 
       if (res.ok) {
         const data = await res.json();
         // Update local item
         const updatedInbox = inbox.map((item) =>
-          item.id === selectedInboxItem.id ? { ...item, replies: data.replies, status: "Replied" as const } : item
+          item.id === selectedInboxItem.id
+            ? { ...item, replies: data.replies, status: "Replied" as const }
+            : item
         );
         setInbox(updatedInbox);
-        setSelectedInboxItem({ ...selectedInboxItem, replies: data.replies, status: "Replied" as const });
+        setSelectedInboxItem({
+          ...selectedInboxItem,
+          replies: data.replies,
+          status: "Replied" as const,
+        });
         setReplyText("");
         toast.success(txt("Reply submitted successfully", "تم إرسال الرد بنجاح"));
       } else {
@@ -425,14 +461,16 @@ export default function SocialMedia() {
           type: "caption",
           promptText: `Suggest a professional, friendly response to this user comment: "${selectedInboxItem.message}" on social media. Build on our branding as Madarij OS.`,
           tone: "friendly & professional",
-          language: isAr ? "ar" : "en"
-        })
+          language: isAr ? "ar" : "en",
+        }),
       });
 
       if (res.ok) {
         const data = await res.json();
         setReplyText(data.optimizedText || "");
-        toast.success(txt("AI generated a response recommendation", "اقترح الذكاء الاصطناعي رداً مناسباً"));
+        toast.success(
+          txt("AI generated a response recommendation", "اقترح الذكاء الاصطناعي رداً مناسباً")
+        );
       } else {
         throw new Error();
       }
@@ -453,8 +491,8 @@ export default function SocialMedia() {
         name: newCompetitorName,
         followers: Math.round(Math.random() * 80000 + 10000),
         engagement: parseFloat((Math.random() * 3 + 1).toFixed(1)),
-        frequency: Math.round(Math.random() * 15 + 5)
-      }
+        frequency: Math.round(Math.random() * 15 + 5),
+      },
     ]);
     setNewCompetitorName("");
     toast.success(txt("Competitor added for monitoring", "تم إضافة المنافس للمراقبة"));
@@ -471,7 +509,9 @@ export default function SocialMedia() {
     const days = [];
     // Blank days
     for (let i = 0; i < firstDayIndex; i++) {
-      days.push(<div key={`empty-${i}`} className="bg-slate-50 border border-slate-100 min-h-[100px]" />);
+      days.push(
+        <div key={`empty-${i}`} className="bg-slate-50 border border-slate-100 min-h-[100px]" />
+      );
     }
 
     // Days with posts
@@ -480,9 +520,14 @@ export default function SocialMedia() {
       const matchingPosts = posts.filter((p) => p.scheduledAt.startsWith(dateString));
 
       days.push(
-        <div key={`day-${d}`} className="bg-white border border-slate-200 p-2 min-h-[110px] flex flex-col justify-between hover:shadow-sm transition-all group relative">
+        <div
+          key={`day-${d}`}
+          className="bg-white border border-slate-200 p-2 min-h-[110px] flex flex-col justify-between hover:shadow-sm transition-all group relative"
+        >
           <div className="flex justify-between items-center">
-            <span className="text-xs font-semibold text-slate-500 group-hover:text-indigo-600 transition-colors">{d}</span>
+            <span className="text-xs font-semibold text-slate-500 group-hover:text-indigo-600 transition-colors">
+              {d}
+            </span>
             {matchingPosts.length > 0 && (
               <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
             )}
@@ -497,8 +542,8 @@ export default function SocialMedia() {
                   post.approvalStatus === "Pending"
                     ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
                     : post.status === "Published"
-                    ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                    : "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
+                      ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                      : "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
                 )}
               >
                 <div className="flex items-center gap-1">
@@ -518,7 +563,10 @@ export default function SocialMedia() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl animate-fade-in text-slate-900" style={{ direction: isAr ? "rtl" : "ltr" }}>
+    <div
+      className="container mx-auto px-4 py-8 max-w-7xl animate-fade-in text-slate-900"
+      style={{ direction: isAr ? "rtl" : "ltr" }}
+    >
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
@@ -531,7 +579,10 @@ export default function SocialMedia() {
             {txt("Social Media & Growth Platform", "إدارة شبكات التواصل والنمو")}
           </h1>
           <p className="text-slate-500 mt-1">
-            {txt("Schedule, write with AI, track competitors, and monitor your brand authority across all major channels.", "خطط، اكتب بالذكاء الاصطناعي، راقب المنافسين، وتفاعل مع الجمهور عبر قنوات التواصل كافة.")}
+            {txt(
+              "Schedule, write with AI, track competitors, and monitor your brand authority across all major channels.",
+              "خطط، اكتب بالذكاء الاصطناعي، راقب المنافسين، وتفاعل مع الجمهور عبر قنوات التواصل كافة."
+            )}
           </p>
         </div>
 
@@ -559,7 +610,16 @@ export default function SocialMedia() {
           </span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-          {["linkedin", "instagram", "twitter", "facebook", "tiktok", "youtube", "threads", "pinterest"].map((plat) => {
+          {[
+            "linkedin",
+            "instagram",
+            "twitter",
+            "facebook",
+            "tiktok",
+            "youtube",
+            "threads",
+            "pinterest",
+          ].map((plat) => {
             const acc = accounts.find((a) => a.platform === plat);
             const Icon = platformIcons[plat];
             const isConnected = !!acc;
@@ -569,11 +629,17 @@ export default function SocialMedia() {
                 key={plat}
                 className={cn(
                   "p-3 rounded-xl border flex flex-col items-center justify-between text-center transition-all",
-                  isConnected ? "bg-slate-50/50 border-slate-200" : "bg-white border-dashed border-slate-200 opacity-60 hover:opacity-100"
+                  isConnected
+                    ? "bg-slate-50/50 border-slate-200"
+                    : "bg-white border-dashed border-slate-200 opacity-60 hover:opacity-100"
                 )}
               >
                 <div className="relative">
-                  {Icon && <Icon className={cn("w-6 h-6", isConnected ? "text-slate-800" : "text-slate-400")} />}
+                  {Icon && (
+                    <Icon
+                      className={cn("w-6 h-6", isConnected ? "text-slate-800" : "text-slate-400")}
+                    />
+                  )}
                   {isConnected && (
                     <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-white" />
                   )}
@@ -592,7 +658,9 @@ export default function SocialMedia() {
                   </span>
                 ) : (
                   <button
-                    onClick={() => handleConnectProfile(plat, `@madarij_${plat}`, `Madarij ${plat}`)}
+                    onClick={() =>
+                      handleConnectProfile(plat, `@madarij_${plat}`, `Madarij ${plat}`)
+                    }
                     className="mt-2 text-[10px] text-indigo-600 hover:text-indigo-700 font-semibold"
                   >
                     + {txt("Connect", "ربط")}
@@ -607,21 +675,55 @@ export default function SocialMedia() {
       {/* CORE STATS BANNER */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: txt("Total Reach (GCC)", "الوصول الإجمالي (الخليج)"), value: "185.4K", icon: Globe, change: "+14.2%", positive: true },
-          { label: txt("Active Scheduled Posts", "المنشورات المجدولة النشطة"), value: posts.filter(p => p.status === "Scheduled").length.toString(), icon: CalendarIcon, change: txt("Next post tomorrow", "التالي غداً"), positive: true },
-          { label: txt("Inbox Pending Reviews", "مراجعات وارد الصندوق"), value: inbox.filter(i => i.status === "Unread").length.toString(), icon: MessageSquare, change: txt("Needs attention", "تحتاج مراجعة"), positive: false },
-          { label: txt("Avg. Engagement Rate", "معدل التفاعل الإجمالي"), value: "4.8%", icon: TrendingUp, change: "+1.2%", positive: true }
+          {
+            label: txt("Total Reach (GCC)", "الوصول الإجمالي (الخليج)"),
+            value: "185.4K",
+            icon: Globe,
+            change: "+14.2%",
+            positive: true,
+          },
+          {
+            label: txt("Active Scheduled Posts", "المنشورات المجدولة النشطة"),
+            value: posts.filter((p) => p.status === "Scheduled").length.toString(),
+            icon: CalendarIcon,
+            change: txt("Next post tomorrow", "التالي غداً"),
+            positive: true,
+          },
+          {
+            label: txt("Inbox Pending Reviews", "مراجعات وارد الصندوق"),
+            value: inbox.filter((i) => i.status === "Unread").length.toString(),
+            icon: MessageSquare,
+            change: txt("Needs attention", "تحتاج مراجعة"),
+            positive: false,
+          },
+          {
+            label: txt("Avg. Engagement Rate", "معدل التفاعل الإجمالي"),
+            value: "4.8%",
+            icon: TrendingUp,
+            change: "+1.2%",
+            positive: true,
+          },
         ].map((stat, idx) => (
-          <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div
+            key={idx}
+            className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow"
+          >
             <div className="flex justify-between items-start">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{stat.label}</span>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                {stat.label}
+              </span>
               <div className="p-2 bg-slate-50 rounded-xl">
                 <stat.icon className="w-5 h-5 text-indigo-600" />
               </div>
             </div>
             <div className="mt-3 flex items-baseline gap-2">
               <span className="text-2xl font-black text-slate-950">{stat.value}</span>
-              <span className={cn("text-xs font-bold", stat.positive ? "text-green-600" : "text-amber-500")}>
+              <span
+                className={cn(
+                  "text-xs font-bold",
+                  stat.positive ? "text-green-600" : "text-amber-500"
+                )}
+              >
                 {stat.change}
               </span>
             </div>
@@ -635,9 +737,21 @@ export default function SocialMedia() {
           { id: "calendar", label: txt("Content Calendar", "تقويم المحتوى"), icon: CalendarIcon },
           { id: "scheduler", label: txt("Scheduler & Composer", "جدولة المنشورات"), icon: Clock },
           { id: "ai", label: txt("AI Copilot & Writer", "مساعد الذكاء الاصطناعي"), icon: Sparkles },
-          { id: "inbox", label: txt("Unified Comments Inbox", "صندوق الوارد الموحد"), icon: MessageSquare },
-          { id: "monitoring", label: txt("Brand Mentions", "مراقبة الإشارات والسمعة"), icon: Activity },
-          { id: "competitors", label: txt("Competitors Tracking", "مراقبة المنافسين"), icon: BarChart3 }
+          {
+            id: "inbox",
+            label: txt("Unified Comments Inbox", "صندوق الوارد الموحد"),
+            icon: MessageSquare,
+          },
+          {
+            id: "monitoring",
+            label: txt("Brand Mentions", "مراقبة الإشارات والسمعة"),
+            icon: Activity,
+          },
+          {
+            id: "competitors",
+            label: txt("Competitors Tracking", "مراقبة المنافسين"),
+            icon: BarChart3,
+          },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -652,7 +766,10 @@ export default function SocialMedia() {
             <tab.icon className="w-4 h-4" />
             <span>{tab.label}</span>
             {activeTab === tab.id && (
-              <motion.div layoutId="activeTabIndicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
+              <motion.div
+                layoutId="activeTabIndicator"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600"
+              />
             )}
           </button>
         ))}
@@ -663,7 +780,9 @@ export default function SocialMedia() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-24 bg-white border border-slate-200 rounded-2xl">
             <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-            <p className="text-slate-400 text-sm mt-4 font-medium">{txt("Loading dynamic social feeds...", "جاري تحميل بيانات شبكات التواصل...")}</p>
+            <p className="text-slate-400 text-sm mt-4 font-medium">
+              {txt("Loading dynamic social feeds...", "جاري تحميل بيانات شبكات التواصل...")}
+            </p>
           </div>
         ) : (
           <motion.div
@@ -681,8 +800,15 @@ export default function SocialMedia() {
                 <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
                   <div className="flex justify-between items-center mb-6">
                     <div>
-                      <h2 className="text-lg font-bold text-slate-900">{txt("July 2026 Calendar", "تقويم شهر يوليو ٢٠٢٦")}</h2>
-                      <p className="text-sm text-slate-500">{txt("Interact with dates or scheduled items below.", "اضغط على الأيام لتفقد أو تعديل المنشورات المجدولة.")}</p>
+                      <h2 className="text-lg font-bold text-slate-900">
+                        {txt("July 2026 Calendar", "تقويم شهر يوليو ٢٠٢٦")}
+                      </h2>
+                      <p className="text-sm text-slate-500">
+                        {txt(
+                          "Interact with dates or scheduled items below.",
+                          "اضغط على الأيام لتفقد أو تعديل المنشورات المجدولة."
+                        )}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 border border-green-100 px-2.5 py-1 rounded-full">
@@ -725,7 +851,10 @@ export default function SocialMedia() {
             {activeTab === "scheduler" && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 {/* Editor Panel */}
-                <form onSubmit={handleCreatePost} className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
+                <form
+                  onSubmit={handleCreatePost}
+                  className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6"
+                >
                   <h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3">
                     {txt("Compose Social Campaign", "إنشاء حملة تواصل")}
                   </h3>
@@ -736,32 +865,34 @@ export default function SocialMedia() {
                       {txt("Target Channels (Select Multiple)", "القنوات المستهدفة (تحديد متعدد)")}
                     </label>
                     <div className="flex flex-wrap gap-2">
-                      {["linkedin", "instagram", "twitter", "facebook", "tiktok", "youtube"].map((plat) => {
-                        const isSelected = selectedPlatforms.includes(plat);
-                        const Icon = platformIcons[plat];
-                        return (
-                          <button
-                            type="button"
-                            key={plat}
-                            onClick={() => {
-                              if (isSelected) {
-                                setSelectedPlatforms(selectedPlatforms.filter((p) => p !== plat));
-                              } else {
-                                setSelectedPlatforms([...selectedPlatforms, plat]);
-                              }
-                            }}
-                            className={cn(
-                              "flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all",
-                              isSelected
-                                ? "bg-indigo-600 border-indigo-600 text-white"
-                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                            )}
-                          >
-                            {Icon && <Icon className="w-3.5 h-3.5" />}
-                            <span className="capitalize">{plat === "twitter" ? "X" : plat}</span>
-                          </button>
-                        );
-                      })}
+                      {["linkedin", "instagram", "twitter", "facebook", "tiktok", "youtube"].map(
+                        (plat) => {
+                          const isSelected = selectedPlatforms.includes(plat);
+                          const Icon = platformIcons[plat];
+                          return (
+                            <button
+                              type="button"
+                              key={plat}
+                              onClick={() => {
+                                if (isSelected) {
+                                  setSelectedPlatforms(selectedPlatforms.filter((p) => p !== plat));
+                                } else {
+                                  setSelectedPlatforms([...selectedPlatforms, plat]);
+                                }
+                              }}
+                              className={cn(
+                                "flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all",
+                                isSelected
+                                  ? "bg-indigo-600 border-indigo-600 text-white"
+                                  : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                              )}
+                            >
+                              {Icon && <Icon className="w-3.5 h-3.5" />}
+                              <span className="capitalize">{plat === "twitter" ? "X" : plat}</span>
+                            </button>
+                          );
+                        }
+                      )}
                     </div>
                   </div>
 
@@ -791,14 +922,22 @@ export default function SocialMedia() {
                       rows={5}
                       value={newPostContent}
                       onChange={(e) => setNewPostContent(e.target.value)}
-                      placeholder={txt("What would you like to share on corporate social media?", "ما الذي تود طرحه على قنوات التواصل الخاصة بالمؤسسة؟")}
+                      placeholder={txt(
+                        "What would you like to share on corporate social media?",
+                        "ما الذي تود طرحه على قنوات التواصل الخاصة بالمؤسسة؟"
+                      )}
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                     />
                     <div className="flex justify-between items-center mt-1 text-xs text-slate-400">
                       <span>
                         {newPostContent.length} {txt("characters", "حرف")}
                       </span>
-                      <span>{txt("Recommended: <280 for X, <3000 for LinkedIn", "الموصى به: أقل من ٢٨٠ لـ X، ٣٠٠٠ للينكد إن")}</span>
+                      <span>
+                        {txt(
+                          "Recommended: <280 for X, <3000 for LinkedIn",
+                          "الموصى به: أقل من ٢٨٠ لـ X، ٣٠٠٠ للينكد إن"
+                        )}
+                      </span>
                     </div>
                   </div>
 
@@ -815,7 +954,10 @@ export default function SocialMedia() {
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-xs"
                     />
                     <div className="flex gap-2 mt-2">
-                      {["https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800", "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800"].map((preset, i) => (
+                      {[
+                        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800",
+                        "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800",
+                      ].map((preset, i) => (
                         <button
                           type="button"
                           key={i}
@@ -839,9 +981,15 @@ export default function SocialMedia() {
                         onChange={(e) => setPostStatus(e.target.value as any)}
                         className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs bg-white"
                       >
-                        <option value="Scheduled">{txt("Schedule & Publish Directly", "جدولة ونشر مباشر")}</option>
-                        <option value="Pending Approval">{txt("Submit for Team Lead Approval", "إرسال لاعتماد قائد الفريق")}</option>
-                        <option value="Draft">{txt("Save as Internal Draft", "حفظ كمسودة داخلية")}</option>
+                        <option value="Scheduled">
+                          {txt("Schedule & Publish Directly", "جدولة ونشر مباشر")}
+                        </option>
+                        <option value="Pending Approval">
+                          {txt("Submit for Team Lead Approval", "إرسال لاعتماد قائد الفريق")}
+                        </option>
+                        <option value="Draft">
+                          {txt("Save as Internal Draft", "حفظ كمسودة داخلية")}
+                        </option>
                       </select>
                     </div>
 
@@ -932,16 +1080,28 @@ export default function SocialMedia() {
                             alt=""
                           />
                           <div>
-                            <span className="text-xs font-extrabold text-slate-950 block">Madarij OS Corporate</span>
-                            <span className="text-[10px] text-slate-400 block">12,500 followers • 1h ago</span>
+                            <span className="text-xs font-extrabold text-slate-950 block">
+                              Madarij OS Corporate
+                            </span>
+                            <span className="text-[10px] text-slate-400 block">
+                              12,500 followers • 1h ago
+                            </span>
                           </div>
                         </div>
                         <p className="text-xs text-slate-800 whitespace-pre-line leading-relaxed mb-3">
-                          {newPostContent || txt("Drafting social post... Content copy will instantly render here in real-time.", "اكتب منشوراً ترويجياً... وسيتم تحديث نص المعاينة فوراً.")}
+                          {newPostContent ||
+                            txt(
+                              "Drafting social post... Content copy will instantly render here in real-time.",
+                              "اكتب منشوراً ترويجياً... وسيتم تحديث نص المعاينة فوراً."
+                            )}
                         </p>
                         {postImage && (
                           <div className="border border-slate-100 rounded-lg overflow-hidden mb-3">
-                            <img src={postImage} className="w-full max-h-52 object-cover" alt="Campaign Graphic" />
+                            <img
+                              src={postImage}
+                              className="w-full max-h-52 object-cover"
+                              alt="Campaign Graphic"
+                            />
                           </div>
                         )}
                         <div className="border-t border-slate-100 pt-2 flex justify-between text-slate-400 text-xs">
@@ -953,32 +1113,40 @@ export default function SocialMedia() {
                       </div>
                     )}
 
-                    {!selectedPlatforms.includes("linkedin") && selectedPlatforms.includes("instagram") && (
-                      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm max-w-[340px] mx-auto">
-                        <div className="flex items-center gap-2 mb-3">
-                          <img
-                            src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=150"
-                            className="w-8 h-8 rounded-full object-cover border"
-                            alt=""
-                          />
-                          <span className="text-xs font-extrabold text-slate-950">madarij_os</span>
+                    {!selectedPlatforms.includes("linkedin") &&
+                      selectedPlatforms.includes("instagram") && (
+                        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm max-w-[340px] mx-auto">
+                          <div className="flex items-center gap-2 mb-3">
+                            <img
+                              src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=150"
+                              className="w-8 h-8 rounded-full object-cover border"
+                              alt=""
+                            />
+                            <span className="text-xs font-extrabold text-slate-950">
+                              madarij_os
+                            </span>
+                          </div>
+                          <div className="bg-slate-100 border border-slate-200 rounded-lg aspect-square overflow-hidden mb-3 flex items-center justify-center">
+                            {postImage ? (
+                              <img src={postImage} className="w-full h-full object-cover" alt="" />
+                            ) : (
+                              <div className="text-center text-slate-400 p-4">
+                                <Layers className="w-8 h-8 mx-auto mb-1 opacity-50" />
+                                <span className="text-[10px]">
+                                  {txt(
+                                    "Upload or select graphic representation",
+                                    "اختر صورة للمنشور للمعالجة"
+                                  )}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-800 line-clamp-3">
+                            <span className="font-extrabold mr-1">madarij_os</span>
+                            {newPostContent || txt("Write caption...", "محتوى المنشور...")}
+                          </p>
                         </div>
-                        <div className="bg-slate-100 border border-slate-200 rounded-lg aspect-square overflow-hidden mb-3 flex items-center justify-center">
-                          {postImage ? (
-                            <img src={postImage} className="w-full h-full object-cover" alt="" />
-                          ) : (
-                            <div className="text-center text-slate-400 p-4">
-                              <Layers className="w-8 h-8 mx-auto mb-1 opacity-50" />
-                              <span className="text-[10px]">{txt("Upload or select graphic representation", "اختر صورة للمنشور للمعالجة")}</span>
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-800 line-clamp-3">
-                          <span className="font-extrabold mr-1">madarij_os</span>
-                          {newPostContent || txt("Write caption...", "محتوى المنشور...")}
-                        </p>
-                      </div>
-                    )}
+                      )}
                   </div>
                 </div>
               </div>
@@ -997,7 +1165,10 @@ export default function SocialMedia() {
                       {txt("Gemini Social AI Copywriter", "محرر الذكاء الاصطناعي من Gemini")}
                     </h3>
                     <p className="text-xs text-slate-500">
-                      {txt("Generate viral posts, caption hooks, video/reel scripts, translations and strategic schedules.", "صمم منشورات فيروسية، خطاطيف فيديو، نصوص Reels، ترجمات فورية وجداول نشر ممتازة.")}
+                      {txt(
+                        "Generate viral posts, caption hooks, video/reel scripts, translations and strategic schedules.",
+                        "صمم منشورات فيروسية، خطاطيف فيديو، نصوص Reels، ترجمات فورية وجداول نشر ممتازة."
+                      )}
                     </p>
                   </div>
 
@@ -1005,8 +1176,12 @@ export default function SocialMedia() {
                   <div className="grid grid-cols-3 gap-2">
                     {[
                       { id: "post", label: txt("Viral Post", "منشور فيروسي"), desc: "LinkedIn/X" },
-                      { id: "reels_script", label: txt("Reels / Short", "فيديو Reels"), desc: "TikTok/Insta" },
-                      { id: "caption", label: txt("Smart Caption", "شرح ذكي"), desc: "General" }
+                      {
+                        id: "reels_script",
+                        label: txt("Reels / Short", "فيديو Reels"),
+                        desc: "TikTok/Insta",
+                      },
+                      { id: "caption", label: txt("Smart Caption", "شرح ذكي"), desc: "General" },
                     ].map((type) => (
                       <button
                         key={type.id}
@@ -1034,7 +1209,10 @@ export default function SocialMedia() {
                       rows={4}
                       value={aiPrompt}
                       onChange={(e) => setAiPrompt(e.target.value)}
-                      placeholder={txt("e.g. Announcing our 24/7 dedicated Arabic client support for enterprise operations in Saudi Arabia.", "مثال: الإعلان عن إطلاق الدعم الفني باللغة العربية طوال أيام الأسبوع لعملائنا في السعودية.")}
+                      placeholder={txt(
+                        "e.g. Announcing our 24/7 dedicated Arabic client support for enterprise operations in Saudi Arabia.",
+                        "مثال: الإعلان عن إطلاق الدعم الفني باللغة العربية طوال أيام الأسبوع لعملائنا في السعودية."
+                      )}
                       className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-xs"
                     />
                   </div>
@@ -1050,10 +1228,18 @@ export default function SocialMedia() {
                         onChange={(e) => setAiTone(e.target.value)}
                         className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white"
                       >
-                        <option value="professional">{txt("Professional & Trustworthy", "مهني وموثوق")}</option>
-                        <option value="inspiring">{txt("Inspiring & Visionary", "ملهم وطموح")}</option>
-                        <option value="energetic">{txt("Energetic & Creative", "نشط ومبدع")}</option>
-                        <option value="analytical">{txt("Data-driven & Analytical", "تحليلي قائم على البيانات")}</option>
+                        <option value="professional">
+                          {txt("Professional & Trustworthy", "مهني وموثوق")}
+                        </option>
+                        <option value="inspiring">
+                          {txt("Inspiring & Visionary", "ملهم وطموح")}
+                        </option>
+                        <option value="energetic">
+                          {txt("Energetic & Creative", "نشط ومبدع")}
+                        </option>
+                        <option value="analytical">
+                          {txt("Data-driven & Analytical", "تحليلي قائم على البيانات")}
+                        </option>
                       </select>
                     </div>
 
@@ -1082,7 +1268,9 @@ export default function SocialMedia() {
                     ) : (
                       <Sparkles className="w-4 h-4" />
                     )}
-                    <span>{txt("Write Social Content with Gemini", "صياغة المحتوى بالذكاء الاصطناعي")}</span>
+                    <span>
+                      {txt("Write Social Content with Gemini", "صياغة المحتوى بالذكاء الاصطناعي")}
+                    </span>
                   </button>
                 </div>
 
@@ -1098,7 +1286,9 @@ export default function SocialMedia() {
                         {aiType === "post" && (
                           <>
                             <div>
-                              <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">{txt("Generated Post Body", "نص المنشور المكتوب")}</span>
+                              <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
+                                {txt("Generated Post Body", "نص المنشور المكتوب")}
+                              </span>
                               <p className="text-xs text-slate-800 whitespace-pre-line leading-relaxed mt-1">
                                 {aiResult.postContent}
                               </p>
@@ -1107,7 +1297,10 @@ export default function SocialMedia() {
                             {aiResult.hashtags && (
                               <div className="flex flex-wrap gap-1.5 mt-3">
                                 {aiResult.hashtags.map((h: string, idx: number) => (
-                                  <span key={idx} className="text-xs text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded">
+                                  <span
+                                    key={idx}
+                                    className="text-xs text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded"
+                                  >
                                     #{h}
                                   </span>
                                 ))}
@@ -1118,7 +1311,9 @@ export default function SocialMedia() {
                               <div className="mt-4 p-2.5 bg-slate-50 rounded-lg flex items-center gap-2 text-xs text-slate-600">
                                 <Clock className="w-4 h-4 text-slate-500" />
                                 <span>
-                                  <strong>{txt("Recommended Time: ", "التوقيت الموصى به: ")}</strong>
+                                  <strong>
+                                    {txt("Recommended Time: ", "التوقيت الموصى به: ")}
+                                  </strong>
                                   {aiResult.optimalSendTime}
                                 </span>
                               </div>
@@ -1129,7 +1324,9 @@ export default function SocialMedia() {
                         {aiType === "reels_script" && (
                           <div className="space-y-4">
                             <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-lg text-xs">
-                              <strong>{txt("Retention Hook: ", "خطاف الفيديو الأول (Hook): ")}</strong>
+                              <strong>
+                                {txt("Retention Hook: ", "خطاف الفيديو الأول (Hook): ")}
+                              </strong>
                               <p className="text-slate-800 mt-1 italic">"{aiResult.hook}"</p>
                             </div>
 
@@ -1141,15 +1338,21 @@ export default function SocialMedia() {
                                 {aiResult.sceneOutline?.map((scene: any, i: number) => (
                                   <div key={i} className="text-xs">
                                     <span className="font-bold text-indigo-600">{scene.time}</span>
-                                    <p className="text-slate-900 font-semibold mt-0.5">{scene.audio}</p>
-                                    <p className="text-[10px] text-slate-500">{txt("Visual Cue: ", "المشهد البصري: ")} {scene.visual}</p>
+                                    <p className="text-slate-900 font-semibold mt-0.5">
+                                      {scene.audio}
+                                    </p>
+                                    <p className="text-[10px] text-slate-500">
+                                      {txt("Visual Cue: ", "المشهد البصري: ")} {scene.visual}
+                                    </p>
                                   </div>
                                 ))}
                               </div>
                             </div>
 
                             <div>
-                              <span className="text-[10px] font-bold text-slate-400 block uppercase mb-1">{txt("Caption copy to post:", "الوصف المصاحب للفيديو:")}</span>
+                              <span className="text-[10px] font-bold text-slate-400 block uppercase mb-1">
+                                {txt("Caption copy to post:", "الوصف المصاحب للفيديو:")}
+                              </span>
                               <p className="text-xs text-slate-700">{aiResult.caption}</p>
                             </div>
                           </div>
@@ -1175,7 +1378,12 @@ export default function SocialMedia() {
                     ) : (
                       <div className="border border-dashed border-slate-200 rounded-xl py-16 text-center text-slate-400">
                         <Sparkles className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                        <p className="text-xs font-medium">{txt("Generated campaign layouts will appear here instantly.", "ستظهر نتائج الصياغة الإبداعية للذكاء الاصطناعي هنا فوراً.")}</p>
+                        <p className="text-xs font-medium">
+                          {txt(
+                            "Generated campaign layouts will appear here instantly.",
+                            "ستظهر نتائج الصياغة الإبداعية للذكاء الاصطناعي هنا فوراً."
+                          )}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -1184,7 +1392,9 @@ export default function SocialMedia() {
                     <div className="mt-4 flex gap-2">
                       <button
                         onClick={() => {
-                          navigator.clipboard.writeText(aiResult.postContent || aiResult.optimizedText || aiResult.caption || "");
+                          navigator.clipboard.writeText(
+                            aiResult.postContent || aiResult.optimizedText || aiResult.caption || ""
+                          );
                           toast.success(txt("Copied to clipboard!", "تم النسخ للحافظة!"));
                         }}
                         className="flex-1 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition-colors"
@@ -1193,10 +1403,17 @@ export default function SocialMedia() {
                       </button>
                       <button
                         onClick={() => {
-                          setNewPostContent(aiResult.postContent || aiResult.optimizedText || aiResult.caption || "");
-                          if (aiResult.imagePrompt) setPostImage("https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800"); // Simulate assigning prompt
+                          setNewPostContent(
+                            aiResult.postContent || aiResult.optimizedText || aiResult.caption || ""
+                          );
+                          if (aiResult.imagePrompt)
+                            setPostImage(
+                              "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800"
+                            ); // Simulate assigning prompt
                           setActiveTab("scheduler");
-                          toast.success(txt("Content loaded into Composer!", "تم نقل النص لمحاكي المنشورات!"));
+                          toast.success(
+                            txt("Content loaded into Composer!", "تم نقل النص لمحاكي المنشورات!")
+                          );
                         }}
                         className="flex-1 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition-colors"
                       >
@@ -1216,7 +1433,9 @@ export default function SocialMedia() {
                 {/* List Column */}
                 <div className="md:col-span-5 border-r border-slate-200 flex flex-col">
                   <div className="p-4 border-b border-slate-200 bg-slate-50/50">
-                    <h3 className="text-sm font-extrabold text-slate-800 mb-2">{txt("Conversations & Comments Inbox", "وارد الاستفسارات والتعليقات")}</h3>
+                    <h3 className="text-sm font-extrabold text-slate-800 mb-2">
+                      {txt("Conversations & Comments Inbox", "وارد الاستفسارات والتعليقات")}
+                    </h3>
                     <div className="relative">
                       <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                       <input
@@ -1238,15 +1457,25 @@ export default function SocialMedia() {
                           onClick={() => {
                             setSelectedInboxItem(item);
                             // Set read locally
-                            setInbox((prev) => prev.map((i) => (i.id === item.id ? { ...i, status: "Read" as const } : i)));
+                            setInbox((prev) =>
+                              prev.map((i) =>
+                                i.id === item.id ? { ...i, status: "Read" as const } : i
+                              )
+                            );
                           }}
                           className={cn(
                             "p-4 cursor-pointer transition-all hover:bg-slate-50 flex gap-3 relative",
-                            selectedInboxItem?.id === item.id ? "bg-indigo-50/40 border-l-4 border-l-indigo-600" : ""
+                            selectedInboxItem?.id === item.id
+                              ? "bg-indigo-50/40 border-l-4 border-l-indigo-600"
+                              : ""
                           )}
                         >
                           <div className="relative flex-shrink-0">
-                            <img src={item.authorAvatar} className="w-10 h-10 rounded-full object-cover border" alt="" />
+                            <img
+                              src={item.authorAvatar}
+                              className="w-10 h-10 rounded-full object-cover border"
+                              alt=""
+                            />
                             {Icon && (
                               <span className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full border shadow-sm">
                                 <Icon className="w-3 h-3 text-slate-700" />
@@ -1255,13 +1484,22 @@ export default function SocialMedia() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-start">
-                              <span className="text-xs font-extrabold text-slate-900 block truncate">{item.authorName}</span>
+                              <span className="text-xs font-extrabold text-slate-900 block truncate">
+                                {item.authorName}
+                              </span>
                               <span className="text-[10px] text-slate-400 block flex-shrink-0">
-                                {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {new Date(item.timestamp).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
                               </span>
                             </div>
-                            <span className="text-[10px] text-slate-400 block mt-0.5 font-medium">{item.type}</span>
-                            <p className="text-xs text-slate-600 line-clamp-2 mt-1">{item.message}</p>
+                            <span className="text-[10px] text-slate-400 block mt-0.5 font-medium">
+                              {item.type}
+                            </span>
+                            <p className="text-xs text-slate-600 line-clamp-2 mt-1">
+                              {item.message}
+                            </p>
                           </div>
                           {isUnread && (
                             <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 absolute right-4 top-1/2 -translate-y-1/2" />
@@ -1279,10 +1517,18 @@ export default function SocialMedia() {
                       {/* Active header */}
                       <div className="p-4 border-b border-slate-200 bg-white flex justify-between items-center">
                         <div className="flex items-center gap-3">
-                          <img src={selectedInboxItem.authorAvatar} className="w-10 h-10 rounded-full object-cover border" alt="" />
+                          <img
+                            src={selectedInboxItem.authorAvatar}
+                            className="w-10 h-10 rounded-full object-cover border"
+                            alt=""
+                          />
                           <div>
-                            <span className="text-xs font-extrabold text-slate-900 block">{selectedInboxItem.authorName}</span>
-                            <span className="text-[10px] text-slate-400 block capitalize">{selectedInboxItem.platform} • {selectedInboxItem.type}</span>
+                            <span className="text-xs font-extrabold text-slate-900 block">
+                              {selectedInboxItem.authorName}
+                            </span>
+                            <span className="text-[10px] text-slate-400 block capitalize">
+                              {selectedInboxItem.platform} • {selectedInboxItem.type}
+                            </span>
                           </div>
                         </div>
                         {selectedInboxItem.postTitle && (
@@ -1296,9 +1542,15 @@ export default function SocialMedia() {
                       <div className="flex-1 p-6 overflow-y-auto space-y-4 max-h-[350px]">
                         {/* User comment */}
                         <div className="flex gap-3 max-w-[85%]">
-                          <img src={selectedInboxItem.authorAvatar} className="w-8 h-8 rounded-full object-cover border flex-shrink-0" alt="" />
+                          <img
+                            src={selectedInboxItem.authorAvatar}
+                            className="w-8 h-8 rounded-full object-cover border flex-shrink-0"
+                            alt=""
+                          />
                           <div className="bg-white border border-slate-200 p-3.5 rounded-2xl rounded-tl-none shadow-sm">
-                            <p className="text-xs text-slate-800 leading-relaxed">{selectedInboxItem.message}</p>
+                            <p className="text-xs text-slate-800 leading-relaxed">
+                              {selectedInboxItem.message}
+                            </p>
                             <span className="text-[9px] text-slate-400 block mt-1">
                               {new Date(selectedInboxItem.timestamp).toLocaleString()}
                             </span>
@@ -1322,7 +1574,10 @@ export default function SocialMedia() {
                       </div>
 
                       {/* Reply Editor */}
-                      <form onSubmit={handleSendInboxReply} className="p-4 bg-white border-t border-slate-200">
+                      <form
+                        onSubmit={handleSendInboxReply}
+                        className="p-4 bg-white border-t border-slate-200"
+                      >
                         <div className="flex gap-2">
                           <button
                             type="button"
@@ -1341,7 +1596,10 @@ export default function SocialMedia() {
                             type="text"
                             value={replyText}
                             onChange={(e) => setReplyText(e.target.value)}
-                            placeholder={txt("Type your team response or use AI Suggestion...", "اكتب رد الفريق هنا أو استعن بالذكاء الاصطناعي...")}
+                            placeholder={txt(
+                              "Type your team response or use AI Suggestion...",
+                              "اكتب رد الفريق هنا أو استعن بالذكاء الاصطناعي..."
+                            )}
                             className="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-xs focus:ring-1 focus:ring-indigo-500"
                           />
                           <button
@@ -1358,7 +1616,12 @@ export default function SocialMedia() {
                   ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-slate-400 py-24">
                       <MessageSquare className="w-10 h-10 text-slate-300 mb-2 animate-bounce" />
-                      <p className="text-xs font-bold">{txt("Select a conversation from the left to engage.", "اختر إحدى المحادثات من القائمة الجانبية للرد والتفاعل.")}</p>
+                      <p className="text-xs font-bold">
+                        {txt(
+                          "Select a conversation from the left to engage.",
+                          "اختر إحدى المحادثات من القائمة الجانبية للرد والتفاعل."
+                        )}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -1373,12 +1636,26 @@ export default function SocialMedia() {
                 {/* Brand overview row */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[
-                    { title: txt("Net Brand Sentiment Index", "مؤشر الرضا والسمعة الإيجابية"), val: "84%", bg: "bg-green-50 text-green-700 border-green-100" },
-                    { title: txt("Share of Voice (Saudi Enterprise OS)", "الحصة من الحديث الإشاري"), val: "38.5%", bg: "bg-indigo-50 text-indigo-700 border-indigo-100" },
-                    { title: txt("Active Tracked Hashtags", "الهاشتاغات النشطة الخاضعة للرصد"), val: "#مداريج_OS", bg: "bg-slate-50 text-slate-700 border-slate-100" }
+                    {
+                      title: txt("Net Brand Sentiment Index", "مؤشر الرضا والسمعة الإيجابية"),
+                      val: "84%",
+                      bg: "bg-green-50 text-green-700 border-green-100",
+                    },
+                    {
+                      title: txt("Share of Voice (Saudi Enterprise OS)", "الحصة من الحديث الإشاري"),
+                      val: "38.5%",
+                      bg: "bg-indigo-50 text-indigo-700 border-indigo-100",
+                    },
+                    {
+                      title: txt("Active Tracked Hashtags", "الهاشتاغات النشطة الخاضعة للرصد"),
+                      val: "#مداريج_OS",
+                      bg: "bg-slate-50 text-slate-700 border-slate-100",
+                    },
                   ].map((it, i) => (
                     <div key={i} className={cn("border p-5 rounded-2xl shadow-sm", it.bg)}>
-                      <span className="text-[10px] font-bold uppercase tracking-wider block opacity-75">{it.title}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider block opacity-75">
+                        {it.title}
+                      </span>
                       <span className="text-3xl font-black block mt-2">{it.val}</span>
                     </div>
                   ))}
@@ -1386,14 +1663,24 @@ export default function SocialMedia() {
 
                 {/* Mentions Feed */}
                 <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                  <h3 className="text-sm font-extrabold text-slate-800 mb-4">{txt("Real-Time Mentions Feed & Web Listening", "قائمة الإشارات ورصد الويب الحي")}</h3>
+                  <h3 className="text-sm font-extrabold text-slate-800 mb-4">
+                    {txt(
+                      "Real-Time Mentions Feed & Web Listening",
+                      "قائمة الإشارات ورصد الويب الحي"
+                    )}
+                  </h3>
 
                   <div className="space-y-4">
                     {monitoring.map((m) => (
-                      <div key={m.id} className="p-4 border border-slate-100 rounded-xl hover:shadow-sm transition-all bg-slate-50/30 flex justify-between items-start gap-4">
+                      <div
+                        key={m.id}
+                        className="p-4 border border-slate-100 rounded-xl hover:shadow-sm transition-all bg-slate-50/30 flex justify-between items-start gap-4"
+                      >
                         <div className="space-y-1.5 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-extrabold text-slate-900">{m.author}</span>
+                            <span className="text-xs font-extrabold text-slate-900">
+                              {m.author}
+                            </span>
                             <span className="text-[10px] bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-400">
                               {m.source}
                             </span>
@@ -1401,7 +1688,9 @@ export default function SocialMedia() {
                               {new Date(m.createdAt).toLocaleString()}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-700 leading-relaxed font-medium">"{m.text}"</p>
+                          <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                            "{m.text}"
+                          </p>
                           <div className="flex items-center gap-4 text-[10px] text-slate-400">
                             <span>
                               <strong>{txt("Keyword: ", "الكلمة المفتاحية: ")}</strong>
@@ -1422,8 +1711,8 @@ export default function SocialMedia() {
                             m.sentiment === "Positive"
                               ? "bg-green-50 border-green-200 text-green-700"
                               : m.sentiment === "Negative"
-                              ? "bg-red-50 border-red-200 text-red-700"
-                              : "bg-slate-50 border-slate-200 text-slate-600"
+                                ? "bg-red-50 border-red-200 text-red-700"
+                                : "bg-slate-50 border-slate-200 text-slate-600"
                           )}
                         >
                           {m.sentiment}
@@ -1443,9 +1732,14 @@ export default function SocialMedia() {
                 {/* Form to add */}
                 <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
                   <div>
-                    <h3 className="text-sm font-extrabold text-slate-800 mb-1">{txt("Add Competitor Profile", "إضافة ملف تعريف لمنافس")}</h3>
+                    <h3 className="text-sm font-extrabold text-slate-800 mb-1">
+                      {txt("Add Competitor Profile", "إضافة ملف تعريف لمنافس")}
+                    </h3>
                     <p className="text-xs text-slate-500">
-                      {txt("Madarij OS AI web crawlers periodically parse competitor social profiles to chart comparisons.", "يقوم زاحف الويب الذكي في مداريج بمسح دوري لحسابات المنافسين للمقارنة والتحليل.")}
+                      {txt(
+                        "Madarij OS AI web crawlers periodically parse competitor social profiles to chart comparisons.",
+                        "يقوم زاحف الويب الذكي في مداريج بمسح دوري لحسابات المنافسين للمقارنة والتحليل."
+                      )}
                     </p>
                   </div>
 
@@ -1471,7 +1765,10 @@ export default function SocialMedia() {
                     </span>
 
                     {competitors.map((c, i) => (
-                      <div key={i} className="flex justify-between items-center p-3.5 bg-slate-50/50 border border-slate-200 rounded-xl">
+                      <div
+                        key={i}
+                        className="flex justify-between items-center p-3.5 bg-slate-50/50 border border-slate-200 rounded-xl"
+                      >
                         <div>
                           <span className="text-xs font-bold text-slate-900 block">{c.name}</span>
                           <span className="text-[10px] text-slate-400 block">
@@ -1479,8 +1776,12 @@ export default function SocialMedia() {
                           </span>
                         </div>
                         <div className="text-right">
-                          <span className="text-xs font-extrabold text-indigo-600 block">{c.engagement}% ER</span>
-                          <span className="text-[10px] text-slate-400 block">{c.frequency} posts/mo</span>
+                          <span className="text-xs font-extrabold text-indigo-600 block">
+                            {c.engagement}% ER
+                          </span>
+                          <span className="text-[10px] text-slate-400 block">
+                            {c.frequency} posts/mo
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -1491,7 +1792,10 @@ export default function SocialMedia() {
                 <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
                   <h3 className="text-sm font-extrabold text-slate-800 border-b border-slate-100 pb-3 flex items-center gap-1.5">
                     <BarChart3 className="w-5 h-5 text-slate-500" />
-                    {txt("Competitor Share of Engagement vs. Followers", "توزيع التفاعل والمتابعين للمنافسين")}
+                    {txt(
+                      "Competitor Share of Engagement vs. Followers",
+                      "توزيع التفاعل والمتابعين للمنافسين"
+                    )}
                   </h3>
 
                   <div className="h-[280px]">
@@ -1501,8 +1805,18 @@ export default function SocialMedia() {
                         <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
                         <YAxis stroke="#64748b" fontSize={11} />
                         <Tooltip />
-                        <Bar dataKey="engagement" fill="#4f46e5" radius={[4, 4, 0, 0]} name={txt("Engagement Rate %", "معدل التفاعل %")} />
-                        <Bar dataKey="frequency" fill="#06b6d4" radius={[4, 4, 0, 0]} name={txt("Post Frequency /mo", "معدل النشر /شهر")} />
+                        <Bar
+                          dataKey="engagement"
+                          fill="#4f46e5"
+                          radius={[4, 4, 0, 0]}
+                          name={txt("Engagement Rate %", "معدل التفاعل %")}
+                        />
+                        <Bar
+                          dataKey="frequency"
+                          fill="#06b6d4"
+                          radius={[4, 4, 0, 0]}
+                          name={txt("Post Frequency /mo", "معدل النشر /شهر")}
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1545,9 +1859,12 @@ export default function SocialMedia() {
                     M
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-slate-900 block">{selectedPreviewPost.authorName}</span>
+                    <span className="text-xs font-bold text-slate-900 block">
+                      {selectedPreviewPost.authorName}
+                    </span>
                     <span className="text-[10px] text-slate-400 block">
-                      {txt("Scheduled Date: ", "تاريخ النشر: ")} {new Date(selectedPreviewPost.scheduledAt).toLocaleString()}
+                      {txt("Scheduled Date: ", "تاريخ النشر: ")}{" "}
+                      {new Date(selectedPreviewPost.scheduledAt).toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -1573,7 +1890,10 @@ export default function SocialMedia() {
                   {selectedPreviewPost.platforms.map((plat) => {
                     const Icon = platformIcons[plat];
                     return (
-                      <span key={plat} className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2 py-1 rounded text-xs capitalize text-slate-700">
+                      <span
+                        key={plat}
+                        className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2 py-1 rounded text-xs capitalize text-slate-700"
+                      >
                         {Icon && <Icon className="w-3.5 h-3.5 text-slate-600" />}
                         <span>{plat}</span>
                       </span>
@@ -1589,7 +1909,11 @@ export default function SocialMedia() {
 
               {selectedPreviewPost.imageUrl && (
                 <div className="border rounded-lg overflow-hidden max-h-48">
-                  <img src={selectedPreviewPost.imageUrl} className="w-full h-full object-cover" alt="" />
+                  <img
+                    src={selectedPreviewPost.imageUrl}
+                    className="w-full h-full object-cover"
+                    alt=""
+                  />
                 </div>
               )}
 

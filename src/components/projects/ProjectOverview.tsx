@@ -53,9 +53,9 @@ export default function ProjectOverview({
   // Calculations
   const totalProjects = projects.length;
   const activeProjects = projects.filter((p) => p.status === "Active").length;
-  
+
   const totalBudget = projects.reduce((acc, p) => acc + p.budget, 0);
-  
+
   // Calculate total costs (timesheets cost + expenses)
   const totalCosts = projects.reduce((acc, p) => {
     const timesheetCost = (p.timesheets || []).reduce((tAcc, t) => {
@@ -65,17 +65,21 @@ export default function ProjectOverview({
     return acc + timesheetCost + expenseCost;
   }, 0);
 
-  const avgMargin = totalBudget > 0 ? Math.max(0, Math.round(((totalBudget - totalCosts) / totalBudget) * 100)) : 100;
-  
+  const avgMargin =
+    totalBudget > 0
+      ? Math.max(0, Math.round(((totalBudget - totalCosts) / totalBudget) * 100))
+      : 100;
+
   const totalHours = projects.reduce((acc, p) => {
     return acc + (p.timesheets || []).reduce((tAcc, t) => tAcc + t.hours, 0);
   }, 0);
 
   // Filtered list
   const filteredProjects = projects.filter((p) => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || 
-                        p.description.toLowerCase().includes(search.toLowerCase()) ||
-                        (p.clientName || "").toLowerCase().includes(search.toLowerCase());
+    const matchSearch =
+      p.name.toLowerCase().includes(search.toLowerCase()) ||
+      p.description.toLowerCase().includes(search.toLowerCase()) ||
+      (p.clientName || "").toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "All" || p.status === statusFilter;
     const matchHealth = healthFilter === "All" || p.health === healthFilter;
     return matchSearch && matchStatus && matchHealth;
@@ -92,7 +96,9 @@ export default function ProjectOverview({
               {isRtl ? "المشاريع الكلية" : "TOTAL PROJECTS"}
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-black text-zinc-900 dark:text-zinc-100">{totalProjects}</span>
+              <span className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
+                {totalProjects}
+              </span>
               <span className="text-xs font-semibold text-emerald-500">
                 {activeProjects} {isRtl ? "نشط" : "active"}
               </span>
@@ -146,10 +152,16 @@ export default function ProjectOverview({
               {isRtl ? "معدل هامش الربح التشغيلي" : "EST. OPERATING MARGIN"}
             </span>
             <div className="flex items-baseline gap-2">
-              <span className={cn(
-                "text-2xl font-black",
-                avgMargin > 40 ? "text-emerald-500" : avgMargin > 15 ? "text-amber-500" : "text-rose-500"
-              )}>
+              <span
+                className={cn(
+                  "text-2xl font-black",
+                  avgMargin > 40
+                    ? "text-emerald-500"
+                    : avgMargin > 15
+                      ? "text-amber-500"
+                      : "text-rose-500"
+                )}
+              >
                 {avgMargin}%
               </span>
               <span className="text-[10px] text-zinc-400 font-medium">
@@ -213,7 +225,7 @@ export default function ProjectOverview({
             <Sparkles className="w-4 h-4 text-emerald-400" />
             <span>{isRtl ? "إنشاء ذكي بـ Gemini" : "Generate with Gemini"}</span>
           </button>
-          
+
           <button
             onClick={onOpenNewProjectModal}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all duration-300 cursor-pointer shadow-sm"
@@ -232,7 +244,9 @@ export default function ProjectOverview({
             {isRtl ? "لا توجد مشاريع مطابقة" : "No projects found"}
           </h3>
           <p className="text-xs text-zinc-400 mt-1">
-            {isRtl ? "ابدأ بإنشاء أول مشروع متكامل للمنشأة يدوياً أو بواسطة الـ Copilot." : "Initiate an enterprise project plan manually or use the AI Copilot."}
+            {isRtl
+              ? "ابدأ بإنشاء أول مشروع متكامل للمنشأة يدوياً أو بواسطة الـ Copilot."
+              : "Initiate an enterprise project plan manually or use the AI Copilot."}
           </p>
         </div>
       ) : (
@@ -240,7 +254,8 @@ export default function ProjectOverview({
           {filteredProjects.map((p) => {
             const completedTasks = p.tasks.filter((t) => t.status === "Done").length;
             const totalTasks = p.tasks.length;
-            const taskProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+            const taskProgress =
+              totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
             // Project costs for this card
             const projectTimesheetCost = (p.timesheets || []).reduce((acc, t) => {
@@ -248,7 +263,8 @@ export default function ProjectOverview({
             }, 0);
             const projectExpenseCost = (p.expenses || []).reduce((acc, e) => acc + e.amount, 0);
             const totalProjectCost = projectTimesheetCost + projectExpenseCost;
-            const costPct = p.budget > 0 ? Math.min(100, Math.round((totalProjectCost / p.budget) * 100)) : 0;
+            const costPct =
+              p.budget > 0 ? Math.min(100, Math.round((totalProjectCost / p.budget) * 100)) : 0;
 
             return (
               <motion.div
@@ -260,15 +276,27 @@ export default function ProjectOverview({
                 <div className="p-5 space-y-4 flex-1">
                   <div className="flex items-start justify-between">
                     {/* Health Indicator */}
-                    <span className={cn(
-                      "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border",
-                      p.health === "On Track"
-                        ? "bg-emerald-500/5 text-emerald-500 border-emerald-500/15"
+                    <span
+                      className={cn(
+                        "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border",
+                        p.health === "On Track"
+                          ? "bg-emerald-500/5 text-emerald-500 border-emerald-500/15"
+                          : p.health === "At Risk"
+                            ? "bg-amber-500/5 text-amber-500 border-amber-500/15"
+                            : "bg-rose-500/5 text-rose-500 border-rose-500/15"
+                      )}
+                    >
+                      {p.health === "On Track"
+                        ? isRtl
+                          ? "سليم"
+                          : "On Track"
                         : p.health === "At Risk"
-                          ? "bg-amber-500/5 text-amber-500 border-amber-500/15"
-                          : "bg-rose-500/5 text-rose-500 border-rose-500/15"
-                    )}>
-                      {p.health === "On Track" ? (isRtl ? "سليم" : "On Track") : p.health === "At Risk" ? (isRtl ? "معرض لخطر" : "At Risk") : (isRtl ? "حرج" : "Critical")}
+                          ? isRtl
+                            ? "معرض لخطر"
+                            : "At Risk"
+                          : isRtl
+                            ? "حرج"
+                            : "Critical"}
                     </span>
 
                     {/* Actions Menu */}
@@ -284,10 +312,12 @@ export default function ProjectOverview({
                       </button>
 
                       {activeMenuId === p.id && (
-                        <div className={cn(
-                          "absolute top-7 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg py-1.5 z-30 w-36 text-xs font-semibold",
-                          isRtl ? "left-0" : "right-0"
-                        )}>
+                        <div
+                          className={cn(
+                            "absolute top-7 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg py-1.5 z-30 w-36 text-xs font-semibold",
+                            isRtl ? "left-0" : "right-0"
+                          )}
+                        >
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -302,7 +332,13 @@ export default function ProjectOverview({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (confirm(isRtl ? "هل أنت متأكد من حذف هذا المشروع بالكامل؟" : "Are you sure you want to delete this project?")) {
+                              if (
+                                confirm(
+                                  isRtl
+                                    ? "هل أنت متأكد من حذف هذا المشروع بالكامل؟"
+                                    : "Are you sure you want to delete this project?"
+                                )
+                              ) {
                                 onDeleteProject(p.id);
                               }
                               setActiveMenuId(null);
@@ -342,7 +378,9 @@ export default function ProjectOverview({
                   <div className="space-y-1">
                     <div className="flex justify-between text-[10px] font-bold text-zinc-500">
                       <span>{isRtl ? "إنجاز المهام" : "Task Completion"}</span>
-                      <span>{completedTasks}/{totalTasks} ({taskProgress}%)</span>
+                      <span>
+                        {completedTasks}/{totalTasks} ({taskProgress}%)
+                      </span>
                     </div>
                     <div className="w-full h-1.5 bg-zinc-100 dark:bg-zinc-900 rounded-full overflow-hidden">
                       <div
@@ -356,13 +394,29 @@ export default function ProjectOverview({
                   <div className="space-y-1">
                     <div className="flex justify-between text-[10px] font-bold text-zinc-500">
                       <span>{isRtl ? "المصروف الفعلي من الميزانية" : "Budget Spend Tracking"}</span>
-                      <span className={cn(costPct > 90 ? "text-rose-500" : costPct > 70 ? "text-amber-500" : "text-emerald-500")}>
-                        {totalProjectCost.toLocaleString()} / {p.budget.toLocaleString()} SAR ({costPct}%)
+                      <span
+                        className={cn(
+                          costPct > 90
+                            ? "text-rose-500"
+                            : costPct > 70
+                              ? "text-amber-500"
+                              : "text-emerald-500"
+                        )}
+                      >
+                        {totalProjectCost.toLocaleString()} / {p.budget.toLocaleString()} SAR (
+                        {costPct}%)
                       </span>
                     </div>
                     <div className="w-full h-1.5 bg-zinc-100 dark:bg-zinc-900 rounded-full overflow-hidden">
                       <div
-                        className={cn("h-full transition-all duration-500", costPct > 90 ? "bg-rose-500" : costPct > 70 ? "bg-amber-500" : "bg-blue-500")}
+                        className={cn(
+                          "h-full transition-all duration-500",
+                          costPct > 90
+                            ? "bg-rose-500"
+                            : costPct > 70
+                              ? "bg-amber-500"
+                              : "bg-blue-500"
+                        )}
                         style={{ width: `${costPct}%` }}
                       />
                     </div>
@@ -372,12 +426,34 @@ export default function ProjectOverview({
                 {/* Footer details */}
                 <div className="bg-zinc-50 dark:bg-zinc-900/40 px-5 py-3 border-t border-zinc-100 dark:border-zinc-900/60 flex items-center justify-between text-[10px] font-semibold text-zinc-400">
                   <div className="flex items-center gap-1">
-                    <span className={cn(
-                      "w-2 h-2 rounded-full",
-                      p.status === "Active" ? "bg-emerald-500 animate-pulse" : p.status === "Planning" ? "bg-blue-500" : p.status === "Paused" ? "bg-amber-500" : "bg-zinc-400"
-                    )} />
+                    <span
+                      className={cn(
+                        "w-2 h-2 rounded-full",
+                        p.status === "Active"
+                          ? "bg-emerald-500 animate-pulse"
+                          : p.status === "Planning"
+                            ? "bg-blue-500"
+                            : p.status === "Paused"
+                              ? "bg-amber-500"
+                              : "bg-zinc-400"
+                      )}
+                    />
                     <span className="text-zinc-500 dark:text-zinc-400">
-                      {p.status === "Active" ? (isRtl ? "نشط" : "Active") : p.status === "Planning" ? (isRtl ? "قيد التخطيط" : "Planning") : p.status === "Paused" ? (isRtl ? "متوقف مؤقتاً" : "Paused") : (isRtl ? "مكتمل" : "Completed")}
+                      {p.status === "Active"
+                        ? isRtl
+                          ? "نشط"
+                          : "Active"
+                        : p.status === "Planning"
+                          ? isRtl
+                            ? "قيد التخطيط"
+                            : "Planning"
+                          : p.status === "Paused"
+                            ? isRtl
+                              ? "متوقف مؤقتاً"
+                              : "Paused"
+                            : isRtl
+                              ? "مكتمل"
+                              : "Completed"}
                     </span>
                   </div>
 

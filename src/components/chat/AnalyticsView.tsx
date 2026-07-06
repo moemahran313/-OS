@@ -58,10 +58,38 @@ const aiPerformanceData = [
 const AI_COLORS = ["#8B5CF6", "#3B82F6", "#9CA3AF"];
 
 const agentsPerformance = [
-  { name: "أحمد العتيبي", avatar: "A", resolved: 342, csat: 4.9, art: "8.5 دقيقة", channel: "واتساب" },
-  { name: "سارة الشمري", avatar: "S", resolved: 298, csat: 4.8, art: "11.2 دقيقة", channel: "بريد إلكتروني" },
-  { name: "فيصل خالد", avatar: "F", resolved: 276, csat: 4.7, art: "12.4 دقيقة", channel: "محادثة الموقع" },
-  { name: "هدى عسيري", avatar: "H", resolved: 224, csat: 4.6, art: "14.1 دقيقة", channel: "تيليجرام" },
+  {
+    name: "أحمد العتيبي",
+    avatar: "A",
+    resolved: 342,
+    csat: 4.9,
+    art: "8.5 دقيقة",
+    channel: "واتساب",
+  },
+  {
+    name: "سارة الشمري",
+    avatar: "S",
+    resolved: 298,
+    csat: 4.8,
+    art: "11.2 دقيقة",
+    channel: "بريد إلكتروني",
+  },
+  {
+    name: "فيصل خالد",
+    avatar: "F",
+    resolved: 276,
+    csat: 4.7,
+    art: "12.4 دقيقة",
+    channel: "محادثة الموقع",
+  },
+  {
+    name: "هدى عسيري",
+    avatar: "H",
+    resolved: 224,
+    csat: 4.6,
+    art: "14.1 دقيقة",
+    channel: "تيليجرام",
+  },
 ];
 
 export default function AnalyticsView() {
@@ -131,8 +159,12 @@ export default function AnalyticsView() {
         <div className="lg:col-span-2 bg-white border border-zinc-200 rounded-3xl p-6 shadow-sm space-y-4">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="font-extrabold text-sm text-zinc-800">معدل الاستجابة والحل الأسبوعي</h3>
-              <p className="text-[10px] text-zinc-500 font-bold mt-0.5">مقارنة وقت الرد بالدقائق وتأثير رضا العميل</p>
+              <h3 className="font-extrabold text-sm text-zinc-800">
+                معدل الاستجابة والحل الأسبوعي
+              </h3>
+              <p className="text-[10px] text-zinc-500 font-bold mt-0.5">
+                مقارنة وقت الرد بالدقائق وتأثير رضا العميل
+              </p>
             </div>
             <div className="flex gap-3 text-xs font-bold">
               <span className="flex items-center gap-1.5 text-zinc-600">
@@ -193,7 +225,9 @@ export default function AnalyticsView() {
         <div className="bg-white border border-zinc-200 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
           <div>
             <h3 className="font-extrabold text-sm text-zinc-800">توزيع المحادثات حسب القناة</h3>
-            <p className="text-[10px] text-zinc-500 font-bold mt-0.5">القنوات الأكثر نشاطاً هذا الشهر</p>
+            <p className="text-[10px] text-zinc-500 font-bold mt-0.5">
+              القنوات الأكثر نشاطاً هذا الشهر
+            </p>
           </div>
           <div className="h-44 w-full flex items-center justify-center relative">
             <ResponsiveContainer width="100%" height="100%">
@@ -229,10 +263,18 @@ export default function AnalyticsView() {
           </div>
           <div className="grid grid-cols-2 gap-2 mt-4">
             {channelData.map((c) => (
-              <div key={c.name} className="flex items-center gap-1.5 text-xs font-bold text-zinc-600">
-                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: c.color }} />
+              <div
+                key={c.name}
+                className="flex items-center gap-1.5 text-xs font-bold text-zinc-600"
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: c.color }}
+                />
                 <span className="truncate">{c.name}</span>
-                <span className="text-zinc-400 font-normal">({Math.round((c.value / 14900) * 100)}%)</span>
+                <span className="text-zinc-400 font-normal">
+                  ({Math.round((c.value / 14900) * 100)}%)
+                </span>
               </div>
             ))}
           </div>
@@ -244,7 +286,9 @@ export default function AnalyticsView() {
         <div className="lg:col-span-2 bg-white border border-zinc-200 rounded-3xl p-6 shadow-sm space-y-4">
           <div>
             <h3 className="font-extrabold text-sm text-zinc-800">إنتاجية وجودة أداء الوكلاء</h3>
-            <p className="text-[10px] text-zinc-500 font-bold mt-0.5">الوكلاء المتصلون حالياً ومؤشرات أدائهم</p>
+            <p className="text-[10px] text-zinc-500 font-bold mt-0.5">
+              الوكلاء المتصلون حالياً ومؤشرات أدائهم
+            </p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-right border-collapse">
@@ -293,7 +337,9 @@ export default function AnalyticsView() {
         <div className="bg-white border border-zinc-200 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
           <div>
             <h3 className="font-extrabold text-sm text-zinc-800">معدل الحل التلقائي بالـ AI</h3>
-            <p className="text-[10px] text-zinc-500 font-bold mt-0.5">كيف يتعامل الذكاء الاصطناعي مع القنوات</p>
+            <p className="text-[10px] text-zinc-500 font-bold mt-0.5">
+              كيف يتعامل الذكاء الاصطناعي مع القنوات
+            </p>
           </div>
           <div className="h-44 w-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
@@ -325,9 +371,15 @@ export default function AnalyticsView() {
           </div>
           <div className="space-y-2 mt-4">
             {aiPerformanceData.map((entry, i) => (
-              <div key={entry.name} className="flex justify-between items-center text-xs font-bold text-zinc-600">
+              <div
+                key={entry.name}
+                className="flex justify-between items-center text-xs font-bold text-zinc-600"
+              >
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: AI_COLORS[i] }} />
+                  <span
+                    className="w-2.5 h-2.5 rounded-full"
+                    style={{ backgroundColor: AI_COLORS[i] }}
+                  />
                   <span>{entry.name}</span>
                 </div>
                 <span className="text-zinc-900 font-black">{entry.value}%</span>

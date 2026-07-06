@@ -1124,43 +1124,52 @@ export default function Dashboard() {
           score: 75,
           cac: 450,
           averageAgingDays: 14,
-          explanationAr: "صحة الأعمال معتدلة ومستقرة. الإيرادات تدعم استمرار النمو ولكن هناك فرصة لتحسين التدفق النقدي عبر متابعة الفواتير.",
-          explanationEn: "Business health is moderate and stable. Revenue supports continued growth, but there is an opportunity to improve cash flow by following up on invoices.",
+          explanationAr:
+            "صحة الأعمال معتدلة ومستقرة. الإيرادات تدعم استمرار النمو ولكن هناك فرصة لتحسين التدفق النقدي عبر متابعة الفواتير.",
+          explanationEn:
+            "Business health is moderate and stable. Revenue supports continued growth, but there is an opportunity to improve cash flow by following up on invoices.",
           recommendationsAr: [
             "تفعيل تذكيرات الدفع التلقائية (WhatsApp) لتقليص عمر الفواتير المعلقة.",
             "تحسين قنوات استهداف العملاء لخفض تكلفة حيازة العميل.",
-            "مراجعة شروط السداد للعملاء ذوي الدفع المتأخر."
+            "مراجعة شروط السداد للعملاء ذوي الدفع المتأخر.",
           ],
           recommendationsEn: [
             "Activate automated payment reminders (WhatsApp) to accelerate outstanding invoice collection.",
             "Optimize customer targeting channels to lower customer acquisition cost (CAC).",
-            "Review credit terms for clients with repeated payment delays."
-          ]
+            "Review credit terms for clients with repeated payment delays.",
+          ],
         };
 
         const score = health.score;
         const isAr = settings?.language === "ar";
-        
+
         // Color mapping
-        let colorClass = "text-emerald-500 bg-emerald-500/10 border-emerald-500/20 dark:border-emerald-500/20";
+        let colorClass =
+          "text-emerald-500 bg-emerald-500/10 border-emerald-500/20 dark:border-emerald-500/20";
         let statusText = isAr ? "ممتاز جداً" : "Excellent";
         let glowColor = "rgba(16, 185, 129, 0.15)";
-        
+
         if (score < 60) {
           colorClass = "text-rose-500 bg-rose-500/10 border-rose-500/20 dark:border-rose-500/20";
           statusText = isAr ? "بحاجة لتدخل عاجل" : "Critical Intervention Needed";
           glowColor = "rgba(239, 68, 68, 0.15)";
         } else if (score < 85) {
-          colorClass = "text-amber-500 bg-amber-500/10 border-amber-500/20 dark:border-amber-500/20";
+          colorClass =
+            "text-amber-500 bg-amber-500/10 border-amber-500/20 dark:border-amber-500/20";
           statusText = isAr ? "مستقر مع تنبيهات" : "Stable with Warnings";
           glowColor = "rgba(245, 158, 11, 0.15)";
         }
 
         const handleRecommendationClick = (rec: string) => {
-          if (rec.includes("WhatsApp") || rec.includes("واتساب") || rec.includes("تحصيل") || rec.includes("collection")) {
+          if (
+            rec.includes("WhatsApp") ||
+            rec.includes("واتساب") ||
+            rec.includes("تحصيل") ||
+            rec.includes("collection")
+          ) {
             toast.success(
-              isAr 
-                ? "🪄 تم تفعيل التذكيرات والمتابعات الذكية بنجاح وتوجيه العملاء المتأخرين في WhatsApp Sales Hub!" 
+              isAr
+                ? "🪄 تم تفعيل التذكيرات والمتابعات الذكية بنجاح وتوجيه العملاء المتأخرين في WhatsApp Sales Hub!"
                 : "🪄 AI Automated follow-ups activated successfully in WhatsApp Sales Hub for all past-due invoices!"
             );
           } else {
@@ -1179,7 +1188,12 @@ export default function Dashboard() {
             style={{ boxShadow: `0 10px 30px -10px ${glowColor}` }}
           >
             {/* Outer soft glowing background decorative circle */}
-            <div className="absolute -right-16 -top-16 w-48 h-48 rounded-full blur-3xl opacity-30 pointer-events-none" style={{ backgroundColor: score < 60 ? '#f43f5e' : score < 85 ? '#f59e0b' : '#10b981' }} />
+            <div
+              className="absolute -right-16 -top-16 w-48 h-48 rounded-full blur-3xl opacity-30 pointer-events-none"
+              style={{
+                backgroundColor: score < 60 ? "#f43f5e" : score < 85 ? "#f59e0b" : "#10b981",
+              }}
+            />
 
             <div className="flex flex-col lg:flex-row items-center gap-6 relative z-10">
               {/* Left Side: Score Wheel / Visual Gauge */}
@@ -1187,7 +1201,7 @@ export default function Dashboard() {
                 <span className="text-[10px] font-black uppercase text-zinc-400 tracking-wider mb-2">
                   {isAr ? "مؤشر صحة الأعمال" : "Business Health"}
                 </span>
-                
+
                 {/* Visual Circle Progress */}
                 <div className="relative w-28 h-28 flex items-center justify-center">
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
@@ -1206,7 +1220,7 @@ export default function Dashboard() {
                       cy="50"
                       r="40"
                       fill="transparent"
-                      stroke={score < 60 ? '#f43f5e' : score < 85 ? '#f59e0b' : '#10b981'}
+                      stroke={score < 60 ? "#f43f5e" : score < 85 ? "#f59e0b" : "#10b981"}
                       strokeWidth="10"
                       strokeDasharray="251.2"
                       strokeDashoffset={251.2 - (251.2 * score) / 100}
@@ -1214,12 +1228,19 @@ export default function Dashboard() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-black font-mono text-zinc-900 dark:text-zinc-100">{score}</span>
+                    <span className="text-3xl font-black font-mono text-zinc-900 dark:text-zinc-100">
+                      {score}
+                    </span>
                     <span className="text-[9px] font-black text-zinc-400">/ 100</span>
                   </div>
                 </div>
 
-                <span className={cn("mt-3 px-2.5 py-1 rounded-full text-[10px] font-black border", colorClass)}>
+                <span
+                  className={cn(
+                    "mt-3 px-2.5 py-1 rounded-full text-[10px] font-black border",
+                    colorClass
+                  )}
+                >
                   {statusText}
                 </span>
               </div>
@@ -1245,21 +1266,37 @@ export default function Dashboard() {
                 {/* Sub-KPI stats bar inside the health score */}
                 <div className="grid grid-cols-3 gap-3 p-3 bg-zinc-50 dark:bg-zinc-800/40 rounded-xl border border-zinc-100 dark:border-zinc-800">
                   <div className="text-center">
-                    <p className="text-[9px] font-black text-zinc-400 mb-0.5">{isAr ? "اتجاه الإيرادات" : "Revenue Trend"}</p>
-                    <p className={cn("text-xs font-bold font-mono", parseFloat(dashboardStats?.trends?.revenue || 0) >= 0 ? "text-emerald-600" : "text-rose-600")}>
-                      {parseFloat(dashboardStats?.trends?.revenue || 0) >= 0 ? "+" : ""}{dashboardStats?.trends?.revenue || 0}%
+                    <p className="text-[9px] font-black text-zinc-400 mb-0.5">
+                      {isAr ? "اتجاه الإيرادات" : "Revenue Trend"}
+                    </p>
+                    <p
+                      className={cn(
+                        "text-xs font-bold font-mono",
+                        parseFloat(dashboardStats?.trends?.revenue || 0) >= 0
+                          ? "text-emerald-600"
+                          : "text-rose-600"
+                      )}
+                    >
+                      {parseFloat(dashboardStats?.trends?.revenue || 0) >= 0 ? "+" : ""}
+                      {dashboardStats?.trends?.revenue || 0}%
                     </p>
                   </div>
                   <div className="text-center border-x border-zinc-200/60 dark:border-zinc-800/60">
-                    <p className="text-[9px] font-black text-zinc-400 mb-0.5">{isAr ? "تكلفة حيازة العميل" : "Customer Acquisition"}</p>
+                    <p className="text-[9px] font-black text-zinc-400 mb-0.5">
+                      {isAr ? "تكلفة حيازة العميل" : "Customer Acquisition"}
+                    </p>
                     <p className="text-xs font-bold font-mono text-indigo-600 dark:text-indigo-400">
-                      {health.cac.toLocaleString()} <span className="text-[9px] font-normal">{isAr ? "ر.س" : "SAR"}</span>
+                      {health.cac.toLocaleString()}{" "}
+                      <span className="text-[9px] font-normal">{isAr ? "ر.س" : "SAR"}</span>
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-[9px] font-black text-zinc-400 mb-0.5">{isAr ? "متوسط عمر الفواتير" : "Invoice Aging"}</p>
+                    <p className="text-[9px] font-black text-zinc-400 mb-0.5">
+                      {isAr ? "متوسط عمر الفواتير" : "Invoice Aging"}
+                    </p>
                     <p className="text-xs font-bold font-mono text-amber-600">
-                      {health.averageAgingDays} <span className="text-[9px] font-normal">{isAr ? "يوم" : "days"}</span>
+                      {health.averageAgingDays}{" "}
+                      <span className="text-[9px] font-normal">{isAr ? "يوم" : "days"}</span>
                     </p>
                   </div>
                 </div>
@@ -1267,20 +1304,24 @@ export default function Dashboard() {
                 {/* Recommendations */}
                 <div className="space-y-2">
                   <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-wider">
-                    {isAr ? "التوصيات المقترحة من مدارج للتحسين بنقرة واحدة:" : "Actionable AI recommendations to improve:"}
+                    {isAr
+                      ? "التوصيات المقترحة من مدارج للتحسين بنقرة واحدة:"
+                      : "Actionable AI recommendations to improve:"}
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {(isAr ? health.recommendationsAr : health.recommendationsEn).map((rec: string, idx: number) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => handleRecommendationClick(rec)}
-                        className="p-2.5 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-bold text-right rtl:text-right ltr:text-left hover:border-indigo-500 dark:hover:border-indigo-500 transition-all shadow-xxs hover:shadow-xs flex items-center justify-between group"
-                      >
-                        <span className="flex-1 leading-tight">{rec}</span>
-                        <ArrowUpRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-indigo-500 shrink-0 mx-1" />
-                      </button>
-                    ))}
+                    {(isAr ? health.recommendationsAr : health.recommendationsEn).map(
+                      (rec: string, idx: number) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleRecommendationClick(rec)}
+                          className="p-2.5 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-bold text-right rtl:text-right ltr:text-left hover:border-indigo-500 dark:hover:border-indigo-500 transition-all shadow-xxs hover:shadow-xs flex items-center justify-between group"
+                        >
+                          <span className="flex-1 leading-tight">{rec}</span>
+                          <ArrowUpRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-indigo-500 shrink-0 mx-1" />
+                        </button>
+                      )
+                    )}
                   </div>
                 </div>
               </div>

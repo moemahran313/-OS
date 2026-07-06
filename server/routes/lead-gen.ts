@@ -62,7 +62,8 @@ router.put("/landing-pages/:id", authenticate, async (req: any, res) => {
     const pageRef = db.collection("landing_pages").doc(id);
     const snap = await pageRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Page not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     const updateData = {
       ...req.body,
@@ -82,7 +83,8 @@ router.delete("/landing-pages/:id", authenticate, async (req: any, res) => {
     const pageRef = db.collection("landing_pages").doc(id);
     const snap = await pageRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Page not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     await pageRef.delete();
     res.json({ success: true });
@@ -176,7 +178,6 @@ The response must be structured JSON representing a high-fidelity page. Translat
   }
 });
 
-
 // ==========================================
 // FORM BUILDER ENDPOINTS
 // ==========================================
@@ -217,7 +218,8 @@ router.put("/forms/:id", authenticate, async (req: any, res) => {
     const formRef = db.collection("lead_forms").doc(id);
     const snap = await formRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Form not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     const updateData = {
       ...req.body,
@@ -237,7 +239,8 @@ router.delete("/forms/:id", authenticate, async (req: any, res) => {
     const formRef = db.collection("lead_forms").doc(id);
     const snap = await formRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Form not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     await formRef.delete();
     res.json({ success: true });
@@ -298,7 +301,6 @@ Response structure:
   }
 });
 
-
 // ==========================================
 // POPUPS BUILDER ENDPOINTS
 // ==========================================
@@ -339,7 +341,8 @@ router.put("/popups/:id", authenticate, async (req: any, res) => {
     const popupRef = db.collection("lead_popups").doc(id);
     const snap = await popupRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Popup not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     const updateData = {
       ...req.body,
@@ -359,7 +362,8 @@ router.delete("/popups/:id", authenticate, async (req: any, res) => {
     const popupRef = db.collection("lead_popups").doc(id);
     const snap = await popupRef.get();
     if (!snap.exists) return res.status(404).json({ error: "Popup not found" });
-    if (snap.data()?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+    if (snap.data()?.userId !== req.user.uid)
+      return res.status(403).json({ error: "Unauthorized" });
 
     await popupRef.delete();
     res.json({ success: true });
@@ -367,7 +371,6 @@ router.delete("/popups/:id", authenticate, async (req: any, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ==========================================
 // CHATBOT & INTERACTION ENDPOINTS
@@ -382,7 +385,8 @@ router.get("/chatbots", authenticate, async (req: any, res) => {
       const defaultConfig = {
         name: "مستشار Madarij الذكي",
         greeting: "أهلاً بك! كيف يمكنني مساعدتك في تنمية أعمالك اليوم وتأهيل استفسارك؟",
-        systemPrompt: "You are a professional corporate intelligence representative for Madarij OS. Always be courteous, answer product questions briefly, and guide the user politely to provide their name, email, company, and phone number to schedule a full presentation with our team.",
+        systemPrompt:
+          "You are a professional corporate intelligence representative for Madarij OS. Always be courteous, answer product questions briefly, and guide the user politely to provide their name, email, company, and phone number to schedule a full presentation with our team.",
         capturedFields: ["name", "email", "company", "phone"],
         enabled: true,
         createdAt: new Date().toISOString(),
@@ -427,7 +431,9 @@ router.post("/chatbots/message", async (req: any, res) => {
     const ai = getGeminiClient();
 
     // Prepare history logs
-    const messageHistory = messages.map((m: any) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n");
+    const messageHistory = messages
+      .map((m: any) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
+      .join("\n");
 
     const prompt = `${systemPrompt || "You are an AI Sales Assistant capturing leads."}
 Review this chat history:
@@ -472,7 +478,6 @@ Provide the response in structured JSON:
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ==========================================
 // SUBMISSIONS & ANALYSIS LOGS
@@ -633,22 +638,26 @@ Provide the output as STRICT JSON:
     const emailToSearch = customerData.email || "N/A";
     const nameToSearch = customerData.name || customerData.fullName || "";
     if (emailToSearch !== "N/A" || nameToSearch) {
-      const leadsSnap = await db.collection("leads")
+      const leadsSnap = await db
+        .collection("leads")
         .where("userId", "==", req.user.uid)
         .where("email", "==", emailToSearch)
         .get();
 
       if (!leadsSnap.empty) {
         const leadId = leadsSnap.docs[0].id;
-        await db.collection("leads").doc(leadId).update({
-          leadScore: parsed.qualification.score,
-          leadScoreReason: parsed.qualification.qualificationExplanation,
-          leadScoreDate: new Date().toISOString(),
-          companySize: parsed.enriched.size,
-          industry: parsed.enriched.industry,
-          conversionProbability: parsed.qualification.conversionProbability,
-          notes: `[AI Enriched] الفرع: ${parsed.enriched.industry}. التقنية المستخدمة: ${parsed.enriched.technologiesUsed}. الإجراء الموصى به: ${parsed.qualification.recommendedFollowUp}. المندوب الموصى به: ${parsed.qualification.assignedSalesRep}`,
-        });
+        await db
+          .collection("leads")
+          .doc(leadId)
+          .update({
+            leadScore: parsed.qualification.score,
+            leadScoreReason: parsed.qualification.qualificationExplanation,
+            leadScoreDate: new Date().toISOString(),
+            companySize: parsed.enriched.size,
+            industry: parsed.enriched.industry,
+            conversionProbability: parsed.qualification.conversionProbability,
+            notes: `[AI Enriched] الفرع: ${parsed.enriched.industry}. التقنية المستخدمة: ${parsed.enriched.technologiesUsed}. الإجراء الموصى به: ${parsed.qualification.recommendedFollowUp}. المندوب الموصى به: ${parsed.qualification.assignedSalesRep}`,
+          });
       }
     }
 
