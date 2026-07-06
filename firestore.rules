@@ -286,9 +286,9 @@ service cloud.firestore {
 
     // DMS Documents Rules
     match /dms_documents/{docId} {
-      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list, get: if isSignedIn() && (resource == null || !('userId' in resource.data) || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && (incoming() == null || !('userId' in incoming()) || incoming().userId == request.auth.uid);
+      allow update, delete: if isSignedIn() && (resource == null || !('userId' in resource.data) || resource.data.userId == request.auth.uid);
     }
 
     // Cost Centers Rules
@@ -342,6 +342,51 @@ service cloud.firestore {
 
     // WhatsApp Queue Rules
     match /whatsapp_queue/{queueId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().userId == existing().userId;
+    }
+
+    // Tickets Rules
+    match /tickets/{ticketId} {
+      allow list, get: if isSignedIn() && (resource == null || !('userId' in resource.data) || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && (incoming() == null || !('userId' in incoming()) || incoming().userId == request.auth.uid);
+      allow update, delete: if isSignedIn() && (resource == null || !('userId' in resource.data) || resource.data.userId == request.auth.uid);
+    }
+
+    // Knowledge Articles Rules
+    match /knowledge_articles/{articleId} {
+      allow list, get: if isSignedIn() && (resource == null || !('userId' in resource.data) || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && (incoming() == null || !('userId' in incoming()) || incoming().userId == request.auth.uid);
+      allow update, delete: if isSignedIn() && (resource == null || !('userId' in resource.data) || resource.data.userId == request.auth.uid);
+    }
+
+    // Advertising Platform Rules
+    match /adv_campaigns/{campId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().userId == existing().userId;
+    }
+
+    match /adv_adsets/{adsetId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().userId == existing().userId;
+    }
+
+    match /adv_creatives/{creativeId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().userId == existing().userId;
+    }
+
+    match /adv_pixels/{pixelId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().userId == existing().userId;
+    }
+
+    match /adv_automations/{ruleId} {
       allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && incoming().userId == request.auth.uid;
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().userId == existing().userId;

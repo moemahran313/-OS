@@ -66,6 +66,145 @@ export default function Settings() {
 
   const [expiringContractsCount, setExpiringContractsCount] = useState<number | null>(null);
 
+  // Referral Program states
+  const [referralStats, setReferralStats] = useState<any>({
+    referralCode: "",
+    rewardPreference: "discount",
+    discountEarnedSar: 0,
+    trialExtensionDays: 0,
+    history: [],
+  });
+  const [loadingReferrals, setLoadingReferrals] = useState(false);
+  const [customCode, setCustomCode] = useState("");
+  const [updatingCode, setUpdatingCode] = useState(false);
+  const [updatingPreference, setUpdatingPreference] = useState(false);
+  const [simulationName, setSimulationName] = useState("");
+  const [simulationEmail, setSimulationEmail] = useState("");
+  const [simulating, setSimulating] = useState(false);
+  const [paymentLoadingId, setPaymentLoadingId] = useState<string | null>(null);
+
+  const fetchReferralStats = async () => {
+    setLoadingReferrals(true);
+    try {
+      const res = await fetch("/api/referrals/my-stats");
+      if (res.ok) {
+        const data = await res.json();
+        setReferralStats(data);
+        setCustomCode(data.referralCode || "");
+      }
+    } catch (err) {
+      console.error("Error fetching referral stats:", err);
+    } finally {
+      setLoadingReferrals(false);
+    }
+  };
+
+  const handleSaveCustomCode = async () => {
+    if (!customCode.trim()) {
+      toast.error("الرجاء إدخال الرمز الحصري أولاً.");
+      return;
+    }
+    setUpdatingCode(true);
+    try {
+      const res = await fetch("/api/referrals/generate-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customCode }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setReferralStats((prev: any) => ({ ...prev, referralCode: data.referralCode }));
+        toast.success("تم تحديث رمز الإحالة المخصص بنجاح! 🎉");
+      } else {
+        toast.error(data.error || "فشل تحديث رمز الإحالة.");
+      }
+    } catch (err) {
+      console.error("Error updating referral code:", err);
+      toast.error("حدث خطأ أثناء الاتصال بالخادم.");
+    } finally {
+      setUpdatingCode(false);
+    }
+  };
+
+  const handleUpdateRewardPreference = async (pref: "discount" | "trial") => {
+    setUpdatingPreference(true);
+    try {
+      const res = await fetch("/api/referrals/update-preference", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preference: pref }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setReferralStats((prev: any) => ({ ...prev, rewardPreference: pref }));
+        toast.success(
+          `تم تغيير نوع المكافأة المفضلة إلى ${pref === "trial" ? "تمديد الفترة التجريبية" : "خصم مالي"}! 🎁`
+        );
+      } else {
+        toast.error(data.error || "فشل تحديث تفضيلات المكافأة.");
+      }
+    } catch (err) {
+      console.error("Error updating preference:", err);
+    } finally {
+      setUpdatingPreference(false);
+    }
+  };
+
+  const handleSimulateSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!simulationName.trim() || !simulationEmail.trim()) {
+      toast.error("الرجاء إدخال الاسم والبريد الإلكتروني لتجربة المحاكاة.");
+      return;
+    }
+    setSimulating(true);
+    try {
+      const res = await fetch("/api/referrals/simulate-signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: simulationName,
+          email: simulationEmail,
+          referrerCode: referralStats.referralCode,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`محاكاة ناجحة! 🎉 سجل ${simulationName} كصديق محال ومُنحت المكافأة فوراً!`);
+        setSimulationName("");
+        setSimulationEmail("");
+        fetchReferralStats();
+      } else {
+        toast.error(data.error || "فشل محاكاة التسجيل.");
+      }
+    } catch (err) {
+      console.error("Simulation error:", err);
+    } finally {
+      setSimulating(false);
+    }
+  };
+
+  const handleSimulatePayment = async (referredUserId: string) => {
+    setPaymentLoadingId(referredUserId);
+    try {
+      const res = await fetch("/api/referrals/simulate-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ referredUserId }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("تمت محاكاة أول دفعة بنجاح! تم مضاعفة مكافآتك! 💳🔥");
+        fetchReferralStats();
+      } else {
+        toast.error(data.error || "فشل محاكاة الدفع.");
+      }
+    } catch (err) {
+      console.error("Simulation payment error:", err);
+    } finally {
+      setPaymentLoadingId(null);
+    }
+  };
+
   // Local state for the form so we don't update on every keystroke
   const [formData, setFormData] = useState({
     emailNotif_newLeads: "immediately",
@@ -257,6 +396,12 @@ export default function Settings() {
     if (activeTab === "security") {
       const timer = setTimeout(() => {
         fetchActiveSessions();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+    if (activeTab === "referrals") {
+      const timer = setTimeout(() => {
+        fetchReferralStats();
       }, 0);
       return () => clearTimeout(timer);
     }
@@ -1653,109 +1798,318 @@ export default function Settings() {
               </div>
             )}
             {activeTab === "referrals" && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div>
-                  <h2 className="text-xl font-black text-zinc-900 tracking-tight">
-                    برنامج الإحالة
-                  </h2>
-                  <p className="text-sm text-zinc-500 mt-1 font-medium leading-relaxed">
-                    شارك مدارج مع أصدقائك أو عملائك واستفد من خصومات على اشتراكك تصل إلى 100%.
-                  </p>
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 text-right" dir="rtl">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-zinc-100">
+                  <div>
+                    <h2 className="text-xl font-black text-zinc-900 tracking-tight flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-amber-500" />
+                      برنامج الإحالة والمكافآت المشتركة
+                    </h2>
+                    <p className="text-sm text-zinc-500 mt-1 font-medium leading-relaxed">
+                      ادعُ أصدقاءك وعملاءك للاشتراك في مدارج؛ ليحصل كل منكما على مكافآت فورية فترات تجريبية ممددة أو خصومات تجديد اشتراك عند الدفع.
+                    </p>
+                  </div>
+                  {loadingReferrals && (
+                    <div className="flex items-center gap-2 text-xs text-zinc-400 font-bold bg-zinc-50 px-3 py-1.5 rounded-xl border border-zinc-200">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-500" />
+                      جاري مزامنة الإحصائيات...
+                    </div>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 p-6 rounded-2xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 text-emerald-600">
-                      <Users className="w-24 h-24" />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* 1. Link & Custom Code Generation */}
+                  <div className="bg-gradient-to-br from-emerald-50/50 to-teal-50/50 border border-emerald-100/70 p-6 rounded-3xl relative overflow-hidden flex flex-col justify-between">
+                    <div className="absolute -top-4 -left-4 p-4 opacity-5 text-emerald-600">
+                      <Users className="w-32 h-32" />
                     </div>
-                    <h3 className="text-sm font-bold text-emerald-800 mb-2">
-                      رابط الإحالة الخاص بك
-                    </h3>
-                    <p className="text-xs text-emerald-600/80 mb-4 h-8 max-w-xs leading-relaxed">
-                      انسخ الرابط وشاركه. كل عميل يدفع اشتراكه عبر رابطك يمنحك خصم 20% على اشتراكك
-                      القادم.
-                    </p>
-
-                    <div className="flex gap-2">
-                      <div
-                        className="flex-1 bg-white border border-emerald-200 text-emerald-800 font-bold text-xs p-3 rounded-xl flex items-center justify-between"
-                        dir="ltr"
-                      >
-                        https://mudarij.com/ref/MUD-
-                        {user?.id?.substring(0, 6).toUpperCase() || "1284A"}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                        <h3 className="text-sm font-bold text-emerald-900">الرمز ورابط الإحالة المخصص</h3>
                       </div>
+                      <p className="text-xs text-emerald-700/80 mb-4 leading-relaxed font-medium">
+                        خصص رمز إحالتك ليكون معبراً عن شركتك، ثم انسخ الرابط وشاركه للحصول على المكافآت فوراً.
+                      </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Code customization input */}
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-emerald-800">تخصيص رمز الإحالة</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={customCode}
+                            onChange={(e) => setCustomCode(e.target.value)}
+                            disabled={updatingCode}
+                            placeholder="مثال: SAUDIPRO"
+                            className="flex-1 bg-white border border-emerald-200 text-zinc-950 font-black text-xs px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            dir="ltr"
+                          />
+                          <button
+                            onClick={handleSaveCustomCode}
+                            disabled={updatingCode}
+                            className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-bold text-xs px-4 py-2 rounded-xl transition-colors whitespace-nowrap"
+                          >
+                            {updatingCode ? "جاري الحفظ..." : "تحديث الرمز"}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Displaying unique links */}
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-emerald-800">رابط الإحالة الفعّال</label>
+                        <div className="flex gap-2">
+                          <div
+                            className="flex-1 bg-white/80 backdrop-blur-sm border border-emerald-200 text-emerald-950 font-bold text-xs p-3 rounded-xl flex items-center justify-between overflow-x-auto whitespace-nowrap"
+                            dir="ltr"
+                          >
+                            {window.location.origin}/login?ref={referralStats.referralCode || "PENDING"}
+                          </div>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(
+                                `${window.location.origin}/login?ref=${referralStats.referralCode || "PENDING"}`
+                              );
+                              toast.success("تم نسخ رابط الإحالة الفعّال الخاص بك بنجاح!");
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl transition-colors shrink-0"
+                            title="نسخ الرابط"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 2. Choose Reward Preference */}
+                  <div className="bg-white border border-zinc-200/80 p-6 rounded-3xl flex flex-col justify-between">
+                    <div>
+                      <h3 className="text-sm font-bold text-zinc-900 mb-1.5 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-amber-500" />
+                        تفضيلات المكافأة الخاصة بك
+                      </h3>
+                      <p className="text-xs text-zinc-500 mb-4 leading-relaxed font-medium">
+                        اختر المكافأة التي تود تطبيقها تلقائياً على حسابك وصديقك عند حدوث إحالات ناجحة.
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
                       <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(
-                            `https://mudarij.com/ref/MUD-${user?.id?.substring(0, 6).toUpperCase() || "1284A"}`
-                          );
-                          alert("تم نسخ الرابط الحصري بنجاح!");
-                        }}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white p-3 rounded-xl transition-colors shrink-0"
+                        onClick={() => handleUpdateRewardPreference("discount")}
+                        disabled={updatingPreference}
+                        className={cn(
+                          "w-full p-4 rounded-2xl border text-right transition-all flex items-start gap-3 relative overflow-hidden group",
+                          referralStats.rewardPreference === "discount"
+                            ? "border-amber-500 bg-amber-50/40 text-amber-950 shadow-inner"
+                            : "border-zinc-200 hover:border-zinc-300 bg-zinc-50/50 hover:bg-white text-zinc-600"
+                        )}
                       >
-                        <Copy className="w-5 h-5 mx-auto" />
+                        <div className="flex-1">
+                          <h4 className="text-xs font-black">خصومات اشتراكات مالية 💳</h4>
+                          <p className="text-[10px] text-zinc-500 mt-1 font-medium leading-normal">
+                            احصل على 150 ريال سعودي خصم فوري على تجديد اشتراكك (وكذلك صديقك) عند التسجيل، وتتضاعف المكافأة عند الدفع الأول للعميل المحال.
+                          </p>
+                        </div>
+                        {referralStats.rewardPreference === "discount" && (
+                          <div className="w-2 h-2 rounded-full bg-amber-500 mt-1" />
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => handleUpdateRewardPreference("trial")}
+                        disabled={updatingPreference}
+                        className={cn(
+                          "w-full p-4 rounded-2xl border text-right transition-all flex items-start gap-3 relative overflow-hidden group",
+                          referralStats.rewardPreference === "trial"
+                            ? "border-amber-500 bg-amber-50/40 text-amber-950 shadow-inner"
+                            : "border-zinc-200 hover:border-zinc-300 bg-zinc-50/50 hover:bg-white text-zinc-600"
+                        )}
+                      >
+                        <div className="flex-1">
+                          <h4 className="text-xs font-black">تمديد الفترات التجريبية ⏳</h4>
+                          <p className="text-[10px] text-zinc-500 mt-1 font-medium leading-normal">
+                            احصل على 30 يوماً إضافية مجانية لفترتك التجريبية (وكذلك صديقك) عند التسجيل، وتمتد 30 يوماً إضافية أخرى عند الدفع الأول للإحالة.
+                          </p>
+                        </div>
+                        {referralStats.rewardPreference === "trial" && (
+                          <div className="w-2 h-2 rounded-full bg-amber-500 mt-1" />
+                        )}
                       </button>
                     </div>
                   </div>
 
-                  <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative overflow-hidden text-white flex flex-col justify-center">
-                    <h3 className="text-sm font-bold text-zinc-400 mb-1">المكافآت المكتسبة</h3>
-                    <div className="text-4xl font-black text-white flex items-baseline gap-2">
-                      240 <span className="text-lg text-emerald-400 font-bold">SAR</span>
+                  {/* 3. Accrued Real Rewards Stats */}
+                  <div className="bg-zinc-950 border border-zinc-900 p-6 rounded-3xl text-white flex flex-col justify-between relative overflow-hidden">
+                    <div className="absolute top-0 left-0 p-4 opacity-5 text-zinc-500">
+                      <Sparkles className="w-24 h-24" />
                     </div>
-                    <p className="text-xs text-zinc-500 mt-2 font-medium">
-                      خصم فعال على تجديد الاشتراك القادم.
-                    </p>
+                    <div>
+                      <h3 className="text-sm font-bold text-zinc-400 mb-1">المكافآت التراكمية المحققة</h3>
+                      <p className="text-xs text-zinc-500 leading-normal font-medium mb-4">
+                        إجمالي رصيد المكافآت الحقيقي المطبق على اشتراكك الحالي فوراً.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-zinc-900/60 border border-zinc-800 p-4 rounded-2xl text-center">
+                        <span className="text-[10px] font-black uppercase text-zinc-500 tracking-wider block mb-1">
+                          الخصومات المالية
+                        </span>
+                        <div className="text-2xl font-black text-amber-400">
+                          {referralStats.discountEarnedSar || 0} <span className="text-xs text-zinc-400 font-bold">SAR</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-zinc-900/60 border border-zinc-800 p-4 rounded-2xl text-center">
+                        <span className="text-[10px] font-black uppercase text-zinc-500 tracking-wider block mb-1">
+                          الأيام المضافة مجاناً
+                        </span>
+                        <div className="text-2xl font-black text-emerald-400">
+                          +{referralStats.trialExtensionDays || 0} <span className="text-xs text-zinc-400 font-bold">يوم</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-[10px] text-zinc-500 font-medium leading-relaxed mt-4 pt-3 border-t border-zinc-900">
+                      * يتم تحديث المكافآت وتطبيقها تلقائياً على فواتيرك وخطتك القادمة بفضل الربط الشامل مع محاسبة مدارج OS.
+                    </div>
                   </div>
                 </div>
 
-                <div className="bg-white border border-zinc-100 rounded-3xl overflow-hidden shadow-sm">
+                {/* Simulation Sandbox / Tool */}
+                <div className="bg-zinc-50 border border-zinc-200/60 rounded-3xl p-6 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 p-4 opacity-10 text-zinc-300">
+                    <Code2 className="w-16 h-16" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-zinc-900 flex items-center gap-2 mb-1">
+                      <span className="flex h-2 w-2 relative">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
+                      ⚙️ محاكاة واختبار تدفق الإحالات (Sandbox Simulation)
+                    </h3>
+                    <p className="text-xs text-zinc-500 font-medium leading-relaxed">
+                      بما أنك في بيئة التطوير، تتيح لك هذه الأداة محاكاة دورة حياة العميل المحال بالكامل. أدخل معلومات لإنشاء مستخدم محال وهمي لتشاهد الفواتير، الإشعارات، والخصومات تُضاف في التو واللحظة!
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleSimulateSignup} className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 items-end">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-zinc-700">اسم الصديق الوهمي</label>
+                      <input
+                        type="text"
+                        required
+                        value={simulationName}
+                        onChange={(e) => setSimulationName(e.target.value)}
+                        placeholder="مثال: صالح الشهري"
+                        className="w-full bg-white border border-zinc-200 text-xs px-3 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-zinc-700">البريد الإلكتروني للعميل</label>
+                      <input
+                        type="email"
+                        required
+                        value={simulationEmail}
+                        onChange={(e) => setSimulationEmail(e.target.value)}
+                        placeholder="saleh@example.com"
+                        className="w-full bg-white border border-zinc-200 text-xs px-3 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                        dir="ltr"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={simulating}
+                      className="bg-zinc-900 hover:bg-zinc-800 disabled:bg-zinc-400 text-white font-bold text-xs py-3.5 px-6 rounded-xl transition-all shadow-md active:scale-95 whitespace-nowrap"
+                    >
+                      {simulating ? "جاري المحاكاة..." : "🚀 محاكاة تسجيل العميل الجديد"}
+                    </button>
+                  </form>
+                </div>
+
+                {/* History Table with Simulated Payment actions */}
+                <div className="bg-white border border-zinc-200/80 rounded-3xl overflow-hidden shadow-sm">
                   <div className="p-6 border-b border-zinc-100 flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-zinc-900">سجل الإحالات</h3>
+                    <div>
+                      <h3 className="text-sm font-bold text-zinc-900">سجل الإحالات التفاعلي</h3>
+                      <p className="text-xs text-zinc-400 font-medium mt-0.5">
+                        العملاء الذين سجلوا اشتراكاً باستخدام رمز الإحالة الخاص بك.
+                      </p>
+                    </div>
                   </div>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-right">
-                      <thead className="bg-zinc-50 text-zinc-500 font-bold text-xs">
-                        <tr>
-                          <th className="px-6 py-4">الشركة/العميل</th>
-                          <th className="px-6 py-4">التاريخ</th>
-                          <th className="px-6 py-4">حالة الاشتراك</th>
-                          <th className="px-6 py-4">المكافأة (SAR)</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-zinc-100 font-medium">
-                        <tr className="hover:bg-zinc-50 transition-colors">
-                          <td className="px-6 py-4 text-zinc-900">شركة التقنية المتقدمة</td>
-                          <td className="px-6 py-4 text-zinc-500">2024-04-12</td>
-                          <td className="px-6 py-4">
-                            <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-[10px] font-bold">
-                              مدفوع
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-zinc-900 font-bold">+120</td>
-                        </tr>
-                        <tr className="hover:bg-zinc-50 transition-colors">
-                          <td className="px-6 py-4 text-zinc-900">مؤسسة الريادة</td>
-                          <td className="px-6 py-4 text-zinc-500">2024-04-18</td>
-                          <td className="px-6 py-4">
-                            <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-[10px] font-bold">
-                              مدفوع
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-zinc-900 font-bold">+120</td>
-                        </tr>
-                        <tr className="hover:bg-zinc-50 transition-colors">
-                          <td className="px-6 py-4 text-zinc-900">أحمد للتجارة</td>
-                          <td className="px-6 py-4 text-zinc-500">2024-04-20</td>
-                          <td className="px-6 py-4">
-                            <span className="text-amber-600 bg-amber-50 px-2 py-1 rounded-md text-[10px] font-bold">
-                              تجريبي
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-zinc-900 font-bold">قيد الانتظار</td>
-                        </tr>
-                      </tbody>
-                    </table>
+                    {referralStats.history && referralStats.history.length > 0 ? (
+                      <table className="w-full text-sm text-right">
+                        <thead className="bg-zinc-50 text-zinc-500 font-bold text-xs">
+                          <tr>
+                            <th className="px-6 py-4">الشركة/العميل</th>
+                            <th className="px-6 py-4">البريد الإلكتروني</th>
+                            <th className="px-6 py-4">تاريخ التسجيل</th>
+                            <th className="px-6 py-4">حالة الاشتراك</th>
+                            <th className="px-6 py-4">تفاصيل المكافأة</th>
+                            <th className="px-6 py-4 text-center">إجراءات الاختبار</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-100 font-medium">
+                          {referralStats.history.map((record: any) => (
+                            <tr key={record.id} className="hover:bg-zinc-50/50 transition-colors">
+                              <td className="px-6 py-4 text-zinc-900 font-bold">{record.referredUserName}</td>
+                              <td className="px-6 py-4 text-zinc-500 font-mono text-xs" dir="ltr">
+                                {record.referredUserEmail}
+                              </td>
+                              <td className="px-6 py-4 text-zinc-500 font-bold">
+                                {new Date(record.createdAt).toLocaleDateString("ar-SA")}
+                              </td>
+                              <td className="px-6 py-4">
+                                {record.status === "completed" ? (
+                                  <span className="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full text-[10px] font-black flex items-center gap-1 w-fit">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    مدفوع بالكامل
+                                  </span>
+                                ) : (
+                                  <span className="text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full text-[10px] font-black flex items-center gap-1 w-fit">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                                    فترة تجريبية
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-6 py-4 text-zinc-900 font-black text-xs">
+                                {record.rewardValueDescription}
+                              </td>
+                              <td className="px-6 py-4 text-center">
+                                {record.status !== "completed" ? (
+                                  <button
+                                    onClick={() => handleSimulatePayment(record.referredUserId)}
+                                    disabled={paymentLoadingId === record.referredUserId}
+                                    className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-[10px] py-1.5 px-3 rounded-lg transition-all active:scale-[0.98] inline-flex items-center gap-1.5"
+                                  >
+                                    {paymentLoadingId === record.referredUserId ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      "💳 محاكاة أول دفعة (ترقية)"
+                                    )}
+                                  </button>
+                                ) : (
+                                  <span className="text-emerald-600 text-[10px] font-bold">✓ مكتمل وحُصلت المكافآت</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="p-12 text-center text-zinc-400">
+                        <Users className="w-12 h-12 mx-auto text-zinc-300 mb-3" />
+                        <p className="text-xs font-bold text-zinc-500">لا يوجد سجل إحالات بعد.</p>
+                        <p className="text-[10px] text-zinc-400 mt-1">شارِك رابطك الفريد أعلاه لتشجيع التسجيلات الأولى والحصول على مكافآت ومميزات حصرية!</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

@@ -121,6 +121,11 @@ const SmartNegotiations = lazy(() => import("./pages/SmartNegotiations"));
 const Accounting = lazy(() => import("./pages/Accounting"));
 const ZatcaAi = lazy(() => import("./pages/ZatcaAi"));
 const Projects = lazy(() => import("./pages/Projects"));
+const Support = lazy(() => import("./pages/Support"));
+const LeadsPlatform = lazy(() => import("./pages/LeadsPlatform"));
+const EmailMarketing = lazy(() => import("./pages/EmailMarketing"));
+const SocialMedia = lazy(() => import("./pages/SocialMedia"));
+const Advertising = lazy(() => import("./pages/Advertising"));
 
 function LoadingSpinner() {
   return (
@@ -379,6 +384,38 @@ function AppInnerRoutes() {
               }
             />
             <Route
+              path="lead-gen"
+              element={
+                <PageTransition>
+                  <LeadsPlatform />
+                </PageTransition>
+              }
+            />
+            <Route
+              path="email-marketing"
+              element={
+                <PageTransition>
+                  <EmailMarketing />
+                </PageTransition>
+              }
+            />
+            <Route
+              path="social-media"
+              element={
+                <PageTransition>
+                  <SocialMedia />
+                </PageTransition>
+              }
+            />
+            <Route
+              path="advertising"
+              element={
+                <PageTransition>
+                  <Advertising />
+                </PageTransition>
+              }
+            />
+            <Route
               path="crm/new"
               element={
                 <PageTransition>
@@ -565,6 +602,14 @@ function AppInnerRoutes() {
               element={
                 <PageTransition>
                   <Projects />
+                </PageTransition>
+              }
+            />
+            <Route
+              path="support"
+              element={
+                <PageTransition>
+                  <Support />
                 </PageTransition>
               }
             />

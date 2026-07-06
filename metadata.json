@@ -1,6 +1,6 @@
 {
   "name": "Mudarij OS (مدارج)",
-  "description": "An Arabic-first, GCC-tailored Business OS. Includes CRM, WhatsApp Sales Hub, VAT-compliant Invoicing, Payroll, Multi-Warehouse Configuration, and Product Assembly (BOM).",
+  "description": "An Arabic-first, GCC-tailored Business OS. Includes CRM, WhatsApp Sales Hub, VAT-compliant Invoicing, Payroll, Multi-Warehouse Configuration, Product Assembly (BOM), and an AI Advertising Platform with multi-touch ROAS attribution.",
   "requestFramePermissions": ["microphone", "camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

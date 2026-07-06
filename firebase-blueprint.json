@@ -399,6 +399,26 @@
     "exchange_rates": {
       "schema": "ExchangeRate",
       "description": "Spot exchange rates for foreign currencies"
+    },
+    "adv_campaigns": {
+      "schema": "object",
+      "description": "Advertising campaigns across Meta, Google, LinkedIn, TikTok"
+    },
+    "adv_adsets": {
+      "schema": "object",
+      "description": "Advertising campaign ad groups and targeting sets"
+    },
+    "adv_creatives": {
+      "schema": "object",
+      "description": "Ad creative variants, headlines, copy, and visual prompts"
+    },
+    "adv_pixels": {
+      "schema": "object",
+      "description": "Ad networks tracking pixels and server-side Conversion APIs"
+    },
+    "adv_automations": {
+      "schema": "object",
+      "description": "AI-powered automated rules for budgets, bids, and pauses"
     }
   }
 }

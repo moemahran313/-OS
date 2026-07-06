@@ -22,6 +22,10 @@ import {
   Warehouse,
   Scale,
   FolderKanban,
+  LifeBuoy,
+  Magnet,
+  Mail,
+  Share2,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Logo } from "@/src/components/Logo";
@@ -47,6 +51,10 @@ import { useTranslation } from "react-i18next";
 const navigationData = [
   { nameKey: "dashboard", id: "Dashboard", href: "/app", icon: LayoutDashboard },
   { nameKey: "sidebar.employees", id: "CRM", href: "/app/crm", icon: Users },
+  { nameKey: "sidebar.lead_gen", id: "LeadGen", href: "/app/lead-gen", icon: Magnet },
+  { nameKey: "sidebar.email_marketing", id: "EmailMarketing", href: "/app/email-marketing", icon: Mail },
+  { nameKey: "sidebar.social_media", id: "SocialMedia", href: "/app/social-media", icon: Share2 },
+  { nameKey: "sidebar.advertising", id: "Advertising", href: "/app/advertising", icon: Sparkles },
   { nameKey: "sidebar.chat", id: "Chat", href: "/app/chat", icon: MessageSquare },
   { nameKey: "projects", id: "Projects", href: "/app/projects", icon: FolderKanban },
   { nameKey: "دفتر الأستاذ والقيود", id: "Accounting", href: "/app/accounting", icon: Scale },
@@ -67,6 +75,7 @@ const navigationData = [
   { nameKey: "common.payroll", id: "Payroll", href: "/app/payroll", icon: CreditCard },
   { nameKey: "المخزون والمستودعات", id: "Inventory", href: "/app/inventory", icon: Warehouse },
   { nameKey: "sidebar.analytics", id: "Analytics", href: "/app/analytics", icon: BarChart3 },
+  { nameKey: "الدعم الفني والبطاقات", id: "Support", href: "/app/support", icon: LifeBuoy },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -347,7 +356,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                           ? settings.language === "ar"
                             ? "إدارة المشاريع"
                             : "Project Management"
-                          : t(item.nameKey)}
+                          : item.id === "LeadGen"
+                            ? settings.language === "ar"
+                              ? "منصة توليد العملاء"
+                              : "Lead Generation Platform"
+                            : item.id === "EmailMarketing"
+                              ? settings.language === "ar"
+                                ? "التسويق والبريد الإلكتروني"
+                                : "Email Marketing & Growth"
+                              : item.id === "SocialMedia"
+                                ? settings.language === "ar"
+                                  ? "إدارة التواصل الاجتماعي"
+                                  : "Social Media & Growth"
+                                : item.id === "Advertising"
+                                  ? settings.language === "ar"
+                                    ? "إدارة الحملات الإعلانية"
+                                    : "Advertising & Copilot"
+                                  : t(item.nameKey)}
                   </motion.span>
                 )}
 
@@ -371,7 +396,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                           ? settings.language === "ar"
                             ? "إدارة المشاريع"
                             : "Project Management"
-                          : t(item.nameKey)}
+                          : item.id === "LeadGen"
+                            ? settings.language === "ar"
+                              ? "منصة توليد العملاء"
+                              : "Lead Generation Platform"
+                            : item.id === "EmailMarketing"
+                              ? settings.language === "ar"
+                                ? "التسويق والبريد الإلكتروني"
+                                : "Email Marketing & Growth"
+                              : item.id === "SocialMedia"
+                                ? settings.language === "ar"
+                                  ? "إدارة التواصل الاجتماعي"
+                                  : "Social Media & Growth"
+                                : item.id === "Advertising"
+                                  ? settings.language === "ar"
+                                    ? "إدارة الحملات الإعلانية"
+                                    : "Advertising & Copilot"
+                                  : t(item.nameKey)}
                   </div>
                 )}
               </Link>

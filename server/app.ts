@@ -29,6 +29,12 @@ import organizationsRoutes from "./routes/organizations.js";
 import dmsRoutes from "./routes/dms.js";
 import zatcaRoutes from "./routes/zatca.js";
 import projectsRoutes from "./routes/projects.js";
+import referralRoutes from "./routes/referrals.js";
+import ticketRoutes from "./routes/tickets.js";
+import leadGenRoutes from "./routes/lead-gen.js";
+import emailMarketingRoutes from "./routes/email-marketing.js";
+import socialMediaRoutes from "./routes/social-media.js";
+import advertisingRoutes from "./routes/advertising.js";
 
 export async function createApp() {
   const app = express();
@@ -70,6 +76,12 @@ export async function createApp() {
   app.use("/api/dms", dmsRoutes);
   app.use("/api/zatca", zatcaRoutes);
   app.use("/api/projects", projectsRoutes);
+  app.use("/api/referrals", referralRoutes);
+  app.use("/api/tickets", ticketRoutes);
+  app.use("/api/lead-gen", leadGenRoutes);
+  app.use("/api/email-marketing", emailMarketingRoutes);
+  app.use("/api/social-media", socialMediaRoutes);
+  app.use("/api/advertising", advertisingRoutes);
 
   // HR routes like /api/nitaqat/calculate and /api/workpermit/calculate
   app.use("/api", hrRoutes);
