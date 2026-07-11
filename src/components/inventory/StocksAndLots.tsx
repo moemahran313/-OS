@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useSettings } from "@/src/contexts/SettingsContext";
 import {
   Layers,
   Search,
@@ -99,6 +100,8 @@ const INITIAL_BATCHES = [
 ];
 
 export default function StocksAndLots({ items, warehouses, onUpdateProduct }: StocksAndLotsProps) {
+  const { settings } = useSettings();
+  const isAr = settings.language === "ar";
   const [subTab, setSubTab] = useState<"matrix" | "serials" | "batches">("matrix");
 
   // States
@@ -263,26 +266,26 @@ export default function StocksAndLots({ items, warehouses, onUpdateProduct }: St
       <div className="flex border-b border-zinc-200 bg-zinc-50 dark:bg-zinc-800 p-1.5 rounded-2xl border gap-1">
         <button
           onClick={() => setSubTab("matrix")}
-          className={`flex-1 md:flex-none px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${subTab === "matrix" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-500 hover:bg-zinc-100"}`}
+          className={`flex-1 md:flex-none px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${subTab === "matrix" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-500 hover:bg-zinc-100"}`}
         >
           📍 مواقع المخازن ورفوف الثنائيات
         </button>
         <button
           onClick={() => setSubTab("serials")}
-          className={`flex-1 md:flex-none px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${subTab === "serials" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-500 hover:bg-zinc-100"}`}
+          className={`flex-1 md:flex-none px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${subTab === "serials" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-500 hover:bg-zinc-100"}`}
         >
           🎫 تتبع الأرقام التسلسلية (Serials)
         </button>
         <button
           onClick={() => setSubTab("batches")}
-          className={`flex-1 md:flex-none px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${subTab === "batches" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-500 hover:bg-zinc-100"}`}
+          className={`flex-1 md:flex-none px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${subTab === "batches" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-500 hover:bg-zinc-100"}`}
         >
           📅 تتبع الدفعات وتواريخ الصلاحية (FEFO Lots)
         </button>
       </div>
 
       {/* SEARCH BAR (Used on all subtabs) */}
-      <div className="bg-white dark:bg-zinc-900 p-4 rounded-3xl border border-zinc-100 dark:border-zinc-800 flex items-center justify-between shadow-sm">
+      <div className="bg-white dark:bg-zinc-100 p-4 rounded-3xl border border-zinc-100 dark:border-zinc-800 flex items-center justify-between shadow-sm">
         <div className="relative w-full md:w-80">
           <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
           <input
@@ -300,7 +303,7 @@ export default function StocksAndLots({ items, warehouses, onUpdateProduct }: St
 
       {/* --- SUBTAB 1: STOCKS MATRIX & BIN LOCATIONS --- */}
       {subTab === "matrix" && (
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-zinc-100 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden">
           <div className="overflow-x-auto text-xs font-bold text-right">
             <table className="w-full">
               <thead>
@@ -449,7 +452,7 @@ export default function StocksAndLots({ items, warehouses, onUpdateProduct }: St
       {subTab === "serials" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Register Serial Form */}
-          <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 border-b pb-2">
               <Barcode className="w-4 h-4 text-indigo-600" />
               تسجيل رقم تسلسلي فريد لمنتج (Serialized Entry)
@@ -524,7 +527,7 @@ export default function StocksAndLots({ items, warehouses, onUpdateProduct }: St
           </div>
 
           {/* Serial numbers database list */}
-          <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
+          <div className="lg:col-span-2 bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-4 border-b pb-2">
               قاعدة بيانات الأرقام التسلسلية المسجلة
             </h3>
@@ -611,7 +614,7 @@ export default function StocksAndLots({ items, warehouses, onUpdateProduct }: St
               </div>
 
               {fefoSuggestedBatch ? (
-                <div className="md:col-span-2 bg-white dark:bg-zinc-900 border border-emerald-200 dark:border-emerald-900/30 p-4 rounded-2xl flex items-center justify-between gap-4">
+                <div className="md:col-span-2 bg-white dark:bg-zinc-100 border border-emerald-200 dark:border-emerald-900/30 p-4 rounded-2xl flex items-center justify-between gap-4">
                   <div>
                     <span className="text-[9px] font-black text-emerald-600 uppercase block">
                       الدفعة الموصى بصرفها حالياً (FEFO)
@@ -643,7 +646,7 @@ export default function StocksAndLots({ items, warehouses, onUpdateProduct }: St
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Register Batch Form */}
-            <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
+            <div className="bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
               <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 border-b pb-2">
                 <Layers className="w-4 h-4 text-indigo-600" />
                 تعريف دفعة إنتاج (Lot / Batch Entry)
@@ -739,7 +742,7 @@ export default function StocksAndLots({ items, warehouses, onUpdateProduct }: St
             </div>
 
             {/* List of active batches */}
-            <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
+            <div className="lg:col-span-2 bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
               <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-4 border-b pb-2">
                 سجل دفعات الإنتاج وتواريخ انتهاء الصلاحية
               </h3>
@@ -810,9 +813,9 @@ export default function StocksAndLots({ items, warehouses, onUpdateProduct }: St
       {selectedItemForBin && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
-          dir="rtl"
+          dir={isAr ? "rtl" : "ltr"}
         >
-          <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border w-full max-w-sm p-6 space-y-4">
+          <div className="bg-white dark:bg-zinc-100 rounded-[2rem] border w-full max-w-sm p-6 space-y-4">
             <h4 className="font-black text-xs text-zinc-900 dark:text-zinc-100 border-b pb-2">
               تحديد موقع الرف (Bin Location Config)
             </h4>
@@ -886,9 +889,9 @@ export default function StocksAndLots({ items, warehouses, onUpdateProduct }: St
       {selectedItemForReorder && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
-          dir="rtl"
+          dir={isAr ? "rtl" : "ltr"}
         >
-          <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border w-full max-w-sm p-6 space-y-4">
+          <div className="bg-white dark:bg-zinc-100 rounded-[2rem] border w-full max-w-sm p-6 space-y-4">
             <h4 className="font-black text-xs text-zinc-900 dark:text-zinc-100 border-b pb-2">
               قوانين حماية المخزون وإعادة الطلب
             </h4>

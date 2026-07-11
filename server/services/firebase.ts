@@ -37,7 +37,7 @@ function readFallbackDb(): Record<string, Record<string, any>> {
       return JSON.parse(fs.readFileSync(fallbackFilePath, "utf8"));
     }
   } catch (err) {
-    console.error("Failed to read local firestore fallback:", err);
+    console.warn("Unable to read local firestore fallback:", err);
   }
   return {};
 }
@@ -46,7 +46,7 @@ function writeFallbackDb(data: Record<string, Record<string, any>>) {
   try {
     fs.writeFileSync(fallbackFilePath, JSON.stringify(data, null, 2), "utf8");
   } catch (err) {
-    console.error("Failed to write local firestore fallback:", err);
+    console.warn("Unable to write local firestore fallback:", err);
   }
 }
 
@@ -352,7 +352,7 @@ const dbWrapper: any = {
       get(target, prop, receiver) {
         if (prop === "doc") {
           return (id?: string) => {
-            const rawDoc = target.doc(id || "");
+            const rawDoc = id ? target.doc(id) : target.doc();
             return new Proxy(rawDoc, {
               get(docTarget, docProp) {
                 if (docProp === "get") {
@@ -362,7 +362,7 @@ const dbWrapper: any = {
                     } catch (err: any) {
                       if (shouldFallback(err)) {
                         console.log(
-                          `[Firestore Fallback] Error on doc get for ${collectionName}/${docTarget.id}. Falling back to local DB.`
+                          `[Firestore Fallback] Notice on doc get for ${collectionName}/${docTarget.id}. Falling back to local DB.`
                         );
                         const fbDoc = new FallbackDocumentReference(collectionName, docTarget.id);
                         return await fbDoc.get();
@@ -378,7 +378,7 @@ const dbWrapper: any = {
                     } catch (err: any) {
                       if (shouldFallback(err)) {
                         console.log(
-                          `[Firestore Fallback] Error on doc set for ${collectionName}/${docTarget.id}. Falling back to local DB.`
+                          `[Firestore Fallback] Notice on doc set for ${collectionName}/${docTarget.id}. Falling back to local DB.`
                         );
                         const fbDoc = new FallbackDocumentReference(collectionName, docTarget.id);
                         return await fbDoc.set(data, options);
@@ -394,7 +394,7 @@ const dbWrapper: any = {
                     } catch (err: any) {
                       if (shouldFallback(err)) {
                         console.log(
-                          `[Firestore Fallback] Error on doc update for ${collectionName}/${docTarget.id}. Falling back to local DB.`
+                          `[Firestore Fallback] Notice on doc update for ${collectionName}/${docTarget.id}. Falling back to local DB.`
                         );
                         const fbDoc = new FallbackDocumentReference(collectionName, docTarget.id);
                         return await fbDoc.update(data);
@@ -410,7 +410,7 @@ const dbWrapper: any = {
                     } catch (err: any) {
                       if (shouldFallback(err)) {
                         console.log(
-                          `[Firestore Fallback] Error on doc delete for ${collectionName}/${docTarget.id}. Falling back to local DB.`
+                          `[Firestore Fallback] Notice on doc delete for ${collectionName}/${docTarget.id}. Falling back to local DB.`
                         );
                         const fbDoc = new FallbackDocumentReference(collectionName, docTarget.id);
                         return await fbDoc.delete();
@@ -419,7 +419,8 @@ const dbWrapper: any = {
                     }
                   };
                 }
-                return (Reflect.get(docTarget, docProp) as any)?.bind(docTarget);
+                const val = Reflect.get(docTarget, docProp);
+                return typeof val === "function" ? val.bind(docTarget) : val;
               },
             });
           };
@@ -432,7 +433,7 @@ const dbWrapper: any = {
             } catch (err: any) {
               if (shouldFallback(err)) {
                 console.log(
-                  `[Firestore Fallback] Error on collection add for ${collectionName}. Falling back to local DB.`
+                  `[Firestore Fallback] Notice on collection add for ${collectionName}. Falling back to local DB.`
                 );
                 const fbCol = new FallbackCollectionReference(collectionName);
                 return await fbCol.add(data);
@@ -457,7 +458,7 @@ const dbWrapper: any = {
                       } catch (err: any) {
                         if (shouldFallback(err)) {
                           console.log(
-                            `[Firestore Fallback] Error on query get for ${collectionName}. Falling back to local DB.`
+                            `[Firestore Fallback] Notice on query get for ${collectionName}. Falling back to local DB.`
                           );
                           const fbCol = new FallbackCollectionReference(collectionName);
                           // Build fallback query matching this chain
@@ -485,7 +486,8 @@ const dbWrapper: any = {
                       return wrapQuery(qTarget.limit(limitNum));
                     };
                   }
-                  return (Reflect.get(qTarget, qProp) as any)?.bind(qTarget);
+                  const memberVal = Reflect.get(qTarget, qProp);
+                  return typeof memberVal === "function" ? memberVal.bind(qTarget) : memberVal;
                 },
               });
             };
@@ -493,7 +495,8 @@ const dbWrapper: any = {
           };
         }
 
-        return (Reflect.get(target, prop) as any)?.bind(target);
+        const val = Reflect.get(target, prop);
+        return typeof val === "function" ? val.bind(target) : val;
       },
     });
   },
@@ -510,7 +513,7 @@ const dbWrapper: any = {
             } catch (err: any) {
               if (shouldFallback(err)) {
                 console.log(
-                  `[Firestore Fallback] Error on batch commit. Falling back to local DB.`
+                  `[Firestore Fallback] Notice on batch commit. Falling back to local DB.`
                 );
                 // Return a resolved promise as if committed locally
                 return { writeTime: new Date() };
@@ -519,7 +522,8 @@ const dbWrapper: any = {
             }
           };
         }
-        return (Reflect.get(target, prop) as any)?.bind(target);
+        const val = Reflect.get(target, prop);
+        return typeof val === "function" ? val.bind(target) : val;
       },
     });
   },
@@ -531,7 +535,7 @@ const dbWrapper: any = {
     } catch (err: any) {
       if (shouldFallback(err)) {
         console.log(
-          `[Firestore Fallback] Error on transaction run. Falling back to mock transaction.`
+          `[Firestore Fallback] Notice on transaction run. Falling back to mock transaction.`
         );
         // Run simple local fallback logic
         const mockTransaction: any = {

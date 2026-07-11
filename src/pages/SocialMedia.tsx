@@ -6,20 +6,13 @@ import {
   MessageSquare,
   Plus,
   Trash2,
-  Check,
   CheckCircle2,
   AlertCircle,
   Eye,
   Send,
   TrendingUp,
   BarChart3,
-  Users,
-  Settings,
-  Shield,
-  Share2,
-  HelpCircle,
   Activity,
-  FileText,
   Video,
   Globe,
   Linkedin,
@@ -28,10 +21,11 @@ import {
   Facebook,
   Youtube,
   AtSign,
-  Ghost,
-  Search,
-  MessageCircle,
   Layers,
+  Image as ImageIcon,
+  Check,
+  MoreVertical,
+  Link as LinkIcon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
@@ -47,10 +41,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
 } from "recharts";
 
 // ========================================================
@@ -64,6 +54,7 @@ interface SocialAccount {
   avatar: string;
   followers: number;
   status: "Connected" | "Disconnected";
+  accessToken?: string;
 }
 
 interface SocialPost {
@@ -76,12 +67,7 @@ interface SocialPost {
   authorName: string;
   approvalStatus: "Draft" | "Pending" | "Approved";
   publishedAt?: string;
-  metrics?: {
-    reach: number;
-    engagement: number;
-    clicks: number;
-    shares: number;
-  };
+  metrics?: { reach: number; engagement: number; clicks: number; shares: number };
 }
 
 interface InboxItem {
@@ -91,14 +77,10 @@ interface InboxItem {
   authorAvatar: string;
   message: string;
   timestamp: string;
-  status: "Read" | "Unread" | "Replied";
+  status: "Read" | "Unread" | "Replied" | "Unresolved" | "In Progress" | "Resolved";
   type: "Comment" | "Mention" | "Direct Message";
   postTitle?: string;
-  replies: Array<{
-    author: string;
-    text: string;
-    timestamp: string;
-  }>;
+  replies: Array<{ author: string; text: string; timestamp: string }>;
 }
 
 interface BrandMention {
@@ -107,6 +89,8 @@ interface BrandMention {
   author: string;
   text: string;
   sentiment: "Positive" | "Neutral" | "Negative";
+  urgency?: "High" | "Medium" | "Low";
+  entities?: string[];
   keyword: string;
   reach: number;
   createdAt: string;
@@ -115,14 +99,12 @@ interface BrandMention {
 export default function SocialMedia() {
   const { i18n } = useTranslation();
   const isAr = i18n.language === "ar";
-
-  // Translation Helper
   const txt = (en: string, ar: string) => (isAr ? ar : en);
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<
-    "calendar" | "scheduler" | "ai" | "inbox" | "monitoring" | "competitors"
-  >("calendar");
+    "calendar" | "scheduler" | "inbox" | "monitoring" | "analytics"
+  >("scheduler");
 
   // Loading States
   const [loading, setLoading] = useState(true);
@@ -134,46 +116,48 @@ export default function SocialMedia() {
   const [inbox, setInbox] = useState<InboxItem[]>([]);
   const [monitoring, setMonitoring] = useState<BrandMention[]>([]);
 
-  // Composer / Scheduler State
+  // Composer State
   const [newPostContent, setNewPostContent] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["linkedin"]);
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("10:00");
   const [postImage, setPostImage] = useState("");
+  const [aspectRatio, setAspectRatio] = useState<"1:1" | "16:9" | "9:16">("1:1");
   const [postStatus, setPostStatus] = useState<"Draft" | "Pending Approval" | "Scheduled">(
     "Scheduled"
   );
 
-  // AI Assistant State
-  const [aiPrompt, setAiPrompt] = useState("");
-  const [aiType, setAiType] = useState<"post" | "reels_script" | "caption">("post");
-  const [aiTone, setAiTone] = useState("professional");
-  const [aiLang, setAiLang] = useState(isAr ? "ar" : "en");
-  const [aiResult, setAiResult] = useState<any>(null);
+  // Platform overrides
+  const [activePlatformTab, setActivePlatformTab] = useState<string>("Global");
+  const [platformOverrides, setPlatformOverrides] = useState<Record<string, string>>({});
 
-  // Unified Inbox State
+  // UTM tracking builder
+  const [utmUrl, setUtmUrl] = useState("");
+  const [utmSource, setUtmSource] = useState("");
+  const [utmCampaign, setUtmCampaign] = useState("");
+
+  // Inbox
   const [selectedInboxItem, setSelectedInboxItem] = useState<InboxItem | null>(null);
   const [replyText, setReplyText] = useState("");
   const [isSuggestingReply, setIsSuggestingReply] = useState(false);
+  const [smartReplies, setSmartReplies] = useState<string[]>([]);
 
-  // Competitor Tracking State
-  const [competitors, setCompetitors] = useState([
-    { name: txt("Competitor A", "المنافس أ"), followers: 45000, engagement: 3.2, frequency: 12 },
-    { name: txt("Competitor B", "المنافس ب"), followers: 68000, engagement: 2.1, frequency: 18 },
-    {
-      name: txt("Madarij OS (Us)", "مداريج (نحن)"),
-      followers: 115900,
-      engagement: 4.8,
-      frequency: 22,
-    },
-  ]);
-  const [newCompetitorName, setNewCompetitorName] = useState("");
+  // Monitoring
+  const [monitorKeyword, setMonitorKeyword] = useState("Madarij");
+  const [isListening, setIsListening] = useState(false);
 
-  // Post Preview Modal
-  const [selectedPreviewPost, setSelectedPreviewPost] = useState<SocialPost | null>(null);
+  // Analytics mock data
+  const performanceData = [
+    { name: "Mon", reach: 12000, engagement: 800 },
+    { name: "Tue", reach: 15000, engagement: 1200 },
+    { name: "Wed", reach: 14000, engagement: 900 },
+    { name: "Thu", reach: 21000, engagement: 2100 },
+    { name: "Fri", reach: 18000, engagement: 1500 },
+    { name: "Sat", reach: 24000, engagement: 3000 },
+    { name: "Sun", reach: 29000, engagement: 4200 },
+  ];
 
-  // Mock platforms map
-  const platformIcons: { [key: string]: any } = {
+  const platformIcons: Record<string, any> = {
     linkedin: Linkedin,
     instagram: Instagram,
     twitter: Twitter,
@@ -181,40 +165,23 @@ export default function SocialMedia() {
     tiktok: Video,
     youtube: Youtube,
     threads: AtSign,
-    pinterest: PinIcon,
-    snapchat: Ghost,
   };
 
-  function PinIcon(props: any) {
-    return (
-      <svg
-        {...props}
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <line x1="12" x2="12" y1="17" y2="22" />
-        <path d="M5 17h14v-1.76a2 2 0 0 0-.44-1.24l-2.12-2.65A2 2 0 0 1 16 10.11V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v5.11a2 2 0 0 1-.44 1.24L5.44 14a2 2 0 0 0-.44 1.24Z" />
-      </svg>
-    );
-  }
-
-  // Set default scheduled date to tomorrow
   useEffect(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     setScheduledDate(tomorrow.toISOString().split("T")[0]);
-  }, []);
-
-  // Fetch initial data
-  useEffect(() => {
     fetchData();
+
+    // Check URL parameters for OAuth connection result
+    const params = new URLSearchParams(window.location.search);
+    const connectedPlatform = params.get("connected");
+    if (connectedPlatform) {
+      toast.success(
+        txt(`Successfully connected ${connectedPlatform} via OAuth 2.0!`, `تم التوصيل بنجاح!`)
+      );
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
 
   const fetchData = async () => {
@@ -242,35 +209,40 @@ export default function SocialMedia() {
     }
   };
 
-  // Connect a new profile
-  const handleConnectProfile = async (platform: string, handle: string, name: string) => {
+  // Connect Profile (OAuth Flow)
+  const handleConnectProfile = async (platform: string) => {
     try {
       setActionLoading(true);
-      const res = await fetch("/api/social-media/accounts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ platform, handle, name }),
-      });
+      const res = await fetch(`/api/social-media/connect/${platform}`);
       if (res.ok) {
-        const newAcc = await res.json();
-        setAccounts((prev) => [...prev, newAcc]);
-        toast.success(
-          txt(`Successfully connected ${platform} account!`, `تم ربط حساب ${platform} بنجاح!`)
-        );
-      } else {
-        throw new Error();
+        const data = await res.json();
+        // Normally window.location.href = data.url
+        // For simulation, we'll route to the simulated callback directly
+        window.location.href = data.url;
       }
     } catch {
-      toast.error(txt("Failed to connect account", "فشل ربط الحساب"));
-    } finally {
+      toast.error(txt("OAuth initiation failed", "فشل بدء المصادقة"));
       setActionLoading(false);
     }
   };
 
-  // Submit Post Creator
+  // Composer
+  const handleComposerTextChange = (val: string) => {
+    if (activePlatformTab === "Global") {
+      setNewPostContent(val);
+    } else {
+      setPlatformOverrides((prev) => ({ ...prev, [activePlatformTab]: val }));
+    }
+  };
+
+  const currentComposerText =
+    activePlatformTab === "Global"
+      ? newPostContent
+      : (platformOverrides[activePlatformTab] ?? newPostContent);
+
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newPostContent.trim()) {
+    if (!newPostContent.trim() && Object.keys(platformOverrides).length === 0) {
       toast.error(txt("Post content cannot be empty", "لا يمكن ترك محتوى المنشور فارغاً"));
       return;
     }
@@ -280,6 +252,7 @@ export default function SocialMedia() {
       const payload = {
         content: newPostContent,
         platforms: selectedPlatforms,
+        overrides: platformOverrides,
         status: postStatus,
         approvalStatus: postStatus === "Pending Approval" ? "Pending" : "Approved",
         scheduledAt: scheduledDateTime,
@@ -295,13 +268,15 @@ export default function SocialMedia() {
       if (res.ok) {
         const created = await res.json();
         setPosts((prev) => [created, ...prev]);
-        toast.success(txt("Social post scheduled successfully!", "تم جدولة المنشور بنجاح!"));
-        // Clear composer state
+        toast(txt("Post scheduled.", "تم جدولة المنشور."), {
+          action: {
+            label: txt("View in Calendar", "عرض في التقويم"),
+            onClick: () => setActiveTab("calendar"),
+          },
+        });
         setNewPostContent("");
+        setPlatformOverrides({});
         setPostImage("");
-        setActiveTab("calendar");
-      } else {
-        throw new Error();
       }
     } catch {
       toast.error(txt("Failed to schedule post", "فشل جدولة المنشور"));
@@ -310,107 +285,22 @@ export default function SocialMedia() {
     }
   };
 
-  // Approve a post
-  const handleApprovePost = async (postId: string) => {
+  const handlePublishNow = async (postId: string) => {
     try {
       setActionLoading(true);
-      const res = await fetch(`/api/social-media/posts/${postId}/approve`, {
-        method: "POST",
-      });
+      const res = await fetch(`/api/social-media/posts/publish/${postId}`, { method: "POST" });
       if (res.ok) {
-        setPosts((prev) =>
-          prev.map((p) =>
-            p.id === postId ? { ...p, approvalStatus: "Approved", status: "Scheduled" } : p
-          )
-        );
-        toast.success(txt("Post approved successfully!", "تمت الموافقة على المنشور بنجاح!"));
-        setSelectedPreviewPost(null);
-      } else {
-        throw new Error();
+        setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, status: "Published" } : p)));
+        toast.success(txt("Post published immediately!", "تم النشر فوراً!"));
       }
     } catch {
-      toast.error(txt("Failed to approve post", "فشل اعتماد المنشور"));
+      toast.error("Failed to publish");
     } finally {
       setActionLoading(false);
     }
   };
 
-  // Cancel / Delete scheduled post
-  const handleDeletePost = async (postId: string) => {
-    if (
-      !confirm(
-        txt(
-          "Are you sure you want to cancel this scheduled post?",
-          "هل أنت متأكد من إلغاء جدولة هذا المنشور؟"
-        )
-      )
-    )
-      return;
-    try {
-      setActionLoading(true);
-      const res = await fetch(`/api/social-media/posts/${postId}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        setPosts((prev) => prev.filter((p) => p.id !== postId));
-        toast.success(txt("Scheduled post deleted successfully", "تم حذف المنشور المجدول بنجاح"));
-        setSelectedPreviewPost(null);
-      } else {
-        throw new Error();
-      }
-    } catch {
-      toast.error(txt("Failed to delete post", "فشل حذف المنشور"));
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  // Generate AI Copilot Content
-  const handleAIGenerate = async () => {
-    if (!aiPrompt.trim()) {
-      toast.error(txt("Please provide a prompt/topic", "يرجى كتابة فكرة أو موضوع للمنشور"));
-      return;
-    }
-    try {
-      setActionLoading(true);
-      setAiResult(null);
-      const res = await fetch("/api/social-media/ai/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: aiType,
-          platform: selectedPlatforms[0] || "linkedin",
-          promptText: aiPrompt,
-          tone: aiTone,
-          language: aiLang,
-        }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setAiResult(data);
-        toast.success(
-          txt(
-            "AI Copilot generated amazing content!",
-            "قام مساعد الذكاء الاصطناعي بتوليد المحتوى بنجاح!"
-          )
-        );
-      } else {
-        const errData = await res.json();
-        toast.error(
-          errData.error || txt("AI generation failed", "فشل توليد المحتوى بالذكاء الاصطناعي")
-        );
-      }
-    } catch {
-      toast.error(
-        txt("Network error during AI generation", "خطأ في الشبكة أثناء توليد الذكاء الاصطناعي")
-      );
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  // Reply in Inbox
+  // Inbox & Webhooks
   const handleSendInboxReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedInboxItem || !replyText.trim()) return;
@@ -425,22 +315,20 @@ export default function SocialMedia() {
 
       if (res.ok) {
         const data = await res.json();
-        // Update local item
         const updatedInbox = inbox.map((item) =>
           item.id === selectedInboxItem.id
-            ? { ...item, replies: data.replies, status: "Replied" as const }
+            ? { ...item, replies: data.replies, status: "Resolved" as const }
             : item
         );
         setInbox(updatedInbox);
         setSelectedInboxItem({
           ...selectedInboxItem,
           replies: data.replies,
-          status: "Replied" as const,
+          status: "Resolved" as const,
         });
         setReplyText("");
+        setSmartReplies([]);
         toast.success(txt("Reply submitted successfully", "تم إرسال الرد بنجاح"));
-      } else {
-        throw new Error();
       }
     } catch {
       toast.error(txt("Failed to send reply", "فشل إرسال الرد"));
@@ -449,30 +337,21 @@ export default function SocialMedia() {
     }
   };
 
-  // Use AI to suggest reply
   const handleSuggestReplyWithAI = async () => {
     if (!selectedInboxItem) return;
     try {
       setIsSuggestingReply(true);
-      const res = await fetch("/api/social-media/ai/generate", {
+      const res = await fetch(`/api/social-media/inbox/${selectedInboxItem.id}/smart-reply`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "caption",
-          promptText: `Suggest a professional, friendly response to this user comment: "${selectedInboxItem.message}" on social media. Build on our branding as Madarij OS.`,
-          tone: "friendly & professional",
-          language: isAr ? "ar" : "en",
-        }),
       });
 
       if (res.ok) {
         const data = await res.json();
-        setReplyText(data.optimizedText || "");
-        toast.success(
-          txt("AI generated a response recommendation", "اقترح الذكاء الاصطناعي رداً مناسباً")
-        );
-      } else {
-        throw new Error();
+        setSmartReplies(data.replies || []);
+        if (data.replies?.length > 0) {
+          setReplyText(data.replies[0]);
+        }
+        toast.success(txt("AI generated suggestions", "تم استلام الاقتراحات"));
       }
     } catch {
       toast.error(txt("Failed to fetch AI reply recommendation", "فشل جلب اقتراح الرد الذكي"));
@@ -481,246 +360,132 @@ export default function SocialMedia() {
     }
   };
 
-  // Competitor form submission
-  const handleAddCompetitor = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCompetitorName.trim()) return;
-    setCompetitors([
-      ...competitors,
-      {
-        name: newCompetitorName,
-        followers: Math.round(Math.random() * 80000 + 10000),
-        engagement: parseFloat((Math.random() * 3 + 1).toFixed(1)),
-        frequency: Math.round(Math.random() * 15 + 5),
-      },
-    ]);
-    setNewCompetitorName("");
-    toast.success(txt("Competitor added for monitoring", "تم إضافة المنافس للمراقبة"));
+  // Brand Listening
+  const handleStartListening = async () => {
+    if (!monitorKeyword) return;
+    try {
+      setIsListening(true);
+      const res = await fetch("/api/social-media/monitoring/listen", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyword: monitorKeyword }),
+      });
+      if (res.ok) {
+        const newMentions = await res.json();
+        setMonitoring((prev) => [...newMentions, ...prev]);
+        toast.success(txt("Active listening collected new mentions.", "تم التقاط إشارات جديدة."));
+      }
+    } catch {
+      toast.error("Failed to start listening stream");
+    } finally {
+      setIsListening(false);
+    }
   };
 
-  // Helper to render calendar grid (Current Month July 2026)
-  const renderCalendarDays = () => {
-    // Current date state corresponds to July 2026 (as in metadata)
-    const year = 2026;
-    const month = 6; // July is index 6
-    const firstDayIndex = 3; // July 1st, 2026 is Wednesday (index 3 if Sunday is 0)
-    const totalDays = 31;
-
-    const days = [];
-    // Blank days
-    for (let i = 0; i < firstDayIndex; i++) {
-      days.push(
-        <div key={`empty-${i}`} className="bg-slate-50 border border-slate-100 min-h-[100px]" />
-      );
+  const handleBuildUTM = () => {
+    if (!utmUrl) return;
+    const finalUrl = new URL(utmUrl);
+    if (utmSource) finalUrl.searchParams.set("utm_source", utmSource);
+    if (utmCampaign) finalUrl.searchParams.set("utm_campaign", utmCampaign);
+    // Normally we would save to /api/social-media/links and get a short link
+    const short = `https://${window.location.host}/api/social-media/l/track-${Date.now().toString().slice(-4)}`;
+    const appendedText = `\n\n${short}`;
+    if (activePlatformTab === "Global") {
+      setNewPostContent((prev) => prev + appendedText);
+    } else {
+      setPlatformOverrides((prev) => ({
+        ...prev,
+        [activePlatformTab]: (prev[activePlatformTab] || newPostContent) + appendedText,
+      }));
     }
-
-    // Days with posts
-    for (let d = 1; d <= totalDays; d++) {
-      const dateString = `${year}-07-${String(d).padStart(2, "0")}`;
-      const matchingPosts = posts.filter((p) => p.scheduledAt.startsWith(dateString));
-
-      days.push(
-        <div
-          key={`day-${d}`}
-          className="bg-white border border-slate-200 p-2 min-h-[110px] flex flex-col justify-between hover:shadow-sm transition-all group relative"
-        >
-          <div className="flex justify-between items-center">
-            <span className="text-xs font-semibold text-slate-500 group-hover:text-indigo-600 transition-colors">
-              {d}
-            </span>
-            {matchingPosts.length > 0 && (
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-            )}
-          </div>
-          <div className="flex-1 flex flex-col gap-1 mt-1 justify-end">
-            {matchingPosts.map((post) => (
-              <div
-                key={post.id}
-                onClick={() => setSelectedPreviewPost(post)}
-                className={cn(
-                  "text-[10px] p-1 rounded truncate cursor-pointer font-medium select-none transition-colors border",
-                  post.approvalStatus === "Pending"
-                    ? "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100"
-                    : post.status === "Published"
-                      ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                      : "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
-                )}
-              >
-                <div className="flex items-center gap-1">
-                  {post.platforms.map((p) => {
-                    const Icon = platformIcons[p];
-                    return Icon ? <Icon key={p} className="w-2.5 h-2.5 inline-block" /> : null;
-                  })}
-                  <span>{post.content}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-    }
-    return days;
+    toast.success(txt("Tracking link injected to post", "تم إدراج الرابط في المنشور"));
+    setUtmUrl("");
+    setUtmSource("");
+    setUtmCampaign("");
   };
 
   return (
     <div
-      className="container mx-auto px-4 py-8 max-w-7xl animate-fade-in text-slate-900"
+      className="container mx-auto px-4 py-8 max-w-7xl font-sans text-slate-900 bg-slate-50 min-h-screen"
       style={{ direction: isAr ? "rtl" : "ltr" }}
     >
       {/* HEADER SECTION */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">
-              {txt("Enterprise Suite", "جناح المؤسسات")}
+          <div className="flex items-center gap-2 mb-2">
+            <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded bg-slate-800 text-white shadow-sm">
+              {txt("OS CORE MODULE", "وحدة النظام الأساسية")}
+            </span>
+            <span className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest rounded border border-slate-300 text-slate-600 bg-white">
+              v2.1.0
             </span>
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 mt-2">
-            {txt("Social Media & Growth Platform", "إدارة شبكات التواصل والنمو")}
+          <h1 className="text-4xl font-black tracking-tight text-slate-950">
+            {txt("Social Media Management", "إدارة شبكات التواصل")}
           </h1>
-          <p className="text-slate-500 mt-1">
+          <p className="text-slate-500 mt-2 max-w-2xl text-sm leading-relaxed">
             {txt(
-              "Schedule, write with AI, track competitors, and monitor your brand authority across all major channels.",
-              "خطط، اكتب بالذكاء الاصطناعي، راقب المنافسين، وتفاعل مع الجمهور عبر قنوات التواصل كافة."
+              "Unify your enterprise presence. Command intelligent workflows, actively monitor brand sentiment via Gemini 3.5 Flash, and orchestrate deep multi-platform scheduling.",
+              "وحّد تواجد مؤسستك. أدر مسارات العمل الذكية، وراقب سمعة علامتك التجارية وتحليل المشاعر باستخدام Gemini 3.5، مع جدولة متقدمة للمنصات كافة."
             )}
           </p>
         </div>
 
         <button
-          onClick={() => {
-            setActiveTab("scheduler");
-            setNewPostContent("");
-          }}
-          className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-sm hover:shadow transition-all"
+          onClick={() => setActiveTab("scheduler")}
+          className="flex items-center gap-2 px-6 py-3 bg-slate-950 hover:bg-slate-800 text-white font-bold text-sm rounded shadow-lg transition-all"
         >
-          <Plus className="w-5 h-5" />
-          <span>{txt("Composer", "منشئ المنشورات")}</span>
+          <Sparkles className="w-4 h-4" />
+          <span>{txt("Smart Composer", "المنشئ الذكي")}</span>
         </button>
-      </div>
-
-      {/* CHANNELS QUICK SLIDER */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-8 shadow-sm">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-sm font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2">
-            <Layers className="w-4 h-4 text-indigo-500" />
-            {txt("Connected Social Channels", "القنوات والمنصات المرتبطة")}
-          </h2>
-          <span className="text-xs text-slate-400">
-            {txt("Manage connected workspace profiles", "إدارة الحسابات المرتبطة بمساحة العمل")}
-          </span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-          {[
-            "linkedin",
-            "instagram",
-            "twitter",
-            "facebook",
-            "tiktok",
-            "youtube",
-            "threads",
-            "pinterest",
-          ].map((plat) => {
-            const acc = accounts.find((a) => a.platform === plat);
-            const Icon = platformIcons[plat];
-            const isConnected = !!acc;
-
-            return (
-              <div
-                key={plat}
-                className={cn(
-                  "p-3 rounded-xl border flex flex-col items-center justify-between text-center transition-all",
-                  isConnected
-                    ? "bg-slate-50/50 border-slate-200"
-                    : "bg-white border-dashed border-slate-200 opacity-60 hover:opacity-100"
-                )}
-              >
-                <div className="relative">
-                  {Icon && (
-                    <Icon
-                      className={cn("w-6 h-6", isConnected ? "text-slate-800" : "text-slate-400")}
-                    />
-                  )}
-                  {isConnected && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-white" />
-                  )}
-                </div>
-                <div className="mt-2">
-                  <span className="text-xs font-semibold block capitalize text-slate-800">
-                    {plat === "twitter" ? "X / Twitter" : plat}
-                  </span>
-                  <span className="text-[10px] text-slate-400 block truncate max-w-[100px]">
-                    {isConnected ? acc.handle : txt("Disconnected", "غير متصل")}
-                  </span>
-                </div>
-                {isConnected ? (
-                  <span className="text-[10px] mt-2 font-medium bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full">
-                    {acc.followers.toLocaleString()} {txt("followers", "متابع")}
-                  </span>
-                ) : (
-                  <button
-                    onClick={() =>
-                      handleConnectProfile(plat, `@madarij_${plat}`, `Madarij ${plat}`)
-                    }
-                    className="mt-2 text-[10px] text-indigo-600 hover:text-indigo-700 font-semibold"
-                  >
-                    + {txt("Connect", "ربط")}
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
       </div>
 
       {/* CORE STATS BANNER */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           {
-            label: txt("Total Reach (GCC)", "الوصول الإجمالي (الخليج)"),
+            label: txt("Total Reach", "الوصول الإجمالي"),
             value: "185.4K",
             icon: Globe,
             change: "+14.2%",
             positive: true,
           },
           {
-            label: txt("Active Scheduled Posts", "المنشورات المجدولة النشطة"),
+            label: txt("Scheduled Queue", "طابور الجدولة"),
             value: posts.filter((p) => p.status === "Scheduled").length.toString(),
             icon: CalendarIcon,
-            change: txt("Next post tomorrow", "التالي غداً"),
+            change: txt("Active", "نشط"),
             positive: true,
           },
           {
-            label: txt("Inbox Pending Reviews", "مراجعات وارد الصندوق"),
-            value: inbox.filter((i) => i.status === "Unread").length.toString(),
+            label: txt("Unresolved Tickets", "التذاكر المفتوحة"),
+            value: inbox.filter((i) => i.status === "Unresolved").length.toString(),
             icon: MessageSquare,
-            change: txt("Needs attention", "تحتاج مراجعة"),
+            change: txt("Action needed", "تحتاج مراجعة"),
             positive: false,
           },
           {
-            label: txt("Avg. Engagement Rate", "معدل التفاعل الإجمالي"),
+            label: txt("Avg. Engagement", "معدل التفاعل"),
             value: "4.8%",
             icon: TrendingUp,
             change: "+1.2%",
             positive: true,
           },
         ].map((stat, idx) => (
-          <div
-            key={idx}
-            className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow"
-          >
+          <div key={idx} className="bg-white border border-slate-200 rounded p-5 shadow-sm">
             <div className="flex justify-between items-start">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
                 {stat.label}
               </span>
-              <div className="p-2 bg-slate-50 rounded-xl">
-                <stat.icon className="w-5 h-5 text-indigo-600" />
-              </div>
+              <stat.icon className="w-4 h-4 text-slate-400" />
             </div>
-            <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-2xl font-black text-slate-950">{stat.value}</span>
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-3xl font-black text-slate-900 font-mono tracking-tighter">
+                {stat.value}
+              </span>
               <span
                 className={cn(
-                  "text-xs font-bold",
+                  "text-xs font-bold font-mono",
                   stat.positive ? "text-green-600" : "text-amber-500"
                 )}
               >
@@ -732,57 +497,34 @@ export default function SocialMedia() {
       </div>
 
       {/* NAVIGATION TABS */}
-      <div className="flex border-b border-slate-200 mb-8 overflow-x-auto whitespace-nowrap scrollbar-hide">
+      <div className="flex border-b border-slate-300 mb-8 overflow-x-auto whitespace-nowrap scrollbar-hide gap-8">
         {[
-          { id: "calendar", label: txt("Content Calendar", "تقويم المحتوى"), icon: CalendarIcon },
-          { id: "scheduler", label: txt("Scheduler & Composer", "جدولة المنشورات"), icon: Clock },
-          { id: "ai", label: txt("AI Copilot & Writer", "مساعد الذكاء الاصطناعي"), icon: Sparkles },
-          {
-            id: "inbox",
-            label: txt("Unified Comments Inbox", "صندوق الوارد الموحد"),
-            icon: MessageSquare,
-          },
-          {
-            id: "monitoring",
-            label: txt("Brand Mentions", "مراقبة الإشارات والسمعة"),
-            icon: Activity,
-          },
-          {
-            id: "competitors",
-            label: txt("Competitors Tracking", "مراقبة المنافسين"),
-            icon: BarChart3,
-          },
+          { id: "scheduler", label: txt("Composer", "المنشئ"), icon: Plus },
+          { id: "calendar", label: txt("Calendar", "التقويم"), icon: CalendarIcon },
+          { id: "inbox", label: txt("Unified Inbox", "صندوق الوارد"), icon: MessageSquare },
+          { id: "monitoring", label: txt("Active Listening", "الاستماع النشط"), icon: Activity },
+          { id: "analytics", label: txt("Deep Analytics", "التحليلات العميقة"), icon: BarChart3 },
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
             className={cn(
-              "flex items-center gap-2 px-6 py-3 border-b-2 font-semibold text-sm transition-all relative",
+              "flex items-center gap-2 pb-4 border-b-2 font-bold text-sm transition-all relative uppercase tracking-wider",
               activeTab === tab.id
-                ? "border-indigo-600 text-indigo-600"
+                ? "border-slate-900 text-slate-900"
                 : "border-transparent text-slate-500 hover:text-slate-800"
             )}
           >
             <tab.icon className="w-4 h-4" />
             <span>{tab.label}</span>
-            {activeTab === tab.id && (
-              <motion.div
-                layoutId="activeTabIndicator"
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600"
-              />
-            )}
           </button>
         ))}
       </div>
 
-      {/* TAB CONTENT OUTLET */}
       <AnimatePresence mode="wait">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 bg-white border border-slate-200 rounded-2xl">
-            <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-            <p className="text-slate-400 text-sm mt-4 font-medium">
-              {txt("Loading dynamic social feeds...", "جاري تحميل بيانات شبكات التواصل...")}
-            </p>
+          <div className="flex justify-center py-20">
+            <div className="w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <motion.div
@@ -793,835 +535,476 @@ export default function SocialMedia() {
             transition={{ duration: 0.2 }}
           >
             {/* ========================================================
-                CALENDAR TAB
-                ======================================================== */}
-            {activeTab === "calendar" && (
-              <div className="space-y-6">
-                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                  <div className="flex justify-between items-center mb-6">
-                    <div>
-                      <h2 className="text-lg font-bold text-slate-900">
-                        {txt("July 2026 Calendar", "تقويم شهر يوليو ٢٠٢٦")}
-                      </h2>
-                      <p className="text-sm text-slate-500">
-                        {txt(
-                          "Interact with dates or scheduled items below.",
-                          "اضغط على الأيام لتفقد أو تعديل المنشورات المجدولة."
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 border border-green-100 px-2.5 py-1 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                        {txt("Published", "تم النشر")}
-                      </span>
-                      <span className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-                        {txt("Approved / Scheduled", "معتمد ومجدول")}
-                      </span>
-                      <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-2.5 py-1 rounded-full">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                        {txt("Pending Approval", "قيد المراجعة")}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Calendar Grid Header */}
-                  <div className="grid grid-cols-7 gap-1 text-center font-bold text-slate-500 text-xs mb-2 uppercase tracking-wider">
-                    <div>{txt("Sun", "أحد")}</div>
-                    <div>{txt("Mon", "اثنين")}</div>
-                    <div>{txt("Tue", "ثلاثاء")}</div>
-                    <div>{txt("Wed", "أربعاء")}</div>
-                    <div>{txt("Thu", "خميس")}</div>
-                    <div>{txt("Fri", "جمعة")}</div>
-                    <div>{txt("Sat", "سبت")}</div>
-                  </div>
-
-                  {/* Days */}
-                  <div className="grid grid-cols-7 gap-1.5 bg-slate-100 border border-slate-100 rounded-xl overflow-hidden">
-                    {renderCalendarDays()}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ========================================================
-                SCHEDULER & COMPOSER
+                SCHEDULER & SMART COMPOSER
                 ======================================================== */}
             {activeTab === "scheduler" && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
                 {/* Editor Panel */}
-                <form
-                  onSubmit={handleCreatePost}
-                  className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6"
-                >
-                  <h3 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3">
-                    {txt("Compose Social Campaign", "إنشاء حملة تواصل")}
-                  </h3>
-
-                  {/* Channel Select */}
+                <div className="xl:col-span-7 bg-white border border-slate-200 rounded p-6 shadow-sm space-y-8">
+                  {/* Channels */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                      {txt("Target Channels (Select Multiple)", "القنوات المستهدفة (تحديد متعدد)")}
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
+                      {txt("1. Select Platforms", "١. اختر المنصات")}
                     </label>
-                    <div className="flex flex-wrap gap-2">
-                      {["linkedin", "instagram", "twitter", "facebook", "tiktok", "youtube"].map(
-                        (plat) => {
-                          const isSelected = selectedPlatforms.includes(plat);
-                          const Icon = platformIcons[plat];
-                          return (
+                    <div className="flex flex-wrap gap-3">
+                      {["linkedin", "instagram", "twitter", "facebook"].map((plat) => {
+                        const isSelected = selectedPlatforms.includes(plat);
+                        const acc = accounts.find((a) => a.platform === plat);
+                        const Icon = platformIcons[plat];
+
+                        return (
+                          <div key={plat} className="flex flex-col gap-1">
                             <button
-                              type="button"
-                              key={plat}
                               onClick={() => {
-                                if (isSelected) {
+                                if (isSelected)
                                   setSelectedPlatforms(selectedPlatforms.filter((p) => p !== plat));
-                                } else {
-                                  setSelectedPlatforms([...selectedPlatforms, plat]);
-                                }
+                                else setSelectedPlatforms([...selectedPlatforms, plat]);
                               }}
                               className={cn(
-                                "flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all",
+                                "flex items-center gap-2 px-4 py-2.5 rounded text-sm font-bold border transition-all",
                                 isSelected
-                                  ? "bg-indigo-600 border-indigo-600 text-white"
+                                  ? "bg-slate-900 border-slate-900 text-white"
                                   : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                               )}
                             >
-                              {Icon && <Icon className="w-3.5 h-3.5" />}
+                              {Icon && <Icon className="w-4 h-4" />}
                               <span className="capitalize">{plat === "twitter" ? "X" : plat}</span>
                             </button>
-                          );
-                        }
-                      )}
+                            {acc ? (
+                              <span className="text-[10px] text-green-600 font-mono flex items-center gap-1">
+                                <Check className="w-3 h-3" /> Connected
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleConnectProfile(plat)}
+                                className="text-[10px] text-blue-600 hover:underline font-mono text-left"
+                              >
+                                Connect OAuth
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
-                  {/* Content input */}
+                  {/* Smart Composer Area */}
                   <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        {txt("Post Content Copy", "محتوى ونص المنشور")}
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setNewPostContent(
-                            txt(
-                              "We are happy to offer the best-integrated Saudi payroll & HR operations! Secure, compliant with local rules, and 100% cloud native.",
-                              "يسرنا تقديم الحلول الأكثر تكاملاً لحساب الرواتب والموارد البشرية في المملكة! آمن، متوافق مع نظام العمل السعودي وسحابي بالكامل."
-                            )
-                          );
-                        }}
-                        className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>{txt("Load Template", "تحميل مسودة")}</span>
-                      </button>
+                    <div className="flex justify-between items-end border-b border-slate-200 mb-4">
+                      <div className="flex gap-4">
+                        <button
+                          onClick={() => setActivePlatformTab("Global")}
+                          className={cn(
+                            "pb-2 text-xs font-bold uppercase tracking-widest border-b-2",
+                            activePlatformTab === "Global"
+                              ? "border-slate-900 text-slate-900"
+                              : "border-transparent text-slate-400"
+                          )}
+                        >
+                          GLOBAL
+                        </button>
+                        {selectedPlatforms.map((p) => (
+                          <button
+                            key={p}
+                            onClick={() => setActivePlatformTab(p)}
+                            className={cn(
+                              "pb-2 text-xs font-bold uppercase tracking-widest border-b-2",
+                              activePlatformTab === p
+                                ? "border-slate-900 text-slate-900"
+                                : "border-transparent text-slate-400"
+                            )}
+                          >
+                            {p} OVERRIDE
+                          </button>
+                        ))}
+                      </div>
                     </div>
+
                     <textarea
-                      rows={5}
-                      value={newPostContent}
-                      onChange={(e) => setNewPostContent(e.target.value)}
-                      placeholder={txt(
-                        "What would you like to share on corporate social media?",
-                        "ما الذي تود طرحه على قنوات التواصل الخاصة بالمؤسسة؟"
-                      )}
-                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                      rows={6}
+                      value={currentComposerText}
+                      onChange={(e) => handleComposerTextChange(e.target.value)}
+                      placeholder={txt("Write your content...", "اكتب محتوى المنشور...")}
+                      className="w-full px-4 py-3 border border-slate-200 rounded focus:ring-1 focus:ring-slate-900 focus:border-slate-900 text-sm font-medium bg-slate-50"
                     />
-                    <div className="flex justify-between items-center mt-1 text-xs text-slate-400">
+                    <div className="flex justify-between items-center mt-2 text-[10px] font-mono text-slate-500">
+                      <span>{currentComposerText.length} CHARS</span>
                       <span>
-                        {newPostContent.length} {txt("characters", "حرف")}
-                      </span>
-                      <span>
-                        {txt(
-                          "Recommended: <280 for X, <3000 for LinkedIn",
-                          "الموصى به: أقل من ٢٨٠ لـ X، ٣٠٠٠ للينكد إن"
+                        {activePlatformTab === "twitter" && currentComposerText.length > 280 ? (
+                          <span className="text-red-500 font-bold">OVER LIMIT (280)</span>
+                        ) : (
+                          "GOOD"
                         )}
                       </span>
                     </div>
                   </div>
 
-                  {/* Graphic illustration */}
+                  {/* Media Uploader */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                      {txt("Graphic Link / Asset URL", "رابط الصورة / أصل التصميم")}
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
+                      {txt("Media Engine", "محرك الوسائط")}
                     </label>
+                    <div className="flex gap-4 mb-3">
+                      {["1:1", "16:9", "9:16"].map((ratio) => (
+                        <button
+                          key={ratio}
+                          onClick={() => setAspectRatio(ratio as any)}
+                          className={cn(
+                            "px-3 py-1 border text-xs font-mono font-bold rounded",
+                            aspectRatio === ratio ? "bg-slate-900 text-white" : "text-slate-500"
+                          )}
+                        >
+                          {ratio}
+                        </button>
+                      ))}
+                    </div>
                     <input
                       type="text"
                       value={postImage}
                       onChange={(e) => setPostImage(e.target.value)}
-                      placeholder="https://images.unsplash.com/photo-..."
-                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-xs"
-                    />
-                    <div className="flex gap-2 mt-2">
-                      {[
-                        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800",
-                        "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800",
-                      ].map((preset, i) => (
-                        <button
-                          type="button"
-                          key={i}
-                          onClick={() => setPostImage(preset)}
-                          className="w-14 h-10 border border-slate-200 rounded overflow-hidden opacity-80 hover:opacity-100"
-                        >
-                          <img src={preset} className="w-full h-full object-cover" alt="" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Workflow approvals & date */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                        {txt("Post Setting / Workflow", "إعدادات النشر ومسار العمل")}
-                      </label>
-                      <select
-                        value={postStatus}
-                        onChange={(e) => setPostStatus(e.target.value as any)}
-                        className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs bg-white"
-                      >
-                        <option value="Scheduled">
-                          {txt("Schedule & Publish Directly", "جدولة ونشر مباشر")}
-                        </option>
-                        <option value="Pending Approval">
-                          {txt("Submit for Team Lead Approval", "إرسال لاعتماد قائد الفريق")}
-                        </option>
-                        <option value="Draft">
-                          {txt("Save as Internal Draft", "حفظ كمسودة داخلية")}
-                        </option>
-                      </select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                          {txt("Date", "التاريخ")}
-                        </label>
-                        <input
-                          type="date"
-                          value={scheduledDate}
-                          onChange={(e) => setScheduledDate(e.target.value)}
-                          className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                          {txt("Time AST", "الوقت AST")}
-                        </label>
-                        <input
-                          type="time"
-                          value={scheduledTime}
-                          onChange={(e) => setScheduledTime(e.target.value)}
-                          className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-slate-100 pt-4 flex justify-end gap-3">
-                    <button
-                      type="submit"
-                      disabled={actionLoading}
-                      className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm flex items-center gap-2"
-                    >
-                      {actionLoading ? (
-                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <Clock className="w-4 h-4" />
-                      )}
-                      <span>
-                        {postStatus === "Pending Approval"
-                          ? txt("Submit to Approver", "تقديم للمراجعة")
-                          : txt("Schedule Post Campaign", "جدولة الحملة الآن")}
-                      </span>
-                    </button>
-                  </div>
-                </form>
-
-                {/* Platform Preview Mockup Panel */}
-                <div className="lg:col-span-5 space-y-4">
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                      <Eye className="w-4 h-4 text-slate-500" />
-                      {txt("Live Multi-Platform Mockup", "معاينة المنصات التفاعلية")}
-                    </h4>
-
-                    {/* Tabs within Mockup */}
-                    <div className="flex gap-2 mb-4 bg-white p-1 rounded-xl border border-slate-200">
-                      {["linkedin", "instagram"].map((tab) => (
-                        <button
-                          key={tab}
-                          type="button"
-                          onClick={() => {
-                            if (!selectedPlatforms.includes(tab)) {
-                              setSelectedPlatforms([...selectedPlatforms, tab]);
-                            }
-                          }}
-                          className={cn(
-                            "flex-1 py-1.5 text-xs font-bold rounded-lg capitalize transition-all",
-                            selectedPlatforms.includes(tab)
-                              ? "bg-slate-900 text-white"
-                              : "text-slate-500 hover:text-slate-800"
-                          )}
-                        >
-                          {tab}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Mockup Frame */}
-                    {selectedPlatforms.includes("linkedin") && (
-                      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                        <div className="flex items-center gap-2 mb-3">
-                          <img
-                            src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150"
-                            className="w-10 h-10 rounded-full object-cover border"
-                            alt=""
-                          />
-                          <div>
-                            <span className="text-xs font-extrabold text-slate-950 block">
-                              Madarij OS Corporate
-                            </span>
-                            <span className="text-[10px] text-slate-400 block">
-                              12,500 followers • 1h ago
-                            </span>
-                          </div>
-                        </div>
-                        <p className="text-xs text-slate-800 whitespace-pre-line leading-relaxed mb-3">
-                          {newPostContent ||
-                            txt(
-                              "Drafting social post... Content copy will instantly render here in real-time.",
-                              "اكتب منشوراً ترويجياً... وسيتم تحديث نص المعاينة فوراً."
-                            )}
-                        </p>
-                        {postImage && (
-                          <div className="border border-slate-100 rounded-lg overflow-hidden mb-3">
-                            <img
-                              src={postImage}
-                              className="w-full max-h-52 object-cover"
-                              alt="Campaign Graphic"
-                            />
-                          </div>
-                        )}
-                        <div className="border-t border-slate-100 pt-2 flex justify-between text-slate-400 text-xs">
-                          <span>👍 Like</span>
-                          <span>💬 Comment</span>
-                          <span>🔁 Repost</span>
-                          <span>📤 Send</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {!selectedPlatforms.includes("linkedin") &&
-                      selectedPlatforms.includes("instagram") && (
-                        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm max-w-[340px] mx-auto">
-                          <div className="flex items-center gap-2 mb-3">
-                            <img
-                              src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=150"
-                              className="w-8 h-8 rounded-full object-cover border"
-                              alt=""
-                            />
-                            <span className="text-xs font-extrabold text-slate-950">
-                              madarij_os
-                            </span>
-                          </div>
-                          <div className="bg-slate-100 border border-slate-200 rounded-lg aspect-square overflow-hidden mb-3 flex items-center justify-center">
-                            {postImage ? (
-                              <img src={postImage} className="w-full h-full object-cover" alt="" />
-                            ) : (
-                              <div className="text-center text-slate-400 p-4">
-                                <Layers className="w-8 h-8 mx-auto mb-1 opacity-50" />
-                                <span className="text-[10px]">
-                                  {txt(
-                                    "Upload or select graphic representation",
-                                    "اختر صورة للمنشور للمعالجة"
-                                  )}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                          <p className="text-xs text-slate-800 line-clamp-3">
-                            <span className="font-extrabold mr-1">madarij_os</span>
-                            {newPostContent || txt("Write caption...", "محتوى المنشور...")}
-                          </p>
-                        </div>
-                      )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ========================================================
-                AI ASSISTANT
-                ======================================================== */}
-            {activeTab === "ai" && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Inputs Panel */}
-                <div className="lg:col-span-6 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900 mb-1 flex items-center gap-1.5">
-                      <Sparkles className="w-5 h-5 text-indigo-500 animate-pulse" />
-                      {txt("Gemini Social AI Copywriter", "محرر الذكاء الاصطناعي من Gemini")}
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      {txt(
-                        "Generate viral posts, caption hooks, video/reel scripts, translations and strategic schedules.",
-                        "صمم منشورات فيروسية، خطاطيف فيديو، نصوص Reels، ترجمات فورية وجداول نشر ممتازة."
-                      )}
-                    </p>
-                  </div>
-
-                  {/* Template Types */}
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: "post", label: txt("Viral Post", "منشور فيروسي"), desc: "LinkedIn/X" },
-                      {
-                        id: "reels_script",
-                        label: txt("Reels / Short", "فيديو Reels"),
-                        desc: "TikTok/Insta",
-                      },
-                      { id: "caption", label: txt("Smart Caption", "شرح ذكي"), desc: "General" },
-                    ].map((type) => (
-                      <button
-                        key={type.id}
-                        type="button"
-                        onClick={() => setAiType(type.id as any)}
-                        className={cn(
-                          "p-3 rounded-xl border text-center transition-all",
-                          aiType === type.id
-                            ? "bg-indigo-50 border-indigo-500 text-indigo-700 font-extrabold"
-                            : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                        )}
-                      >
-                        <span className="text-xs block font-bold">{type.label}</span>
-                        <span className="text-[10px] text-slate-400 block">{type.desc}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Core Idea Prompt */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                      {txt("Describe Campaign Goal / Concept", "صِف فكرة المنشور أو هدف الحملة")}
-                    </label>
-                    <textarea
-                      rows={4}
-                      value={aiPrompt}
-                      onChange={(e) => setAiPrompt(e.target.value)}
-                      placeholder={txt(
-                        "e.g. Announcing our 24/7 dedicated Arabic client support for enterprise operations in Saudi Arabia.",
-                        "مثال: الإعلان عن إطلاق الدعم الفني باللغة العربية طوال أيام الأسبوع لعملائنا في السعودية."
-                      )}
-                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-xs"
+                      placeholder="Paste Image URL..."
+                      className="w-full px-4 py-2 border border-slate-200 rounded focus:ring-1 focus:ring-slate-900 text-sm font-mono mb-2"
                     />
                   </div>
 
-                  {/* Tone and Language parameters */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                        {txt("Desired Tone", "نبرة الصوت")}
-                      </label>
-                      <select
-                        value={aiTone}
-                        onChange={(e) => setAiTone(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white"
-                      >
-                        <option value="professional">
-                          {txt("Professional & Trustworthy", "مهني وموثوق")}
-                        </option>
-                        <option value="inspiring">
-                          {txt("Inspiring & Visionary", "ملهم وطموح")}
-                        </option>
-                        <option value="energetic">
-                          {txt("Energetic & Creative", "نشط ومبدع")}
-                        </option>
-                        <option value="analytical">
-                          {txt("Data-driven & Analytical", "تحليلي قائم على البيانات")}
-                        </option>
-                      </select>
+                  {/* UTM Link Builder */}
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded">
+                    <div className="flex items-center gap-2 mb-3">
+                      <LinkIcon className="w-4 h-4 text-slate-500" />
+                      <h4 className="text-xs font-bold text-slate-700 uppercase tracking-widest">
+                        Attribution UTM Builder
+                      </h4>
                     </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                        {txt("Target Language", "لغة المحتوى")}
-                      </label>
-                      <select
-                        value={aiLang}
-                        onChange={(e) => setAiLang(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white"
-                      >
-                        <option value="ar">{txt("Arabic (العربية)", "العربية")}</option>
-                        <option value="en">{txt("English (الإنجليزية)", "الإنجليزية")}</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleAIGenerate}
-                    disabled={actionLoading}
-                    className="w-full py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-semibold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm"
-                  >
-                    {actionLoading ? (
-                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Sparkles className="w-4 h-4" />
-                    )}
-                    <span>
-                      {txt("Write Social Content with Gemini", "صياغة المحتوى بالذكاء الاصطناعي")}
-                    </span>
-                  </button>
-                </div>
-
-                {/* Response Visual Panel */}
-                <div className="lg:col-span-6 bg-slate-50 border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between">
-                  <div className="space-y-4">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      {txt("Copilot Output", "مخرجات الذكاء الاصطناعي")}
-                    </h4>
-
-                    {aiResult ? (
-                      <div className="space-y-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm animate-fade-in">
-                        {aiType === "post" && (
-                          <>
-                            <div>
-                              <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
-                                {txt("Generated Post Body", "نص المنشور المكتوب")}
-                              </span>
-                              <p className="text-xs text-slate-800 whitespace-pre-line leading-relaxed mt-1">
-                                {aiResult.postContent}
-                              </p>
-                            </div>
-
-                            {aiResult.hashtags && (
-                              <div className="flex flex-wrap gap-1.5 mt-3">
-                                {aiResult.hashtags.map((h: string, idx: number) => (
-                                  <span
-                                    key={idx}
-                                    className="text-xs text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded"
-                                  >
-                                    #{h}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-
-                            {aiResult.optimalSendTime && (
-                              <div className="mt-4 p-2.5 bg-slate-50 rounded-lg flex items-center gap-2 text-xs text-slate-600">
-                                <Clock className="w-4 h-4 text-slate-500" />
-                                <span>
-                                  <strong>
-                                    {txt("Recommended Time: ", "التوقيت الموصى به: ")}
-                                  </strong>
-                                  {aiResult.optimalSendTime}
-                                </span>
-                              </div>
-                            )}
-                          </>
-                        )}
-
-                        {aiType === "reels_script" && (
-                          <div className="space-y-4">
-                            <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-lg text-xs">
-                              <strong>
-                                {txt("Retention Hook: ", "خطاف الفيديو الأول (Hook): ")}
-                              </strong>
-                              <p className="text-slate-800 mt-1 italic">"{aiResult.hook}"</p>
-                            </div>
-
-                            <div>
-                              <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block mb-2">
-                                {txt("Timeline Breakdown", "تفصيل المشاهد والسيناريو")}
-                              </span>
-                              <div className="space-y-2.5 border-l-2 border-indigo-100 pl-4">
-                                {aiResult.sceneOutline?.map((scene: any, i: number) => (
-                                  <div key={i} className="text-xs">
-                                    <span className="font-bold text-indigo-600">{scene.time}</span>
-                                    <p className="text-slate-900 font-semibold mt-0.5">
-                                      {scene.audio}
-                                    </p>
-                                    <p className="text-[10px] text-slate-500">
-                                      {txt("Visual Cue: ", "المشهد البصري: ")} {scene.visual}
-                                    </p>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div>
-                              <span className="text-[10px] font-bold text-slate-400 block uppercase mb-1">
-                                {txt("Caption copy to post:", "الوصف المصاحب للفيديو:")}
-                              </span>
-                              <p className="text-xs text-slate-700">{aiResult.caption}</p>
-                            </div>
-                          </div>
-                        )}
-
-                        {aiType === "caption" && (
-                          <>
-                            <p className="text-xs text-slate-800 leading-relaxed">
-                              {aiResult.optimizedText}
-                            </p>
-                            {aiResult.hashtags && (
-                              <div className="flex flex-wrap gap-1 mt-3">
-                                {aiResult.hashtags.map((h: string, idx: number) => (
-                                  <span key={idx} className="text-xs text-indigo-600 font-semibold">
-                                    #{h}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="border border-dashed border-slate-200 rounded-xl py-16 text-center text-slate-400">
-                        <Sparkles className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                        <p className="text-xs font-medium">
-                          {txt(
-                            "Generated campaign layouts will appear here instantly.",
-                            "ستظهر نتائج الصياغة الإبداعية للذكاء الاصطناعي هنا فوراً."
-                          )}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {aiResult && (
-                    <div className="mt-4 flex gap-2">
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(
-                            aiResult.postContent || aiResult.optimizedText || aiResult.caption || ""
-                          );
-                          toast.success(txt("Copied to clipboard!", "تم النسخ للحافظة!"));
-                        }}
-                        className="flex-1 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition-colors"
-                      >
-                        {txt("Copy to Clipboard", "نسخ النص")}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setNewPostContent(
-                            aiResult.postContent || aiResult.optimizedText || aiResult.caption || ""
-                          );
-                          if (aiResult.imagePrompt)
-                            setPostImage(
-                              "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800"
-                            ); // Simulate assigning prompt
-                          setActiveTab("scheduler");
-                          toast.success(
-                            txt("Content loaded into Composer!", "تم نقل النص لمحاكي المنشورات!")
-                          );
-                        }}
-                        className="flex-1 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition-colors"
-                      >
-                        {txt("Use in Composer", "العمل به في المحاكي")}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* ========================================================
-                UNIFIED COMMENTS INBOX
-                ======================================================== */}
-            {activeTab === "inbox" && (
-              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm grid grid-cols-1 md:grid-cols-12 min-h-[500px]">
-                {/* List Column */}
-                <div className="md:col-span-5 border-r border-slate-200 flex flex-col">
-                  <div className="p-4 border-b border-slate-200 bg-slate-50/50">
-                    <h3 className="text-sm font-extrabold text-slate-800 mb-2">
-                      {txt("Conversations & Comments Inbox", "وارد الاستفسارات والتعليقات")}
-                    </h3>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                    <div className="grid grid-cols-3 gap-2">
+                      <input
+                        type="url"
+                        value={utmUrl}
+                        onChange={(e) => setUtmUrl(e.target.value)}
+                        placeholder="Destination URL"
+                        className="col-span-3 px-3 py-2 border rounded text-xs"
+                      />
                       <input
                         type="text"
-                        placeholder={txt("Filter by keyword...", "ابحث في الرسائل والتعليقات...")}
-                        className="w-full pl-9 pr-4 py-1.5 border border-slate-200 rounded-xl text-xs focus:ring-1 focus:ring-indigo-500"
+                        value={utmSource}
+                        onChange={(e) => setUtmSource(e.target.value)}
+                        placeholder="utm_source (e.g. twitter)"
+                        className="px-3 py-2 border rounded text-xs"
                       />
+                      <input
+                        type="text"
+                        value={utmCampaign}
+                        onChange={(e) => setUtmCampaign(e.target.value)}
+                        placeholder="utm_campaign"
+                        className="px-3 py-2 border rounded text-xs"
+                      />
+                      <button
+                        onClick={handleBuildUTM}
+                        className="bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded"
+                      >
+                        Generate & Append
+                      </button>
                     </div>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto divide-y divide-slate-100 max-h-[450px]">
-                    {inbox.map((item) => {
-                      const Icon = platformIcons[item.platform];
-                      const isUnread = item.status === "Unread";
-
-                      return (
-                        <div
-                          key={item.id}
-                          onClick={() => {
-                            setSelectedInboxItem(item);
-                            // Set read locally
-                            setInbox((prev) =>
-                              prev.map((i) =>
-                                i.id === item.id ? { ...i, status: "Read" as const } : i
-                              )
-                            );
-                          }}
-                          className={cn(
-                            "p-4 cursor-pointer transition-all hover:bg-slate-50 flex gap-3 relative",
-                            selectedInboxItem?.id === item.id
-                              ? "bg-indigo-50/40 border-l-4 border-l-indigo-600"
-                              : ""
-                          )}
-                        >
-                          <div className="relative flex-shrink-0">
-                            <img
-                              src={item.authorAvatar}
-                              className="w-10 h-10 rounded-full object-cover border"
-                              alt=""
-                            />
-                            {Icon && (
-                              <span className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full border shadow-sm">
-                                <Icon className="w-3 h-3 text-slate-700" />
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-start">
-                              <span className="text-xs font-extrabold text-slate-900 block truncate">
-                                {item.authorName}
-                              </span>
-                              <span className="text-[10px] text-slate-400 block flex-shrink-0">
-                                {new Date(item.timestamp).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </span>
-                            </div>
-                            <span className="text-[10px] text-slate-400 block mt-0.5 font-medium">
-                              {item.type}
-                            </span>
-                            <p className="text-xs text-slate-600 line-clamp-2 mt-1">
-                              {item.message}
-                            </p>
-                          </div>
-                          {isUnread && (
-                            <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 absolute right-4 top-1/2 -translate-y-1/2" />
-                          )}
-                        </div>
-                      );
-                    })}
+                  {/* Actions */}
+                  <div className="grid grid-cols-2 gap-4 border-t border-slate-200 pt-6">
+                    <div className="flex gap-2">
+                      <input
+                        type="date"
+                        value={scheduledDate}
+                        onChange={(e) => setScheduledDate(e.target.value)}
+                        className="px-3 py-2 border rounded text-xs font-bold"
+                      />
+                      <input
+                        type="time"
+                        value={scheduledTime}
+                        onChange={(e) => setScheduledTime(e.target.value)}
+                        className="px-3 py-2 border rounded text-xs font-bold"
+                      />
+                    </div>
+                    <button
+                      onClick={handleCreatePost}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded px-4 py-2 text-sm uppercase tracking-widest flex items-center justify-center gap-2"
+                    >
+                      <Clock className="w-4 h-4" /> Schedule Post
+                    </button>
                   </div>
                 </div>
 
-                {/* Chat Details Column */}
-                <div className="md:col-span-7 flex flex-col justify-between bg-slate-50/30">
+                {/* Preview Panel */}
+                <div className="xl:col-span-5">
+                  <div className="sticky top-8">
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <Eye className="w-4 h-4" /> Live Platform Preview
+                    </h3>
+
+                    {/* Interactive visual mockup */}
+                    <div className="bg-white border border-slate-200 rounded overflow-hidden shadow-xl max-w-sm mx-auto">
+                      <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex items-center gap-3">
+                        <div className="w-10 h-10 bg-slate-200 rounded-full flex-shrink-0">
+                          <img
+                            src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150"
+                            className="w-full h-full rounded-full object-cover"
+                            alt="avatar"
+                          />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">Madarij OS Corporate</p>
+                          <p className="text-[10px] text-slate-500">
+                            Sponsored • {activePlatformTab}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="p-4 text-sm text-slate-800 whitespace-pre-wrap font-sans">
+                        {currentComposerText || "Your captivating copy goes here..."}
+                      </div>
+                      {postImage && (
+                        <div
+                          className={cn(
+                            "w-full bg-slate-100",
+                            aspectRatio === "1:1"
+                              ? "aspect-square"
+                              : aspectRatio === "16:9"
+                                ? "aspect-video"
+                                : "aspect-[9/16]"
+                          )}
+                        >
+                          <img
+                            src={postImage}
+                            className="w-full h-full object-cover"
+                            alt="Preview"
+                          />
+                        </div>
+                      )}
+                      <div className="px-4 py-3 border-t border-slate-100 flex justify-between text-slate-400">
+                        <span className="text-xs">Like</span>
+                        <span className="text-xs">Comment</span>
+                        <span className="text-xs">Share</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ========================================================
+                CALENDAR
+                ======================================================== */}
+            {activeTab === "calendar" && (
+              <div className="bg-white border border-slate-200 rounded p-6 shadow-sm">
+                <div className="flex justify-between items-end border-b border-slate-200 pb-4 mb-6">
+                  <h2 className="text-2xl font-black text-slate-900">Publishing Timeline</h2>
+                </div>
+
+                <div className="space-y-4">
+                  {posts.map((post) => (
+                    <div key={post.id} className="flex gap-6 items-start group">
+                      <div className="w-32 flex-shrink-0 text-right pt-2 border-r-2 border-slate-100 pr-6 group-hover:border-slate-900 transition-colors">
+                        <p className="font-bold text-sm text-slate-900">
+                          {new Date(post.scheduledAt).toLocaleDateString()}
+                        </p>
+                        <p className="font-mono text-xs text-slate-500">
+                          {new Date(post.scheduledAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                      <div className="flex-1 bg-slate-50 border border-slate-200 rounded p-4 group-hover:shadow-md transition-all">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex gap-2">
+                            {post.platforms.map((p) => {
+                              const Icon = platformIcons[p];
+                              return Icon ? (
+                                <div key={p} className="p-1.5 bg-white border rounded">
+                                  <Icon className="w-4 h-4 text-slate-700" />
+                                </div>
+                              ) : null;
+                            })}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={cn(
+                                "px-2 py-1 text-[10px] font-bold uppercase tracking-widest rounded",
+                                post.status === "Published"
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-amber-100 text-amber-700"
+                              )}
+                            >
+                              {post.status}
+                            </span>
+                            {post.status !== "Published" && (
+                              <button
+                                onClick={() => handlePublishNow(post.id)}
+                                className="px-2 py-1 bg-slate-900 text-white text-[10px] font-bold uppercase rounded"
+                              >
+                                Publish Now
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm text-slate-700">{post.content}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ========================================================
+                UNIFIED INBOX (WEBHOOKS)
+                ======================================================== */}
+            {activeTab === "inbox" && (
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-[700px]">
+                <div className="md:col-span-4 border border-slate-200 rounded bg-white overflow-y-auto">
+                  <div className="p-4 border-b border-slate-200 bg-slate-50 sticky top-0">
+                    <h3 className="font-bold text-sm uppercase tracking-widest text-slate-900">
+                      Active Tickets
+                    </h3>
+                  </div>
+                  {inbox.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setSelectedInboxItem(item);
+                        setSmartReplies([]);
+                      }}
+                      className={cn(
+                        "w-full text-left p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors",
+                        selectedInboxItem?.id === item.id
+                          ? "bg-indigo-50 border-l-4 border-l-indigo-600"
+                          : ""
+                      )}
+                    >
+                      <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm text-slate-900">
+                            {item.authorName}
+                          </span>
+                          <span className="text-[10px] uppercase font-mono text-slate-500">
+                            {item.platform}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-mono text-slate-400">
+                          {new Date(item.timestamp).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 truncate">{item.message}</p>
+                      <div className="mt-2">
+                        <span
+                          className={cn(
+                            "text-[10px] px-2 py-0.5 rounded font-bold uppercase",
+                            item.status === "Resolved"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                          )}
+                        >
+                          {item.status}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="md:col-span-8 border border-slate-200 rounded bg-white flex flex-col relative">
                   {selectedInboxItem ? (
                     <>
-                      {/* Active header */}
-                      <div className="p-4 border-b border-slate-200 bg-white flex justify-between items-center">
-                        <div className="flex items-center gap-3">
+                      <div className="p-6 border-b border-slate-200 bg-slate-50 flex justify-between items-start">
+                        <div className="flex gap-4">
                           <img
                             src={selectedInboxItem.authorAvatar}
-                            className="w-10 h-10 rounded-full object-cover border"
-                            alt=""
+                            alt="avatar"
+                            className="w-12 h-12 rounded shadow-sm"
                           />
                           <div>
-                            <span className="text-xs font-extrabold text-slate-900 block">
+                            <h2 className="text-lg font-black text-slate-900">
                               {selectedInboxItem.authorName}
-                            </span>
-                            <span className="text-[10px] text-slate-400 block capitalize">
+                            </h2>
+                            <p className="text-xs text-slate-500 font-mono uppercase">
                               {selectedInboxItem.platform} • {selectedInboxItem.type}
-                            </span>
+                            </p>
                           </div>
                         </div>
-                        {selectedInboxItem.postTitle && (
-                          <span className="text-[10px] bg-slate-100 border border-slate-200 px-2 py-1 rounded text-slate-500 max-w-[200px] truncate">
-                            {txt("Post: ", "المنشور: ")} {selectedInboxItem.postTitle}
-                          </span>
-                        )}
                       </div>
 
-                      {/* Chat messages Area */}
-                      <div className="flex-1 p-6 overflow-y-auto space-y-4 max-h-[350px]">
-                        {/* User comment */}
-                        <div className="flex gap-3 max-w-[85%]">
-                          <img
-                            src={selectedInboxItem.authorAvatar}
-                            className="w-8 h-8 rounded-full object-cover border flex-shrink-0"
-                            alt=""
-                          />
-                          <div className="bg-white border border-slate-200 p-3.5 rounded-2xl rounded-tl-none shadow-sm">
-                            <p className="text-xs text-slate-800 leading-relaxed">
-                              {selectedInboxItem.message}
-                            </p>
-                            <span className="text-[9px] text-slate-400 block mt-1">
-                              {new Date(selectedInboxItem.timestamp).toLocaleString()}
-                            </span>
+                      <div className="flex-1 p-6 overflow-y-auto space-y-6 bg-slate-50/50">
+                        {/* Original message */}
+                        <div className="flex flex-col items-start max-w-[80%]">
+                          <div className="bg-white border border-slate-200 p-4 rounded-xl rounded-tl-none shadow-sm text-sm text-slate-800">
+                            {selectedInboxItem.message}
                           </div>
+                          <span className="text-[10px] text-slate-400 font-mono mt-1">
+                            {new Date(selectedInboxItem.timestamp).toLocaleString()}
+                          </span>
                         </div>
 
-                        {/* Team replies */}
-                        {selectedInboxItem.replies.map((rep, index) => (
-                          <div key={index} className="flex gap-3 justify-end max-w-[85%] ml-auto">
-                            <div className="bg-indigo-600 text-white p-3.5 rounded-2xl rounded-tr-none shadow-sm">
-                              <p className="text-xs leading-relaxed">{rep.text}</p>
-                              <span className="text-[9px] text-indigo-200 block mt-1 text-right">
-                                {new Date(rep.timestamp).toLocaleString()}
-                              </span>
+                        {/* Replies */}
+                        {selectedInboxItem.replies.map((r, i) => (
+                          <div key={i} className="flex flex-col items-end w-full">
+                            <div className="bg-indigo-600 text-white p-4 rounded-xl rounded-tr-none shadow-sm text-sm max-w-[80%]">
+                              {r.text}
                             </div>
-                            <div className="w-8 h-8 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[10px] font-black text-indigo-600 flex-shrink-0">
-                              M
-                            </div>
+                            <span className="text-[10px] text-slate-400 font-mono mt-1">
+                              {r.author} • {new Date(r.timestamp).toLocaleString()}
+                            </span>
                           </div>
                         ))}
                       </div>
 
-                      {/* Reply Editor */}
-                      <form
-                        onSubmit={handleSendInboxReply}
-                        className="p-4 bg-white border-t border-slate-200"
-                      >
-                        <div className="flex gap-2">
+                      {/* Reply Box */}
+                      <div className="p-4 border-t border-slate-200 bg-white">
+                        {smartReplies.length > 0 && (
+                          <div className="mb-3 flex flex-wrap gap-2">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-1 w-full">
+                              <Sparkles className="w-3 h-3 text-amber-500" /> Gemini Suggestions
+                            </span>
+                            {smartReplies.map((sr, i) => (
+                              <button
+                                key={i}
+                                onClick={() => setReplyText(sr)}
+                                className="text-xs px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded text-slate-800 text-left border border-slate-200"
+                              >
+                                {sr}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        <form onSubmit={handleSendInboxReply} className="flex gap-2">
                           <button
                             type="button"
                             onClick={handleSuggestReplyWithAI}
                             disabled={isSuggestingReply}
-                            className="p-2.5 border border-indigo-100 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-600 rounded-xl text-xs font-bold transition-all flex items-center gap-1 flex-shrink-0"
+                            className="px-3 bg-amber-50 hover:bg-amber-100 text-amber-600 border border-amber-200 rounded flex items-center justify-center transition-colors"
                           >
                             {isSuggestingReply ? (
-                              <span className="w-3.5 h-3.5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                              <div className="w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
                             ) : (
-                              <Sparkles className="w-4 h-4 text-indigo-600" />
+                              <Sparkles className="w-4 h-4" />
                             )}
-                            <span>{txt("AI Answer Guide", "رد ذكي")}</span>
                           </button>
                           <input
                             type="text"
                             value={replyText}
                             onChange={(e) => setReplyText(e.target.value)}
-                            placeholder={txt(
-                              "Type your team response or use AI Suggestion...",
-                              "اكتب رد الفريق هنا أو استعن بالذكاء الاصطناعي..."
-                            )}
-                            className="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-xs focus:ring-1 focus:ring-indigo-500"
+                            placeholder="Type reply or generate with AI..."
+                            className="flex-1 px-4 py-3 border border-slate-200 rounded text-sm focus:border-indigo-600 outline-none"
                           />
                           <button
                             type="submit"
-                            disabled={actionLoading || !replyText.trim()}
-                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all"
+                            disabled={actionLoading}
+                            className="px-6 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm uppercase tracking-widest rounded transition-colors"
                           >
-                            <Send className="w-3.5 h-3.5" />
-                            <span>{txt("Reply", "إرسال")}</span>
+                            Send
                           </button>
-                        </div>
-                      </form>
+                        </form>
+                      </div>
                     </>
                   ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-slate-400 py-24">
-                      <MessageSquare className="w-10 h-10 text-slate-300 mb-2 animate-bounce" />
-                      <p className="text-xs font-bold">
-                        {txt(
-                          "Select a conversation from the left to engage.",
-                          "اختر إحدى المحادثات من القائمة الجانبية للرد والتفاعل."
-                        )}
-                      </p>
+                    <div className="flex-1 flex items-center justify-center text-slate-400 font-mono text-sm uppercase tracking-widest">
+                      Select a ticket
                     </div>
                   )}
                 </div>
@@ -1629,318 +1012,152 @@ export default function SocialMedia() {
             )}
 
             {/* ========================================================
-                BRAND MENTIONS & SENTIMENT
+                ACTIVE LISTENING & SENTIMENT
                 ======================================================== */}
             {activeTab === "monitoring" && (
               <div className="space-y-6">
-                {/* Brand overview row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    {
-                      title: txt("Net Brand Sentiment Index", "مؤشر الرضا والسمعة الإيجابية"),
-                      val: "84%",
-                      bg: "bg-green-50 text-green-700 border-green-100",
-                    },
-                    {
-                      title: txt("Share of Voice (Saudi Enterprise OS)", "الحصة من الحديث الإشاري"),
-                      val: "38.5%",
-                      bg: "bg-indigo-50 text-indigo-700 border-indigo-100",
-                    },
-                    {
-                      title: txt("Active Tracked Hashtags", "الهاشتاغات النشطة الخاضعة للرصد"),
-                      val: "#مداريج_OS",
-                      bg: "bg-slate-50 text-slate-700 border-slate-100",
-                    },
-                  ].map((it, i) => (
-                    <div key={i} className={cn("border p-5 rounded-2xl shadow-sm", it.bg)}>
-                      <span className="text-[10px] font-bold uppercase tracking-wider block opacity-75">
-                        {it.title}
-                      </span>
-                      <span className="text-3xl font-black block mt-2">{it.val}</span>
-                    </div>
-                  ))}
+                <div className="bg-slate-950 rounded p-8 text-white flex flex-col md:flex-row justify-between items-center gap-6 shadow-xl">
+                  <div>
+                    <h2 className="text-2xl font-black mb-2 flex items-center gap-2">
+                      <Activity className="text-green-400 animate-pulse" /> Global Brand Stream
+                    </h2>
+                    <p className="text-slate-400 text-sm max-w-lg">
+                      Powered by Gemini 3.5 Flash. Continuously monitor open-web sources, analyze
+                      sentiment, and extract actionable competitive entities.
+                    </p>
+                  </div>
+                  <div className="flex gap-2 w-full md:w-auto">
+                    <input
+                      type="text"
+                      value={monitorKeyword}
+                      onChange={(e) => setMonitorKeyword(e.target.value)}
+                      placeholder="Keyword e.g., Madarij"
+                      className="px-4 py-3 rounded text-slate-900 font-bold focus:outline-none"
+                    />
+                    <button
+                      onClick={handleStartListening}
+                      disabled={isListening}
+                      className="bg-indigo-600 hover:bg-indigo-500 px-6 py-3 rounded font-bold uppercase tracking-widest text-sm flex items-center gap-2 whitespace-nowrap"
+                    >
+                      {isListening ? "Listening..." : "Start Engine"}
+                    </button>
+                  </div>
                 </div>
 
-                {/* Mentions Feed */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-                  <h3 className="text-sm font-extrabold text-slate-800 mb-4">
-                    {txt(
-                      "Real-Time Mentions Feed & Web Listening",
-                      "قائمة الإشارات ورصد الويب الحي"
-                    )}
-                  </h3>
-
-                  <div className="space-y-4">
-                    {monitoring.map((m) => (
-                      <div
-                        key={m.id}
-                        className="p-4 border border-slate-100 rounded-xl hover:shadow-sm transition-all bg-slate-50/30 flex justify-between items-start gap-4"
-                      >
-                        <div className="space-y-1.5 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-extrabold text-slate-900">
-                              {m.author}
-                            </span>
-                            <span className="text-[10px] bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-400">
-                              {m.source}
-                            </span>
-                            <span className="text-[10px] text-slate-400">
-                              {new Date(m.createdAt).toLocaleString()}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-700 leading-relaxed font-medium">
-                            "{m.text}"
-                          </p>
-                          <div className="flex items-center gap-4 text-[10px] text-slate-400">
-                            <span>
-                              <strong>{txt("Keyword: ", "الكلمة المفتاحية: ")}</strong>
-                              {m.keyword}
-                            </span>
-                            <span>•</span>
-                            <span>
-                              <strong>{txt("Reach impact: ", "مدى التأثير والوصول: ")}</strong>
-                              {m.reach.toLocaleString()}
-                            </span>
-                          </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {monitoring.map((m) => (
+                    <div
+                      key={m.id}
+                      className="bg-white border border-slate-200 rounded p-6 shadow-sm flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex justify-between items-start mb-4">
+                          <span className="text-[10px] font-bold font-mono text-slate-500 uppercase">
+                            {m.source}
+                          </span>
+                          <span
+                            className={cn(
+                              "px-2 py-1 text-[10px] font-bold uppercase tracking-widest rounded",
+                              m.sentiment === "Positive"
+                                ? "bg-green-100 text-green-700"
+                                : m.sentiment === "Negative"
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-slate-100 text-slate-700"
+                            )}
+                          >
+                            {m.sentiment}
+                          </span>
                         </div>
-
-                        {/* Sentiment badge */}
-                        <span
-                          className={cn(
-                            "px-2.5 py-1 text-[10px] font-black rounded-full border shadow-sm",
-                            m.sentiment === "Positive"
-                              ? "bg-green-50 border-green-200 text-green-700"
-                              : m.sentiment === "Negative"
-                                ? "bg-red-50 border-red-200 text-red-700"
-                                : "bg-slate-50 border-slate-200 text-slate-600"
-                          )}
-                        >
-                          {m.sentiment}
-                        </span>
+                        <p className="font-bold text-sm text-slate-900 mb-2">{m.author}</p>
+                        <p className="text-sm text-slate-600">{m.text}</p>
                       </div>
-                    ))}
-                  </div>
+                      <div className="mt-4 pt-4 border-t border-slate-100">
+                        {m.entities && m.entities.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {m.entities.map((e, i) => (
+                              <span
+                                key={i}
+                                className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-mono rounded"
+                              >
+                                Entity: {e}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <p className="text-[10px] font-mono text-slate-400">
+                          Reach: {m.reach.toLocaleString()} • Priority: {m.urgency}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
             {/* ========================================================
-                COMPETITOR TRACKING
+                ANALYTICS
                 ======================================================== */}
-            {activeTab === "competitors" && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Form to add */}
-                <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
-                  <div>
-                    <h3 className="text-sm font-extrabold text-slate-800 mb-1">
-                      {txt("Add Competitor Profile", "إضافة ملف تعريف لمنافس")}
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      {txt(
-                        "Madarij OS AI web crawlers periodically parse competitor social profiles to chart comparisons.",
-                        "يقوم زاحف الويب الذكي في مداريج بمسح دوري لحسابات المنافسين للمقارنة والتحليل."
-                      )}
-                    </p>
-                  </div>
-
-                  <form onSubmit={handleAddCompetitor} className="flex gap-2">
-                    <input
-                      type="text"
-                      value={newCompetitorName}
-                      onChange={(e) => setNewCompetitorName(e.target.value)}
-                      placeholder={txt("e.g. SaudiCRM Pro", "مثال: نظام إدارة محاسب كذا")}
-                      className="flex-1 px-4 py-2 border border-slate-200 rounded-xl text-xs focus:ring-1 focus:ring-indigo-500 bg-white"
-                    />
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold"
-                    >
-                      {txt("Track", "بدء الرصد")}
-                    </button>
-                  </form>
-
-                  <div className="space-y-3.5 border-t border-slate-100 pt-4">
-                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                      {txt("Actively Tracked Competitors", "المنافسون قيد التتبع حالياً")}
-                    </span>
-
-                    {competitors.map((c, i) => (
-                      <div
-                        key={i}
-                        className="flex justify-between items-center p-3.5 bg-slate-50/50 border border-slate-200 rounded-xl"
-                      >
-                        <div>
-                          <span className="text-xs font-bold text-slate-900 block">{c.name}</span>
-                          <span className="text-[10px] text-slate-400 block">
-                            {c.followers.toLocaleString()} {txt("followers", "متابع")}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-xs font-extrabold text-indigo-600 block">
-                            {c.engagement}% ER
-                          </span>
-                          <span className="text-[10px] text-slate-400 block">
-                            {c.frequency} posts/mo
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Analytical Charts */}
-                <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-6">
-                  <h3 className="text-sm font-extrabold text-slate-800 border-b border-slate-100 pb-3 flex items-center gap-1.5">
-                    <BarChart3 className="w-5 h-5 text-slate-500" />
-                    {txt(
-                      "Competitor Share of Engagement vs. Followers",
-                      "توزيع التفاعل والمتابعين للمنافسين"
-                    )}
-                  </h3>
-
-                  <div className="h-[280px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={competitors}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="name" stroke="#64748b" fontSize={11} />
-                        <YAxis stroke="#64748b" fontSize={11} />
-                        <Tooltip />
-                        <Bar
-                          dataKey="engagement"
-                          fill="#4f46e5"
-                          radius={[4, 4, 0, 0]}
-                          name={txt("Engagement Rate %", "معدل التفاعل %")}
-                        />
-                        <Bar
-                          dataKey="frequency"
-                          fill="#06b6d4"
-                          radius={[4, 4, 0, 0]}
-                          name={txt("Post Frequency /mo", "معدل النشر /شهر")}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+            {activeTab === "analytics" && (
+              <div className="bg-white border border-slate-200 rounded p-6 shadow-sm">
+                <h2 className="text-2xl font-black text-slate-900 mb-6">
+                  Cross-Channel Attribution & Growth
+                </h2>
+                <div className="h-96">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={performanceData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                      <XAxis
+                        dataKey="name"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: "#64748b" }}
+                        dy={10}
+                      />
+                      <YAxis
+                        yAxisId="left"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: "#64748b" }}
+                        dx={-10}
+                      />
+                      <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: "#64748b" }}
+                        dx={10}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: "8px",
+                          border: "none",
+                          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                        }}
+                      />
+                      <Line
+                        yAxisId="left"
+                        type="monotone"
+                        dataKey="reach"
+                        stroke="#0f172a"
+                        strokeWidth={3}
+                        dot={{ r: 4, fill: "#0f172a", strokeWidth: 2, stroke: "#fff" }}
+                        activeDot={{ r: 6 }}
+                      />
+                      <Line
+                        yAxisId="right"
+                        type="monotone"
+                        dataKey="engagement"
+                        stroke="#4f46e5"
+                        strokeWidth={3}
+                        dot={{ r: 4, fill: "#4f46e5", strokeWidth: 2, stroke: "#fff" }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
             )}
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* DETAILED POST PREVIEW MODAL */}
-      <AnimatePresence>
-        {selectedPreviewPost && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm animate-fade-in">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-6"
-            >
-              <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <CalendarIcon className="w-4 h-4 text-indigo-600" />
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    {txt("Campaign Item Details", "تفاصيل محتوى الحملة")}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setSelectedPreviewPost(null)}
-                  className="p-1 rounded-full hover:bg-slate-100 text-slate-400"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Header Profile Info */}
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-indigo-600">
-                    M
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-slate-900 block">
-                      {selectedPreviewPost.authorName}
-                    </span>
-                    <span className="text-[10px] text-slate-400 block">
-                      {txt("Scheduled Date: ", "تاريخ النشر: ")}{" "}
-                      {new Date(selectedPreviewPost.scheduledAt).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-
-                <span
-                  className={cn(
-                    "px-2.5 py-1 text-[10px] font-black rounded-full border",
-                    selectedPreviewPost.approvalStatus === "Approved"
-                      ? "bg-green-50 border-green-200 text-green-700"
-                      : "bg-amber-50 border-amber-200 text-amber-700"
-                  )}
-                >
-                  {selectedPreviewPost.approvalStatus}
-                </span>
-              </div>
-
-              {/* Platforms */}
-              <div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                  {txt("Publish Channels", "قنوات البث والنشر")}
-                </span>
-                <div className="flex gap-2">
-                  {selectedPreviewPost.platforms.map((plat) => {
-                    const Icon = platformIcons[plat];
-                    return (
-                      <span
-                        key={plat}
-                        className="flex items-center gap-1 bg-slate-50 border border-slate-200 px-2 py-1 rounded text-xs capitalize text-slate-700"
-                      >
-                        {Icon && <Icon className="w-3.5 h-3.5 text-slate-600" />}
-                        <span>{plat}</span>
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Content text */}
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-800 leading-relaxed font-medium">
-                {selectedPreviewPost.content}
-              </div>
-
-              {selectedPreviewPost.imageUrl && (
-                <div className="border rounded-lg overflow-hidden max-h-48">
-                  <img
-                    src={selectedPreviewPost.imageUrl}
-                    className="w-full h-full object-cover"
-                    alt=""
-                  />
-                </div>
-              )}
-
-              {/* Actions row */}
-              <div className="flex justify-between items-center border-t border-slate-100 pt-4">
-                <button
-                  onClick={() => handleDeletePost(selectedPreviewPost.id)}
-                  disabled={actionLoading}
-                  className="px-4 py-2 text-xs font-bold text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1.5"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>{txt("Delete / Cancel", "إلغاء وجدولة")}</span>
-                </button>
-
-                {selectedPreviewPost.approvalStatus === "Pending" && (
-                  <button
-                    onClick={() => handleApprovePost(selectedPreviewPost.id)}
-                    disabled={actionLoading}
-                    className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>{txt("Approve for Broadcast", "مواثقة واعتماد للنشر")}</span>
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          </div>
         )}
       </AnimatePresence>
     </div>

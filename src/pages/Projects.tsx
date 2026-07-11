@@ -511,7 +511,7 @@ export default function Projects() {
       {/* --- MANUAL CREATE PROJECT MODAL --- */}
       {isNewModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200 dark:border-zinc-850 p-6 w-full max-w-lg shadow-2xl space-y-4">
+          <div className="bg-white dark:bg-zinc-100 rounded-3xl border border-zinc-200 dark:border-zinc-850 p-6 w-full max-w-lg shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
               <h3 className="font-black text-sm text-zinc-900 dark:text-white">
                 {isRtl ? "تدشين مشروع جديد بالمنشأة" : "Launch Enterprise Project Plan"}
@@ -539,7 +539,7 @@ export default function Projects() {
                       ? "مثال: ميكنة واجهة محاسبة مستودع جدة"
                       : "e.g., Warehouse Accounting Sync Jeddah"
                   }
-                  className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white"
+                  className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white"
                 />
               </div>
 
@@ -557,7 +557,7 @@ export default function Projects() {
                       ? "نطاق المشروع، تفاصيل التسليمات المتوقعة والأهداف..."
                       : "Describe key milestones and expectations..."
                   }
-                  className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white resize-none"
+                  className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white resize-none"
                 />
               </div>
 
@@ -569,7 +569,7 @@ export default function Projects() {
                 <select
                   value={formData.clientId}
                   onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                  className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white"
+                  className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white"
                 >
                   <option value="">
                     -- {isRtl ? "مشروع داخلي بالمنشأة" : "Internal Corporate Project"} --
@@ -593,7 +593,7 @@ export default function Projects() {
                     type="number"
                     value={formData.budget || ""}
                     onChange={(e) => setFormData({ ...formData, budget: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white"
+                    className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white"
                   />
                 </div>
 
@@ -606,7 +606,7 @@ export default function Projects() {
                     type="date"
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white"
+                    className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white"
                   />
                 </div>
               </div>
@@ -622,7 +622,7 @@ export default function Projects() {
                     onChange={(e) =>
                       setFormData({ ...formData, billingMethod: e.target.value as any })
                     }
-                    className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white"
+                    className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white"
                   >
                     <option value="Fixed Price">{isRtl ? "سعر ثابت" : "Fixed Price"}</option>
                     <option value="Time & Materials">
@@ -639,7 +639,7 @@ export default function Projects() {
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-                    className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white"
+                    className="w-full px-3.5 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-850 rounded-xl outline-none text-zinc-800 dark:text-white"
                   >
                     <option value="High">{isRtl ? "عالي" : "High"}</option>
                     <option value="Medium">{isRtl ? "متوسط" : "Medium"}</option>

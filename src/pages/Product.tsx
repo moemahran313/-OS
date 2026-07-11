@@ -75,7 +75,7 @@ export default function Product() {
 
   return (
     <div
-      className="min-h-screen bg-zinc-950 text-white font-sans antialiased selection:bg-primary/30"
+      className="min-h-screen bg-zinc-950 text-white font-sans antialiased selection:bg-primary/30 public-dark-page"
       dir="rtl"
     >
       <Navbar />

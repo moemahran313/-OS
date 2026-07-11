@@ -63,7 +63,7 @@ import {
 import { db, auth } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
 import { useTranslation } from "react-i18next";
-import { handleFirestoreError, OperationType } from "@/src/lib/firestore-errors";
+import { handleFirestoreError, OperationType } from "@/src/lib/firestore-issues";
 
 import PayrollComplianceWidget from "@/src/components/PayrollComplianceWidget";
 import { toast } from "sonner";

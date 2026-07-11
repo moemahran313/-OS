@@ -1,7 +1,9 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/auth.js";
+import { authenticate } from "../middleware/auth.ts";
 import { GoogleGenAI } from "@google/genai";
-import { logAudit } from "../services/utils.js";
+import { logAudit } from "../services/utils.ts";
+import { prisma } from "../services/prisma.ts";
+import { db } from "../services/firebase.ts";
 
 const router = Router();
 
@@ -65,6 +67,115 @@ async function generateWithFallback(ai: any, params: any) {
       }
       throw err;
     }
+  }
+}
+
+// Helper to retrieve real transactions from Firestore DB combined with simulated data fallback
+async function getTransactionsForUser(userId: string) {
+  try {
+    const snap = await db.collection("invoices").where("userId", "==", userId).get();
+    const dbInvoices = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+
+    if (!dbInvoices || dbInvoices.length === 0) {
+      return mockTransactions;
+    }
+
+    const realTransactions = dbInvoices.map((inv: any, idx: number) => {
+      const amountBeforeVat = (inv.subtotalHalalas || 0) / 100;
+      const vatAmount = (inv.vatAmountHalalas || 0) / 100;
+      const total = (inv.totalAmountHalalas || 0) / 100;
+
+      let compliance = "valid";
+      let reason = "";
+      let details = "";
+
+      const expectedVat = Math.round(amountBeforeVat * 0.15);
+      const actualVat = Math.round(vatAmount);
+      if (Math.abs(expectedVat - actualVat) > 1) {
+        compliance = "non_compliant";
+        reason = "MathMismatch";
+        details = `حساب الضريبة غير متطابق: القيمة المسجلة ${vatAmount} ريال تختلف عن القيمة الرياضية المتوقعة ${amountBeforeVat * 0.15} ريال (15%)`;
+      }
+
+      let dateStr = "";
+      if (inv.issueDate) {
+        if (typeof inv.issueDate === "string") {
+          dateStr = inv.issueDate;
+        } else if (inv.issueDate.toDate) {
+          dateStr = inv.issueDate.toDate().toISOString().split("T")[0];
+        } else {
+          dateStr = new Date(inv.issueDate).toISOString().split("T")[0];
+        }
+      } else {
+        dateStr = new Date().toISOString().split("T")[0];
+      }
+
+      return {
+        id: `TX-${(inv.id || "").substring(0, 4).toUpperCase() || 1000 + idx}`,
+        date: dateStr,
+        description: inv.notes || `فاتورة مبيعات رقم ${inv.number} لعميل ${inv.clientName}`,
+        amountBeforeVat,
+        vatRate: 0.15,
+        vatAmount,
+        total,
+        type: "sales" as const,
+        buyerName: inv.clientName,
+        buyerVat: "310931252100003",
+        docNumber: inv.number,
+        compliance,
+        reason,
+        details,
+      };
+    });
+
+    const purchases = mockTransactions.filter((t) => t.type === "purchase");
+    return [...realTransactions, ...purchases];
+  } catch (err) {
+    console.error("Error retrieving user transactions:", err);
+    return mockTransactions;
+  }
+}
+
+async function getBankLedgerForUser(userId: string) {
+  try {
+    const snap = await db.collection("invoices").where("userId", "==", userId).get();
+    const dbInvoices = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+
+    if (!dbInvoices || dbInvoices.length === 0) {
+      return mockBankLedger;
+    }
+
+    const realBankRecords = dbInvoices.map((inv: any, idx: number) => {
+      const isPaid = inv.status === "paid" || inv.status === "partially paid";
+      let dateStr = "";
+      if (inv.issueDate) {
+        if (typeof inv.issueDate === "string") {
+          dateStr = inv.issueDate;
+        } else if (inv.issueDate.toDate) {
+          dateStr = inv.issueDate.toDate().toISOString().split("T")[0];
+        } else {
+          dateStr = new Date(inv.issueDate).toISOString().split("T")[0];
+        }
+      } else {
+        dateStr = new Date().toISOString().split("T")[0];
+      }
+      return {
+        id: `BNK-${(inv.id || "").substring(0, 3).toUpperCase() || 100 + idx}`,
+        date: dateStr,
+        description: isPaid
+          ? `حوالة واردة من ${inv.clientName} لسداد الفاتورة ${inv.number}`
+          : `حوالة معلقة من ${inv.clientName} بانتظار التحصيل`,
+        amount: (inv.paidAmountHalalas || 0) / 100,
+        hasMatchingDoc: isPaid,
+        matchingDocId: `TX-${(inv.id || "").substring(0, 4).toUpperCase()}`,
+      };
+    });
+
+    const missingReceipts = mockBankLedger.filter((b) => !b.hasMatchingDoc);
+    return [...realBankRecords, ...missingReceipts];
+  } catch (err) {
+    console.error("Error retrieving user bank ledger:", err);
+    return mockBankLedger;
   }
 }
 
@@ -315,25 +426,28 @@ router.post("/ai-query", authenticate, async (req: any, res) => {
     }
 
     // Build standard high-fidelity financial context
-    const salesCount = mockTransactions.filter((t) => t.type === "sales").length;
-    const purchasesCount = mockTransactions.filter((t) => t.type === "purchase").length;
+    const transactions = await getTransactionsForUser(req.user.id);
+    const bankLedger = await getBankLedgerForUser(req.user.id);
 
-    const salesVat = mockTransactions
+    const salesCount = transactions.filter((t) => t.type === "sales").length;
+    const purchasesCount = transactions.filter((t) => t.type === "purchase").length;
+
+    const salesVat = transactions
       .filter((t) => t.type === "sales")
       .reduce((sum, t) => sum + t.vatAmount, 0);
-    const purchasesVat = mockTransactions
+    const purchasesVat = transactions
       .filter((t) => t.type === "purchase")
       .reduce((sum, t) => sum + t.vatAmount, 0);
 
-    const salesSubtotal = mockTransactions
+    const salesSubtotal = transactions
       .filter((t) => t.type === "sales")
       .reduce((sum, t) => sum + t.amountBeforeVat, 0);
-    const purchasesSubtotal = mockTransactions
+    const purchasesSubtotal = transactions
       .filter((t) => t.type === "purchase")
       .reduce((sum, t) => sum + t.amountBeforeVat, 0);
 
     const netVatDue = salesVat - purchasesVat;
-    const nonCompliantInvoices = mockTransactions.filter((t) => t.compliance !== "valid");
+    const nonCompliantInvoices = transactions.filter((t) => t.compliance !== "valid");
 
     const systemInstruction = `
 أنت خبير مالي ذكي ومستشار ضرائب سعودي معتمد ومجاز من الهيئة العامة للزكاة والضريبة والجمارك (ZATCA) وحاصل على زمالة الهيئة السعودية للمراجعين والمحاسبين (SOCPA).
@@ -353,7 +467,7 @@ ${JSON.stringify(nonCompliantInvoices, null, 2)}
 
 قائمة المعاملات البنكية التي تفتقر لمستندات لإتمام عملية التدقيق المالي:
 ${JSON.stringify(
-  mockBankLedger.filter((b) => !b.hasMatchingDoc),
+  bankLedger.filter((b) => !b.hasMatchingDoc),
   null,
   2
 )}
@@ -406,6 +520,9 @@ router.post("/run-step", authenticate, async (req: any, res) => {
       return res.status(400).json({ error: "Missing parameters workflowId or stepId" });
     }
 
+    const transactions = await getTransactionsForUser(req.user.id);
+    const bankLedger = await getBankLedgerForUser(req.user.id);
+
     let payload: any = {};
 
     if (workflowId === "vat") {
@@ -415,15 +532,15 @@ router.post("/run-step", authenticate, async (req: any, res) => {
             message: "تم استرداد وتجهيز المعاملات المالية بنجاح من أنظمة دفتر الحسابات ERP.",
             status: "success",
             data: {
-              transactionsCount: mockTransactions.length,
-              totalAmount: mockTransactions.reduce((sum, t) => sum + t.total, 0),
-              transactions: mockTransactions,
+              transactionsCount: transactions.length,
+              totalAmount: transactions.reduce((sum, t) => sum + t.total, 0),
+              transactions: transactions,
             },
           };
           break;
         case 1: // Validate invoices
           // Find math mismatch
-          const invalidMath = mockTransactions.filter(
+          const invalidMath = transactions.filter(
             (t) => t.compliance === "non_compliant" && t.reason === "MathMismatch"
           );
           payload = {
@@ -432,16 +549,16 @@ router.post("/run-step", authenticate, async (req: any, res) => {
             findings: `تم رصد عدد (1) خطأ رياضي في حساب الضريبة.`,
             details: invalidMath.map(
               (i) =>
-                `الفاتورة رقم ${i.docNumber} للمورد "${i.supplierName}": الضريبة المسجلة ${i.vatAmount} ريال والضريبة الضرورية ${i.amountBeforeVat * 0.15} ريال.`
+                `الفاتورة رقم ${i.docNumber} للمورد "${(i as any).supplierName || (i as any).buyerName}": الضريبة المسجلة ${i.vatAmount} ريال والضريبة الضرورية ${i.amountBeforeVat * 0.15} ريال.`
             ),
             data: {
-              validatedCount: mockTransactions.length,
+              validatedCount: transactions.length,
               errorCount: invalidMath.length,
             },
           };
           break;
         case 2: // Check ZATCA compliance
-          const nonCompliant = mockTransactions.filter((t) => t.compliance === "non_compliant");
+          const nonCompliant = transactions.filter((t) => t.compliance === "non_compliant");
           payload = {
             message:
               "اكتمل تحليل الامتثال لمعايير الفوترة الإلكترونية لهيئة الزكاة والضريبة والجمارك (ZATCAPhase 2).",
@@ -449,26 +566,26 @@ router.post("/run-step", authenticate, async (req: any, res) => {
             findings: `تم رصد عدد (${nonCompliant.length}) مخالفة صارخة لمعايير الامتثال في المستندات والروابط.`,
             nonCompliantList: nonCompliant.map((c) => ({
               doc: c.docNumber,
-              entity: c.supplierName || c.buyerName,
+              entity: (c as any).supplierName || (c as any).buyerName,
               reason: c.details,
             })),
             data: {
-              compliantCount: mockTransactions.length - nonCompliant.length,
+              compliantCount: transactions.length - nonCompliant.length,
               criticalAuditFlags: nonCompliant.length,
             },
           };
           break;
         case 3: // Prepare VAT return
-          const salesVat = mockTransactions
+          const salesVat = transactions
             .filter((t) => t.type === "sales")
             .reduce((sum, t) => sum + t.vatAmount, 0);
-          const purchasesVat = mockTransactions
+          const purchasesVat = transactions
             .filter((t) => t.type === "purchase")
             .reduce((sum, t) => sum + t.vatAmount, 0);
-          const salesBefore = mockTransactions
+          const salesBefore = transactions
             .filter((t) => t.type === "sales")
             .reduce((sum, t) => sum + t.amountBeforeVat, 0);
-          const purchasesBefore = mockTransactions
+          const purchasesBefore = transactions
             .filter((t) => t.type === "purchase")
             .reduce((sum, t) => sum + t.amountBeforeVat, 0);
           payload = {
@@ -526,8 +643,8 @@ router.post("/run-step", authenticate, async (req: any, res) => {
               "تم استيراد الكشف البنكي ومستندات الفحص المحاسبي من بوابة العميل (Mudarij Client Portal).",
             status: "success",
             data: {
-              bankEntries: mockBankLedger.length,
-              scannedDocs: mockTransactions.length,
+              bankEntries: bankLedger.length,
+              scannedDocs: transactions.length,
             },
           };
           break;
@@ -545,7 +662,7 @@ router.post("/run-step", authenticate, async (req: any, res) => {
           };
           break;
         case 2: // Missing docs detection
-          const missingDocs = mockBankLedger.filter((b) => !b.hasMatchingDoc);
+          const missingDocs = bankLedger.filter((b) => !b.hasMatchingDoc);
           payload = {
             message:
               "تحليل المطابقة المستندية: كشف الفجوات بين حركة الحساب البنكي وفواتير الشراء المعززة.",
@@ -556,7 +673,7 @@ router.post("/run-step", authenticate, async (req: any, res) => {
               amount: m.amount,
             })),
             data: {
-              totalMatching: mockBankLedger.length - missingDocs.length,
+              totalMatching: bankLedger.length - missingDocs.length,
               totalMissing: missingDocs.length,
             },
           };
@@ -575,10 +692,10 @@ router.post("/run-step", authenticate, async (req: any, res) => {
           };
           break;
         case 4: // Audit package generation
-          const salesTotal = mockTransactions
+          const salesTotal = transactions
             .filter((t) => t.type === "sales")
             .reduce((sum, t) => sum + t.amountBeforeVat, 0);
-          const purchasesTotal = mockTransactions
+          const purchasesTotal = transactions
             .filter((t) => t.type === "purchase")
             .reduce((sum, t) => sum + t.amountBeforeVat, 0);
           payload = {
@@ -593,7 +710,8 @@ router.post("/run-step", authenticate, async (req: any, res) => {
                 revenue: salesTotal,
                 directCosts: purchasesTotal,
                 grossProfit: salesTotal - purchasesTotal,
-                profitMargin: (((salesTotal - purchasesTotal) / salesTotal) * 100).toFixed(1) + "%",
+                profitMargin:
+                  (((salesTotal - purchasesTotal) / (salesTotal || 1)) * 100).toFixed(1) + "%",
               },
               auditOpinion:
                 "تحفظي (Qualified Opinion) بسبب مصاريف نثرية غير مؤيدة بمستندات فواتير مبسطة",
@@ -918,6 +1036,54 @@ router.post("/suggest-workflow", authenticate, async (req: any, res) => {
   } catch (err: any) {
     console.error("Workflow Suggestion Error:", err);
     res.status(500).json({ error: "فشل استخلاص مسار العمل المقترح: " + err.message });
+  }
+});
+
+// Initial analytics metrics for Workflows visual nodes loaded from the database
+router.get("/init", authenticate, async (req: any, res) => {
+  try {
+    const transactions = await getTransactionsForUser(req.user.id);
+    const bankLedger = await getBankLedgerForUser(req.user.id);
+
+    const salesCount = transactions.filter((t) => t.type === "sales").length;
+    const purchasesCount = transactions.filter((t) => t.type === "purchase").length;
+
+    const salesVat = transactions
+      .filter((t) => t.type === "sales")
+      .reduce((sum, t) => sum + t.vatAmount, 0);
+    const purchasesVat = transactions
+      .filter((t) => t.type === "purchase")
+      .reduce((sum, t) => sum + t.vatAmount, 0);
+
+    const salesTotal = transactions
+      .filter((t) => t.type === "sales")
+      .reduce((sum, t) => sum + t.total, 0);
+    const purchasesTotal = transactions
+      .filter((t) => t.type === "purchase")
+      .reduce((sum, t) => sum + t.total, 0);
+
+    const missingDocsCount = bankLedger.filter((b) => !b.hasMatchingDoc).length;
+    const mathMismatchCount = transactions.filter(
+      (t) => t.compliance === "non_compliant" && t.reason === "MathMismatch"
+    ).length;
+
+    res.json({
+      success: true,
+      metrics: {
+        salesCount,
+        purchasesCount,
+        salesVat,
+        purchasesVat,
+        salesTotal,
+        purchasesTotal,
+        missingDocsCount,
+        mathMismatchCount,
+        totalTransactions: transactions.length,
+      },
+    });
+  } catch (err: any) {
+    console.error("Error loading workflows initialization metrics:", err);
+    res.status(500).json({ error: "فشل استيراد مقاييس تشغيل مسارات العمل" });
   }
 });
 

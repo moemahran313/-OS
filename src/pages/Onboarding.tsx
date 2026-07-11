@@ -53,7 +53,7 @@ const countries = [
 ];
 
 export default function Onboarding() {
-  const { user, refreshUser } = useUser();
+  const { user, refreshUser, updateProfile } = useUser();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -128,6 +128,12 @@ export default function Onboarding() {
       }
 
       // Sync user profile client-side
+      if (updateProfile) {
+        await updateProfile({
+          companyName: formData.name,
+          crNumber: formData.registrationNumber,
+        });
+      }
       if (refreshUser) {
         await refreshUser();
       }
@@ -227,7 +233,7 @@ export default function Onboarding() {
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         placeholder="مؤسسة مدارج للحلول الرقمية"
-                        className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3.5 text-sm font-bold focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all placeholder:text-zinc-300"
+                        className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3.5 text-sm font-bold text-zinc-900 focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all placeholder:text-zinc-300"
                       />
                       <Building2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
                     </div>
@@ -244,7 +250,7 @@ export default function Onboarding() {
                         value={formData.legalName}
                         onChange={(e) => setFormData({ ...formData, legalName: e.target.value })}
                         placeholder="شركة مدارج للحلول الرقمية المحدودة"
-                        className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3.5 text-sm font-bold focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all placeholder:text-zinc-300"
+                        className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3.5 text-sm font-bold text-zinc-900 focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all placeholder:text-zinc-300"
                       />
                       <Building2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
                     </div>
@@ -264,7 +270,7 @@ export default function Onboarding() {
                             setFormData({ ...formData, registrationNumber: e.target.value })
                           }
                           placeholder="1010123456"
-                          className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3 text-sm font-bold focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all placeholder:text-zinc-300"
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3 text-sm font-bold text-zinc-900 focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all placeholder:text-zinc-300"
                         />
                         <Hash className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                       </div>
@@ -281,7 +287,7 @@ export default function Onboarding() {
                           value={formData.taxNumber}
                           onChange={(e) => setFormData({ ...formData, taxNumber: e.target.value })}
                           placeholder="300012345600003"
-                          className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3 text-sm font-bold focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all placeholder:text-zinc-300 font-mono"
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3 text-sm font-bold text-zinc-900 focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all placeholder:text-zinc-300 font-mono"
                         />
                         <Hash className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                       </div>
@@ -295,7 +301,7 @@ export default function Onboarding() {
                       <select
                         value={formData.industry}
                         onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                        className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3.5 text-sm font-bold focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all text-zinc-700"
+                        className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3.5 text-sm font-bold focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all text-zinc-900"
                       >
                         {industries.map((ind) => (
                           <option key={ind.value} value={ind.value}>
@@ -347,7 +353,7 @@ export default function Onboarding() {
                       <select
                         value={formData.country}
                         onChange={(e) => handleCountryChange(e.target.value)}
-                        className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3.5 text-sm font-bold focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all text-zinc-700"
+                        className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3.5 text-sm font-bold focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all text-zinc-900"
                       >
                         {countries.map((c) => (
                           <option key={c.code} value={c.code}>
@@ -371,7 +377,7 @@ export default function Onboarding() {
                           onChange={(e) =>
                             setFormData({ ...formData, baseCurrency: e.target.value })
                           }
-                          className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3 text-sm font-bold focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all text-zinc-700"
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3 text-sm font-bold focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all text-zinc-900"
                         >
                           <option value="SAR">SAR — ريال سعودي</option>
                           <option value="AED">AED — درهم إماراتي</option>
@@ -394,7 +400,7 @@ export default function Onboarding() {
                         <select
                           value={formData.timezone}
                           onChange={(e) => setFormData({ ...formData, timezone: e.target.value })}
-                          className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3 text-sm font-bold focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all text-zinc-700"
+                          className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3 text-sm font-bold focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all text-zinc-900"
                         >
                           <option value="Asia/Riyadh">Riyadh (GMT+03:00)</option>
                           <option value="Asia/Dubai">Dubai (GMT+04:00)</option>
@@ -417,7 +423,7 @@ export default function Onboarding() {
                       <select
                         value={formData.language}
                         onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                        className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3.5 text-sm font-bold focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all text-zinc-700"
+                        className="w-full bg-zinc-50 border border-zinc-200 rounded-2xl px-12 py-3.5 text-sm font-bold focus:ring-2 focus:ring-zinc-950/10 outline-none hover:border-zinc-300 transition-all text-zinc-900"
                       >
                         <option value="ar">العربية (الأصلية والافتراضية)</option>
                         <option value="en">English (US)</option>

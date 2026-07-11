@@ -1,4 +1,4 @@
-import { auth } from "../services/firebase.js";
+import { auth } from "../services/firebase.ts";
 
 export const authenticate = async (req: any, res: any, next: any) => {
   const token = req.cookies.mudarij_token || req.headers.authorization?.split(" ")[1];

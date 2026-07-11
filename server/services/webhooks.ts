@@ -1,4 +1,4 @@
-import { db } from "./firebase.js";
+import { db } from "./firebase.ts";
 
 export const executeWebhooks = async (userId: string, eventType: string, payload: any) => {
   try {

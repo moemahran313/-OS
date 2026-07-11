@@ -7,7 +7,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { useSettings } from "@/src/contexts/SettingsContext";
 import { useUser } from "@/src/contexts/UserContext";
 import { db } from "@/src/lib/firebase";
-import { handleFirestoreError, OperationType } from "@/src/lib/firestore-errors";
+import { handleFirestoreError, OperationType } from "@/src/lib/firestore-issues";
 import {
   collection,
   query,
@@ -753,6 +753,7 @@ const PREDEFINED_CLAUSES = [
 
 export default function Contracts() {
   const { settings } = useSettings();
+  const isAr = settings.language === "ar";
   const { user } = useUser();
   const [employees, setEmployees] = useState<any[]>([]);
   const [dmsDocuments, setDmsDocuments] = useState<any[]>([]);
@@ -1736,7 +1737,7 @@ export default function Contracts() {
   return (
     <div
       className="flex flex-col lg:flex-row h-[calc(100vh-6rem)] overflow-hidden bg-zinc-50 font-sans"
-      dir="rtl"
+      dir={isAr ? "rtl" : "ltr"}
     >
       {/* Injected custom native scale rules for gorgeous page-accurate browser printing */}
       <style>{`

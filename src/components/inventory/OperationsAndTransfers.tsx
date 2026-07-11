@@ -418,19 +418,19 @@ export default function OperationsAndTransfers({
       <div className="flex border-b border-zinc-200 bg-zinc-50 dark:bg-zinc-800 p-1.5 rounded-2xl border gap-1">
         <button
           onClick={() => setSubTab("transfers")}
-          className={`flex-1 md:flex-none px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${subTab === "transfers" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-500 hover:bg-zinc-100"}`}
+          className={`flex-1 md:flex-none px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${subTab === "transfers" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-500 hover:bg-zinc-100"}`}
         >
           🚛 تحويل بيني مستودعي (Transfers)
         </button>
         <button
           onClick={() => setSubTab("adjustments")}
-          className={`flex-1 md:flex-none px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${subTab === "adjustments" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-500 hover:bg-zinc-100"}`}
+          className={`flex-1 md:flex-none px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${subTab === "adjustments" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-500 hover:bg-zinc-100"}`}
         >
           ⚖️ تسوية الجرد والمالية (Adjustments)
         </button>
         <button
           onClick={() => setSubTab("bom")}
-          className={`flex-1 md:flex-none px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${subTab === "bom" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-500 hover:bg-zinc-100"}`}
+          className={`flex-1 md:flex-none px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${subTab === "bom" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-500 hover:bg-zinc-100"}`}
         >
           🏭 تجميع المنتجات (BOM Assembly)
         </button>
@@ -440,7 +440,7 @@ export default function OperationsAndTransfers({
       {subTab === "transfers" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Initiate Transfer Form */}
-          <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 border-b pb-2">
               <ArrowRightLeft className="w-4 h-4 text-indigo-600" />
               طلب تحويل بيني مستودعي (New Transfer Order)
@@ -540,7 +540,7 @@ export default function OperationsAndTransfers({
           </div>
 
           {/* Transfers Activity Monitor */}
-          <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+          <div className="lg:col-span-2 bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
             <div>
               <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-4 border-b pb-2 flex items-center gap-1.5">
                 <RefreshCw className="w-4 h-4 text-emerald-600" />
@@ -627,7 +627,7 @@ export default function OperationsAndTransfers({
       {subTab === "adjustments" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Create Stock Adjustment Form */}
-          <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 border-b pb-2">
               <ClipboardList className="w-4 h-4 text-indigo-600" />
               قيد تسوية مخزنية وتصحيح الجرد (Inventory Adjustment)
@@ -676,21 +676,21 @@ export default function OperationsAndTransfers({
                 <button
                   type="button"
                   onClick={() => setAdjType("add")}
-                  className={`py-1.5 rounded-lg text-[10px] font-black transition-all ${adjType === "add" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-400"}`}
+                  className={`py-1.5 rounded-lg text-[10px] font-black transition-all ${adjType === "add" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-400"}`}
                 >
                   إضافة مخزون (+)
                 </button>
                 <button
                   type="button"
                   onClick={() => setAdjType("subtract")}
-                  className={`py-1.5 rounded-lg text-[10px] font-black transition-all ${adjType === "subtract" ? "bg-white dark:bg-zinc-900 text-red-600 shadow-sm" : "text-zinc-400"}`}
+                  className={`py-1.5 rounded-lg text-[10px] font-black transition-all ${adjType === "subtract" ? "bg-white dark:bg-zinc-100 text-red-600 shadow-sm" : "text-zinc-400"}`}
                 >
                   صرف / تصفية (-)
                 </button>
                 <button
                   type="button"
                   onClick={() => setAdjType("set")}
-                  className={`py-1.5 rounded-lg text-[10px] font-black transition-all ${adjType === "set" ? "bg-white dark:bg-zinc-900 text-amber-650 shadow-sm" : "text-zinc-400"}`}
+                  className={`py-1.5 rounded-lg text-[10px] font-black transition-all ${adjType === "set" ? "bg-white dark:bg-zinc-100 text-amber-650 shadow-sm" : "text-zinc-400"}`}
                 >
                   تعيين ثابت (=)
                 </button>
@@ -783,7 +783,7 @@ export default function OperationsAndTransfers({
           </div>
 
           {/* Audit trail of stock adjustments */}
-          <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
+          <div className="lg:col-span-2 bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-4 border-b pb-2 flex items-center gap-1.5">
               <ShieldCheck className="w-4.5 h-4.5 text-emerald-600" />
               سجل التدقيق المستندى لتسويات الجرد المعتمدة (Adjustment Audit Trail)
@@ -869,7 +869,7 @@ export default function OperationsAndTransfers({
       {subTab === "bom" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Assemble manufacturing order card */}
-          <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 border-b pb-2">
               <Layers className="w-4 h-4 text-indigo-600" />
               أمر تصنيع وتجميع فوري (Build & Assemble BOM)
@@ -953,7 +953,7 @@ export default function OperationsAndTransfers({
           </div>
 
           {/* BOM Breakdown and component checking */}
-          <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
+          <div className="lg:col-span-2 bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-4 border-b pb-2">
               هيكلية المكونات والمواد اللازمة (Bill of Materials Breakdown)
             </h3>

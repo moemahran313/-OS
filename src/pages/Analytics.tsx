@@ -40,6 +40,8 @@ import { DataAnalyticsEngine } from "@/src/services/analytics/engine";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
+import { getLandingEvents, LandingTrackEvent } from "@/src/services/landingTracker";
+import { Trash2, Globe } from "lucide-react";
 
 const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444"];
 
@@ -47,8 +49,11 @@ export default function Analytics() {
   const { user } = useUser();
   const [data, setData] = useState<AnalyticsReport | null>(null);
   const [loading, setLoading] = useState(true);
+  const [landingEvents, setLandingEvents] = useState<LandingTrackEvent[]>([]);
 
   useEffect(() => {
+    setLandingEvents(getLandingEvents());
+
     const fetchAnalytics = async () => {
       if (!user) return;
       try {
@@ -139,6 +144,82 @@ export default function Analytics() {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* 🎯 Real-Time High-Intent Lead Conversion Tracker Stream */}
+      <section
+        className="text-white rounded-[2.5rem] border border-zinc-800 p-10 shadow-2xl relative overflow-hidden"
+        style={{ backgroundColor: "#09090b" }}
+        dir="rtl"
+      >
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+          <div>
+            <div className="flex items-center gap-2 text-primary font-black text-[10px] uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping" />
+              Real-time High-Intent Engagement Stream (20% conversion pathways)
+            </div>
+            <h3 className="text-2xl font-black mt-1 text-white">
+              تحليلات التفاعل عالي الأهمية (Landing Page Conversion Drivers)
+            </h3>
+            <p className="text-zinc-400 text-xs mt-1">
+              يتم رصد هذه الأحداث مباشرة عند تفاعل الزوار مع المكونات الرئيسية لصفحة الهبوط.
+            </p>
+          </div>
+          {landingEvents.length > 0 && (
+            <button
+              onClick={() => {
+                localStorage.removeItem("mudarij_landing_events");
+                setLandingEvents([]);
+              }}
+              className="px-4 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> مسح تفاعلات الهبوط
+            </button>
+          )}
+        </div>
+
+        {landingEvents.length === 0 ? (
+          <div className="text-center py-12 border border-dashed border-zinc-800 rounded-2xl bg-zinc-900/20">
+            <Target className="w-12 h-12 text-zinc-700 mx-auto mb-3 animate-bounce" />
+            <h4 className="text-sm font-bold text-zinc-400">لا توجد تفاعلات مرصودة بعد</h4>
+            <p className="text-xs text-zinc-500 mt-1 max-w-md mx-auto">
+              تفضل بزيارة صفحة الهبوط وتفاعل مع الأزرار أو الشعارات لرؤية البيانات تنساب هنا لحظة
+              بلحظة!
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {landingEvents.map((evt) => (
+              <div
+                key={evt.id}
+                className="p-5 rounded-2xl bg-zinc-900/50 border border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900 transition-all flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <span className="text-[10px] bg-primary/10 text-primary px-3 py-1 rounded-full font-black uppercase">
+                      {evt.category}
+                    </span>
+                    <span className="text-[10px] text-zinc-500 font-bold font-mono">
+                      {new Date(evt.timestamp).toLocaleTimeString("ar-SA", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-bold text-zinc-100 leading-snug">{evt.eventName}</h4>
+                </div>
+                <div className="mt-4 pt-3 border-t border-zinc-800/50 flex items-center justify-between text-[10px] text-zinc-500">
+                  <span className="flex items-center gap-1 font-mono">
+                    <Globe className="w-3 h-3 text-zinc-600" /> GCC-KSA Region
+                  </span>
+                  <span className="text-emerald-400 font-bold">نشط ⚡</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 📊 2. KPI Tree & Unit Economics Layer */}

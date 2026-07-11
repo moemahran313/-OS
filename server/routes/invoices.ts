@@ -1,9 +1,9 @@
 import { Router } from "express";
 import puppeteer from "puppeteer";
-import { logAudit } from "../services/utils.js";
-import { authenticate } from "../middleware/auth.js";
-import { db } from "../services/firebase.js";
-import { executeWebhooks } from "../services/webhooks.js";
+import { logAudit } from "../services/utils.ts";
+import { authenticate } from "../middleware/auth.ts";
+import { db } from "../services/firebase.ts";
+import { executeWebhooks } from "../services/webhooks.ts";
 
 const router = Router();
 

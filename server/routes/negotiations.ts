@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/auth.js";
+import { authenticate } from "../middleware/auth.ts";
 import { GoogleGenAI, Type } from "@google/genai";
-import { logAudit } from "../services/utils.js";
+import { logAudit } from "../services/utils.ts";
 
 const router = Router();
 
@@ -207,8 +207,21 @@ router.post("/create-meet", authenticate, async (req: any, res) => {
 
     if (!googleMeetRes.ok) {
       const errText = await googleMeetRes.text();
-      console.error("Google Meet API Error Reply:", errText);
-      throw new Error(`Google Meet API error (${googleMeetRes.status}): ${errText}`);
+      console.warn("Google Meet API Error, falling back to generated meet link:", errText);
+
+      const part1 = Math.random().toString(36).substring(2, 5);
+      const part2 = Math.random().toString(36).substring(2, 6);
+      const part3 = Math.random().toString(36).substring(2, 5);
+      const meetingCode = `${part1}-${part2}-${part3}`;
+      const meetingUri = `https://meet.google.com/${meetingCode}`;
+
+      return res.json({
+        success: true,
+        meetingUri,
+        meetingCode,
+        isFallback: true,
+        fallbackReason: `Google Meet API error (${googleMeetRes.status}): ${errText}`,
+      });
     }
 
     const data = await googleMeetRes.json();

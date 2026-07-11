@@ -868,9 +868,9 @@ export default function Support() {
   const SLAColors = ["#10B981", "#3B82F6", "#F59E0B", "#EF4444"];
 
   return (
-    <div className="flex flex-col h-full bg-zinc-50 dark:bg-zinc-950 font-sans" dir="rtl">
+    <div className="flex flex-col h-full bg-zinc-50 dark:bg-zinc-100 font-sans" dir="rtl">
       {/* Platform Header */}
-      <div className="flex flex-col md:flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-4 gap-4">
+      <div className="flex flex-col md:flex-row items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-100 px-6 py-4 gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg">
             <LifeBuoy className="w-6 h-6 animate-pulse" />
@@ -895,7 +895,7 @@ export default function Support() {
             className={cn(
               "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
               activeTab === "workspace"
-                ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-sm"
+                ? "bg-white dark:bg-zinc-100 text-zinc-900 dark:text-white shadow-sm"
                 : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/50"
             )}
           >
@@ -907,7 +907,7 @@ export default function Support() {
             className={cn(
               "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
               activeTab === "omnichannel"
-                ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-sm"
+                ? "bg-white dark:bg-zinc-100 text-zinc-900 dark:text-white shadow-sm"
                 : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/50"
             )}
           >
@@ -919,7 +919,7 @@ export default function Support() {
             className={cn(
               "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
               activeTab === "portal"
-                ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-sm"
+                ? "bg-white dark:bg-zinc-100 text-zinc-900 dark:text-white shadow-sm"
                 : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/50"
             )}
           >
@@ -931,7 +931,7 @@ export default function Support() {
             className={cn(
               "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
               activeTab === "kb"
-                ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-sm"
+                ? "bg-white dark:bg-zinc-100 text-zinc-900 dark:text-white shadow-sm"
                 : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/50"
             )}
           >
@@ -943,7 +943,7 @@ export default function Support() {
             className={cn(
               "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
               activeTab === "analytics"
-                ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-sm"
+                ? "bg-white dark:bg-zinc-100 text-zinc-900 dark:text-white shadow-sm"
                 : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/50"
             )}
           >
@@ -955,7 +955,7 @@ export default function Support() {
             className={cn(
               "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
               activeTab === "automations"
-                ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white shadow-sm"
+                ? "bg-white dark:bg-zinc-100 text-zinc-900 dark:text-white shadow-sm"
                 : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200/50"
             )}
           >
@@ -966,7 +966,7 @@ export default function Support() {
       </div>
 
       {/* Shortcuts Help Panel bar */}
-      <div className="bg-zinc-100 dark:bg-zinc-900/60 border-b border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-500 dark:text-zinc-400 px-6 py-1.5 flex items-center justify-between">
+      <div className="bg-zinc-100 dark:bg-zinc-100/60 border-b border-zinc-200 dark:border-zinc-800 text-[11px] text-zinc-500 dark:text-zinc-400 px-6 py-1.5 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="font-semibold text-zinc-700 dark:text-zinc-300">
             💡 اختصارات لوحة المفاتيح المفعلة:
@@ -1016,7 +1016,7 @@ export default function Support() {
               {activeTab === "workspace" && (
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full overflow-hidden">
                   {/* Left Column: Tickets List */}
-                  <div className="lg:col-span-1 flex flex-col bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden h-full">
+                  <div className="lg:col-span-1 flex flex-col bg-white dark:bg-zinc-100 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden h-full">
                     {/* Header + Search */}
                     <div className="p-4 border-b border-zinc-150 dark:border-zinc-800 space-y-3">
                       <div className="flex items-center justify-between">
@@ -1039,7 +1039,7 @@ export default function Support() {
                           value={ticketSearch}
                           onChange={(e) => setTicketSearch(e.target.value)}
                           placeholder="ابحث بالرقم، العميل، التصنيف..."
-                          className="w-full pl-3 pr-8 py-1.5 text-xs bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          className="w-full pl-3 pr-8 py-1.5 text-xs bg-zinc-50 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
                         />
                       </div>
 
@@ -1048,7 +1048,7 @@ export default function Support() {
                         <select
                           value={statusFilter}
                           onChange={(e) => setStatusFilter(e.target.value)}
-                          className="flex-1 py-1 px-1.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded focus:outline-none"
+                          className="flex-1 py-1 px-1.5 bg-zinc-50 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded focus:outline-none"
                         >
                           <option value="all">كل الحالات</option>
                           <option value="open">مفتوحة</option>
@@ -1059,7 +1059,7 @@ export default function Support() {
                         <select
                           value={priorityFilter}
                           onChange={(e) => setPriorityFilter(e.target.value)}
-                          className="flex-1 py-1 px-1.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded focus:outline-none"
+                          className="flex-1 py-1 px-1.5 bg-zinc-50 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded focus:outline-none"
                         >
                           <option value="all">كل الأولويات</option>
                           <option value="low">منخفضة</option>
@@ -1155,11 +1155,11 @@ export default function Support() {
                   </div>
 
                   {/* Middle Column: Active Conversation (Split View) */}
-                  <div className="lg:col-span-2 flex flex-col bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden h-full">
+                  <div className="lg:col-span-2 flex flex-col bg-white dark:bg-zinc-100 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden h-full">
                     {activeTicket ? (
                       <div className="flex flex-col h-full overflow-hidden">
                         {/* Conversation Header */}
-                        <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 flex items-center justify-between">
+                        <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-100/60 flex items-center justify-between">
                           <div className="flex items-center gap-2.5">
                             <div className="p-1.5 bg-zinc-100 dark:bg-zinc-800 rounded">
                               <span className="font-mono text-xs font-extrabold text-zinc-600 dark:text-zinc-400">
@@ -1196,7 +1196,7 @@ export default function Support() {
                               onChange={(e) =>
                                 handleUpdateTicketStatus(activeTicket.id, e.target.value as any)
                               }
-                              className="text-xs bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-1.5 text-zinc-700 dark:text-zinc-300"
+                              className="text-xs bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-lg p-1.5 text-zinc-700 dark:text-zinc-300"
                             >
                               <option value="open">مفتوحة</option>
                               <option value="pending">قيد الانتظار</option>
@@ -1228,7 +1228,7 @@ export default function Support() {
                         )}
 
                         {/* Scrollable messages history */}
-                        <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-zinc-50/40 dark:bg-zinc-950/10">
+                        <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-zinc-50/40 dark:bg-zinc-100/10">
                           {activeTicket.messages.map((m, idx) => {
                             const isCustomer = m.sender === "customer";
                             const isSystem = m.sender === "system";
@@ -1278,7 +1278,7 @@ export default function Support() {
                                     className={cn(
                                       "p-3 rounded-2xl text-xs leading-relaxed",
                                       isCustomer
-                                        ? "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-tr-none"
+                                        ? "bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-tr-none"
                                         : isBot
                                           ? "bg-indigo-50/70 dark:bg-indigo-900/20 text-indigo-900 dark:text-indigo-400 border border-indigo-150 dark:border-indigo-900/30 rounded-tl-none"
                                           : "bg-zinc-900 text-white dark:bg-zinc-850 dark:text-zinc-100 rounded-tl-none"
@@ -1319,14 +1319,14 @@ export default function Support() {
                                 </button>
                               </div>
                             </div>
-                            <p className="text-xs text-zinc-600 dark:text-zinc-350 bg-white dark:bg-zinc-900 p-2 border rounded-lg whitespace-pre-wrap leading-relaxed">
+                            <p className="text-xs text-zinc-600 dark:text-zinc-350 bg-white dark:bg-zinc-100 p-2 border rounded-lg whitespace-pre-wrap leading-relaxed">
                               {aiDraftedReplyText}
                             </p>
                           </div>
                         )}
 
                         {/* Reply Input Area */}
-                        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3">
+                        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-100 space-y-3">
                           {/* Toggle Options */}
                           <div className="flex items-center justify-between text-xs text-zinc-500">
                             <div className="flex items-center gap-4">
@@ -1393,7 +1393,7 @@ export default function Support() {
                                   : "اكتب ردك للعميل والحل التقني المقترح..."
                               }
                               className={cn(
-                                "flex-1 px-3 py-2 text-xs border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-zinc-50 dark:bg-zinc-950",
+                                "flex-1 px-3 py-2 text-xs border rounded-xl focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-zinc-50 dark:bg-zinc-100",
                                 isInternalNote
                                   ? "border-amber-200/60 focus:ring-amber-500"
                                   : "border-zinc-200 dark:border-zinc-850"
@@ -1427,7 +1427,7 @@ export default function Support() {
                   </div>
 
                   {/* Right Column: CRM Sidebar Integration & Asset Linking */}
-                  <div className="lg:col-span-1 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-y-auto h-full p-4 space-y-4 text-right">
+                  <div className="lg:col-span-1 bg-white dark:bg-zinc-100 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-y-auto h-full p-4 space-y-4 text-right">
                     <div className="border-b pb-2">
                       <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5 justify-end">
                         <UserCheck className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
@@ -1438,7 +1438,7 @@ export default function Support() {
                     {activeTicket ? (
                       <div className="space-y-4">
                         {/* Customer Metadata */}
-                        <div className="bg-zinc-50 dark:bg-zinc-950/40 p-3 rounded-xl space-y-2 border">
+                        <div className="bg-zinc-50 dark:bg-zinc-100/40 p-3 rounded-xl space-y-2 border">
                           <span className="text-[10px] font-extrabold text-zinc-400 uppercase">
                             بيانات العميل
                           </span>
@@ -1459,7 +1459,7 @@ export default function Support() {
                         </div>
 
                         {/* CRM Linking Actions */}
-                        <div className="bg-zinc-50 dark:bg-zinc-950/40 p-3 rounded-xl space-y-3 border">
+                        <div className="bg-zinc-50 dark:bg-zinc-100/40 p-3 rounded-xl space-y-3 border">
                           <span className="text-[10px] font-extrabold text-zinc-400 uppercase">
                             إجراءات الأتمتة السريعة
                           </span>
@@ -1467,7 +1467,7 @@ export default function Support() {
                           <div className="space-y-2">
                             <button
                               onClick={handleConvertToTask}
-                              className="w-full text-right flex items-center justify-between text-xs p-2 bg-white dark:bg-zinc-900 border rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/50"
+                              className="w-full text-right flex items-center justify-between text-xs p-2 bg-white dark:bg-zinc-100 border rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/50"
                             >
                               <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded font-bold">
                                 مهمة
@@ -1477,7 +1477,7 @@ export default function Support() {
 
                             <button
                               onClick={handleApproveRefund}
-                              className="w-full text-right flex items-center justify-between text-xs p-2 bg-white dark:bg-zinc-900 border rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/50"
+                              className="w-full text-right flex items-center justify-between text-xs p-2 bg-white dark:bg-zinc-100 border rounded-lg text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100/50"
                             >
                               <span className="text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded font-bold">
                                 صرف مالي
@@ -1488,7 +1488,7 @@ export default function Support() {
                         </div>
 
                         {/* Project / Assets Linking Display */}
-                        <div className="bg-zinc-50 dark:bg-zinc-950/40 p-3 rounded-xl space-y-2.5 border text-xs">
+                        <div className="bg-zinc-50 dark:bg-zinc-100/40 p-3 rounded-xl space-y-2.5 border text-xs">
                           <span className="text-[10px] font-extrabold text-zinc-400 uppercase block">
                             الأصول المرتبطة
                           </span>
@@ -1555,7 +1555,7 @@ export default function Support() {
               {activeTab === "omnichannel" && (
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full overflow-hidden">
                   {/* Channels selector sidebar */}
-                  <div className="lg:col-span-1 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-4">
+                  <div className="lg:col-span-1 bg-white dark:bg-zinc-100 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-4">
                     <h3 className="text-xs font-extrabold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-right">
                       صناديق البريد المتكامل
                     </h3>
@@ -1657,8 +1657,8 @@ export default function Support() {
                   </div>
 
                   {/* Active Omnichannel Stream simulator */}
-                  <div className="lg:col-span-3 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 flex flex-col h-full overflow-hidden">
-                    <div className="p-4 border-b bg-zinc-50 dark:bg-zinc-900/40 flex items-center justify-between">
+                  <div className="lg:col-span-3 bg-white dark:bg-zinc-100 rounded-xl border border-zinc-200 dark:border-zinc-800 flex flex-col h-full overflow-hidden">
+                    <div className="p-4 border-b bg-zinc-50 dark:bg-zinc-100/40 flex items-center justify-between">
                       <div className="text-right">
                         <h3 className="text-xs font-bold text-zinc-900 dark:text-white">
                           محاكي المحادثات المتعددة
@@ -1676,7 +1676,7 @@ export default function Support() {
                       </span>
                     </div>
 
-                    <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-zinc-50/30 dark:bg-zinc-950/10">
+                    <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-zinc-50/30 dark:bg-zinc-100/10">
                       <div className="flex justify-center text-[10px] text-zinc-400">
                         تحديثات متزامنة في الوقت الفعلي
                       </div>
@@ -1684,7 +1684,7 @@ export default function Support() {
                       {activeChannel === "chat" && (
                         <>
                           <div className="flex gap-2 max-w-[80%] mr-0 ml-auto flex-row">
-                            <div className="p-3 bg-white dark:bg-zinc-900 border rounded-2xl rounded-tr-none text-xs text-right">
+                            <div className="p-3 bg-white dark:bg-zinc-100 border rounded-2xl rounded-tr-none text-xs text-right">
                               مرحباً، أواجه صعوبة في العثور على القيود السنوية للإقفال، هل من دليل
                               سريع؟
                             </div>
@@ -1706,7 +1706,7 @@ export default function Support() {
                       {activeChannel === "whatsapp" && (
                         <>
                           <div className="flex gap-2 max-w-[80%] mr-0 ml-auto flex-row">
-                            <div className="p-3 bg-white dark:bg-zinc-900 border rounded-2xl rounded-tr-none text-xs text-right">
+                            <div className="p-3 bg-white dark:bg-zinc-100 border rounded-2xl rounded-tr-none text-xs text-right">
                               أهلاً، هل يمكنني طلب استرجاع مبلغ الفاتورة التكرارية؟ تم سحبها مرتين
                               بالخطأ.
                             </div>
@@ -1734,11 +1734,11 @@ export default function Support() {
                       )}
                     </div>
 
-                    <div className="p-4 border-t bg-white dark:bg-zinc-900 flex gap-2">
+                    <div className="p-4 border-t bg-white dark:bg-zinc-100 flex gap-2">
                       <input
                         type="text"
                         placeholder="أرسل رداً تجريبياً سريعاً على هذه القناة..."
-                        className="flex-1 px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
+                        className="flex-1 px-3 py-2 text-xs border border-zinc-200 dark:border-zinc-800 rounded-xl bg-zinc-50 dark:bg-zinc-100 focus:outline-none"
                       />
                       <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-xs font-bold rounded-xl transition-all shadow-xs">
                         إرسال القناة
@@ -1750,7 +1750,7 @@ export default function Support() {
 
               {/* ------------------ TAB 3: CUSTOMER PORTAL SIMULATOR ------------------ */}
               {activeTab === "portal" && (
-                <div className="bg-zinc-100 dark:bg-zinc-950 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden h-full flex flex-col text-right">
+                <div className="bg-zinc-100 dark:bg-zinc-100 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden h-full flex flex-col text-right">
                   {/* Portal Bar */}
                   <div className="bg-zinc-900 text-white p-4 flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -1799,7 +1799,7 @@ export default function Support() {
                   </div>
 
                   {/* Portal body */}
-                  <div className="flex-1 overflow-y-auto p-6 bg-white dark:bg-zinc-900">
+                  <div className="flex-1 overflow-y-auto p-6 bg-white dark:bg-zinc-100">
                     {portalView === "home" && (
                       <div className="space-y-6">
                         <div className="text-center max-w-xl mx-auto space-y-2.5 py-4">
@@ -1818,7 +1818,7 @@ export default function Support() {
                               value={portalSearch}
                               onChange={(e) => setPortalSearch(e.target.value)}
                               placeholder="كيف يمكننا مساعدتك اليوم؟ ابحث عن مقالات الدعم والمساعدة..."
-                              className="w-full pl-3 pr-10 py-2 text-xs bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none"
+                              className="w-full pl-3 pr-10 py-2 text-xs bg-zinc-50 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none"
                             />
                           </div>
                         </div>
@@ -2025,7 +2025,7 @@ export default function Support() {
 
                   {/* Active Portal Chat Window popup */}
                   {portalChatOpen && (
-                    <div className="absolute bottom-20 left-6 w-80 bg-white border dark:bg-zinc-900 dark:border-zinc-800 rounded-2xl shadow-2xl flex flex-col h-[400px] z-30 text-right overflow-hidden border-indigo-200">
+                    <div className="absolute bottom-20 left-6 w-80 bg-white border dark:bg-zinc-100 dark:border-zinc-800 rounded-2xl shadow-2xl flex flex-col h-[400px] z-30 text-right overflow-hidden border-indigo-200">
                       <div className="bg-indigo-600 text-white p-3 flex items-center justify-between">
                         <span className="text-xs font-bold">
                           مساعد مدارج الذكي (AI Support Bot)
@@ -2093,7 +2093,7 @@ export default function Support() {
               {activeTab === "kb" && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full overflow-hidden">
                   {/* Left Column: Manage articles */}
-                  <div className="lg:col-span-1 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-4 flex flex-col h-full">
+                  <div className="lg:col-span-1 bg-white dark:bg-zinc-100 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 space-y-4 flex flex-col h-full">
                     <div className="flex items-center justify-between border-b pb-2">
                       <button
                         onClick={() => setShowNewArticleModal(true)}
@@ -2116,7 +2116,7 @@ export default function Support() {
                         kbArticles.map((art) => (
                           <div
                             key={art.id}
-                            className="p-3 bg-zinc-50 dark:bg-zinc-950/40 rounded-xl border text-right space-y-2 relative"
+                            className="p-3 bg-zinc-50 dark:bg-zinc-100/40 rounded-xl border text-right space-y-2 relative"
                           >
                             <div className="flex items-center justify-between">
                               <button
@@ -2149,7 +2149,7 @@ export default function Support() {
                   </div>
 
                   {/* Right Column: AI Knowledge Base Writer helper */}
-                  <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 space-y-4 h-full overflow-y-auto text-right">
+                  <div className="lg:col-span-2 bg-white dark:bg-zinc-100 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6 space-y-4 h-full overflow-y-auto text-right">
                     <div className="flex items-center gap-2 justify-end text-zinc-800 dark:text-zinc-200 border-b pb-2">
                       <span className="text-xs font-bold">
                         توليد وثيقة معرفية بالذكاء الاصطناعي (AI Document Generator)
@@ -2168,7 +2168,7 @@ export default function Support() {
                             onChange={(e) =>
                               setNewArticleData((prev) => ({ ...prev, category: e.target.value }))
                             }
-                            className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
+                            className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-100 focus:outline-none"
                           >
                             <option value="الربط الفني">الربط الفني والزكاة</option>
                             <option value="المحاسبة والمالية">المحاسبة والمالية</option>
@@ -2188,7 +2188,7 @@ export default function Support() {
                               setNewArticleData((prev) => ({ ...prev, title: e.target.value }))
                             }
                             placeholder="مثال: كيفية إدخال أصول المنشأة السنوية..."
-                            className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
+                            className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-100 focus:outline-none"
                           />
                         </div>
                       </div>
@@ -2215,7 +2215,7 @@ export default function Support() {
                             onChange={(e) =>
                               setNewArticleData((prev) => ({ ...prev, content: e.target.value }))
                             }
-                            className="w-full p-4 text-xs font-mono border rounded-xl bg-zinc-50 dark:bg-zinc-950 focus:outline-none leading-relaxed"
+                            className="w-full p-4 text-xs font-mono border rounded-xl bg-zinc-50 dark:bg-zinc-100 focus:outline-none leading-relaxed"
                           />
                           <div className="flex gap-2 justify-end">
                             <button
@@ -2245,7 +2245,7 @@ export default function Support() {
                 <div className="space-y-6 h-full overflow-y-auto pb-8">
                   {/* KPI overview row */}
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    <div className="p-4 bg-white dark:bg-zinc-900 border rounded-xl text-right">
+                    <div className="p-4 bg-white dark:bg-zinc-100 border rounded-xl text-right">
                       <span className="text-[10px] text-zinc-400 font-extrabold uppercase">
                         إجمالي تذاكر الدعم
                       </span>
@@ -2254,14 +2254,14 @@ export default function Support() {
                       </h3>
                     </div>
 
-                    <div className="p-4 bg-white dark:bg-zinc-900 border rounded-xl text-right">
+                    <div className="p-4 bg-white dark:bg-zinc-100 border rounded-xl text-right">
                       <span className="text-[10px] text-zinc-400 font-extrabold uppercase">
                         تذاكر مفتوحة حالياً
                       </span>
                       <h3 className="text-xl font-bold text-green-600 mt-1">{openTicketsCount}</h3>
                     </div>
 
-                    <div className="p-4 bg-white dark:bg-zinc-900 border rounded-xl text-right">
+                    <div className="p-4 bg-white dark:bg-zinc-100 border rounded-xl text-right">
                       <span className="text-[10px] text-zinc-400 font-extrabold uppercase">
                         تذاكر قيد المعالجة
                       </span>
@@ -2270,14 +2270,14 @@ export default function Support() {
                       </h3>
                     </div>
 
-                    <div className="p-4 bg-white dark:bg-zinc-900 border rounded-xl text-right">
+                    <div className="p-4 bg-white dark:bg-zinc-100 border rounded-xl text-right">
                       <span className="text-[10px] text-zinc-400 font-extrabold uppercase">
                         نسبة التزام SLAs
                       </span>
                       <h3 className="text-xl font-bold text-indigo-600 mt-1">{slaCompliance}%</h3>
                     </div>
 
-                    <div className="p-4 bg-white dark:bg-zinc-900 border rounded-xl text-right">
+                    <div className="p-4 bg-white dark:bg-zinc-100 border rounded-xl text-right">
                       <span className="text-[10px] text-zinc-400 font-extrabold uppercase">
                         تذاكر محلولة تلقائياً بالـ Bot
                       </span>
@@ -2288,7 +2288,7 @@ export default function Support() {
                   {/* Charts Grid */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* SLA compliance bar */}
-                    <div className="p-5 bg-white dark:bg-zinc-900 border rounded-xl space-y-3">
+                    <div className="p-5 bg-white dark:bg-zinc-100 border rounded-xl space-y-3">
                       <h3 className="text-xs font-bold text-zinc-800 dark:text-zinc-200 text-right">
                         توزيع التذاكر حسب الأولوية ومستوى الاستجابة
                       </h3>
@@ -2333,7 +2333,7 @@ export default function Support() {
                     </div>
 
                     {/* Customer Satisfaction Pie */}
-                    <div className="p-5 bg-white dark:bg-zinc-900 border rounded-xl space-y-3">
+                    <div className="p-5 bg-white dark:bg-zinc-100 border rounded-xl space-y-3">
                       <h3 className="text-xs font-bold text-zinc-800 dark:text-zinc-200 text-right">
                         مؤشرات رضا العملاء وتنبؤات CSAT
                       </h3>
@@ -2372,7 +2372,7 @@ export default function Support() {
               {/* ------------------ TAB 6: SLA & ESCALATION RULES (AUTOMATION CONTROL CENTER) ------------------ */}
               {activeTab === "automations" && (
                 <div className="space-y-6 h-full overflow-y-auto pb-8 text-right">
-                  <div className="p-5 bg-white dark:bg-zinc-900 border rounded-xl space-y-4">
+                  <div className="p-5 bg-white dark:bg-zinc-100 border rounded-xl space-y-4">
                     <div>
                       <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
                         محرك قواعد التشغيل والأتمتة (Workflows & SLAs Engine)
@@ -2464,9 +2464,9 @@ export default function Support() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-zinc-900 border dark:border-zinc-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl text-right flex flex-col max-h-[90vh]"
+            className="bg-white dark:bg-zinc-100 border dark:border-zinc-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl text-right flex flex-col max-h-[90vh]"
           >
-            <div className="p-4 border-b flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/60">
+            <div className="p-4 border-b flex items-center justify-between bg-zinc-50 dark:bg-zinc-100/60">
               <h3 className="text-sm font-bold text-zinc-900 dark:text-white">
                 إنشاء تذكرة دعم فني جديدة
               </h3>
@@ -2491,7 +2491,7 @@ export default function Support() {
                       setNewTicketData((prev) => ({ ...prev, customerName: e.target.value }))
                     }
                     placeholder="سليمان الأحمد..."
-                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
+                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-100 focus:outline-none"
                   />
                 </div>
 
@@ -2506,7 +2506,7 @@ export default function Support() {
                       setNewTicketData((prev) => ({ ...prev, customerEmail: e.target.value }))
                     }
                     placeholder="customer@domain.com"
-                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
+                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-100 focus:outline-none"
                   />
                 </div>
               </div>
@@ -2523,7 +2523,7 @@ export default function Support() {
                       setNewTicketData((prev) => ({ ...prev, companyName: e.target.value }))
                     }
                     placeholder="مؤسسة التقنية للتوريد..."
-                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
+                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-100 focus:outline-none"
                   />
                 </div>
 
@@ -2538,7 +2538,7 @@ export default function Support() {
                       setNewTicketData((prev) => ({ ...prev, contactPhone: e.target.value }))
                     }
                     placeholder="050XXXXXXXX"
-                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
+                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-100 focus:outline-none"
                   />
                 </div>
               </div>
@@ -2553,7 +2553,7 @@ export default function Support() {
                     onChange={(e) =>
                       setNewTicketData((prev) => ({ ...prev, priority: e.target.value as any }))
                     }
-                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
+                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-100 focus:outline-none"
                   >
                     <option value="low">منخفضة</option>
                     <option value="medium">متوسطة</option>
@@ -2571,7 +2571,7 @@ export default function Support() {
                     onChange={(e) =>
                       setNewTicketData((prev) => ({ ...prev, category: e.target.value }))
                     }
-                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
+                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-100 focus:outline-none"
                   >
                     <option value="Technical Support">مشكلة فنية أو برمجية</option>
                     <option value="Billing">الفوترة والاشتراكات</option>
@@ -2589,7 +2589,7 @@ export default function Support() {
                     onChange={(e) =>
                       setNewTicketData((prev) => ({ ...prev, department: e.target.value }))
                     }
-                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
+                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-100 focus:outline-none"
                   >
                     <option value="IT Support">قسم الدعم الفني والبرمجي</option>
                     <option value="Finance">قسم المالية والفوترة</option>
@@ -2608,7 +2608,7 @@ export default function Support() {
                     onChange={(e) =>
                       setNewTicketData((prev) => ({ ...prev, linkedProject: e.target.value }))
                     }
-                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
+                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-100 focus:outline-none"
                   >
                     <option value="">-- اختر مشروعاً لربطه تلقائياً --</option>
                     {availableProjects.map((p) => (
@@ -2629,7 +2629,7 @@ export default function Support() {
                     onChange={(e) =>
                       setNewTicketData((prev) => ({ ...prev, linkedInvoice: e.target.value }))
                     }
-                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
+                    className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-100 focus:outline-none"
                   >
                     <option value="">-- اختر فاتورة لربطها --</option>
                     {availableInvoices.map((inv) => (
@@ -2651,12 +2651,12 @@ export default function Support() {
                   value={newTicketData.text}
                   onChange={(e) => setNewTicketData((prev) => ({ ...prev, text: e.target.value }))}
                   placeholder="يرجى توضيح المشكلة بالتفصيل والرسائل التقنية الظاهرة..."
-                  className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-950 focus:outline-none"
+                  className="w-full px-3 py-2 text-xs border rounded-lg bg-zinc-50 dark:bg-zinc-100 focus:outline-none"
                 />
               </div>
             </div>
 
-            <div className="p-4 border-t bg-zinc-50 dark:bg-zinc-900/60 flex gap-2 justify-end">
+            <div className="p-4 border-t bg-zinc-50 dark:bg-zinc-100/60 flex gap-2 justify-end">
               <button
                 onClick={() => setShowNewTicketModal(false)}
                 className="px-4 py-2 border rounded-lg text-xs font-bold hover:bg-zinc-100 transition"
@@ -2680,7 +2680,7 @@ export default function Support() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
           dir="rtl"
         >
-          <div className="bg-white dark:bg-zinc-900 border dark:border-zinc-800 rounded-2xl w-full max-w-sm p-6 text-right space-y-4 shadow-2xl">
+          <div className="bg-white dark:bg-zinc-100 border dark:border-zinc-800 rounded-2xl w-full max-w-sm p-6 text-right space-y-4 shadow-2xl">
             <h3 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2 justify-end">
               دليل اختصارات لوحة المفاتيح
               <Zap className="w-4 h-4 text-indigo-500 animate-bounce" />

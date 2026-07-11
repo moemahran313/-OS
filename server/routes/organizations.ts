@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/auth.js";
-import { logAudit } from "../services/utils.js";
-import { db } from "../services/firebase.js";
+import { authenticate } from "../middleware/auth.ts";
+import { logAudit } from "../services/utils.ts";
+import { db } from "../services/firebase.ts";
 
 const router = Router();
 
@@ -151,12 +151,16 @@ const getActiveContext = async (userId: string) => {
     userData.activeOrganizationId = orgId;
     userData.activeCompanyId = companyId;
     userData.activeBranchId = branchId;
+    userData.companyName = "منظمة مدارج التجريبية";
+    userData.crNumber = "1010123456";
 
     await userRef.update({
       organizations: userData.organizations,
       activeOrganizationId: userData.activeOrganizationId,
       activeCompanyId: userData.activeCompanyId,
       activeBranchId: userData.activeBranchId,
+      companyName: "منظمة مدارج التجريبية",
+      crNumber: "1010123456",
     });
   }
 
@@ -328,6 +332,8 @@ router.post("/", authenticate, async (req: any, res) => {
         activeOrganizationId: orgId,
         activeCompanyId: companyId,
         activeBranchId: branchId,
+        companyName: name,
+        crNumber: registrationNumber || "",
       },
       { merge: true }
     );

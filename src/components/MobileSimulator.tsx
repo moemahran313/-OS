@@ -755,7 +755,7 @@ export default function MobileSimulator() {
                     {selectedChatId === null ? (
                       <>
                         {/* AI Smart Follow-up Suggestions Block */}
-                        <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-850 rounded-2xl p-3 space-y-2.5">
+                        <div className="bg-zinc-50 dark:bg-zinc-100/40 border border-zinc-200 dark:border-zinc-850 rounded-2xl p-3 space-y-2.5">
                           <div className="flex items-center gap-2 border-b border-zinc-150 dark:border-zinc-800 pb-1.5">
                             <Zap className="w-4 h-4 text-amber-500 animate-pulse" />
                             <div className="text-right flex-1">
@@ -838,7 +838,7 @@ export default function MobileSimulator() {
                                 return (
                                   <div
                                     key={`followup-${chat.id}`}
-                                    className="bg-white dark:bg-zinc-950 p-2.5 rounded-xl border border-zinc-150 dark:border-zinc-800 space-y-2 text-right rtl:text-right ltr:text-left transition-all hover:border-indigo-400"
+                                    className="bg-white dark:bg-zinc-100 p-2.5 rounded-xl border border-zinc-150 dark:border-zinc-800 space-y-2 text-right rtl:text-right ltr:text-left transition-all hover:border-indigo-400"
                                   >
                                     {/* Card Header */}
                                     <div className="flex items-center justify-between gap-1">
@@ -883,7 +883,7 @@ export default function MobileSimulator() {
                                     </div>
 
                                     {/* Suggested Message Preview */}
-                                    <div className="bg-zinc-50 dark:bg-zinc-900 p-2 rounded-lg border border-zinc-100 dark:border-zinc-850">
+                                    <div className="bg-zinc-50 dark:bg-zinc-100 p-2 rounded-lg border border-zinc-100 dark:border-zinc-850">
                                       <p className="text-[8px] text-zinc-600 dark:text-zinc-300 italic leading-relaxed whitespace-pre-wrap">
                                         "{suggestedText}"
                                       </p>
@@ -977,7 +977,7 @@ export default function MobileSimulator() {
                             <div
                               key={chat.id}
                               onClick={() => setSelectedChatId(chat.id)}
-                              className="bg-white dark:bg-zinc-950 p-3 rounded-xl border border-zinc-100 dark:border-zinc-850 hover:border-zinc-300 transition-all cursor-pointer flex items-center justify-between gap-2 shadow-xs group"
+                              className="bg-white dark:bg-zinc-100 p-3 rounded-xl border border-zinc-100 dark:border-zinc-850 hover:border-zinc-300 transition-all cursor-pointer flex items-center justify-between gap-2 shadow-xs group"
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
                                 <img

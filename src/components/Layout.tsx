@@ -83,6 +83,45 @@ const navigationData = [
   { nameKey: "الدعم الفني والبطاقات", id: "Support", href: "/app/support", icon: LifeBuoy },
 ];
 
+const navigationGroups = [
+  {
+    id: "core",
+    titleAr: "التحكم والقيادة",
+    titleEn: "Core & Control",
+    itemIds: ["Dashboard", "Analytics", "Calculations"],
+  },
+  {
+    id: "marketing",
+    titleAr: "النمو والتسويق",
+    titleEn: "Growth & Marketing",
+    itemIds: ["LeadGen", "EmailMarketing", "SocialMedia", "Advertising"],
+  },
+  {
+    id: "crm_comms",
+    titleAr: "العملاء والتواصل",
+    titleEn: "CRM & Communications",
+    itemIds: ["CRM", "Chat", "SmartNegotiations"],
+  },
+  {
+    id: "financials",
+    titleAr: "المالية والامتثال",
+    titleEn: "Financials & Compliance",
+    itemIds: ["Accounting", "Invoices", "Payroll", "ZatcaAi", "Compliance"],
+  },
+  {
+    id: "operations",
+    titleAr: "المشاريع والعمليات",
+    titleEn: "Projects & Operations",
+    itemIds: ["Projects", "Workflows", "Integrations", "Support"],
+  },
+  {
+    id: "supply_chain",
+    titleAr: "سلسلة الإمداد والعقود",
+    titleEn: "Supply Chain & Contracts",
+    itemIds: ["Suppliers", "Contracts", "Inventory"],
+  },
+];
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const location = useLocation();
@@ -214,6 +253,44 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       hasPermission(item.id)
   );
 
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
+
+  const toggleGroup = (groupId: string) => {
+    setCollapsedGroups((prev) => ({
+      ...prev,
+      [groupId]: !prev[groupId],
+    }));
+  };
+
+  const groupedNavigation = navigationGroups
+    .map((group) => {
+      const items = filteredNavigation.filter((item) => group.itemIds.includes(item.id));
+      return {
+        ...group,
+        items,
+      };
+    })
+    .filter((group) => group.items.length > 0);
+
+  // Auto-expand group containing active route on mount/location change
+  React.useEffect(() => {
+    const updates: Record<string, boolean> = {};
+    let changed = false;
+    groupedNavigation.forEach((group) => {
+      const hasActiveChild = group.items.some((item) => location.pathname === item.href);
+      if (hasActiveChild && collapsedGroups[group.id] !== false) {
+        updates[group.id] = false;
+        changed = true;
+      }
+    });
+    if (changed) {
+      setCollapsedGroups((prev) => ({
+        ...prev,
+        ...updates,
+      }));
+    }
+  }, [location.pathname]);
+
   const handleCommand = async (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && command.trim()) {
       setIsProcessing(true);
@@ -230,12 +307,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className="app-workspace flex h-screen bg-zinc-50 dark:bg-zinc-950 font-sans overflow-hidden text-zinc-900 dark:text-zinc-100 transition-colors duration-300"
+      className="app-workspace flex h-screen bg-zinc-50 font-sans overflow-hidden text-zinc-900 dark:text-zinc-100 transition-colors duration-300"
       dir={settings.language === "ar" ? "rtl" : "ltr"}
     >
       {/* Background ambient glows */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-zinc-200/20 dark:bg-zinc-900/40 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-zinc-200/20 dark:bg-zinc-100/40 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Desktop Sidebar */}
       <motion.aside
@@ -243,7 +320,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className={cn(
           "h-full flex flex-col z-20 hidden lg:flex shrink-0 relative transition-all duration-300",
-          "backdrop-blur-md bg-white/40 dark:bg-zinc-950/40 border-zinc-200 dark:border-zinc-900/50",
+          "backdrop-blur-md bg-white/40 dark:bg-zinc-100/40 border-zinc-200 dark:border-zinc-900/50",
           settings.language === "ar" ? "border-l" : "border-r"
         )}
       >
@@ -251,7 +328,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <button
           onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           className={cn(
-            "absolute top-6 p-1.5 rounded-full bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 transition-all z-30 cursor-pointer shadow-lg shadow-black/10 dark:shadow-black/50",
+            "absolute top-6 p-1.5 rounded-full bg-white dark:bg-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 transition-all z-30 cursor-pointer shadow-lg shadow-black/10 dark:shadow-black/50",
             settings.language === "ar"
               ? "-left-3.5 rotate-0 hover:translate-x-[-2px]"
               : "-right-3.5 rotate-0 hover:translate-x-[2px]"
@@ -310,127 +387,165 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Navigation List */}
-        <nav className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto no-scrollbar scroll-smooth">
-          {filteredNavigation.map((item) => {
-            const isActive = location.pathname === item.href;
+        <nav className="flex-1 px-3 py-6 space-y-3 overflow-y-auto no-scrollbar scroll-smooth">
+          {groupedNavigation.map((group, groupIndex) => {
+            const isGroupCollapsed = !!collapsedGroups[group.id];
             return (
-              <Link
-                key={item.id}
-                to={item.href}
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                className={cn(
-                  "flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all duration-300 relative group cursor-pointer",
-                  isActive
-                    ? "text-emerald-500 dark:text-emerald-400 font-semibold"
-                    : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900/50 hover:text-zinc-900 dark:hover:text-zinc-100"
-                )}
-              >
-                {/* Active Highlight Background Pill */}
-                {isActive && (
-                  <motion.div
-                    layoutId="activeNavBackground"
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                    className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent border-r-2 border-emerald-500 rounded-xl"
-                    style={{
-                      transformOrigin: settings.language === "ar" ? "right" : "left",
-                    }}
-                  />
-                )}
-
-                <item.icon
-                  className={cn(
-                    "w-5 h-5 transition-transform duration-300 group-hover:scale-110 relative z-10 shrink-0",
-                    isActive
-                      ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]"
-                      : "text-zinc-500 group-hover:text-emerald-400"
-                  )}
-                />
-
-                {!isSidebarCollapsed && (
-                  <motion.span
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
-                    className="font-medium text-[13px] tracking-tight relative z-10 whitespace-nowrap overflow-hidden"
-                  >
-                    {item.id === "SmartNegotiations"
-                      ? settings.language === "ar"
-                        ? "التفاوض والاجتماعات"
-                        : "Smart Negotiations"
-                      : item.id === "Chat"
-                        ? settings.language === "ar"
-                          ? "مركز الاتصال الموحد"
-                          : "Unified Communications"
-                        : item.id === "Projects"
-                          ? settings.language === "ar"
-                            ? "إدارة المشاريع"
-                            : "Project Management"
-                          : item.id === "LeadGen"
-                            ? settings.language === "ar"
-                              ? "منصة توليد العملاء"
-                              : "Lead Generation Platform"
-                            : item.id === "EmailMarketing"
-                              ? settings.language === "ar"
-                                ? "التسويق والبريد الإلكتروني"
-                                : "Email Marketing & Growth"
-                              : item.id === "SocialMedia"
-                                ? settings.language === "ar"
-                                  ? "إدارة التواصل الاجتماعي"
-                                  : "Social Media & Growth"
-                                : item.id === "Advertising"
-                                  ? settings.language === "ar"
-                                    ? "إدارة الحملات الإعلانية"
-                                    : "Advertising & Copilot"
-                                  : t(item.nameKey)}
-                  </motion.span>
-                )}
-
-                {/* Collapsed Tooltip */}
-                {isSidebarCollapsed && (
+              <div key={group.id} className="space-y-1">
+                {/* Group Header */}
+                {!isSidebarCollapsed ? (
                   <div
-                    className={cn(
-                      "absolute top-1/2 -translate-y-1/2 bg-zinc-900 border border-zinc-800 text-zinc-100 px-3 py-1.5 rounded-lg text-xs opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-50 shadow-xl whitespace-nowrap",
-                      settings.language === "ar" ? "right-16" : "left-16"
-                    )}
+                    onClick={() => toggleGroup(group.id)}
+                    className="flex items-center justify-between px-3.5 pt-3 pb-1.5 text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest cursor-pointer hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors select-none group/hdr"
                   >
-                    {item.id === "SmartNegotiations"
-                      ? settings.language === "ar"
-                        ? "التفاوض والاجتماعات"
-                        : "Smart Negotiations"
-                      : item.id === "Chat"
-                        ? settings.language === "ar"
-                          ? "مركز الاتصال الموحد"
-                          : "Unified Communications"
-                        : item.id === "Projects"
-                          ? settings.language === "ar"
-                            ? "إدارة المشاريع"
-                            : "Project Management"
-                          : item.id === "LeadGen"
-                            ? settings.language === "ar"
-                              ? "منصة توليد العملاء"
-                              : "Lead Generation Platform"
-                            : item.id === "EmailMarketing"
-                              ? settings.language === "ar"
-                                ? "التسويق والبريد الإلكتروني"
-                                : "Email Marketing & Growth"
-                              : item.id === "SocialMedia"
-                                ? settings.language === "ar"
-                                  ? "إدارة التواصل الاجتماعي"
-                                  : "Social Media & Growth"
-                                : item.id === "Advertising"
-                                  ? settings.language === "ar"
-                                    ? "إدارة الحملات الإعلانية"
-                                    : "Advertising & Copilot"
-                                  : t(item.nameKey)}
+                    <span>{settings.language === "ar" ? group.titleAr : group.titleEn}</span>
+                    <ChevronDown
+                      className={cn(
+                        "w-3 h-3 text-zinc-400 dark:text-zinc-500 transition-transform duration-200 group-hover/hdr:text-emerald-500",
+                        isGroupCollapsed ? "-rotate-90 rtl:rotate-90" : "rotate-0"
+                      )}
+                    />
                   </div>
+                ) : (
+                  groupIndex > 0 && (
+                    <div className="h-[1px] bg-zinc-200/40 dark:bg-zinc-100/40 my-2 mx-1" />
+                  )
                 )}
-              </Link>
+
+                {/* Group Items container */}
+                <motion.div
+                  initial={false}
+                  animate={{
+                    height: !isSidebarCollapsed && isGroupCollapsed ? 0 : "auto",
+                    opacity: !isSidebarCollapsed && isGroupCollapsed ? 0 : 1,
+                  }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-1 overflow-hidden"
+                >
+                  {group.items.map((item) => {
+                    const isActive = location.pathname === item.href;
+                    return (
+                      <Link
+                        key={item.id}
+                        to={item.href}
+                        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                        className={cn(
+                          "flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all duration-300 relative group cursor-pointer",
+                          isActive
+                            ? "text-emerald-500 dark:text-emerald-400 font-semibold"
+                            : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900/50 hover:text-zinc-900 dark:hover:text-zinc-100"
+                        )}
+                      >
+                        {/* Active Highlight Background Pill */}
+                        {isActive && (
+                          <motion.div
+                            layoutId="activeNavBackground"
+                            transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                            className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent border-r-2 border-emerald-500 rounded-xl"
+                            style={{
+                              transformOrigin: settings.language === "ar" ? "right" : "left",
+                            }}
+                          />
+                        )}
+
+                        <item.icon
+                          className={cn(
+                            "w-5 h-5 transition-transform duration-300 group-hover:scale-110 relative z-10 shrink-0",
+                            isActive
+                              ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+                              : "text-zinc-500 group-hover:text-emerald-400"
+                          )}
+                        />
+
+                        {!isSidebarCollapsed && (
+                          <motion.span
+                            initial={{ opacity: 0, width: 0 }}
+                            animate={{ opacity: 1, width: "auto" }}
+                            exit={{ opacity: 0, width: 0 }}
+                            className="font-medium text-[13px] tracking-tight relative z-10 whitespace-nowrap overflow-hidden"
+                          >
+                            {item.id === "SmartNegotiations"
+                              ? settings.language === "ar"
+                                ? "التفاوض والاجتماعات"
+                                : "Smart Negotiations"
+                              : item.id === "Chat"
+                                ? settings.language === "ar"
+                                  ? "مركز الاتصال الموحد"
+                                  : "Unified Communications"
+                                : item.id === "Projects"
+                                  ? settings.language === "ar"
+                                    ? "إدارة المشاريع"
+                                    : "Project Management"
+                                  : item.id === "LeadGen"
+                                    ? settings.language === "ar"
+                                      ? "منصة توليد العملاء"
+                                      : "Lead Generation Platform"
+                                    : item.id === "EmailMarketing"
+                                      ? settings.language === "ar"
+                                        ? "التسويق والبريد الإلكتروني"
+                                        : "Email Marketing & Growth"
+                                      : item.id === "SocialMedia"
+                                        ? settings.language === "ar"
+                                          ? "إدارة التواصل الاجتماعي"
+                                          : "Social Media & Growth"
+                                        : item.id === "Advertising"
+                                          ? settings.language === "ar"
+                                            ? "إدارة الحملات الإعلانية"
+                                            : "Advertising & Copilot"
+                                          : t(item.nameKey)}
+                          </motion.span>
+                        )}
+
+                        {/* Collapsed Tooltip */}
+                        {isSidebarCollapsed && (
+                          <div
+                            className={cn(
+                              "absolute top-1/2 -translate-y-1/2 bg-zinc-900 border border-zinc-800 text-zinc-100 px-3 py-1.5 rounded-lg text-xs opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-50 shadow-xl whitespace-nowrap",
+                              settings.language === "ar" ? "right-16" : "left-16"
+                            )}
+                          >
+                            {item.id === "SmartNegotiations"
+                              ? settings.language === "ar"
+                                ? "التفاوض والاجتماعات"
+                                : "Smart Negotiations"
+                              : item.id === "Chat"
+                                ? settings.language === "ar"
+                                  ? "مركز الاتصال الموحد"
+                                  : "Unified Communications"
+                                : item.id === "Projects"
+                                  ? settings.language === "ar"
+                                    ? "إدارة المشاريع"
+                                    : "Project Management"
+                                  : item.id === "LeadGen"
+                                    ? settings.language === "ar"
+                                      ? "منصة توليد العملاء"
+                                      : "Lead Generation Platform"
+                                    : item.id === "EmailMarketing"
+                                      ? settings.language === "ar"
+                                        ? "التسويق والبريد الإلكتروني"
+                                        : "Email Marketing & Growth"
+                                      : item.id === "SocialMedia"
+                                        ? settings.language === "ar"
+                                          ? "إدارة التواصل الاجتماعي"
+                                          : "Social Media & Growth"
+                                        : item.id === "Advertising"
+                                          ? settings.language === "ar"
+                                            ? "إدارة الحملات الإعلانية"
+                                            : "Advertising & Copilot"
+                                          : t(item.nameKey)}
+                          </div>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </motion.div>
+              </div>
             );
           })}
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-zinc-200 dark:border-zinc-900/50 space-y-2 bg-zinc-50/50 dark:bg-zinc-950/40">
+        <div className="p-4 border-t border-zinc-200 dark:border-zinc-900/50 space-y-2 bg-zinc-50/50 dark:bg-zinc-100/40">
           {user?.role === "Administrator" && (
             <Link
               to="/app/settings"
@@ -493,75 +608,123 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               exit={{ x: settings.language === "ar" ? 280 : -280 }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className={cn(
-                "fixed top-0 bottom-0 w-72 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-900 h-full flex flex-col z-50 shadow-2xl lg:hidden",
+                "fixed top-0 bottom-0 w-72 bg-white dark:bg-zinc-100 border-zinc-200 dark:border-zinc-900 h-full flex flex-col z-50 shadow-2xl lg:hidden",
                 settings.language === "ar" ? "right-0 border-l" : "left-0 border-r"
               )}
             >
               <div
-                className="p-6 border-b border-zinc-200 dark:border-zinc-900/50 flex justify-between items-center bg-white dark:bg-zinc-950 font-sans"
+                className="p-6 border-b border-zinc-200 dark:border-zinc-900/50 flex justify-between items-center bg-white dark:bg-zinc-100 font-sans"
                 dir={settings.language === "ar" ? "rtl" : "ltr"}
               >
                 <Logo theme={isDark ? "dark" : "light"} />
                 <button
                   type="button"
                   onClick={() => setMobileSidebarOpen(false)}
-                  className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  className="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <nav
-                className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto no-scrollbar scroll-smooth"
+                className="flex-1 px-4 py-6 space-y-3 overflow-y-auto no-scrollbar scroll-smooth"
                 dir={settings.language === "ar" ? "rtl" : "ltr"}
               >
-                {filteredNavigation.map((item) => {
-                  const isActive = location.pathname === item.href;
+                {groupedNavigation.map((group) => {
+                  const isGroupCollapsed = !!collapsedGroups[group.id];
                   return (
-                    <Link
-                      key={item.id}
-                      to={item.href}
-                      onClick={() => {
-                        setMobileSidebarOpen(false);
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
-                      className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 relative group text-sm font-semibold cursor-pointer",
-                        isActive
-                          ? "text-emerald-500 dark:text-emerald-400 bg-emerald-500/5 border border-emerald-500/20"
-                          : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900/50 hover:text-zinc-900 dark:hover:text-zinc-100"
-                      )}
-                    >
-                      <item.icon
-                        className={cn(
-                          "w-4 h-4 shrink-0 transition-transform group-hover:scale-110",
-                          isActive
-                            ? "text-emerald-400"
-                            : "text-zinc-500 group-hover:text-emerald-400"
-                        )}
-                      />
-                      <span>
-                        {item.id === "SmartNegotiations"
-                          ? settings.language === "ar"
-                            ? "التفاوض والاجتماعات"
-                            : "Smart Negotiations"
-                          : item.id === "Chat"
-                            ? settings.language === "ar"
-                              ? "مركز الاتصال الموحد"
-                              : "Unified Communications"
-                            : item.id === "Projects"
-                              ? settings.language === "ar"
-                                ? "إدارة المشاريع"
-                                : "Project Management"
-                              : t(item.nameKey)}
-                      </span>
-                    </Link>
+                    <div key={group.id} className="space-y-1">
+                      {/* Group Header */}
+                      <div
+                        onClick={() => toggleGroup(group.id)}
+                        className="flex items-center justify-between px-4 pt-3 pb-1.5 text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest cursor-pointer hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors select-none group/hdr"
+                      >
+                        <span>{settings.language === "ar" ? group.titleAr : group.titleEn}</span>
+                        <ChevronDown
+                          className={cn(
+                            "w-3 h-3 text-zinc-400 dark:text-zinc-500 transition-transform duration-200 group-hover/hdr:text-emerald-500",
+                            isGroupCollapsed ? "-rotate-90 rtl:rotate-90" : "rotate-0"
+                          )}
+                        />
+                      </div>
+
+                      {/* Group Items */}
+                      <motion.div
+                        initial={false}
+                        animate={{
+                          height: isGroupCollapsed ? 0 : "auto",
+                          opacity: isGroupCollapsed ? 0 : 1,
+                        }}
+                        transition={{ duration: 0.2 }}
+                        className="space-y-1 overflow-hidden"
+                      >
+                        {group.items.map((item) => {
+                          const isActive = location.pathname === item.href;
+                          return (
+                            <Link
+                              key={item.id}
+                              to={item.href}
+                              onClick={() => {
+                                setMobileSidebarOpen(false);
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              }}
+                              className={cn(
+                                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 relative group text-sm font-semibold cursor-pointer",
+                                isActive
+                                  ? "text-emerald-500 dark:text-emerald-400 bg-emerald-500/5 border border-emerald-500/20"
+                                  : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900/50 hover:text-zinc-900 dark:hover:text-zinc-100"
+                              )}
+                            >
+                              <item.icon
+                                className={cn(
+                                  "w-4 h-4 shrink-0 transition-transform group-hover:scale-110",
+                                  isActive
+                                    ? "text-emerald-400"
+                                    : "text-zinc-500 group-hover:text-emerald-400"
+                                )}
+                              />
+                              <span>
+                                {item.id === "SmartNegotiations"
+                                  ? settings.language === "ar"
+                                    ? "التفاوض والاجتماعات"
+                                    : "Smart Negotiations"
+                                  : item.id === "Chat"
+                                    ? settings.language === "ar"
+                                      ? "مركز الاتصال الموحد"
+                                      : "Unified Communications"
+                                    : item.id === "Projects"
+                                      ? settings.language === "ar"
+                                        ? "إدارة المشاريع"
+                                        : "Project Management"
+                                      : item.id === "LeadGen"
+                                        ? settings.language === "ar"
+                                          ? "منصة توليد العملاء"
+                                          : "Lead Generation Platform"
+                                        : item.id === "EmailMarketing"
+                                          ? settings.language === "ar"
+                                            ? "التسويق والبريد الإلكتروني"
+                                            : "Email Marketing & Growth"
+                                          : item.id === "SocialMedia"
+                                            ? settings.language === "ar"
+                                              ? "إدارة التواصل الاجتماعي"
+                                              : "Social Media & Growth"
+                                            : item.id === "Advertising"
+                                              ? settings.language === "ar"
+                                                ? "إدارة الحملات الإعلانية"
+                                                : "Advertising & Copilot"
+                                              : t(item.nameKey)}
+                              </span>
+                            </Link>
+                          );
+                        })}
+                      </motion.div>
+                    </div>
                   );
                 })}
               </nav>
 
               <div
-                className="p-4 border-t border-zinc-200 dark:border-zinc-900/50 space-y-2 bg-zinc-50 dark:bg-zinc-950"
+                className="p-4 border-t border-zinc-200 dark:border-zinc-900/50 space-y-2 bg-zinc-50 dark:bg-zinc-100"
                 dir={settings.language === "ar" ? "rtl" : "ltr"}
               >
                 {user?.role === "Administrator" && (
@@ -586,13 +749,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-hidden bg-zinc-50 dark:bg-zinc-950 relative transition-colors duration-300">
+      <main className="flex-1 flex flex-col overflow-hidden bg-zinc-50 relative transition-colors duration-300">
         {/* Top Header */}
-        <header className="h-20 border-b border-zinc-200 dark:border-zinc-900/60 bg-white/80 dark:bg-zinc-950/50 backdrop-blur-md flex items-center px-4 md:px-8 justify-between gap-4 md:gap-8 z-10 shrink-0 transition-colors duration-300">
+        <header className="h-20 border-b border-zinc-200 dark:border-zinc-900/60 bg-white/80 dark:bg-zinc-100/50 backdrop-blur-md flex items-center px-4 md:px-8 justify-between gap-4 md:gap-8 z-10 shrink-0 transition-colors duration-300">
           {/* Mobile hamburger menu button */}
           <button
             onClick={() => setMobileSidebarOpen(true)}
-            className="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 lg:hidden cursor-pointer shadow-sm"
+            className="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-850 bg-white dark:bg-zinc-100 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 lg:hidden cursor-pointer shadow-sm"
             aria-label="Toggle Menu"
           >
             <Menu className="w-5 h-5" />
@@ -619,7 +782,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     ? t("layout.voice_placeholder_listening")
                     : t("layout.voice_placeholder")
                 }
-                className="w-full bg-zinc-100/60 dark:bg-zinc-900/60 hover:bg-zinc-200/50 dark:hover:bg-zinc-900/80 focus:bg-white dark:focus:bg-zinc-900 border border-zinc-200 dark:border-zinc-850 focus:border-emerald-500/50 rounded-2xl py-3 pr-11 pl-4 focus:ring-4 focus:ring-emerald-500/10 transition-all text-[13px] placeholder:text-zinc-500 text-zinc-800 dark:text-zinc-100 font-medium shadow-inner shadow-black/5 dark:shadow-black/30 outline-none"
+                className="w-full bg-zinc-100/60 dark:bg-zinc-100/60 hover:bg-zinc-200/50 dark:hover:bg-zinc-900/80 focus:bg-white dark:focus:bg-zinc-900 border border-zinc-200 dark:border-zinc-850 focus:border-emerald-500/50 rounded-2xl py-3 pr-11 pl-4 focus:ring-4 focus:ring-emerald-500/10 transition-all text-[13px] placeholder:text-zinc-500 text-zinc-800 dark:text-zinc-100 font-medium shadow-inner shadow-black/5 dark:shadow-black/30 outline-none"
               />
 
               <AnimatePresence>
@@ -628,7 +791,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     initial={{ opacity: 0, y: 15, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 15, scale: 0.98 }}
-                    className="absolute top-full mt-3 left-0 right-0 p-5 bg-white dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 text-[13px] font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed"
+                    className="absolute top-full mt-3 left-0 right-0 p-5 bg-white dark:bg-zinc-100/95 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 text-[13px] font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed"
                   >
                     <div className="flex justify-between items-center mb-3 border-b border-zinc-200 dark:border-zinc-800 pb-2">
                       <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-black px-2.5 py-1 rounded-lg flex items-center gap-1.5 border border-emerald-500/20">
@@ -649,7 +812,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
             {/* Elegant Mic & Dialect Selector Panel */}
             <div className="relative flex items-center shrink-0">
-              <div className="flex items-center bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-850 rounded-2xl overflow-hidden shadow-md">
+              <div className="flex items-center bg-zinc-100 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-850 rounded-2xl overflow-hidden shadow-md">
                 <button
                   onClick={handleMicClick}
                   className={cn(
@@ -714,7 +877,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute top-full left-0 mt-2.5 w-44 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                    className="absolute top-full left-0 mt-2.5 w-44 bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-50 overflow-hidden"
                   >
                     <div className="p-1.5 space-y-0.5">
                       {dialects.map((d) => (
@@ -754,7 +917,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   newLang === "ar" ? t("layout.switch_to_arabic") : t("layout.switch_to_english")
                 );
               }}
-              className="px-4 py-2 rounded-2xl border border-zinc-200 dark:border-zinc-850 bg-zinc-100 dark:bg-zinc-900 text-xs font-black text-zinc-650 dark:text-zinc-300 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-200 dark:hover:bg-zinc-850 hover:border-emerald-500/20 transition-all cursor-pointer flex items-center gap-2 outline-none shadow-sm"
+              className="px-4 py-2 rounded-2xl border border-zinc-200 dark:border-zinc-850 bg-zinc-100 dark:bg-zinc-100 text-xs font-black text-zinc-650 dark:text-zinc-300 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-200 dark:hover:bg-zinc-850 hover:border-emerald-500/20 transition-all cursor-pointer flex items-center gap-2 outline-none shadow-sm"
               title={settings.language === "ar" ? "Switch to English" : "تغيير إلى العربية"}
             >
               <Globe className="w-4 h-4 text-zinc-550 dark:text-zinc-400 group-hover:animate-spin" />
@@ -766,7 +929,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-3 rounded-2xl border border-zinc-200 dark:border-zinc-850 bg-zinc-100 dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-200 dark:hover:bg-zinc-850 transition-all cursor-pointer flex items-center justify-center outline-none shadow-sm active:scale-95 group"
+              className="p-3 rounded-2xl border border-zinc-200 dark:border-zinc-850 bg-zinc-100 dark:bg-zinc-100 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-200 dark:hover:bg-zinc-850 transition-all cursor-pointer flex items-center justify-center outline-none shadow-sm active:scale-95 group"
               title={settings.language === "ar" ? "تغيير المظهر" : "Toggle Theme"}
             >
               {isDark ? (
@@ -780,7 +943,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="relative">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="p-3 rounded-2xl border border-zinc-200 dark:border-zinc-850 bg-zinc-100 dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-200 dark:hover:bg-zinc-850 relative transition-all outline-none cursor-pointer shadow-sm"
+                className="p-3 rounded-2xl border border-zinc-200 dark:border-zinc-850 bg-zinc-100 dark:bg-zinc-100 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-200 dark:hover:bg-zinc-850 relative transition-all outline-none cursor-pointer shadow-sm"
               >
                 <Bell className="w-4 h-4" />
                 {notifications.filter((n) => !n.isRead).length > 0 && (
@@ -794,9 +957,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     initial={{ opacity: 0, y: 15, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                    className="absolute top-full mt-3 left-0 w-80 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-[100] overflow-hidden flex flex-col max-h-[420px] shadow-black/10 dark:shadow-black/80"
+                    className="absolute top-full mt-3 left-0 w-80 bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl z-[100] overflow-hidden flex flex-col max-h-[420px] shadow-black/10 dark:shadow-black/80"
                   >
-                    <div className="p-4 border-b border-zinc-200 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-950/50 flex justify-between items-center">
+                    <div className="p-4 border-b border-zinc-200 dark:border-zinc-800/60 bg-zinc-50 dark:bg-zinc-100/50 flex justify-between items-center">
                       <h3 className="text-xs font-black text-zinc-800 dark:text-zinc-100">
                         {t("layout.notifications")}
                       </h3>
@@ -820,8 +983,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             className={cn(
                               "p-4 border-b border-zinc-100 dark:border-zinc-800/40 hover:bg-zinc-50 dark:hover:bg-zinc-850/60 cursor-pointer transition-all relative",
                               !n.isRead
-                                ? "bg-zinc-50 dark:bg-zinc-900/40 border-r-2 border-r-emerald-500"
-                                : "bg-transparent dark:bg-zinc-900/10 opacity-70"
+                                ? "bg-zinc-50 dark:bg-zinc-100/40 border-r-2 border-r-emerald-500"
+                                : "bg-transparent dark:bg-zinc-100/10 opacity-70"
                             )}
                           >
                             <h4 className="text-xs font-black text-zinc-800 dark:text-zinc-100 mb-1 flex items-center justify-between">
@@ -861,7 +1024,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
                 className="flex items-center gap-2 group outline-none cursor-pointer"
               >
-                <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center overflow-hidden group-hover:border-emerald-500 transition-all shadow-md">
+                <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center overflow-hidden group-hover:border-emerald-500 transition-all shadow-md">
                   {(user?.role === "Administrator" ? settings.avatar : user?.avatar) ||
                   settings.avatar ? (
                     <img
@@ -890,7 +1053,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     initial={{ opacity: 0, y: 15, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                    className="absolute top-full mt-3 left-0 w-52 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-2 z-[100]"
+                    className="absolute top-full mt-3 left-0 w-52 bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-2 z-[100]"
                   >
                     <div className="p-3 border-b border-zinc-200 dark:border-zinc-800 mb-1.5">
                       <p className="text-[10px] font-black text-zinc-450 dark:text-zinc-500 uppercase tracking-wider mb-1">

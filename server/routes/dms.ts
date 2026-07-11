@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/auth.js";
+import { authenticate } from "../middleware/auth.ts";
 import { GoogleGenAI, Type } from "@google/genai";
-import { logAudit, generateContentWithRetry } from "../services/utils.js";
+import { logAudit, generateContentWithRetry } from "../services/utils.ts";
 
 const router = Router();
 

@@ -236,19 +236,19 @@ export default function AdvancedReports({ items, warehouses }: AdvancedReportsPr
         <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
           <button
             onClick={() => setReportType("turnover")}
-            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${reportType === "turnover" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-500"}`}
+            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${reportType === "turnover" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-500"}`}
           >
             📈 معدل دوران المخزون ونسبة المبيعات
           </button>
           <button
             onClick={() => setReportType("aging")}
-            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${reportType === "aging" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-500"}`}
+            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${reportType === "aging" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-500"}`}
           >
             ⏳ ركود المخزون وتحليل الأعمار (Aging)
           </button>
           <button
             onClick={() => setReportType("valuation")}
-            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${reportType === "valuation" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-500"}`}
+            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${reportType === "valuation" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-500"}`}
           >
             📊 مقارنة تقييمات WAC / FIFO / LIFO
           </button>
@@ -281,7 +281,7 @@ export default function AdvancedReports({ items, warehouses }: AdvancedReportsPr
             </div>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-zinc-100 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden">
             <div className="overflow-x-auto text-xs font-bold text-right">
               <table className="w-full">
                 <thead>
@@ -351,7 +351,7 @@ export default function AdvancedReports({ items, warehouses }: AdvancedReportsPr
             </div>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-zinc-100 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden">
             <div className="overflow-x-auto text-xs font-bold text-right">
               <table className="w-full">
                 <thead>
@@ -405,7 +405,7 @@ export default function AdvancedReports({ items, warehouses }: AdvancedReportsPr
         <div className="space-y-6 animate-in fade-in duration-300">
           {/* Method totals cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border shadow-sm">
+            <div className="bg-white dark:bg-zinc-100 p-5 rounded-3xl border shadow-sm">
               <span className="text-[10px] text-zinc-400 font-black block uppercase">
                 المتوسط المرجح (WAC Method)
               </span>
@@ -417,7 +417,7 @@ export default function AdvancedReports({ items, warehouses }: AdvancedReportsPr
                 النموذج القياسي المعتمد لغالبية شركات التجزئة.
               </p>
             </div>
-            <div className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border shadow-sm">
+            <div className="bg-white dark:bg-zinc-100 p-5 rounded-3xl border shadow-sm">
               <span className="text-[10px] text-zinc-400 font-black block uppercase">
                 الوارد أولاً يصرف أولاً (FIFO Method)
               </span>
@@ -429,7 +429,7 @@ export default function AdvancedReports({ items, warehouses }: AdvancedReportsPr
                 يُظهر تكلفة أعلى للمخزون في فترات التضخم المالي.
               </p>
             </div>
-            <div className="bg-white dark:bg-zinc-900 p-5 rounded-3xl border shadow-sm">
+            <div className="bg-white dark:bg-zinc-100 p-5 rounded-3xl border shadow-sm">
               <span className="text-[10px] text-zinc-400 font-black block uppercase">
                 الوارد أخيراً يصرف أولاً (LIFO Method)
               </span>
@@ -443,7 +443,7 @@ export default function AdvancedReports({ items, warehouses }: AdvancedReportsPr
             </div>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-zinc-100 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden">
             <div className="overflow-x-auto text-xs font-bold text-right">
               <table className="w-full">
                 <thead>

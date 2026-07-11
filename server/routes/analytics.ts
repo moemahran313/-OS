@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/auth.js";
-import { DataAnalyticsEngine } from "../../src/services/analytics/engine.js";
-import { db } from "../services/firebase.js";
+import { authenticate } from "../middleware/auth.ts";
+import { DataAnalyticsEngine } from "../../src/services/analytics/engine.ts";
+import { db } from "../services/firebase.ts";
 
 const router = Router();
 const analyticsEngine = new DataAnalyticsEngine();

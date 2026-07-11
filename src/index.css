@@ -1,6 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 /* Custom Font Faces specifically optimized for html2canvas/jsPDF rendering */
 @font-face {
   font-family: "CairoPDF";
@@ -89,6 +91,12 @@
   body {
     @apply bg-zinc-50 text-zinc-900 antialiased;
   }
+  input,
+  select,
+  textarea,
+  button {
+    font-family: inherit;
+  }
 }
 
 @media print {
@@ -139,43 +147,69 @@
 }
 
 .dark {
-  /* Rich, premium cosmic space palette for variables */
+  /* Premium Dark Theme Variables (Proper Inversion Scales) */
   --color-zinc-50: #0c0e12; /* Obsidian background */
-  --color-zinc-100: #13161c; /* Deep gray-blue card */
-  --color-zinc-200: #1e222b; /* Mid charcoal */
-  --color-zinc-300: #2a2f3a; /* Light-mid charcoal border/bg */
-  --color-zinc-400: #3f4654; /* Cool gray-dark bg */
-  --color-zinc-500: #6b758d; /* Cool gray-muted */
-  --color-zinc-600: #2a2f3a; /* Dark background helper */
-  --color-zinc-700: #1e222b; /* Dark background helper */
-  --color-zinc-800: #13161c; /* Dark background helper */
-  --color-zinc-900: #0c0e12; /* Dark background helper */
-  --color-zinc-950: #08090c; /* Darkest obsidian */
+  --color-zinc-100: #13161c; /* Deep gray-blue card bg */
+  --color-zinc-150: #1d212b; /* Crisp border intermediate dark */
+  --color-zinc-200: #1e222b; /* Clean element borders dark */
+  --color-zinc-250: #252a36; /* Mid-gray accent borders dark */
+  --color-zinc-300: #2a2f3a; /* Section divider lines dark */
+  --color-zinc-400: #5a6578; /* Muted text / inactive icons dark */
+  --color-zinc-500: #818ca2; /* Muted subtitles & meta-info dark */
+  --color-zinc-600: #9ca7bc; /* Readable secondary body text dark */
+  --color-zinc-700: #b4bfd2; /* Main readable body text dark */
+  --color-zinc-800: #d1dae8; /* Section subheadings dark */
+  --color-zinc-850: #e2eafd; /* Rich dropdown borders / active labels dark */
+  --color-zinc-900: #f3f6fc; /* Primary headings & prominent titles dark */
+  --color-zinc-950: #ffffff; /* Bright white deep accents dark */
 
-  /* Map other common tailwind frameworks color scales to the same premium dark palette */
+  /* Slate Scale Inversion */
   --color-slate-50: #0c0e12;
   --color-slate-100: #13161c;
+  --color-slate-150: #1d212b;
   --color-slate-200: #1e222b;
+  --color-slate-250: #252a36;
   --color-slate-300: #2a2f3a;
-  --color-slate-400: #3f4654;
-  --color-slate-500: #6b758d;
-  --color-slate-600: #2a2f3a;
-  --color-slate-700: #1e222b;
-  --color-slate-800: #13161c;
-  --color-slate-900: #0c0e12;
-  --color-slate-950: #08090c;
+  --color-slate-400: #5a6578;
+  --color-slate-500: #818ca2;
+  --color-slate-600: #9ca7bc;
+  --color-slate-700: #b4bfd2;
+  --color-slate-800: #d1dae8;
+  --color-slate-850: #e2eafd;
+  --color-slate-900: #f3f6fc;
+  --color-slate-950: #ffffff;
 
+  /* Gray Scale Inversion */
   --color-gray-50: #0c0e12;
   --color-gray-100: #13161c;
+  --color-gray-150: #1d212b;
   --color-gray-200: #1e222b;
+  --color-gray-250: #252a36;
   --color-gray-300: #2a2f3a;
-  --color-gray-400: #3f4654;
-  --color-gray-500: #6b758d;
-  --color-gray-600: #2a2f3a;
-  --color-gray-700: #1e222b;
-  --color-gray-800: #13161c;
-  --color-gray-900: #0c0e12;
-  --color-gray-950: #08090c;
+  --color-gray-400: #5a6578;
+  --color-gray-500: #818ca2;
+  --color-gray-600: #9ca7bc;
+  --color-gray-700: #b4bfd2;
+  --color-gray-800: #d1dae8;
+  --color-gray-850: #e2eafd;
+  --color-gray-900: #f3f6fc;
+  --color-gray-950: #ffffff;
+
+  /* Neutral Scale Inversion */
+  --color-neutral-50: #0c0e12;
+  --color-neutral-100: #13161c;
+  --color-neutral-150: #1d212b;
+  --color-neutral-200: #1e222b;
+  --color-neutral-250: #252a36;
+  --color-neutral-300: #2a2f3a;
+  --color-neutral-400: #5a6578;
+  --color-neutral-500: #818ca2;
+  --color-neutral-600: #9ca7bc;
+  --color-neutral-700: #b4bfd2;
+  --color-neutral-800: #d1dae8;
+  --color-neutral-850: #e2eafd;
+  --color-neutral-900: #f3f6fc;
+  --color-neutral-950: #ffffff;
 
   /* Global background-color overrides for white panels/cards in dark mode */
   .bg-white,
@@ -199,26 +233,6 @@
     --tw-gradient-to: #13161c !important;
   }
 
-  /* Secondary light background components override */
-  .bg-zinc-50,
-  .bg-gray-50,
-  .bg-slate-50,
-  .bg-neutral-50 {
-    background-color: #0c0e12 !important;
-  }
-  .bg-zinc-100,
-  .bg-gray-100,
-  .bg-slate-100,
-  .bg-neutral-100 {
-    background-color: #1a1e26 !important;
-  }
-  .bg-zinc-200,
-  .bg-gray-200,
-  .bg-slate-200,
-  .bg-neutral-200 {
-    background-color: #242936 !important;
-  }
-
   /* Ensure tables look incredibly clean and dark */
   .bg-gray-50\/50,
   .bg-zinc-50\/50,
@@ -226,88 +240,18 @@
     background-color: rgba(12, 14, 18, 0.4) !important;
   }
 
-  /* Global high-end border color overrides in dark mode */
-  .border-zinc-100,
-  .border-gray-100,
-  .border-slate-100,
-  .border-neutral-100,
-  .border-zinc-150,
-  .border-gray-150,
-  .border-slate-150,
-  .border-zinc-200,
-  .border-gray-200,
-  .border-slate-200,
-  .border-neutral-200,
-  .border-zinc-250,
-  .border-gray-250,
-  .border-slate-250 {
-    border-color: #1f2532 !important;
-  }
-  .border-zinc-300,
-  .border-gray-300,
-  .border-slate-300,
-  .border-neutral-300 {
-    border-color: #2c3345 !important;
-  }
-
   /* Transparent overlay classes in dark mode */
   .glass,
   .glass-premium {
     background: rgba(19, 22, 28, 0.75) !important;
-    border-color: rgba(31, 37, 50, 0.5) !important;
+    border-color: rgba(30, 34, 43, 0.5) !important;
     backdrop-filter: blur(14px) !important;
     -webkit-backdrop-filter: blur(14px) !important;
   }
 
-  /* Multi-framework text colors - robust, high-contrast overrides */
-  .text-zinc-900,
-  .text-slate-900,
-  .text-gray-900,
-  .text-neutral-900,
-  .text-slate-950,
-  .text-zinc-950,
+  /* Specific class overrides only for elements that need force-reversing */
   .text-black {
-    color: #f5f7fa !important;
-  }
-  .text-zinc-850,
-  .text-slate-850,
-  .text-gray-850 {
-    color: #eef2f6 !important;
-  }
-  .text-zinc-800,
-  .text-slate-800,
-  .text-gray-800,
-  .text-neutral-800 {
-    color: #dde2ec !important;
-  }
-  .text-zinc-700,
-  .text-slate-700,
-  .text-gray-700,
-  .text-neutral-700 {
-    color: #b8c1d3 !important;
-  }
-  .text-zinc-600,
-  .text-slate-600,
-  .text-gray-600,
-  .text-neutral-600 {
-    color: #939db2 !important;
-  }
-  .text-zinc-550,
-  .text-slate-550,
-  .text-gray-550 {
-    color: #7b859b !important;
-  }
-  .text-zinc-500,
-  .text-slate-500,
-  .text-gray-500,
-  .text-neutral-500 {
-    color: #6b758d !important;
-  }
-  .text-zinc-400,
-  .text-slate-400,
-  .text-gray-400,
-  .text-neutral-400 {
-    color: #4a5264 !important;
+    color: #f3f6fc !important;
   }
 
   /* Status badge aesthetic improvements in dark mode */
@@ -524,4 +468,48 @@ div#root:nth-of-type(1)
 }
 .dark ::selection {
   background-color: rgba(16, 185, 129, 0.3);
+}
+
+/* Force standard light-theme color variables on public dark pages so they don't get inverted */
+.public-dark-page {
+  --color-zinc-50: #f8fafc !important;
+  --color-zinc-100: #f1f5f9 !important;
+  --color-zinc-150: #e2e8f0 !important;
+  --color-zinc-200: #e2e8f0 !important;
+  --color-zinc-250: #cbd5e1 !important;
+  --color-zinc-300: #cbd5e1 !important;
+  --color-zinc-400: #94a3b8 !important;
+  --color-zinc-500: #64748b !important;
+  --color-zinc-600: #475569 !important;
+  --color-zinc-700: #334155 !important;
+  --color-zinc-800: #1e293b !important;
+  --color-zinc-850: #0f172a !important;
+  --color-zinc-900: #0f172a !important;
+  --color-zinc-950: #020617 !important;
+
+  --color-slate-50: #f8fafc !important;
+  --color-slate-100: #f1f5f9 !important;
+  --color-slate-150: #e2e8f0 !important;
+  --color-slate-200: #e2e8f0 !important;
+  --color-slate-250: #cbd5e1 !important;
+  --color-slate-300: #cbd5e1 !important;
+  --color-slate-400: #94a3b8 !important;
+  --color-slate-500: #64748b !important;
+  --color-slate-600: #475569 !important;
+  --color-slate-700: #334155 !important;
+  --color-slate-800: #1e293b !important;
+  --color-slate-900: #0f172a !important;
+  --color-slate-950: #020617 !important;
+
+  --color-gray-50: #f8fafc !important;
+  --color-gray-100: #f1f5f9 !important;
+  --color-gray-200: #e2e8f0 !important;
+  --color-gray-300: #cbd5e1 !important;
+  --color-gray-400: #94a3b8 !important;
+  --color-gray-500: #64748b !important;
+  --color-gray-600: #475569 !important;
+  --color-gray-700: #334155 !important;
+  --color-gray-800: #1e293b !important;
+  --color-gray-900: #0f172a !important;
+  --color-gray-950: #020617 !important;
 }

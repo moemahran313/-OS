@@ -63,7 +63,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
-import { handleFirestoreError, OperationType } from "@/src/lib/firestore-errors";
+import { handleFirestoreError, OperationType } from "@/src/lib/firestore-issues";
 import {
   Radar,
   RadarChart,

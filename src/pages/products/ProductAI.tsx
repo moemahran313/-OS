@@ -71,7 +71,7 @@ export default function ProductAI() {
 
   return (
     <div
-      className="min-h-screen bg-zinc-950 text-white font-sans antialiased selection:bg-primary/30 overflow-hidden"
+      className="min-h-screen bg-zinc-950 text-white font-sans antialiased selection:bg-primary/30 overflow-hidden public-dark-page"
       dir="rtl"
     >
       <Navbar />

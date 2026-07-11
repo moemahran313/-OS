@@ -201,7 +201,7 @@ export default function FixedAssetsTab({
     <div className="space-y-6 text-right">
       {/* Metrics Banner */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
           <span className="text-[10px] text-zinc-400 font-bold uppercase">
             القيمة الشرائية الكلية للأصول (Total Cost)
           </span>
@@ -213,7 +213,7 @@ export default function FixedAssetsTab({
           </p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
           <span className="text-[10px] text-zinc-400 font-bold uppercase">
             إجمالي مجمع الإهلاك (Accumulated Dep.)
           </span>
@@ -225,7 +225,7 @@ export default function FixedAssetsTab({
           </p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
           <span className="text-[10px] text-zinc-400 font-bold uppercase">
             القيمة الدفترية الحالية (Net Book Value)
           </span>
@@ -239,7 +239,7 @@ export default function FixedAssetsTab({
       </div>
 
       {/* Controller Buttons */}
-      <div className="flex justify-between items-center bg-zinc-50 dark:bg-zinc-950 p-4 rounded-2xl border border-zinc-150 dark:border-zinc-850">
+      <div className="flex justify-between items-center bg-zinc-50 dark:bg-zinc-100 p-4 rounded-2xl border border-zinc-150 dark:border-zinc-850">
         <div>
           <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100">
             سجل الأصول والترحيلات الجارية
@@ -267,9 +267,9 @@ export default function FixedAssetsTab({
       </div>
 
       {/* Asset Table */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 rounded-3xl shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 rounded-3xl shadow-sm overflow-hidden">
         <table className="w-full text-xs text-right">
-          <thead className="bg-zinc-50 dark:bg-zinc-950/50 text-[10px] text-zinc-400 font-bold border-b border-zinc-100 dark:border-zinc-800">
+          <thead className="bg-zinc-50 dark:bg-zinc-100/50 text-[10px] text-zinc-400 font-bold border-b border-zinc-100 dark:border-zinc-800">
             <tr>
               <th className="p-3">اسم الأصل الثابت</th>
               <th className="p-3">الفئة والتصنيف</th>
@@ -330,7 +330,7 @@ export default function FixedAssetsTab({
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.98, opacity: 0 }}
-              className="bg-white dark:bg-zinc-900 rounded-3xl max-w-2xl w-full border border-zinc-150 p-6 space-y-6 text-right"
+              className="bg-white dark:bg-zinc-100 rounded-3xl max-w-2xl w-full border border-zinc-150 p-6 space-y-6 text-right"
             >
               <div>
                 <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -344,7 +344,7 @@ export default function FixedAssetsTab({
 
               <div className="border border-zinc-100 dark:border-zinc-850 rounded-2xl overflow-hidden">
                 <table className="w-full text-xs text-right">
-                  <thead className="bg-zinc-50 dark:bg-zinc-950/50 text-[10px] text-zinc-400 font-bold border-b border-zinc-100 dark:border-zinc-800">
+                  <thead className="bg-zinc-50 dark:bg-zinc-100/50 text-[10px] text-zinc-400 font-bold border-b border-zinc-100 dark:border-zinc-800">
                     <tr>
                       <th className="p-3">اسم الأصل الثابت</th>
                       <th className="p-3 text-left">الدفترية الحالية</th>
@@ -367,7 +367,7 @@ export default function FixedAssetsTab({
                         </td>
                       </tr>
                     ))}
-                    <tr className="bg-zinc-50 dark:bg-zinc-950 font-black">
+                    <tr className="bg-zinc-50 dark:bg-zinc-100 font-black">
                       <td className="p-3">الإجمالي التراكمي لدفعة الإهلاك</td>
                       <td className="p-3"></td>
                       <td className="p-3 text-left font-mono text-indigo-600 dark:text-indigo-400">
@@ -383,7 +383,7 @@ export default function FixedAssetsTab({
               </div>
 
               {/* Journal double entry representation representation */}
-              <div className="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850 space-y-2">
+              <div className="bg-zinc-50 dark:bg-zinc-100 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850 space-y-2">
                 <span className="text-[10px] text-zinc-400 font-black block">
                   صيغة القيد المزدوج التلقائي المقترحة للأستاذ العام:
                 </span>
@@ -433,7 +433,7 @@ export default function FixedAssetsTab({
             initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.98, opacity: 0 }}
-            className="bg-white dark:bg-zinc-900 rounded-3xl max-w-md w-full border border-zinc-150 p-6 space-y-4 text-right"
+            className="bg-white dark:bg-zinc-100 rounded-3xl max-w-md w-full border border-zinc-150 p-6 space-y-4 text-right"
           >
             <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
               تسجيل أصل رأسمالي جديد
@@ -450,7 +450,7 @@ export default function FixedAssetsTab({
                   placeholder="مثال: سيارة مرسيدس نقل للبضائع"
                   value={newAsset.name}
                   onChange={(e) => setNewAsset((p) => ({ ...p, name: e.target.value }))}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                  className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                 />
               </div>
 
@@ -462,7 +462,7 @@ export default function FixedAssetsTab({
                     onChange={(e) =>
                       setNewAsset((p) => ({ ...p, category: e.target.value as any }))
                     }
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
                   >
                     <option value="Buildings">مباني وعقارات</option>
                     <option value="Machinery">آلات ومعدات صناعية</option>
@@ -478,7 +478,7 @@ export default function FixedAssetsTab({
                     required
                     value={newAsset.purchaseDate}
                     onChange={(e) => setNewAsset((p) => ({ ...p, purchaseDate: e.target.value }))}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                   />
                 </div>
               </div>
@@ -495,7 +495,7 @@ export default function FixedAssetsTab({
                     onChange={(e) =>
                       setNewAsset((p) => ({ ...p, cost: parseFloat(e.target.value) || 0 }))
                     }
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
                   />
                 </div>
 
@@ -509,7 +509,7 @@ export default function FixedAssetsTab({
                     onChange={(e) =>
                       setNewAsset((p) => ({ ...p, residualValue: parseFloat(e.target.value) || 0 }))
                     }
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
                   />
                 </div>
               </div>
@@ -524,7 +524,7 @@ export default function FixedAssetsTab({
                     onChange={(e) =>
                       setNewAsset((p) => ({ ...p, usefulLifeYears: parseInt(e.target.value) || 5 }))
                     }
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
                   />
                 </div>
 
@@ -535,7 +535,7 @@ export default function FixedAssetsTab({
                     onChange={(e) =>
                       setNewAsset((p) => ({ ...p, depreciationMethod: e.target.value as any }))
                     }
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
                   >
                     <option value="Straight-Line">قسط ثابت (Straight Line)</option>
                     <option value="Declining-Balance">قسط متناقص دوبل (Double Declining)</option>

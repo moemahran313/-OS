@@ -154,7 +154,34 @@ function LoadingSpinner() {
   );
 }
 
-import { ThemeProvider } from "./contexts/ThemeContext";
+import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
+import { useSettings } from "./contexts/SettingsContext";
+
+function ThemeRouteHandler() {
+  const location = useLocation();
+  const { theme } = useTheme();
+  const { settings } = useSettings();
+
+  useEffect(() => {
+    const isDarkTheme =
+      theme === "dark" ||
+      settings.theme === "dark" ||
+      (settings.theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+    const body = document.body;
+    const docEl = document.documentElement;
+
+    if (isDarkTheme) {
+      body.classList.add("dark");
+      docEl.classList.add("dark");
+    } else {
+      body.classList.remove("dark");
+      docEl.classList.remove("dark");
+    }
+  }, [location.pathname, theme, settings.theme]);
+
+  return null;
+}
 
 function PageTransition({ children }: { children: ReactNode }) {
   return (
@@ -629,6 +656,7 @@ export default function App() {
       <SettingsProvider>
         <ThemeProvider>
           <Router>
+            <ThemeRouteHandler />
             <GlobalPayrollMonitor />
             <Toaster position="top-center" expand={true} richColors />
             <AppRoutes />

@@ -12,8 +12,8 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    function isOwner(targetUserId) {
+      return isSignedIn() && request.auth.uid == targetUserId;
     }
 
     function isCronSystem() {

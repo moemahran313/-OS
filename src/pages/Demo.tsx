@@ -528,7 +528,7 @@ export default function Demo() {
 
   return (
     <div
-      className="min-h-screen bg-zinc-950 font-sans antialiased text-white selection:bg-primary/30 relative overflow-hidden"
+      className="min-h-screen bg-zinc-950 font-sans antialiased text-white selection:bg-primary/30 relative overflow-hidden public-dark-page"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       {/* Absolute background visual flares */}

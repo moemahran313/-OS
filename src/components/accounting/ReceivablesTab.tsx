@@ -194,7 +194,7 @@ export default function ReceivablesTab({
     <div className="space-y-6 text-right">
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
           <div className="flex justify-between items-start">
             <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center dark:bg-indigo-950/50 dark:text-indigo-400">
               <DollarSign className="w-5 h-5" />
@@ -213,7 +213,7 @@ export default function ReceivablesTab({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
           <div className="flex justify-between items-start">
             <div className="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center dark:bg-rose-950/50 dark:text-rose-400">
               <AlertTriangle className="w-5 h-5 animate-pulse" />
@@ -232,7 +232,7 @@ export default function ReceivablesTab({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
           <div className="flex justify-between items-start">
             <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center dark:bg-emerald-950/50 dark:text-emerald-400">
               <TrendingUp className="w-5 h-5" />
@@ -251,7 +251,7 @@ export default function ReceivablesTab({
           </div>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
           <div className="flex justify-between items-start">
             <div className="w-10 h-10 bg-zinc-50 text-zinc-600 rounded-xl flex items-center justify-center dark:bg-zinc-800 dark:text-zinc-300">
               <FileText className="w-5 h-5" />
@@ -272,7 +272,7 @@ export default function ReceivablesTab({
       </div>
 
       {/* Receivables Aging Analysis Section */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-3xl shadow-sm space-y-4">
+      <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-3xl shadow-sm space-y-4">
         <div>
           <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100">
             تقرير أعمار ديون العملاء (Aging Account Receivables Summary)
@@ -283,7 +283,7 @@ export default function ReceivablesTab({
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-          <div className="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850">
+          <div className="bg-zinc-50 dark:bg-zinc-100 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850">
             <span className="text-[10px] text-zinc-400 font-bold block">حالي (أقل من 30 يوم)</span>
             <span className="font-mono font-black text-sm text-zinc-800 dark:text-zinc-200 block mt-1">
               {currentAging.toLocaleString()} ر.س
@@ -292,7 +292,7 @@ export default function ReceivablesTab({
               <div className="bg-emerald-500 h-1 rounded-full" style={{ width: "45%" }}></div>
             </div>
           </div>
-          <div className="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850">
+          <div className="bg-zinc-50 dark:bg-zinc-100 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850">
             <span className="text-[10px] text-zinc-400 font-bold block">من 31 - 60 يوم</span>
             <span className="font-mono font-black text-sm text-zinc-800 dark:text-zinc-200 block mt-1">
               {aging30.toLocaleString()} ر.س
@@ -301,7 +301,7 @@ export default function ReceivablesTab({
               <div className="bg-indigo-500 h-1 rounded-full" style={{ width: "30%" }}></div>
             </div>
           </div>
-          <div className="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850">
+          <div className="bg-zinc-50 dark:bg-zinc-100 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850">
             <span className="text-[10px] text-zinc-400 font-bold block">من 61 - 90 يوم</span>
             <span className="font-mono font-black text-sm text-amber-600 block mt-1">
               {aging60.toLocaleString()} ر.س
@@ -310,7 +310,7 @@ export default function ReceivablesTab({
               <div className="bg-amber-500 h-1 rounded-full" style={{ width: "15%" }}></div>
             </div>
           </div>
-          <div className="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850">
+          <div className="bg-zinc-50 dark:bg-zinc-100 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850">
             <span className="text-[10px] text-zinc-400 font-bold block">أكثر من 90 يوم</span>
             <span className="font-mono font-black text-sm text-rose-600 block mt-1">
               {aging90Plus.toLocaleString()} ر.س
@@ -325,7 +325,7 @@ export default function ReceivablesTab({
       {/* Main Customers List & Open Invoices */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Customer list card */}
-        <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-3xl shadow-sm space-y-4">
+        <div className="lg:col-span-2 bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-3xl shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
               <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -345,7 +345,7 @@ export default function ReceivablesTab({
                   placeholder="ابحث عن العميل..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl pr-9 pl-3 py-2 text-xs focus:outline-none"
+                  className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl pr-9 pl-3 py-2 text-xs focus:outline-none"
                 />
               </div>
               <button
@@ -359,7 +359,7 @@ export default function ReceivablesTab({
 
           <div className="border border-zinc-100 dark:border-zinc-850 rounded-2xl overflow-hidden">
             <table className="w-full text-xs text-right">
-              <thead className="bg-zinc-50 dark:bg-zinc-950/50 text-[10px] text-zinc-400 font-bold border-b border-zinc-100 dark:border-zinc-800">
+              <thead className="bg-zinc-50 dark:bg-zinc-100/50 text-[10px] text-zinc-400 font-bold border-b border-zinc-100 dark:border-zinc-800">
                 <tr>
                   <th className="p-3">اسم المنشأة</th>
                   <th className="p-3">الرقم الضريبي VAT</th>
@@ -420,7 +420,7 @@ export default function ReceivablesTab({
         </div>
 
         {/* Invoices list card */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-3xl shadow-sm space-y-4">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-3xl shadow-sm space-y-4">
           <div>
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <FileText className="w-4 h-4 text-indigo-500" />
@@ -435,7 +435,7 @@ export default function ReceivablesTab({
             {invoices.map((inv) => (
               <div
                 key={inv.id}
-                className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-850 p-3 rounded-xl hover:border-zinc-200 dark:hover:border-zinc-800 transition-all space-y-2"
+                className="bg-zinc-50 dark:bg-zinc-100 border border-zinc-100 dark:border-zinc-850 p-3 rounded-xl hover:border-zinc-200 dark:hover:border-zinc-800 transition-all space-y-2"
               >
                 <div className="flex justify-between items-center">
                   <span className="font-mono text-xs font-black text-indigo-600 dark:text-indigo-400">
@@ -473,7 +473,7 @@ export default function ReceivablesTab({
             initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.98, opacity: 0 }}
-            className="bg-white dark:bg-zinc-900 rounded-3xl max-w-md w-full border border-zinc-150 p-6 space-y-4 text-right"
+            className="bg-white dark:bg-zinc-100 rounded-3xl max-w-md w-full border border-zinc-150 p-6 space-y-4 text-right"
           >
             <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
               إصدار إشعار مدين / دائن للعميل
@@ -487,7 +487,7 @@ export default function ReceivablesTab({
                 <select
                   value={noteForm.type}
                   onChange={(e) => setNoteForm((p) => ({ ...p, type: e.target.value as any }))}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
+                  className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
                 >
                   <option value="Credit">إشعار دائن (Credit Note) - تقليل المديونية</option>
                   <option value="Debit">إشعار مدين (Debit Note) - زيادة المديونية</option>
@@ -503,7 +503,7 @@ export default function ReceivablesTab({
                   placeholder="0.00"
                   value={noteForm.amount}
                   onChange={(e) => setNoteForm((p) => ({ ...p, amount: e.target.value }))}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
+                  className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
                 />
               </div>
 
@@ -515,7 +515,7 @@ export default function ReceivablesTab({
                   placeholder="مثال: خصم إضافي معتمد لمجموعة الشايع"
                   value={noteForm.description}
                   onChange={(e) => setNoteForm((p) => ({ ...p, description: e.target.value }))}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                  className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                 />
               </div>
 
@@ -546,7 +546,7 @@ export default function ReceivablesTab({
             initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.98, opacity: 0 }}
-            className="bg-white dark:bg-zinc-900 rounded-3xl max-w-md w-full border border-zinc-150 p-6 space-y-4 text-right"
+            className="bg-white dark:bg-zinc-100 rounded-3xl max-w-md w-full border border-zinc-150 p-6 space-y-4 text-right"
           >
             <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
               إضافة حساب عميل جديد
@@ -563,7 +563,7 @@ export default function ReceivablesTab({
                   placeholder="مثال: شركة بنده للتجزئة"
                   value={newCustomer.nameAr}
                   onChange={(e) => setNewCustomer((p) => ({ ...p, nameAr: e.target.value }))}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                  className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                 />
               </div>
 
@@ -575,7 +575,7 @@ export default function ReceivablesTab({
                   placeholder="E.g. Panda Retail Company"
                   value={newCustomer.nameEn}
                   onChange={(e) => setNewCustomer((p) => ({ ...p, nameEn: e.target.value }))}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                  className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                 />
               </div>
 
@@ -587,7 +587,7 @@ export default function ReceivablesTab({
                   maxLength={15}
                   value={newCustomer.vatNumber}
                   onChange={(e) => setNewCustomer((p) => ({ ...p, vatNumber: e.target.value }))}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
+                  className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
                 />
               </div>
 

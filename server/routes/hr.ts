@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/auth.js";
-import { logAudit } from "../services/utils.js";
+import { authenticate } from "../middleware/auth.ts";
+import { logAudit } from "../services/utils.ts";
 
 const router = Router();
 
@@ -138,7 +138,7 @@ async function generateWithFallback(ai: any, params: any) {
 }
 
 import { GoogleGenAI } from "@google/genai";
-import { db } from "../services/firebase.js";
+import { db } from "../services/firebase.ts";
 
 // AI Assistant Endpoint for Mudarij HR Companion
 router.post("/hr/assistant", authenticate, async (req: any, res) => {

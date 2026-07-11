@@ -196,23 +196,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     // Apply primary color to document
     document.documentElement.style.setProperty("--color-primary", settings.primaryColor);
 
-    // Apply theme
-    if (
-      settings.theme === "dark" ||
-      (settings.theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
-    ) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-
     // Apply language and direction
     if (settings.language) {
       i18n.changeLanguage(settings.language);
       document.documentElement.dir = settings.language === "ar" ? "rtl" : "ltr";
       document.documentElement.lang = settings.language;
     }
-  }, [settings.theme, settings.primaryColor, settings.language]);
+  }, [settings.primaryColor, settings.language]);
 
   return (
     <SettingsContext.Provider value={{ settings, updateSettings }}>

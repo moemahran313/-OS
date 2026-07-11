@@ -756,7 +756,7 @@ export default function InventoryDashboard() {
   return (
     <div className="space-y-6 pb-12 font-sans text-zinc-900" dir="rtl">
       {/* Dynamic Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-6 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-zinc-100 p-6 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm">
         <div>
           <h2 className="text-xl font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
             <Warehouse className="w-6 h-6 text-indigo-600" />
@@ -789,7 +789,7 @@ export default function InventoryDashboard() {
       </div>
 
       {/* Primary Navigation Tabs */}
-      <div className="flex flex-wrap border-b border-zinc-200 bg-white dark:bg-zinc-900 p-2 rounded-2xl border gap-1">
+      <div className="flex flex-wrap border-b border-zinc-200 bg-white dark:bg-zinc-100 p-2 rounded-2xl border gap-1">
         <button
           onClick={() => setActiveTab("overview")}
           className={cn(
@@ -932,7 +932,7 @@ export default function InventoryDashboard() {
 
           {/* Simple physical warehouses config tab */}
           {activeTab === "warehouses" && (
-            <div className="bg-white dark:bg-zinc-900 p-6 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
+            <div className="bg-white dark:bg-zinc-100 p-6 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-6">
               <div className="flex justify-between items-center">
                 <div>
                   <h3 className="text-sm font-black text-zinc-900 dark:text-zinc-100">
@@ -961,7 +961,7 @@ export default function InventoryDashboard() {
                       <th className="p-4">رمز الحساب في الدليل</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-150 dark:divide-zinc-800 bg-white dark:bg-zinc-900">
+                  <tbody className="divide-y divide-zinc-150 dark:divide-zinc-800 bg-white dark:bg-zinc-100">
                     {warehouses.map((wh) => (
                       <tr
                         key={wh.id}
@@ -998,7 +998,7 @@ export default function InventoryDashboard() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 w-full max-w-md overflow-hidden flex flex-col p-6 space-y-4"
+              className="bg-white dark:bg-zinc-100 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 w-full max-w-md overflow-hidden flex flex-col p-6 space-y-4"
             >
               <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100 border-b pb-2 flex items-center gap-1.5">
                 <Warehouse className="w-5 h-5 text-indigo-600" />

@@ -916,7 +916,7 @@ export default function Accounting() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-20" dir="rtl">
       {/* 1. DYNAMIC MULTI-COMPANY & MULTI-BRANCH ERP HEADER CONTROL */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-6 rounded-[2rem] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden">
+      <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-6 rounded-[2rem] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-[40px] pointer-events-none" />
 
         <div className="flex flex-col md:flex-row items-start md:items-center gap-4 w-full md:w-auto relative z-10">
@@ -945,7 +945,7 @@ export default function Accounting() {
                   <option
                     key={c.id}
                     value={c.id}
-                    className="bg-white dark:bg-zinc-900 text-sm font-bold text-zinc-800 dark:text-zinc-200"
+                    className="bg-white dark:bg-zinc-100 text-sm font-bold text-zinc-800 dark:text-zinc-200"
                   >
                     {c.nameAr} ({c.nameEn})
                   </option>
@@ -974,7 +974,7 @@ export default function Accounting() {
         {/* Global Controls & Filters */}
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto relative z-10">
           {/* Branch Selector */}
-          <div className="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold">
+          <div className="flex items-center gap-1.5 bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs font-bold">
             <Layers className="w-3.5 h-3.5 text-zinc-400" />
             <span className="text-zinc-400">الفرع:</span>
             <select
@@ -1102,7 +1102,7 @@ export default function Accounting() {
                 ].map((stat, idx) => (
                   <div
                     key={idx}
-                    className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-6 rounded-2xl flex items-center justify-between shadow-sm"
+                    className="bg-white dark:bg-zinc-100 border border-zinc-100 dark:border-zinc-800 p-6 rounded-2xl flex items-center justify-between shadow-sm"
                   >
                     <div>
                       <span className="text-[10px] text-zinc-400 font-bold block mb-1">
@@ -1123,7 +1123,7 @@ export default function Accounting() {
               </div>
 
               {/* COA Control Tools */}
-              <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-4 rounded-2xl shadow-sm">
+              <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white dark:bg-zinc-100 border border-zinc-100 dark:border-zinc-800 p-4 rounded-2xl shadow-sm">
                 <div className="relative w-full md:max-w-md">
                   <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                   <input
@@ -1131,7 +1131,7 @@ export default function Accounting() {
                     placeholder="ابحث برمز الحساب، الاسم العربي، أو الإنجليزي..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl pr-10 pl-4 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl pr-10 pl-4 py-2 text-xs font-semibold focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
 
@@ -1161,7 +1161,7 @@ export default function Accounting() {
                   <select
                     value={accountTypeFilter}
                     onChange={(e) => setAccountTypeFilter(e.target.value)}
-                    className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-xs font-black focus:outline-none cursor-pointer"
+                    className="bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-xs font-black focus:outline-none cursor-pointer"
                   >
                     <option value="all">كل التصنيفات</option>
                     <option value="Asset">الأصول (Asset)</option>
@@ -1188,10 +1188,10 @@ export default function Accounting() {
               </div>
 
               {/* Chart Table Render */}
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+              <div className="bg-white dark:bg-zinc-100 border border-zinc-100 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
                 <table className="w-full text-right border-collapse text-xs">
                   <thead>
-                    <tr className="bg-zinc-50 dark:bg-zinc-950/50 border-b border-zinc-100 dark:border-zinc-800 text-[10px] text-zinc-400 font-black tracking-wider uppercase">
+                    <tr className="bg-zinc-50 dark:bg-zinc-100/50 border-b border-zinc-100 dark:border-zinc-800 text-[10px] text-zinc-400 font-black tracking-wider uppercase">
                       <th className="p-4">كود الحساب</th>
                       <th className="p-4">الاسم (عربي)</th>
                       <th className="p-4">الاسم (En)</th>
@@ -1292,7 +1292,7 @@ export default function Accounting() {
               className="space-y-6"
             >
               {/* Informational PRD warning */}
-              <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-800 p-5 rounded-2xl flex items-center gap-3">
+              <div className="bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 p-5 rounded-2xl flex items-center gap-3">
                 <ShieldAlert className="w-6 h-6 text-emerald-550 shrink-0" />
                 <div className="space-y-0.5">
                   <h4 className="text-xs font-black text-zinc-800 dark:text-zinc-200">
@@ -1309,7 +1309,7 @@ export default function Accounting() {
               {/* Journals List */}
               <div className="space-y-4">
                 {journals.length === 0 ? (
-                  <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-12 rounded-2xl text-center">
+                  <div className="bg-white dark:bg-zinc-100 border border-zinc-100 dark:border-zinc-800 p-12 rounded-2xl text-center">
                     <FileText className="w-12 h-12 text-zinc-300 mx-auto mb-3" />
                     <p className="text-zinc-400 text-xs font-bold">
                       لا توجد قيود مسجلة للشركة حتى الآن.
@@ -1319,9 +1319,9 @@ export default function Accounting() {
                   journals.map((jv) => (
                     <div
                       key={jv.id}
-                      className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm hover:border-zinc-200 transition-all"
+                      className="bg-white dark:bg-zinc-100 border border-zinc-100 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm hover:border-zinc-200 transition-all"
                     >
-                      <div className="p-5 border-b border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-4 bg-zinc-50/40 dark:bg-zinc-950/10">
+                      <div className="p-5 border-b border-zinc-100 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-4 bg-zinc-50/40 dark:bg-zinc-100/10">
                         <div className="flex flex-wrap items-center gap-3 text-xs">
                           <span className="font-mono font-black bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 px-3 py-1 rounded-lg">
                             {jv.journalNumber}
@@ -1376,7 +1376,7 @@ export default function Accounting() {
 
                         <div className="border border-zinc-100 dark:border-zinc-800 rounded-xl overflow-hidden">
                           <table className="w-full text-right text-xs">
-                            <thead className="bg-zinc-50 dark:bg-zinc-950/50 text-zinc-400 font-bold border-b border-zinc-100 dark:border-zinc-800">
+                            <thead className="bg-zinc-50 dark:bg-zinc-100/50 text-zinc-400 font-bold border-b border-zinc-100 dark:border-zinc-800">
                               <tr>
                                 <th className="p-3">الحساب المالي</th>
                                 <th className="p-3">البيان الفرعي</th>
@@ -1437,7 +1437,7 @@ export default function Accounting() {
               className="space-y-6"
             >
               {/* Year Selector and Header */}
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-6 rounded-2xl shadow-sm">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-6 rounded-2xl shadow-sm">
                 <div className="space-y-1">
                   <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
                     سجل الفترات المحاسبية والأقفال الدورية
@@ -1452,7 +1452,7 @@ export default function Accounting() {
                   <select
                     value={activeFiscalYearId}
                     onChange={(e) => setActiveFiscalYearId(e.target.value)}
-                    className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-xs font-black focus:outline-none cursor-pointer"
+                    className="bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-2.5 text-xs font-black focus:outline-none cursor-pointer"
                   >
                     {fiscalYears.map((fy) => (
                       <option key={fy.id} value={fy.id}>
@@ -1481,7 +1481,7 @@ export default function Accounting() {
                     return (
                       <div
                         key={p.id}
-                        className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm space-y-4"
+                        className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm space-y-4"
                       >
                         <div className="flex justify-between items-start border-b border-zinc-100 dark:border-zinc-800 pb-3">
                           <div>
@@ -1614,10 +1614,10 @@ export default function Accounting() {
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+                  <div className="bg-white dark:bg-zinc-100 border border-zinc-100 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
                     <table className="w-full text-right text-xs">
                       <thead>
-                        <tr className="bg-zinc-50 dark:bg-zinc-950/50 border-b border-zinc-100 dark:border-zinc-800 text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+                        <tr className="bg-zinc-50 dark:bg-zinc-100/50 border-b border-zinc-100 dark:border-zinc-800 text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
                           <th className="p-4">كود الحساب</th>
                           <th className="p-4">اسم الحساب</th>
                           <th className="p-4">النوع</th>
@@ -1670,7 +1670,7 @@ export default function Accounting() {
               className="grid grid-cols-1 md:grid-cols-2 gap-8 text-xs font-bold"
             >
               {/* Balance Sheet (الميزانية العمومية) */}
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-6 rounded-[2rem] shadow-sm space-y-6">
+              <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-6 rounded-[2rem] shadow-sm space-y-6">
                 <div>
                   <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
                     الميزانية العمومية اللحظية (Balance Sheet)
@@ -1766,7 +1766,7 @@ export default function Accounting() {
               </div>
 
               {/* Income Statement (قائمة الدخل) */}
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-6 rounded-[2rem] shadow-sm space-y-6">
+              <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-6 rounded-[2rem] shadow-sm space-y-6">
                 <div>
                   <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
                     قائمة الدخل والأرباح والخسائر (Income Statement)
@@ -1992,7 +1992,7 @@ export default function Accounting() {
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.98, opacity: 0 }}
-              className="bg-white dark:bg-zinc-900 rounded-3xl max-w-md w-full border border-zinc-150 p-6 space-y-4 text-right"
+              className="bg-white dark:bg-zinc-100 rounded-3xl max-w-md w-full border border-zinc-150 p-6 space-y-4 text-right"
             >
               <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
                 تسجيل منشأة / شركة محاسبية جديدة
@@ -2009,7 +2009,7 @@ export default function Accounting() {
                     placeholder="مثال: شركة مدارج اللوجستية"
                     value={newCompany.nameAr}
                     onChange={(e) => setNewCompany((prev) => ({ ...prev, nameAr: e.target.value }))}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -2020,7 +2020,7 @@ export default function Accounting() {
                     placeholder="E.g. Madarij Logistics Co."
                     value={newCompany.nameEn}
                     onChange={(e) => setNewCompany((prev) => ({ ...prev, nameEn: e.target.value }))}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -2033,7 +2033,7 @@ export default function Accounting() {
                       onChange={(e) =>
                         setNewCompany((prev) => ({ ...prev, crNumber: e.target.value }))
                       }
-                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                      className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -2045,7 +2045,7 @@ export default function Accounting() {
                       onChange={(e) =>
                         setNewCompany((prev) => ({ ...prev, vatNumber: e.target.value }))
                       }
-                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                      className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -2056,7 +2056,7 @@ export default function Accounting() {
                     onChange={(e) =>
                       setNewCompany((prev) => ({ ...prev, type: e.target.value as any }))
                     }
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
                   >
                     <option value="Independent">مستقلة بذاتها (Independent)</option>
                     <option value="Holding">مجموعة / قابضة (Holding Group)</option>
@@ -2093,7 +2093,7 @@ export default function Accounting() {
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.98, opacity: 0 }}
-              className="bg-white dark:bg-zinc-900 rounded-3xl max-w-md w-full border border-zinc-150 p-6 space-y-4 text-right"
+              className="bg-white dark:bg-zinc-100 rounded-3xl max-w-md w-full border border-zinc-150 p-6 space-y-4 text-right"
             >
               <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
                 إضافة فرع تشغيلي مالي جديد
@@ -2110,7 +2110,7 @@ export default function Accounting() {
                     placeholder="مثال: فرع المنطقة الغربية - جدة"
                     value={newBranch.nameAr}
                     onChange={(e) => setNewBranch((prev) => ({ ...prev, nameAr: e.target.value }))}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -2121,7 +2121,7 @@ export default function Accounting() {
                     placeholder="E.g. Western Region Branch"
                     value={newBranch.nameEn}
                     onChange={(e) => setNewBranch((prev) => ({ ...prev, nameEn: e.target.value }))}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -2132,7 +2132,7 @@ export default function Accounting() {
                     placeholder="BR-02"
                     value={newBranch.code}
                     onChange={(e) => setNewBranch((prev) => ({ ...prev, code: e.target.value }))}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                   />
                 </div>
                 <div className="pt-4 flex gap-3">
@@ -2164,7 +2164,7 @@ export default function Accounting() {
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.98, opacity: 0 }}
-              className="bg-white dark:bg-zinc-900 rounded-3xl max-w-md w-full border border-zinc-150 p-6 space-y-4 text-right"
+              className="bg-white dark:bg-zinc-100 rounded-3xl max-w-md w-full border border-zinc-150 p-6 space-y-4 text-right"
             >
               <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
                 إنشاء سنة مالية جديدة
@@ -2183,7 +2183,7 @@ export default function Accounting() {
                     onChange={(e) =>
                       setNewFiscalYear((prev) => ({ ...prev, name: e.target.value }))
                     }
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -2196,7 +2196,7 @@ export default function Accounting() {
                       onChange={(e) =>
                         setNewFiscalYear((prev) => ({ ...prev, startDate: e.target.value }))
                       }
-                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                      className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -2208,7 +2208,7 @@ export default function Accounting() {
                       onChange={(e) =>
                         setNewFiscalYear((prev) => ({ ...prev, endDate: e.target.value }))
                       }
-                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                      className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -2241,7 +2241,7 @@ export default function Accounting() {
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.98, opacity: 0 }}
-              className="bg-white dark:bg-zinc-900 rounded-3xl max-w-md w-full border border-zinc-150 p-6 space-y-4 text-right"
+              className="bg-white dark:bg-zinc-100 rounded-3xl max-w-md w-full border border-zinc-150 p-6 space-y-4 text-right"
             >
               <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
                 إضافة حساب مالي لشجرة دليل الشركة
@@ -2258,7 +2258,7 @@ export default function Accounting() {
                     placeholder="مثال: 101005"
                     value={newAccount.code}
                     onChange={(e) => setNewAccount((prev) => ({ ...prev, code: e.target.value }))}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -2269,7 +2269,7 @@ export default function Accounting() {
                     placeholder="مثال: ذمم عملاء التوصيل السريع"
                     value={newAccount.nameAr}
                     onChange={(e) => setNewAccount((prev) => ({ ...prev, nameAr: e.target.value }))}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -2280,7 +2280,7 @@ export default function Accounting() {
                     placeholder="E.g. Delivery Receivables"
                     value={newAccount.nameEn}
                     onChange={(e) => setNewAccount((prev) => ({ ...prev, nameEn: e.target.value }))}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -2291,7 +2291,7 @@ export default function Accounting() {
                       onChange={(e) =>
                         setNewAccount((prev) => ({ ...prev, type: e.target.value as any }))
                       }
-                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
+                      className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
                     >
                       <option value="Asset">أصول (Asset)</option>
                       <option value="Liability">خصوم (Liability)</option>
@@ -2309,7 +2309,7 @@ export default function Accounting() {
                       onChange={(e) =>
                         setNewAccount((prev) => ({ ...prev, parent: e.target.value }))
                       }
-                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                      className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -2368,7 +2368,7 @@ export default function Accounting() {
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.98, opacity: 0 }}
-              className="bg-white dark:bg-zinc-900 rounded-3xl max-w-5xl w-full border border-zinc-150 p-6 space-y-6 text-right max-h-[90vh] overflow-y-auto"
+              className="bg-white dark:bg-zinc-100 rounded-3xl max-w-5xl w-full border border-zinc-150 p-6 space-y-6 text-right max-h-[90vh] overflow-y-auto"
             >
               <div className="flex justify-between items-center border-b border-zinc-100 dark:border-zinc-800 pb-3">
                 <div className="flex items-center gap-3">
@@ -2401,7 +2401,7 @@ export default function Accounting() {
                     required
                     value={journalForm.date}
                     onChange={(e) => setJournalForm((prev) => ({ ...prev, date: e.target.value }))}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                   />
                 </div>
 
@@ -2419,7 +2419,7 @@ export default function Accounting() {
                         exchangeRate: activeRate,
                       }));
                     }}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
                   >
                     {exchangeRates.map((r) => (
                       <option key={r.currencyCode} value={r.currencyCode}>
@@ -2442,7 +2442,7 @@ export default function Accounting() {
                       }))
                     }
                     disabled={journalForm.currency === "SAR"}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none disabled:bg-zinc-100"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none disabled:bg-zinc-100"
                   />
                 </div>
 
@@ -2467,7 +2467,7 @@ export default function Accounting() {
                           destinationCompanyId: e.target.value,
                         }))
                       }
-                      className="w-full mt-1 bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-2 focus:outline-none cursor-pointer"
+                      className="w-full mt-1 bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-2 focus:outline-none cursor-pointer"
                     >
                       <option value="">اختر الشركة المقابلة...</option>
                       {companies
@@ -2490,7 +2490,7 @@ export default function Accounting() {
                     onChange={(e) =>
                       setJournalForm((prev) => ({ ...prev, description: e.target.value }))
                     }
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                   />
                 </div>
               </div>
@@ -2512,7 +2512,7 @@ export default function Accounting() {
 
                 <div className="border border-zinc-100 dark:border-zinc-850 rounded-2xl overflow-hidden max-h-[40vh] overflow-y-auto">
                   <table className="w-full text-right text-xs">
-                    <thead className="bg-zinc-50 dark:bg-zinc-950/50 text-[10px] text-zinc-400 font-bold border-b border-zinc-100 dark:border-zinc-800">
+                    <thead className="bg-zinc-50 dark:bg-zinc-100/50 text-[10px] text-zinc-400 font-bold border-b border-zinc-100 dark:border-zinc-800">
                       <tr>
                         <th className="p-3 w-1/4">الحساب المالي</th>
                         <th className="p-3">مدين (Debit)</th>
@@ -2533,7 +2533,7 @@ export default function Accounting() {
                               required
                               value={line.accountId}
                               onChange={(e) => handleLineChange(idx, "accountId", e.target.value)}
-                              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-2.5 py-2.5 focus:outline-none cursor-pointer font-bold"
+                              className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-2.5 py-2.5 focus:outline-none cursor-pointer font-bold"
                             >
                               <option value="">اختر الحساب...</option>
                               {accounts
@@ -2553,7 +2553,7 @@ export default function Accounting() {
                               placeholder="0.00"
                               value={line.debit || ""}
                               onChange={(e) => handleLineChange(idx, "debit", e.target.value)}
-                              className="w-28 bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-3 py-2.5 focus:outline-none font-mono text-left text-emerald-600 font-black"
+                              className="w-28 bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-3 py-2.5 focus:outline-none font-mono text-left text-emerald-600 font-black"
                             />
                           </td>
 
@@ -2564,7 +2564,7 @@ export default function Accounting() {
                               placeholder="0.00"
                               value={line.credit || ""}
                               onChange={(e) => handleLineChange(idx, "credit", e.target.value)}
-                              className="w-28 bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-3 py-2.5 focus:outline-none font-mono text-left text-rose-600 font-black"
+                              className="w-28 bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-3 py-2.5 focus:outline-none font-mono text-left text-rose-600 font-black"
                             />
                           </td>
 
@@ -2574,7 +2574,7 @@ export default function Accounting() {
                               placeholder="وصف اختياري..."
                               value={line.description}
                               onChange={(e) => handleLineChange(idx, "description", e.target.value)}
-                              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-3 py-2.5 focus:outline-none"
+                              className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-3 py-2.5 focus:outline-none"
                             />
                           </td>
 
@@ -2584,14 +2584,14 @@ export default function Accounting() {
                               placeholder="مركز تكلفة..."
                               value={line.costCenter}
                               onChange={(e) => handleLineChange(idx, "costCenter", e.target.value)}
-                              className="w-24 bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-2 py-2.5 focus:outline-none"
+                              className="w-24 bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-2 py-2.5 focus:outline-none"
                             />
                             <input
                               type="text"
                               placeholder="المشروع..."
                               value={line.project}
                               onChange={(e) => handleLineChange(idx, "project", e.target.value)}
-                              className="w-24 bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-2 py-2.5 focus:outline-none"
+                              className="w-24 bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-2 py-2.5 focus:outline-none"
                             />
                           </td>
 
@@ -2612,7 +2612,7 @@ export default function Accounting() {
               </div>
 
               {/* Bottom Totals and Symmetry Validation */}
-              <div className="bg-zinc-50 dark:bg-zinc-950 p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 border border-zinc-100 dark:border-zinc-850">
+              <div className="bg-zinc-50 dark:bg-zinc-100 p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 border border-zinc-100 dark:border-zinc-850">
                 <div className="flex items-center gap-3 text-xs">
                   {Math.abs(journalForm.totalDebits - journalForm.totalCredits) < 0.01 &&
                   journalForm.totalDebits > 0 ? (
@@ -2690,7 +2690,7 @@ export default function Accounting() {
               initial={{ scale: 0.98, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.98, opacity: 0 }}
-              className="bg-white dark:bg-zinc-900 rounded-3xl max-w-lg w-full border border-zinc-150 p-6 space-y-4 text-right"
+              className="bg-white dark:bg-zinc-100 rounded-3xl max-w-lg w-full border border-zinc-150 p-6 space-y-4 text-right"
             >
               <div>
                 <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
@@ -2710,7 +2710,7 @@ export default function Accounting() {
                       onChange={(e) =>
                         setFxRevalue((prev) => ({ ...prev, currencyCode: e.target.value }))
                       }
-                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
+                      className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
                     >
                       <option value="USD">USD (الدولار الأمريكي)</option>
                       <option value="EUR">EUR (اليورو الأوروبي)</option>
@@ -2733,7 +2733,7 @@ export default function Accounting() {
                           rate: parseFloat(e.target.value) || 1.0,
                         }))
                       }
-                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                      className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                     />
                   </div>
                 </div>

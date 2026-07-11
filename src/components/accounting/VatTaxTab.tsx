@@ -129,7 +129,7 @@ export default function VatTaxTab() {
     <div className="space-y-6 text-right">
       {/* Metrics Banner */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
           <div className="flex justify-between items-start">
             <div className="w-9 h-9 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center dark:bg-emerald-950/30 dark:text-emerald-400">
               <ArrowUpRight className="w-4.5 h-4.5" />
@@ -146,7 +146,7 @@ export default function VatTaxTab() {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
           <div className="flex justify-between items-start">
             <div className="w-9 h-9 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center dark:bg-rose-950/30 dark:text-rose-400">
               <ArrowDownLeft className="w-4.5 h-4.5" />
@@ -163,7 +163,7 @@ export default function VatTaxTab() {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
           <div className="flex justify-between items-start">
             <div className="w-9 h-9 bg-indigo-50 text-indigo-650 rounded-lg flex items-center justify-center dark:bg-indigo-950/30 dark:text-indigo-400">
               <Percent className="w-4.5 h-4.5" />
@@ -186,7 +186,7 @@ export default function VatTaxTab() {
       </div>
 
       {/* Controller Controls */}
-      <div className="flex justify-between items-center bg-zinc-50 dark:bg-zinc-950 p-4 rounded-2xl border border-zinc-150 dark:border-zinc-850">
+      <div className="flex justify-between items-center bg-zinc-50 dark:bg-zinc-100 p-4 rounded-2xl border border-zinc-150 dark:border-zinc-850">
         <div>
           <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100">
             بوابة الإقرارات والامتثال الضريبي المتكامل
@@ -208,7 +208,7 @@ export default function VatTaxTab() {
       {/* Main Grid: VAT Rules & Transaction Log */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* VAT Rate Rules list */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-3xl shadow-sm space-y-4">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-3xl shadow-sm space-y-4">
           <div>
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100">
               قواعد ومعدلات الضرائب المعرفة
@@ -222,7 +222,7 @@ export default function VatTaxTab() {
             {vatRates.map((rate) => (
               <div
                 key={rate.id}
-                className="bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-850 p-3.5 rounded-xl flex justify-between items-center"
+                className="bg-zinc-50 dark:bg-zinc-100 border border-zinc-100 dark:border-zinc-850 p-3.5 rounded-xl flex justify-between items-center"
               >
                 <div>
                   <span className="text-xs font-black text-zinc-850 dark:text-zinc-150 block">
@@ -241,7 +241,7 @@ export default function VatTaxTab() {
         </div>
 
         {/* VAT Transaction Log */}
-        <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-3xl shadow-sm space-y-4">
+        <div className="lg:col-span-2 bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-3xl shadow-sm space-y-4">
           <div>
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100">
               سجل المعاملات الخاضعة للضريبة
@@ -253,7 +253,7 @@ export default function VatTaxTab() {
 
           <div className="border border-zinc-100 dark:border-zinc-850 rounded-2xl overflow-hidden">
             <table className="w-full text-xs text-right">
-              <thead className="bg-zinc-50 dark:bg-zinc-950/50 text-[10px] text-zinc-400 font-bold border-b border-zinc-100 dark:border-zinc-800">
+              <thead className="bg-zinc-50 dark:bg-zinc-100/50 text-[10px] text-zinc-400 font-bold border-b border-zinc-100 dark:border-zinc-800">
                 <tr>
                   <th className="p-3">رقم المرجع / القيد</th>
                   <th className="p-3">نوع الحركة</th>
@@ -308,7 +308,7 @@ export default function VatTaxTab() {
             initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.98, opacity: 0 }}
-            className="bg-white dark:bg-zinc-900 rounded-3xl max-w-2xl w-full border border-zinc-150 p-6 space-y-6 text-right"
+            className="bg-white dark:bg-zinc-100 rounded-3xl max-w-2xl w-full border border-zinc-150 p-6 space-y-6 text-right"
           >
             <div>
               <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -321,7 +321,7 @@ export default function VatTaxTab() {
             </div>
 
             <div className="border border-zinc-100 dark:border-zinc-850 rounded-2xl overflow-hidden text-xs">
-              <div className="bg-zinc-50 dark:bg-zinc-950 p-3 font-black border-b border-zinc-100 dark:border-zinc-850">
+              <div className="bg-zinc-50 dark:bg-zinc-100 p-3 font-black border-b border-zinc-100 dark:border-zinc-850">
                 1. ضريبة المبيعات والمخرجات (Output VAT)
               </div>
               <div className="grid grid-cols-3 p-3 border-b border-zinc-50 dark:border-zinc-850 font-bold">
@@ -337,7 +337,7 @@ export default function VatTaxTab() {
                 <span className="text-left font-mono">0 ر.س</span>
               </div>
 
-              <div className="bg-zinc-50 dark:bg-zinc-950 p-3 font-black border-b border-zinc-100 dark:border-zinc-850">
+              <div className="bg-zinc-50 dark:bg-zinc-100 p-3 font-black border-b border-zinc-100 dark:border-zinc-850">
                 2. ضريبة المشتريات والمدخلات (Input VAT)
               </div>
               <div className="grid grid-cols-3 p-3 border-b border-zinc-50 dark:border-zinc-850 font-bold">

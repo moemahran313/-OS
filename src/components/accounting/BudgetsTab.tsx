@@ -94,7 +94,7 @@ export default function BudgetsTab() {
     <div className="space-y-6 text-right">
       {/* Metrics Banner */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
           <span className="text-[10px] text-zinc-400 font-bold uppercase">
             إجمالي الميزانية السنوية المعتمدة (Total Budget)
           </span>
@@ -106,7 +106,7 @@ export default function BudgetsTab() {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
           <span className="text-[10px] text-zinc-400 font-bold uppercase">
             إجمالي الإنفاق الفعلي (Actual Spent)
           </span>
@@ -118,7 +118,7 @@ export default function BudgetsTab() {
           </p>
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-2xl shadow-sm">
           <span className="text-[10px] text-zinc-400 font-bold uppercase">
             التباين المتبقي / الوفورات (Variance)
           </span>
@@ -134,7 +134,7 @@ export default function BudgetsTab() {
       </div>
 
       {/* Controller Buttons */}
-      <div className="flex justify-between items-center bg-zinc-50 dark:bg-zinc-950 p-4 rounded-2xl border border-zinc-150 dark:border-zinc-850">
+      <div className="flex justify-between items-center bg-zinc-50 dark:bg-zinc-100 p-4 rounded-2xl border border-zinc-150 dark:border-zinc-850">
         <div>
           <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100">
             مراقبة وتعديل الموازنات التقديرية للشركة
@@ -152,9 +152,9 @@ export default function BudgetsTab() {
       </div>
 
       {/* Variance Analysis Table */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 rounded-3xl shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 rounded-3xl shadow-sm overflow-hidden">
         <table className="w-full text-xs text-right">
-          <thead className="bg-zinc-50 dark:bg-zinc-950/50 text-[10px] text-zinc-400 font-bold border-b border-zinc-100 dark:border-zinc-800">
+          <thead className="bg-zinc-50 dark:bg-zinc-100/50 text-[10px] text-zinc-400 font-bold border-b border-zinc-100 dark:border-zinc-800">
             <tr>
               <th className="p-3">بند الموازنة (المصروف المالي)</th>
               <th className="p-3">رمز الحساب</th>
@@ -224,7 +224,7 @@ export default function BudgetsTab() {
             initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.98, opacity: 0 }}
-            className="bg-white dark:bg-zinc-900 rounded-3xl max-w-md w-full border border-zinc-150 p-6 space-y-4 text-right"
+            className="bg-white dark:bg-zinc-100 rounded-3xl max-w-md w-full border border-zinc-150 p-6 space-y-4 text-right"
           >
             <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
               تخصيص بند ميزانية تقديرية جديدة
@@ -241,7 +241,7 @@ export default function BudgetsTab() {
                   placeholder="مثال: 501001"
                   value={newBudget.accountCode}
                   onChange={(e) => setNewBudget((p) => ({ ...p, accountCode: e.target.value }))}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                  className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                 />
               </div>
 
@@ -253,7 +253,7 @@ export default function BudgetsTab() {
                   placeholder="مثال: ميزانية خدمات التسويق والإعلانات"
                   value={newBudget.accountName}
                   onChange={(e) => setNewBudget((p) => ({ ...p, accountName: e.target.value }))}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
+                  className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none"
                 />
               </div>
 
@@ -263,7 +263,7 @@ export default function BudgetsTab() {
                   <select
                     value={newBudget.department}
                     onChange={(e) => setNewBudget((p) => ({ ...p, department: e.target.value }))}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none cursor-pointer"
                   >
                     <option value="Marketing">التسويق والمبيعات (Marketing)</option>
                     <option value="HR & Admin">الموارد البشرية والإدارة (HR & Admin)</option>
@@ -280,7 +280,7 @@ export default function BudgetsTab() {
                     placeholder="0.00"
                     value={newBudget.annualBudget}
                     onChange={(e) => setNewBudget((p) => ({ ...p, annualBudget: e.target.value }))}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
+                    className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 focus:outline-none font-mono"
                   />
                 </div>
               </div>

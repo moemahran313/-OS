@@ -1,4 +1,4 @@
-import { AnalyticsReport, KPI, RiskAlert, ActionRecommendation, Scenario } from "./types.js";
+import { AnalyticsReport, KPI, ActionRecommendation, Scenario } from "./types.js";
 import { SegmentAnalyzer } from "./segments.js";
 
 export class DataAnalyticsEngine {
@@ -16,8 +16,6 @@ export class DataAnalyticsEngine {
     const collectedRate = totalInvoiced > 0 ? (totalPaid / totalInvoiced) * 100 : 0;
 
     const wonLeads = leads.filter((l) => l.status === "won").length;
-    const totalValue = leads.reduce((acc, l) => acc + (l.value || 0), 0);
-    const avgLeadValue = leads.length > 0 ? totalValue / leads.length : 0;
 
     // KPI Tree Generation
     const kpis: KPI[] = [

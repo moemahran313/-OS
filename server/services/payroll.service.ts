@@ -1,4 +1,4 @@
-import { db } from "./firebase.js";
+import { db } from "./firebase.ts";
 
 export class PayrollService {
   static async simulatePayroll(userId: string, period: string) {

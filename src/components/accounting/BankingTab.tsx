@@ -216,7 +216,7 @@ export default function BankingTab() {
               className={`p-5 rounded-2xl border transition-all cursor-pointer ${
                 isSelected
                   ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-500 shadow-sm"
-                  : "bg-white dark:bg-zinc-900 border-zinc-150 dark:border-zinc-850 hover:border-zinc-200"
+                  : "bg-white dark:bg-zinc-100 border-zinc-150 dark:border-zinc-850 hover:border-zinc-200"
               }`}
             >
               <div className="flex justify-between items-start">
@@ -262,7 +262,7 @@ export default function BankingTab() {
       {/* Main Reconciliation Work Arena */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Reconcile Interface */}
-        <div className="lg:col-span-8 bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-6 rounded-3xl shadow-sm space-y-6">
+        <div className="lg:col-span-8 bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-6 rounded-3xl shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
               <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -303,7 +303,7 @@ export default function BankingTab() {
                     className={`p-3.5 rounded-xl border text-xs space-y-2 transition-all ${
                       stmt.matched
                         ? "bg-emerald-50/40 dark:bg-emerald-950/10 border-emerald-200 dark:border-emerald-900/30"
-                        : "bg-zinc-50 dark:bg-zinc-950 border-zinc-150 dark:border-zinc-850 hover:border-zinc-200"
+                        : "bg-zinc-50 dark:bg-zinc-100 border-zinc-150 dark:border-zinc-850 hover:border-zinc-200"
                     }`}
                   >
                     <div className="flex justify-between items-start">
@@ -363,7 +363,7 @@ export default function BankingTab() {
                     className={`p-3.5 rounded-xl border text-xs space-y-2 transition-all ${
                       ledg.matched
                         ? "bg-emerald-50/40 dark:bg-emerald-950/10 border-emerald-200 dark:border-emerald-900/30"
-                        : "bg-zinc-50 dark:bg-zinc-950 border-zinc-150 dark:border-zinc-850 hover:border-zinc-200"
+                        : "bg-zinc-50 dark:bg-zinc-100 border-zinc-150 dark:border-zinc-850 hover:border-zinc-200"
                     }`}
                   >
                     <div className="flex justify-between items-start">
@@ -399,7 +399,7 @@ export default function BankingTab() {
         </div>
 
         {/* Audit Trail & Match Metrics */}
-        <div className="lg:col-span-4 bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-3xl shadow-sm space-y-5 flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-3xl shadow-sm space-y-5 flex flex-col justify-between">
           <div className="space-y-4">
             <div>
               <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100">
@@ -428,7 +428,7 @@ export default function BankingTab() {
             </div>
           </div>
 
-          <div className="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850 space-y-3 mt-4">
+          <div className="bg-zinc-50 dark:bg-zinc-100 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850 space-y-3 mt-4">
             <span className="text-[10px] text-zinc-400 font-black block">
               حالة الحساب البنكي النشط
             </span>

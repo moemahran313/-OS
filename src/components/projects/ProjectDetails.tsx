@@ -367,7 +367,7 @@ export default function ProjectDetails({
   return (
     <div className="space-y-6" dir={isRtl ? "rtl" : "ltr"}>
       {/* Upper Navigation & Title Card */}
-      <div className="bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-900 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-zinc-100 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-900 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button
             onClick={onBack}
@@ -399,7 +399,7 @@ export default function ProjectDetails({
         </div>
 
         {/* Dynamic Financial Banner summary */}
-        <div className="flex items-center gap-6 bg-zinc-50 dark:bg-zinc-900 px-5 py-3 rounded-xl border border-zinc-200/40 dark:border-zinc-800/40 text-xs">
+        <div className="flex items-center gap-6 bg-zinc-50 dark:bg-zinc-100 px-5 py-3 rounded-xl border border-zinc-200/40 dark:border-zinc-800/40 text-xs">
           <div>
             <span className="text-zinc-500 block">
               {isRtl ? "ميزانية المشروع" : "Project Budget"}
@@ -492,7 +492,7 @@ export default function ProjectDetails({
                     "px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border",
                     viewMode === "list"
                       ? "bg-zinc-900 border-zinc-800 text-white"
-                      : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-900 text-zinc-500"
+                      : "bg-white dark:bg-zinc-100 border-zinc-200 dark:border-zinc-900 text-zinc-500"
                   )}
                 >
                   {isRtl ? "طريقة القائمة" : "List View"}
@@ -503,7 +503,7 @@ export default function ProjectDetails({
                     "px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border",
                     viewMode === "board"
                       ? "bg-zinc-900 border-zinc-800 text-white"
-                      : "bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-900 text-zinc-500"
+                      : "bg-white dark:bg-zinc-100 border-zinc-200 dark:border-zinc-900 text-zinc-500"
                   )}
                 >
                   {isRtl ? "لوحة كانبان" : "Kanban Board"}
@@ -534,9 +534,9 @@ export default function ProjectDetails({
 
             {/* LIST VIEW */}
             {viewMode === "list" && (
-              <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-900 rounded-2xl overflow-hidden shadow-sm">
+              <div className="bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-900 rounded-2xl overflow-hidden shadow-sm">
                 <table className="w-full text-xs">
-                  <thead className="bg-zinc-50 dark:bg-zinc-900 text-zinc-400 font-bold border-b border-zinc-200 dark:border-zinc-900">
+                  <thead className="bg-zinc-50 dark:bg-zinc-100 text-zinc-400 font-bold border-b border-zinc-200 dark:border-zinc-900">
                     <tr>
                       <th className="py-3 px-4 text-left">{isRtl ? "المهمة" : "Task Name"}</th>
                       <th className="py-3 px-4 text-left">{isRtl ? "المسؤول" : "Assignee"}</th>
@@ -650,7 +650,7 @@ export default function ProjectDetails({
                               onChange={(e) =>
                                 handleToggleTaskStatus(task.id, e.target.value as Task["status"])
                               }
-                              className="px-2 py-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-[10px] outline-none"
+                              className="px-2 py-1 bg-zinc-50 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-lg text-[10px] outline-none"
                             >
                               <option value="Backlog">Backlog</option>
                               <option value="Todo">Todo</option>
@@ -676,13 +676,13 @@ export default function ProjectDetails({
                     return (
                       <div
                         key={status}
-                        className="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-2xl border border-zinc-200/60 dark:border-zinc-900 flex flex-col min-h-[400px] space-y-3"
+                        className="bg-zinc-50 dark:bg-zinc-100 p-4 rounded-2xl border border-zinc-200/60 dark:border-zinc-900 flex flex-col min-h-[400px] space-y-3"
                       >
                         <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-900 pb-2">
                           <span className="font-black text-xs text-zinc-700 dark:text-zinc-200 tracking-wider uppercase">
                             {status}
                           </span>
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-900 text-zinc-500">
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-100 text-zinc-500">
                             {tasksInLane.length}
                           </span>
                         </div>
@@ -691,7 +691,7 @@ export default function ProjectDetails({
                           {tasksInLane.map((t) => (
                             <div
                               key={t.id}
-                              className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800 shadow-sm hover:border-emerald-500/20 transition-all space-y-2"
+                              className="bg-white dark:bg-zinc-100 p-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800 shadow-sm hover:border-emerald-500/20 transition-all space-y-2"
                             >
                               <h5 className="font-bold text-xs text-zinc-800 dark:text-zinc-200">
                                 {t.name}
@@ -740,7 +740,7 @@ export default function ProjectDetails({
 
         {/* 2. TIMELINE TAB */}
         {activeTab === "timeline" && (
-          <div className="bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-900 shadow-sm space-y-6">
+          <div className="bg-white dark:bg-zinc-100 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-900 shadow-sm space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-xs text-zinc-400 uppercase tracking-wider">
                 {isRtl ? "المخطط الزمني للأهداف والمهام" : "Milestones & Tasks Gantt chart"}
@@ -769,7 +769,7 @@ export default function ProjectDetails({
                         "absolute -left-[30px] top-1 w-4.5 h-4.5 rounded-full flex items-center justify-center border transition-all cursor-pointer",
                         m.status === "completed"
                           ? "bg-emerald-500 border-emerald-600 text-white shadow"
-                          : "bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700"
+                          : "bg-white dark:bg-zinc-100 border-zinc-300 dark:border-zinc-700"
                       )}
                     >
                       {m.status === "completed" && (
@@ -813,7 +813,7 @@ export default function ProjectDetails({
                     <span className="w-28 shrink-0 font-semibold text-zinc-700 dark:text-zinc-300 line-clamp-1">
                       {task.name}
                     </span>
-                    <div className="flex-1 bg-zinc-50 dark:bg-zinc-900 p-1.5 rounded-lg border border-zinc-100 dark:border-zinc-900 flex items-center">
+                    <div className="flex-1 bg-zinc-50 dark:bg-zinc-100 p-1.5 rounded-lg border border-zinc-100 dark:border-zinc-900 flex items-center">
                       <div className="w-full h-4 bg-zinc-100 dark:bg-zinc-850 rounded overflow-hidden relative">
                         {/* Bar offset simulating timeline */}
                         <div
@@ -859,7 +859,7 @@ export default function ProjectDetails({
         {activeTab === "timesheets" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Form */}
-            <div className="bg-white dark:bg-zinc-950 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-900 shadow-sm space-y-4">
+            <div className="bg-white dark:bg-zinc-100 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-900 shadow-sm space-y-4">
               <h3 className="font-bold text-xs text-zinc-400 uppercase tracking-wider">
                 {isRtl ? "تسجيل ساعات العمل" : "Submit Employee Timesheet"}
               </h3>
@@ -872,7 +872,7 @@ export default function ProjectDetails({
                   <select
                     value={newTimesheet.taskId}
                     onChange={(e) => setNewTimesheet({ ...newTimesheet, taskId: e.target.value })}
-                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none"
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none"
                   >
                     <option value="">{isRtl ? "اختر مهمة..." : "Select a task..."}</option>
                     {project.tasks.map((t) => (
@@ -890,7 +890,7 @@ export default function ProjectDetails({
                   <select
                     value={newTimesheet.assignee}
                     onChange={(e) => setNewTimesheet({ ...newTimesheet, assignee: e.target.value })}
-                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none"
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none"
                   >
                     {project.resources.map((r, idx) => (
                       <option key={idx} value={r.name}>
@@ -911,7 +911,7 @@ export default function ProjectDetails({
                       onChange={(e) =>
                         setNewTimesheet({ ...newTimesheet, hours: Number(e.target.value) })
                       }
-                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none"
+                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none"
                     />
                   </div>
                   <div>
@@ -922,7 +922,7 @@ export default function ProjectDetails({
                       type="date"
                       value={newTimesheet.date}
                       onChange={(e) => setNewTimesheet({ ...newTimesheet, date: e.target.value })}
-                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none"
+                      className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none"
                     />
                   </div>
                 </div>
@@ -942,7 +942,7 @@ export default function ProjectDetails({
                         : "Describe the accomplishments..."
                     }
                     rows={3}
-                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none resize-none"
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none resize-none"
                   />
                 </div>
 
@@ -956,14 +956,14 @@ export default function ProjectDetails({
             </div>
 
             {/* Audit Logs / Timesheets Table */}
-            <div className="bg-white dark:bg-zinc-950 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-900 shadow-sm lg:col-span-2 space-y-4">
+            <div className="bg-white dark:bg-zinc-100 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-900 shadow-sm lg:col-span-2 space-y-4">
               <h3 className="font-bold text-xs text-zinc-400 uppercase tracking-wider">
                 {isRtl ? "سجلات أوقات العمل والموافقات" : "Time Audit and Approvals"}
               </h3>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
-                  <thead className="bg-zinc-50 dark:bg-zinc-900 text-zinc-400 font-bold border-b border-zinc-200 dark:border-zinc-900">
+                  <thead className="bg-zinc-50 dark:bg-zinc-100 text-zinc-400 font-bold border-b border-zinc-200 dark:border-zinc-900">
                     <tr>
                       <th className="py-2 px-3 text-left">{isRtl ? "المسؤول" : "Member"}</th>
                       <th className="py-2 px-3 text-left">
@@ -1023,7 +1023,7 @@ export default function ProjectDetails({
 
         {/* 4. RESOURCES TAB */}
         {activeTab === "resources" && (
-          <div className="bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-900 shadow-sm space-y-6">
+          <div className="bg-white dark:bg-zinc-100 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-900 shadow-sm space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="font-bold text-xs text-zinc-400 uppercase tracking-wider">
                 {isRtl ? "مؤشر لود العمل والقدرة الاستيعابية" : "Resource Allocation Workloads"}
@@ -1046,7 +1046,7 @@ export default function ProjectDetails({
                 return (
                   <div
                     key={idx}
-                    className="bg-zinc-50 dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 space-y-4"
+                    className="bg-zinc-50 dark:bg-zinc-100 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 space-y-4"
                   >
                     <div className="flex items-start justify-between">
                       <div>
@@ -1124,14 +1124,14 @@ export default function ProjectDetails({
         {activeTab === "financials" && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Financial metrics & bridge */}
-            <div className="bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-900 shadow-sm space-y-6 lg:col-span-1">
+            <div className="bg-white dark:bg-zinc-100 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-900 shadow-sm space-y-6 lg:col-span-1">
               <h3 className="font-bold text-xs text-zinc-400 uppercase tracking-wider">
                 {isRtl ? "تحليل الميزانية والأرباح" : "Project Profitability Engine"}
               </h3>
 
               <div className="space-y-4 text-xs">
                 {/* Budget */}
-                <div className="bg-zinc-50 dark:bg-zinc-900 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850">
+                <div className="bg-zinc-50 dark:bg-zinc-100 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850">
                   <span className="text-[10px] font-bold text-zinc-400 block uppercase tracking-wider">
                     {isRtl ? "ميزانية العقد الكلية" : "Total Project Contract Value"}
                   </span>
@@ -1203,7 +1203,7 @@ export default function ProjectDetails({
             </div>
 
             {/* Expenses List & form */}
-            <div className="bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-900 shadow-sm lg:col-span-2 space-y-4">
+            <div className="bg-white dark:bg-zinc-100 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-900 shadow-sm lg:col-span-2 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-xs text-zinc-400 uppercase tracking-wider">
                   {isRtl ? "سجل المصروفات والمشتريات" : "Project Expenses Log"}
@@ -1218,7 +1218,7 @@ export default function ProjectDetails({
 
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
-                  <thead className="bg-zinc-50 dark:bg-zinc-900 text-zinc-400 font-bold border-b border-zinc-200 dark:border-zinc-900">
+                  <thead className="bg-zinc-50 dark:bg-zinc-100 text-zinc-400 font-bold border-b border-zinc-200 dark:border-zinc-900">
                     <tr>
                       <th className="py-2 px-3 text-left">{isRtl ? "المصروف" : "Description"}</th>
                       <th className="py-2 px-3 text-left">{isRtl ? "التاريخ" : "Date"}</th>
@@ -1234,7 +1234,7 @@ export default function ProjectDetails({
                         <td className="py-3 px-3 font-semibold">{exp.description}</td>
                         <td className="py-3 px-3 font-mono text-zinc-400">{exp.date}</td>
                         <td className="py-3 px-3">
-                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 font-bold">
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-zinc-100 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 font-bold">
                             {exp.category}
                           </span>
                         </td>
@@ -1255,7 +1255,7 @@ export default function ProjectDetails({
       {/* 1. Milestone Modal */}
       {showMilestoneModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-850 p-6 w-full max-w-md space-y-4">
+          <div className="bg-white dark:bg-zinc-100 rounded-2xl border border-zinc-200 dark:border-zinc-850 p-6 w-full max-w-md space-y-4">
             <h3 className="font-bold text-sm text-zinc-800 dark:text-white">
               {isRtl ? "إضافة محطة أداء رئيسية للمشروع" : "Add Key Project Milestone"}
             </h3>
@@ -1269,7 +1269,7 @@ export default function ProjectDetails({
                   value={newMilestone.name}
                   onChange={(e) => setNewMilestone({ ...newMilestone, name: e.target.value })}
                   placeholder="e.g. M1: Database Architecture Setup"
-                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                 />
               </div>
               <div>
@@ -1282,7 +1282,7 @@ export default function ProjectDetails({
                     setNewMilestone({ ...newMilestone, description: e.target.value })
                   }
                   rows={2}
-                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none resize-none"
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none resize-none"
                 />
               </div>
               <div>
@@ -1293,7 +1293,7 @@ export default function ProjectDetails({
                   type="date"
                   value={newMilestone.dueDate}
                   onChange={(e) => setNewMilestone({ ...newMilestone, dueDate: e.target.value })}
-                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                 />
               </div>
               <div className="flex gap-2 justify-end pt-2">
@@ -1318,7 +1318,7 @@ export default function ProjectDetails({
       {/* 2. Epic Modal */}
       {showEpicModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-850 p-6 w-full max-w-md space-y-4">
+          <div className="bg-white dark:bg-zinc-100 rounded-2xl border border-zinc-200 dark:border-zinc-850 p-6 w-full max-w-md space-y-4">
             <h3 className="font-bold text-sm text-zinc-800 dark:text-white">
               {isRtl ? "إضافة مجموعة برمجية كبرى" : "Add Project Epic"}
             </h3>
@@ -1332,7 +1332,7 @@ export default function ProjectDetails({
                   value={newEpic.name}
                   onChange={(e) => setNewEpic({ ...newEpic, name: e.target.value })}
                   placeholder="e.g. Back-office API Integrations"
-                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                 />
               </div>
               <div>
@@ -1343,7 +1343,7 @@ export default function ProjectDetails({
                   value={newEpic.description}
                   onChange={(e) => setNewEpic({ ...newEpic, description: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none resize-none"
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none resize-none"
                 />
               </div>
               <div className="flex gap-2 justify-end pt-2">
@@ -1368,7 +1368,7 @@ export default function ProjectDetails({
       {/* 3. Task Modal */}
       {showTaskModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-850 p-6 w-full max-w-lg space-y-4">
+          <div className="bg-white dark:bg-zinc-100 rounded-2xl border border-zinc-200 dark:border-zinc-850 p-6 w-full max-w-lg space-y-4">
             <h3 className="font-bold text-sm text-zinc-800 dark:text-white">
               {isRtl ? "إنشاء مهمة عمل جديدة" : "Create New Task"}
             </h3>
@@ -1381,7 +1381,7 @@ export default function ProjectDetails({
                   type="text"
                   value={newTask.name}
                   onChange={(e) => setNewTask({ ...newTask, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                 />
               </div>
               <div>
@@ -1392,7 +1392,7 @@ export default function ProjectDetails({
                   value={newTask.description}
                   onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
                   rows={2}
-                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none resize-none"
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none resize-none"
                 />
               </div>
 
@@ -1404,7 +1404,7 @@ export default function ProjectDetails({
                   <select
                     value={newTask.milestoneId}
                     onChange={(e) => setNewTask({ ...newTask, milestoneId: e.target.value })}
-                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                   >
                     <option value="">-- {isRtl ? "لا يوجد" : "None"} --</option>
                     {project.milestones.map((m) => (
@@ -1421,7 +1421,7 @@ export default function ProjectDetails({
                   <select
                     value={newTask.epicId}
                     onChange={(e) => setNewTask({ ...newTask, epicId: e.target.value })}
-                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                   >
                     <option value="">-- {isRtl ? "لا يوجد" : "None"} --</option>
                     {project.epics.map((e) => (
@@ -1441,7 +1441,7 @@ export default function ProjectDetails({
                   <select
                     value={newTask.assignee}
                     onChange={(e) => setNewTask({ ...newTask, assignee: e.target.value })}
-                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                   >
                     {project.resources.map((r, idx) => (
                       <option key={idx} value={r.name}>
@@ -1460,7 +1460,7 @@ export default function ProjectDetails({
                     onChange={(e) =>
                       setNewTask({ ...newTask, estimatedHours: Number(e.target.value) })
                     }
-                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                   />
                 </div>
                 <div>
@@ -1472,7 +1472,7 @@ export default function ProjectDetails({
                     onChange={(e) =>
                       setNewTask({ ...newTask, priority: e.target.value as Task["priority"] })
                     }
-                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                   >
                     <option value="High">{isRtl ? "عالي" : "High"}</option>
                     <option value="Medium">{isRtl ? "متوسط" : "Medium"}</option>
@@ -1503,7 +1503,7 @@ export default function ProjectDetails({
       {/* 4. Expense Modal */}
       {showExpenseModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-850 p-6 w-full max-w-md space-y-4">
+          <div className="bg-white dark:bg-zinc-100 rounded-2xl border border-zinc-200 dark:border-zinc-850 p-6 w-full max-w-md space-y-4">
             <h3 className="font-bold text-sm text-zinc-800 dark:text-white">
               {isRtl ? "تسجيل مصروف مالي للمشروع" : "Log Project Expense"}
             </h3>
@@ -1517,7 +1517,7 @@ export default function ProjectDetails({
                   value={newExpense.description}
                   onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
                   placeholder="e.g. AWS Production Database hosting"
-                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -1531,7 +1531,7 @@ export default function ProjectDetails({
                     onChange={(e) =>
                       setNewExpense({ ...newExpense, amount: Number(e.target.value) })
                     }
-                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                   />
                 </div>
                 <div>
@@ -1541,7 +1541,7 @@ export default function ProjectDetails({
                   <select
                     value={newExpense.category}
                     onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
-                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
+                    className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                   >
                     <option value="Software License">Software License</option>
                     <option value="Travel & Lodging">Travel & Lodging</option>
@@ -1558,7 +1558,7 @@ export default function ProjectDetails({
                   type="date"
                   value={newExpense.date}
                   onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
-                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
+                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-100 border border-zinc-250 dark:border-zinc-800 rounded-xl outline-none"
                 />
               </div>
               <div className="flex gap-2 justify-end pt-2">

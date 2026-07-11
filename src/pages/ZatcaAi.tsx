@@ -44,7 +44,7 @@ import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { toast } from "sonner";
 import { generateZatcaQR } from "../lib/zatca";
 import { auth } from "../lib/firebase";
-import { handleFirestoreError, OperationType } from "../lib/firestore-errors";
+import { handleFirestoreError, OperationType } from "../lib/firestore-issues";
 
 // Mock Sample Contracts for 1-click Demo experience
 interface DemoContract {
@@ -634,7 +634,7 @@ export default function ZatcaAi() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 font-sans" dir={isAr ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-100 font-sans" dir={isAr ? "rtl" : "ltr"}>
       {/* Top Banner Control Center */}
       <div className="bg-gradient-to-r from-zinc-900 via-zinc-800 to-emerald-950 border-b border-zinc-800 text-white py-6 px-4 md:px-8 shadow-md">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -687,7 +687,7 @@ export default function ZatcaAi() {
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-8">
         {/* Dashboard statistics rows */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+          <div className="bg-white dark:bg-zinc-100 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
             <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
               {isAr ? "العقود المرفوعة" : "Contracts"}
             </span>
@@ -699,7 +699,7 @@ export default function ZatcaAi() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+          <div className="bg-white dark:bg-zinc-100 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
             <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
               {isAr ? "الفواتير المصدرة" : "Generated"}
             </span>
@@ -711,7 +711,7 @@ export default function ZatcaAi() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+          <div className="bg-white dark:bg-zinc-100 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
             <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
               {isAr ? "الفواتير المعتمدة" : "Cleared"}
             </span>
@@ -723,7 +723,7 @@ export default function ZatcaAi() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+          <div className="bg-white dark:bg-zinc-100 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
             <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
               {isAr ? "الفواتير المرفوضة" : "Rejected"}
             </span>
@@ -733,7 +733,7 @@ export default function ZatcaAi() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+          <div className="bg-white dark:bg-zinc-100 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
             <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
               {isAr ? "التنبيهات الفنية" : "Warnings"}
             </span>
@@ -743,7 +743,7 @@ export default function ZatcaAi() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+          <div className="bg-white dark:bg-zinc-100 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
             <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
               {isAr ? "بيانات ضائعة" : "Missing Info"}
             </span>
@@ -753,7 +753,7 @@ export default function ZatcaAi() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+          <div className="bg-white dark:bg-zinc-100 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
             <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">
               {isAr ? "دقة الذكاء الاصطناعي" : "AI Confidence"}
             </span>
@@ -767,7 +767,7 @@ export default function ZatcaAi() {
         </div>
 
         {/* Dynamic Wizard Workflow Controls */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm">
           <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/80 pb-6 mb-6">
             <h2 className="text-lg font-black text-zinc-800 dark:text-zinc-100 flex items-center gap-2">
               <Layers className="w-5 h-5 text-emerald-500" />
@@ -841,7 +841,7 @@ export default function ZatcaAi() {
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={handleFileDrop}
                     onClick={triggerManualUpload}
-                    className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl p-10 flex flex-col items-center justify-center bg-white dark:bg-zinc-900 hover:border-emerald-500 dark:hover:border-emerald-400 cursor-pointer transition-all duration-300"
+                    className="border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl p-10 flex flex-col items-center justify-center bg-white dark:bg-zinc-100 hover:border-emerald-500 dark:hover:border-emerald-400 cursor-pointer transition-all duration-300"
                   >
                     <div className="p-4 bg-emerald-500/10 rounded-full text-emerald-500 mb-4 animate-bounce">
                       <Upload className="w-8 h-8" />
@@ -861,14 +861,14 @@ export default function ZatcaAi() {
 
                   {/* Settings and preferences row */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                    <div className="bg-white dark:bg-zinc-100 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
                       <label className="text-xs font-bold text-zinc-500 block mb-2">
                         {isAr ? "تنسيق المستند المقروء" : "Input Document Type"}
                       </label>
                       <select
                         value={selectedFileType}
                         onChange={(e) => setSelectedFileType(e.target.value)}
-                        className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 text-xs"
+                        className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 text-xs"
                       >
                         <option value="pdf">PDF Contracts & Agreements</option>
                         <option value="docx">Microsoft Word Document (.docx)</option>
@@ -877,7 +877,7 @@ export default function ZatcaAi() {
                       </select>
                     </div>
 
-                    <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                    <div className="bg-white dark:bg-zinc-100 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800">
                       <label className="text-xs font-bold text-zinc-500 block mb-2">
                         {isAr ? "لغة وثيقة العقد" : "Contract Language Scope"}
                       </label>
@@ -889,7 +889,7 @@ export default function ZatcaAi() {
                             className={`flex-1 p-2 rounded-lg border text-xs font-bold capitalize transition-all ${
                               selectedLanguage === lang
                                 ? "bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-400"
-                                : "bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 text-zinc-600 dark:text-zinc-400"
+                                : "bg-zinc-50 dark:bg-zinc-100 border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 text-zinc-600 dark:text-zinc-400"
                             }`}
                           >
                             {lang === "arabic"
@@ -1026,7 +1026,7 @@ export default function ZatcaAi() {
                   )}
 
                   {/* Manual Inputs Resolution / Correction panel */}
-                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl space-y-4">
+                  <div className="bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl space-y-4">
                     <h3 className="text-sm font-black text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
                       <Settings className="w-4 h-4 text-emerald-500" />
                       {isAr
@@ -1048,7 +1048,7 @@ export default function ZatcaAi() {
                             placeholder="e.g. 300459281700003"
                             value={sellerVatInput}
                             onChange={(e) => setSellerVatInput(e.target.value)}
-                            className={`w-full bg-zinc-50 dark:bg-zinc-950 border rounded-lg p-2 text-xs font-mono ${
+                            className={`w-full bg-zinc-50 dark:bg-zinc-100 border rounded-lg p-2 text-xs font-mono ${
                               !sellerVatInput
                                 ? "border-rose-400 focus:ring-rose-400"
                                 : "border-zinc-200 dark:border-zinc-800"
@@ -1075,7 +1075,7 @@ export default function ZatcaAi() {
                             placeholder="e.g. 300812938400003"
                             value={buyerVatInput}
                             onChange={(e) => setBuyerVatInput(e.target.value)}
-                            className={`w-full bg-zinc-50 dark:bg-zinc-950 border rounded-lg p-2 text-xs font-mono ${
+                            className={`w-full bg-zinc-50 dark:bg-zinc-100 border rounded-lg p-2 text-xs font-mono ${
                               !buyerVatInput
                                 ? "border-rose-400 focus:ring-rose-400"
                                 : "border-zinc-200 dark:border-zinc-800"
@@ -1097,7 +1097,7 @@ export default function ZatcaAi() {
                           type="text"
                           value={currencyInput}
                           onChange={(e) => setCurrencyInput(e.target.value)}
-                          className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 text-xs font-mono"
+                          className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 text-xs font-mono"
                         />
                       </div>
 
@@ -1109,7 +1109,7 @@ export default function ZatcaAi() {
                           type="date"
                           value={invoiceDateInput}
                           onChange={(e) => setInvoiceDateInput(e.target.value)}
-                          className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 text-xs font-mono"
+                          className="w-full bg-zinc-50 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 text-xs font-mono"
                         />
                       </div>
                     </div>
@@ -1125,7 +1125,7 @@ export default function ZatcaAi() {
                   </div>
 
                   {/* Collapsible groups of extracted metadata */}
-                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+                  <div className="bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
                     <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 border-b border-zinc-100 dark:border-zinc-800/80">
                       <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
                         {isAr
@@ -1136,7 +1136,7 @@ export default function ZatcaAi() {
 
                     <div className="p-4 space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                        <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                        <div className="bg-zinc-50 dark:bg-zinc-100 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
                           <span className="text-zinc-400 block mb-1">
                             {isAr ? "اسم البائع" : "Seller Name"}
                           </span>
@@ -1144,7 +1144,7 @@ export default function ZatcaAi() {
                             {extractedData.sellerName}
                           </span>
                         </div>
-                        <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                        <div className="bg-zinc-50 dark:bg-zinc-100 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
                           <span className="text-zinc-400 block mb-1">
                             {isAr ? "اسم المشتري" : "Buyer Name"}
                           </span>
@@ -1152,7 +1152,7 @@ export default function ZatcaAi() {
                             {extractedData.buyerName}
                           </span>
                         </div>
-                        <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                        <div className="bg-zinc-50 dark:bg-zinc-100 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
                           <span className="text-zinc-400 block mb-1">
                             {isAr ? "رقم العقد" : "Contract Number"}
                           </span>
@@ -1160,7 +1160,7 @@ export default function ZatcaAi() {
                             {extractedData.contractNumber}
                           </span>
                         </div>
-                        <div className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                        <div className="bg-zinc-50 dark:bg-zinc-100 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800">
                           <span className="text-zinc-400 block mb-1">
                             {isAr ? "شروط الدفع والاستقطاع" : "Payment & Retention Terms"}
                           </span>
@@ -1224,7 +1224,7 @@ export default function ZatcaAi() {
                             {extractedData.milestones.map((milestone: any, i: number) => (
                               <div
                                 key={i}
-                                className="bg-zinc-50 dark:bg-zinc-950 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-xs"
+                                className="bg-zinc-50 dark:bg-zinc-100 p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-xs"
                               >
                                 <div>
                                   <span className="font-bold text-zinc-800 dark:text-zinc-200 block">
@@ -1244,7 +1244,7 @@ export default function ZatcaAi() {
                       )}
                     </div>
 
-                    <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 flex justify-end gap-3">
+                    <div className="p-4 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-100/50 flex justify-end gap-3">
                       <button
                         onClick={() => setCurrentStep("upload")}
                         className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-bold rounded-xl"
@@ -1266,7 +1266,7 @@ export default function ZatcaAi() {
               {currentStep === "invoice" && extractedData && (
                 <div className="space-y-6">
                   {/* Output type and format selection bar */}
-                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 p-4 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                       <label className="text-[10px] uppercase font-bold text-zinc-400 block mb-1">
                         {isAr ? "نوع فاتورة ZATCA المستهدفة" : "Target ZATCA E-Invoice Class"}
@@ -1288,7 +1288,7 @@ export default function ZatcaAi() {
                             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                               invoiceType === type.id
                                 ? "bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-400 border"
-                                : "bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 text-zinc-600 dark:text-zinc-400"
+                                : "bg-zinc-50 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 text-zinc-600 dark:text-zinc-400"
                             }`}
                           >
                             {isAr ? type.label : type.labelEn}
@@ -1326,7 +1326,7 @@ export default function ZatcaAi() {
                   </div>
 
                   {/* Active representation of the e-invoice */}
-                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm min-h-[400px]">
+                  <div className="bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm min-h-[400px]">
                     {outputFormat === "pdf" && (
                       <div className="border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 space-y-8 text-xs bg-white text-zinc-800">
                         {/* Interactive Saudi styled tax invoice header */}
@@ -1554,26 +1554,26 @@ export default function ZatcaAi() {
                           {/* Use standard vector QrCode representing decodable fields */}
                           <QrCode className="w-48 h-48 text-zinc-900" />
                         </div>
-                        <div className="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 w-full font-mono text-[10px] break-all text-zinc-500">
+                        <div className="bg-zinc-50 dark:bg-zinc-100 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 w-full font-mono text-[10px] break-all text-zinc-500">
                           <span className="text-zinc-400 block font-bold mb-1 uppercase tracking-wider">
                             {isAr ? "كود التشفير المعتمد (Base64)" : "Raw Base64 TLV Hash string"}
                           </span>
                           {complianceData.qrTlv}
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full text-[10px]">
-                          <div className="bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded border border-zinc-200 dark:border-zinc-800">
+                          <div className="bg-zinc-50 dark:bg-zinc-100 p-2.5 rounded border border-zinc-200 dark:border-zinc-800">
                             <span className="text-zinc-400 font-bold">Tag 1 (Seller):</span>{" "}
                             {extractedData.sellerName}
                           </div>
-                          <div className="bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded border border-zinc-200 dark:border-zinc-800">
+                          <div className="bg-zinc-50 dark:bg-zinc-100 p-2.5 rounded border border-zinc-200 dark:border-zinc-800">
                             <span className="text-zinc-400 font-bold">Tag 2 (Seller VAT):</span>{" "}
                             {extractedData.sellerVat}
                           </div>
-                          <div className="bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded border border-zinc-200 dark:border-zinc-800">
+                          <div className="bg-zinc-50 dark:bg-zinc-100 p-2.5 rounded border border-zinc-200 dark:border-zinc-800">
                             <span className="text-zinc-400 font-bold">Tag 3 (Timestamp):</span>{" "}
                             {extractedData.contractDate}T11:42:00Z
                           </div>
-                          <div className="bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded border border-zinc-200 dark:border-zinc-800">
+                          <div className="bg-zinc-50 dark:bg-zinc-100 p-2.5 rounded border border-zinc-200 dark:border-zinc-800">
                             <span className="text-zinc-400 font-bold">Tag 4 (Total with VAT):</span>{" "}
                             {total.toFixed(2)} {extractedData.currency}
                           </div>
@@ -1650,13 +1650,13 @@ Payload: {
             <div className="lg:col-span-4 space-y-6">
               {/* Compliance Checker Indicators */}
               {extractedData && (
-                <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl space-y-4 shadow-sm">
+                <div className="bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl space-y-4 shadow-sm">
                   <h3 className="text-xs font-black text-zinc-500 uppercase tracking-wider">
                     {isAr ? "محرك فحص الامتثال المسبق لـ ZATCA" : "ZATCA Local Verification Engine"}
                   </h3>
 
                   <div className="space-y-2.5 text-xs">
-                    <div className="flex justify-between items-center p-2 rounded bg-zinc-50 dark:bg-zinc-950">
+                    <div className="flex justify-between items-center p-2 rounded bg-zinc-50 dark:bg-zinc-100">
                       <span className="text-zinc-600 dark:text-zinc-400">
                         {isAr ? "بنية الرقم الضريبي" : "VAT Numbers Format"}
                       </span>
@@ -1673,7 +1673,7 @@ Payload: {
                       )}
                     </div>
 
-                    <div className="flex justify-between items-center p-2 rounded bg-zinc-50 dark:bg-zinc-950">
+                    <div className="flex justify-between items-center p-2 rounded bg-zinc-50 dark:bg-zinc-100">
                       <span className="text-zinc-600 dark:text-zinc-400">
                         {isAr ? "تطابق مجاميع الفاتورة" : "Invoice Grand Totals"}
                       </span>
@@ -1683,7 +1683,7 @@ Payload: {
                       </span>
                     </div>
 
-                    <div className="flex justify-between items-center p-2 rounded bg-zinc-50 dark:bg-zinc-950">
+                    <div className="flex justify-between items-center p-2 rounded bg-zinc-50 dark:bg-zinc-100">
                       <span className="text-zinc-600 dark:text-zinc-400">
                         {isAr ? "حساب قيمة الضريبة (15%)" : "Tax Rates Verified (15%)"}
                       </span>
@@ -1693,7 +1693,7 @@ Payload: {
                       </span>
                     </div>
 
-                    <div className="flex justify-between items-center p-2 rounded bg-zinc-50 dark:bg-zinc-950">
+                    <div className="flex justify-between items-center p-2 rounded bg-zinc-50 dark:bg-zinc-100">
                       <span className="text-zinc-600 dark:text-zinc-400">
                         {isAr ? "تفادي الفواتير المكررة" : "Sequence Gaps & Duplicates"}
                       </span>
@@ -1703,7 +1703,7 @@ Payload: {
                       </span>
                     </div>
 
-                    <div className="flex justify-between items-center p-2 rounded bg-zinc-50 dark:bg-zinc-950">
+                    <div className="flex justify-between items-center p-2 rounded bg-zinc-50 dark:bg-zinc-100">
                       <span className="text-zinc-600 dark:text-zinc-400">
                         {isAr ? "الحقول الإلزامية للفاتورة" : "Mandatory Fields Check"}
                       </span>
@@ -1799,7 +1799,7 @@ Payload: {
               )}
 
               {/* AI Assistant Chat Interactive Panel */}
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm flex flex-col min-h-[340px]">
+              <div className="bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm flex flex-col min-h-[340px]">
                 <div className="bg-gradient-to-r from-zinc-900 to-zinc-800 p-4 text-white flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-emerald-400" />
@@ -1836,7 +1836,7 @@ Payload: {
                 </div>
 
                 {/* AI Interactive Prompt Chips */}
-                <div className="px-4 pb-2 pt-1 border-t border-zinc-100 dark:border-zinc-800/80 flex flex-wrap gap-1 bg-zinc-50/50 dark:bg-zinc-900/50">
+                <div className="px-4 pb-2 pt-1 border-t border-zinc-100 dark:border-zinc-800/80 flex flex-wrap gap-1 bg-zinc-50/50 dark:bg-zinc-100/50">
                   {[
                     {
                       text: isAr ? "صياغة فواتير العقود" : "Create invoices",
@@ -1871,7 +1871,7 @@ Payload: {
                     onKeyDown={(e) => {
                       if (e.key === "Enter") handleSendAiPrompt();
                     }}
-                    className="flex-1 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 text-xs"
+                    className="flex-1 bg-zinc-50 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 text-xs"
                   />
                   <button
                     onClick={() => handleSendAiPrompt()}
@@ -1886,7 +1886,7 @@ Payload: {
         </div>
 
         {/* Integration Hub / Connect with CRM and ERP */}
-        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm">
+        <div className="bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-sm">
           <h2 className="text-base font-black text-zinc-800 dark:text-zinc-100 mb-2 flex items-center gap-2">
             <Link2 className="w-5 h-5 text-emerald-500" />
             {isAr
@@ -1979,7 +1979,7 @@ Payload: {
                 className={`p-4 rounded-2xl border transition-all flex flex-col justify-between min-h-[130px] ${
                   integrations[app.id]
                     ? "bg-emerald-500/5 border-emerald-500 dark:border-emerald-400 shadow-sm"
-                    : "bg-zinc-50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300"
+                    : "bg-zinc-50 dark:bg-zinc-100 border-zinc-200 dark:border-zinc-800 hover:border-zinc-300"
                 }`}
               >
                 <div className="flex justify-between items-start">

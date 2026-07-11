@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { MessageSquare, Send, Sparkles, User, LogIn, RefreshCw, HelpCircle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
+import { useSettings } from "@/src/contexts/SettingsContext";
 
 interface Message {
   role: "user" | "model";
@@ -9,6 +10,8 @@ interface Message {
 }
 
 export default function PayrollAiAssistant() {
+  const { settings } = useSettings();
+  const isAr = settings.language === "ar";
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "model",
@@ -78,7 +81,7 @@ export default function PayrollAiAssistant() {
   return (
     <div
       className="bg-white rounded-[2.5rem] border border-zinc-200 shadow-sm overflow-hidden flex flex-col h-[600px]"
-      dir="rtl"
+      dir={isAr ? "rtl" : "ltr"}
     >
       {/* Header */}
       <div className="p-6 border-b border-zinc-100 bg-zinc-50 flex items-center justify-between">

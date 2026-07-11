@@ -1957,7 +1957,10 @@ export default function Settings() {
                   </div>
 
                   {/* 3. Accrued Real Rewards Stats */}
-                  <div className="bg-zinc-950 border border-zinc-900 p-6 rounded-3xl text-white flex flex-col justify-between relative overflow-hidden">
+                  <div
+                    className="border border-zinc-900 p-6 rounded-3xl text-white flex flex-col justify-between relative overflow-hidden"
+                    style={{ backgroundColor: "#09090b" }}
+                  >
                     <div className="absolute top-0 left-0 p-4 opacity-5 text-zinc-500">
                       <Sparkles className="w-24 h-24" />
                     </div>

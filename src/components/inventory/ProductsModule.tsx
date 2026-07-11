@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import { useSettings } from "@/src/contexts/SettingsContext";
 import {
   Package,
   Search,
@@ -164,6 +165,8 @@ export default function ProductsModule({
   onDeleteProduct,
   onUpdateProduct,
 }: ProductsModuleProps) {
+  const { settings } = useSettings();
+  const isAr = settings.language === "ar";
   const [subTab, setSubTab] = useState<"catalog" | "categories" | "brands" | "units" | "labels">(
     "catalog"
   );
@@ -762,31 +765,31 @@ export default function ProductsModule({
         <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl border border-zinc-200/50 dark:border-zinc-700">
           <button
             onClick={() => setSubTab("catalog")}
-            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${subTab === "catalog" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"}`}
+            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${subTab === "catalog" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"}`}
           >
             📦 دليل الصنف العام ({items.length})
           </button>
           <button
             onClick={() => setSubTab("categories")}
-            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${subTab === "categories" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"}`}
+            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${subTab === "categories" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"}`}
           >
             📁 الفئات شجرية ({categories.length})
           </button>
           <button
             onClick={() => setSubTab("brands")}
-            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${subTab === "brands" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"}`}
+            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${subTab === "brands" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"}`}
           >
             🎖️ الماركات ({brands.length})
           </button>
           <button
             onClick={() => setSubTab("units")}
-            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${subTab === "units" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"}`}
+            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${subTab === "units" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"}`}
           >
             ⚖️ وحدات القياس والتحويل
           </button>
           <button
             onClick={() => setSubTab("labels")}
-            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${subTab === "labels" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"}`}
+            className={`px-4 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer ${subTab === "labels" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"}`}
           >
             🖨️ طباعة ملصقات الباركود ({selectedItems.length})
           </button>
@@ -809,7 +812,7 @@ export default function ProductsModule({
       {subTab === "catalog" && (
         <div className="space-y-4">
           {/* Filters Toolbar */}
-          <div className="bg-white dark:bg-zinc-900 p-4 rounded-3xl border border-zinc-100 dark:border-zinc-800 flex flex-col md:flex-row gap-3 items-center justify-between shadow-sm">
+          <div className="bg-white dark:bg-zinc-100 p-4 rounded-3xl border border-zinc-100 dark:border-zinc-800 flex flex-col md:flex-row gap-3 items-center justify-between shadow-sm">
             {/* Search Input */}
             <div className="relative w-full md:w-80">
               <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
@@ -962,7 +965,7 @@ export default function ProductsModule({
 
           {/* Last Scanned History Overlay */}
           {scannedItemsHistory.length > 0 && (
-            <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3 rounded-2xl flex items-center gap-2 overflow-x-auto text-xs font-bold">
+            <div className="bg-zinc-50 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-800 p-3 rounded-2xl flex items-center gap-2 overflow-x-auto text-xs font-bold">
               <span className="text-[10px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wide shrink-0">
                 آخر الممسوحات:
               </span>
@@ -991,7 +994,7 @@ export default function ProductsModule({
 
           {/* Interactive TanStack Table View */}
           {viewMode === "list" ? (
-            <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-zinc-100 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-right text-xs">
                   <thead>
@@ -1452,7 +1455,7 @@ export default function ProductsModule({
                           pageIndex: 0,
                         }))
                       }
-                      className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1 rounded-xl outline-none"
+                      className="bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-700 px-2.5 py-1 rounded-xl outline-none"
                     >
                       <option value="10">10 أصناف</option>
                       <option value="25">25 صنف</option>
@@ -1465,7 +1468,7 @@ export default function ProductsModule({
                     <button
                       onClick={() => setPagination((prev) => ({ ...prev, pageIndex: 0 }))}
                       disabled={pagination.pageIndex === 0}
-                      className="px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl disabled:opacity-40"
+                      className="px-2.5 py-1.5 bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-700 rounded-xl disabled:opacity-40"
                     >
                       الأولى
                     </button>
@@ -1477,7 +1480,7 @@ export default function ProductsModule({
                         }))
                       }
                       disabled={pagination.pageIndex === 0}
-                      className="px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl disabled:opacity-40"
+                      className="px-2.5 py-1.5 bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-700 rounded-xl disabled:opacity-40"
                     >
                       السابق
                     </button>
@@ -1505,7 +1508,7 @@ export default function ProductsModule({
                         pagination.pageIndex >=
                         Math.ceil(filteredProducts.length / pagination.pageSize) - 1
                       }
-                      className="px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl disabled:opacity-40"
+                      className="px-2.5 py-1.5 bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-700 rounded-xl disabled:opacity-40"
                     >
                       التالي
                     </button>
@@ -1520,7 +1523,7 @@ export default function ProductsModule({
                         pagination.pageIndex >=
                         Math.ceil(filteredProducts.length / pagination.pageSize) - 1
                       }
-                      className="px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl disabled:opacity-40"
+                      className="px-2.5 py-1.5 bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-700 rounded-xl disabled:opacity-40"
                     >
                       الأخيرة
                     </button>
@@ -1552,7 +1555,7 @@ export default function ProductsModule({
                   <div
                     key={prod.id}
                     onClick={(e) => handleRowClick(e, prod)}
-                    className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-3xl p-4 shadow-sm flex flex-col justify-between hover:border-indigo-500/30 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                    className="bg-white dark:bg-zinc-100 border border-zinc-100 dark:border-zinc-800 rounded-3xl p-4 shadow-sm flex flex-col justify-between hover:border-indigo-500/30 hover:shadow-lg transition-all duration-300 cursor-pointer"
                   >
                     <div>
                       <div className="relative">
@@ -1626,7 +1629,7 @@ export default function ProductsModule({
                 exit={{ opacity: 0, y: 50, scale: 0.95 }}
                 className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999] w-full max-w-2xl px-4"
               >
-                <div className="bg-zinc-950/90 dark:bg-zinc-950/95 backdrop-blur-xl border border-zinc-800 p-4 rounded-3xl shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 text-white">
+                <div className="bg-zinc-950/90 dark:bg-zinc-100/95 backdrop-blur-xl border border-zinc-800 p-4 rounded-3xl shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 text-white">
                   <div className="flex items-center gap-3">
                     <div className="w-3 h-3 bg-indigo-500 rounded-full animate-ping shrink-0" />
                     <div>
@@ -1715,7 +1718,7 @@ export default function ProductsModule({
           {/* Right-Side Rich Product & Stock Detail Drawer */}
           <AnimatePresence>
             {selectedProductForDrawer && (
-              <div className="fixed inset-0 z-[9999] overflow-hidden" dir="rtl">
+              <div className="fixed inset-0 z-[9999] overflow-hidden" dir={isAr ? "rtl" : "ltr"}>
                 {/* Backdrop with elegant blur */}
                 <motion.div
                   initial={{ opacity: 0 }}
@@ -1731,7 +1734,7 @@ export default function ProductsModule({
                     animate={{ x: 0 }}
                     exit={{ x: "-100%" }}
                     transition={{ type: "spring", damping: 25, stiffness: 180 }}
-                    className="w-screen max-w-2xl bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 shadow-2xl flex flex-col justify-between"
+                    className="w-screen max-w-2xl bg-white dark:bg-zinc-100 border-r border-zinc-200 dark:border-zinc-800 shadow-2xl flex flex-col justify-between"
                   >
                     {/* Drawer Header */}
                     <div className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
@@ -2053,7 +2056,7 @@ export default function ProductsModule({
                                 return (
                                   <div
                                     key={wh.id}
-                                    className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 border rounded-xl shadow-sm text-xs"
+                                    className="flex items-center justify-between p-3 bg-white dark:bg-zinc-100 border rounded-xl shadow-sm text-xs"
                                   >
                                     <div>
                                       <span className="font-black text-zinc-900 dark:text-zinc-100 block">
@@ -2089,7 +2092,7 @@ export default function ProductsModule({
                                 <select
                                   value={adjustWhId}
                                   onChange={(e) => setAdjustWhId(e.target.value)}
-                                  className="w-full p-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none"
+                                  className="w-full p-2.5 bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none"
                                 >
                                   <option value="">-- اختر مستودع --</option>
                                   {warehouses.map((wh) => (
@@ -2108,7 +2111,7 @@ export default function ProductsModule({
                                   placeholder="فارق الكمية..."
                                   value={adjustQtyDiff}
                                   onChange={(e) => setAdjustQtyDiff(e.target.value)}
-                                  className="w-full p-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none font-mono"
+                                  className="w-full p-2.5 bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none font-mono"
                                 />
                               </div>
                             </div>
@@ -2122,7 +2125,7 @@ export default function ProductsModule({
                                 value={adjustReason}
                                 onChange={(e) => setAdjustReason(e.target.value)}
                                 placeholder="مثال: تسوية جرد ربع سنوي، استلام طلب شراء..."
-                                className="w-full p-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none"
+                                className="w-full p-2.5 bg-white dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-700 rounded-xl outline-none"
                               />
                             </div>
 
@@ -2268,7 +2271,7 @@ export default function ProductsModule({
       {/* --- SUBTAB 2: NESTED CATEGORIES --- */}
       {subTab === "categories" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 border-b pb-2">
               <FolderTree className="w-4 h-4 text-indigo-600" />
               إضافة فئة تصنيف شجرية جديدة
@@ -2333,7 +2336,7 @@ export default function ProductsModule({
             </form>
           </div>
 
-          <div className="md:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
+          <div className="md:col-span-2 bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-4 border-b pb-2">
               هيكلية الفئات المعتمدة (Hierarchy tree)
             </h3>
@@ -2394,7 +2397,7 @@ export default function ProductsModule({
       {/* --- SUBTAB 3: BRANDS --- */}
       {subTab === "brands" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 border-b pb-2">
               <Bookmark className="w-4 h-4 text-indigo-600" />
               تسجيل ماركة / علامة تجارية
@@ -2439,7 +2442,7 @@ export default function ProductsModule({
             </form>
           </div>
 
-          <div className="md:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
+          <div className="md:col-span-2 bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-4 border-b pb-2">
               قائمة الماركات المسجلة
             </h3>
@@ -2480,7 +2483,7 @@ export default function ProductsModule({
       {/* --- SUBTAB 4: MEASUREMENT UNITS --- */}
       {subTab === "units" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 border-b pb-2">
               <Weight className="w-4 h-4 text-indigo-600" />
               تعريف وحدة قياس وتحويل
@@ -2554,7 +2557,7 @@ export default function ProductsModule({
             </form>
           </div>
 
-          <div className="md:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
+          <div className="md:col-span-2 bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-4 border-b pb-2">
               جدول وحدات القياس الحسابية والتحويل البيني
             </h3>
@@ -2590,7 +2593,7 @@ export default function ProductsModule({
 
       {/* --- SUBTAB 5: BARCODE LABELS PRINTING --- */}
       {subTab === "labels" && (
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
+        <div className="bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b pb-4">
             <div>
               <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
@@ -2628,7 +2631,7 @@ export default function ProductsModule({
                 .map((prod) => (
                   <div
                     key={prod.id}
-                    className="bg-white dark:bg-zinc-900 p-4 rounded-xl border shadow-sm flex flex-col items-center justify-between space-y-3 relative overflow-hidden group"
+                    className="bg-white dark:bg-zinc-100 p-4 rounded-xl border shadow-sm flex flex-col items-center justify-between space-y-3 relative overflow-hidden group"
                   >
                     <div className="text-center">
                       <span className="text-[10px] font-black text-indigo-600 font-mono block">
@@ -2655,7 +2658,7 @@ export default function ProductsModule({
                           {Array.from({ length: 15 }).map((_, idx) => (
                             <div
                               key={idx}
-                              className="bg-white dark:bg-zinc-900 h-full"
+                              className="bg-white dark:bg-zinc-100 h-full"
                               style={{ width: `${idx % 3 === 0 ? "3px" : "1px"}` }}
                             />
                           ))}
@@ -2677,13 +2680,13 @@ export default function ProductsModule({
         {showAddForm && (
           <div
             className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
-            dir="rtl"
+            dir={isAr ? "rtl" : "ltr"}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white dark:bg-zinc-900 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 w-full max-w-3xl overflow-hidden flex flex-col p-6 space-y-4 max-h-[90vh] overflow-y-auto"
+              className="bg-white dark:bg-zinc-100 rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 w-full max-w-3xl overflow-hidden flex flex-col p-6 space-y-4 max-h-[90vh] overflow-y-auto"
             >
               <div className="flex items-center justify-between border-b dark:border-zinc-800 pb-3">
                 <h3 className="text-base font-black text-zinc-900 dark:text-zinc-100">
@@ -3012,7 +3015,7 @@ export default function ProductsModule({
                       </button>
 
                       {generatedVariants.length > 0 && (
-                        <div className="max-h-44 overflow-y-auto border border-zinc-200 rounded-xl bg-white dark:bg-zinc-900 p-2 text-[10px] space-y-1.5">
+                        <div className="max-h-44 overflow-y-auto border border-zinc-200 rounded-xl bg-white dark:bg-zinc-100 p-2 text-[10px] space-y-1.5">
                           {generatedVariants.map((v, i) => (
                             <div
                               key={i}
@@ -3076,9 +3079,9 @@ export default function ProductsModule({
         {showBarcodePrint && (
           <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
-            dir="rtl"
+            dir={isAr ? "rtl" : "ltr"}
           >
-            <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 w-full max-w-sm p-6 flex flex-col items-center space-y-4">
+            <div className="bg-white dark:bg-zinc-100 rounded-[2rem] border border-zinc-200 dark:border-zinc-800 w-full max-w-sm p-6 flex flex-col items-center space-y-4">
               <h4 className="font-black text-xs text-zinc-900 dark:text-zinc-100 border-b pb-2 w-full text-center">
                 طباعة ملصق الصنف المعتمد
               </h4>

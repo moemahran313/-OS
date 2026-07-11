@@ -197,7 +197,7 @@ export default function DashboardOverview({
       {/* Metrics Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Metric 1: Valuation */}
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between group hover:border-indigo-500/30 transition-all duration-300 relative overflow-hidden">
+        <div className="bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between group hover:border-indigo-500/30 transition-all duration-300 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-xl pointer-events-none" />
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
@@ -229,7 +229,7 @@ export default function DashboardOverview({
         </div>
 
         {/* Metric 2: Low Stock */}
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between group hover:border-amber-500/30 transition-all duration-300 relative overflow-hidden">
+        <div className="bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between group hover:border-amber-500/30 transition-all duration-300 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-xl pointer-events-none" />
           <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
             أصناف منخفضة المخزون
@@ -251,7 +251,7 @@ export default function DashboardOverview({
         </div>
 
         {/* Metric 3: Out of Stock */}
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between group hover:border-red-500/30 transition-all duration-300 relative overflow-hidden">
+        <div className="bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between group hover:border-red-500/30 transition-all duration-300 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-xl pointer-events-none" />
           <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
             أصناف نفدت تماماً
@@ -270,7 +270,7 @@ export default function DashboardOverview({
         </div>
 
         {/* Metric 4: Warehouse Activity */}
-        <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300 relative overflow-hidden">
+        <div className="bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between group hover:border-emerald-500/30 transition-all duration-300 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl pointer-events-none" />
           <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block">
             النشاط المستودعي
@@ -297,7 +297,7 @@ export default function DashboardOverview({
       {/* Main Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Stock Level Per Warehouse Chart */}
-        <div className="lg:col-span-2 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-100 dark:border-zinc-800 p-6 shadow-sm">
+        <div className="lg:col-span-2 bg-white dark:bg-zinc-100 rounded-3xl border border-zinc-100 dark:border-zinc-800 p-6 shadow-sm">
           <h3 className="text-sm font-black text-zinc-900 dark:text-zinc-100 mb-4 flex items-center gap-2">
             <BarChart3 className="w-4 h-4 text-indigo-600" />
             توزيع كميات وقيم المخزون على المستودعات (Warehouse Allocations)
@@ -336,7 +336,7 @@ export default function DashboardOverview({
         </div>
 
         {/* ABC Analysis Distribution Chart */}
-        <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-100 dark:border-zinc-800 p-6 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-zinc-100 rounded-3xl border border-zinc-100 dark:border-zinc-800 p-6 shadow-sm flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-black text-zinc-900 dark:text-zinc-100 mb-2 flex items-center gap-2">
               <Package className="w-4 h-4 text-emerald-600" />
@@ -440,7 +440,7 @@ export default function DashboardOverview({
             {aiInsights.map((insight, idx) => (
               <div
                 key={idx}
-                className="bg-white/80 dark:bg-zinc-900/80 p-4 rounded-2xl border border-indigo-500/10 shadow-sm flex items-start gap-2.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:translate-y-[-2px] transition-all duration-300"
+                className="bg-white/80 dark:bg-zinc-100/80 p-4 rounded-2xl border border-indigo-500/10 shadow-sm flex items-start gap-2.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:translate-y-[-2px] transition-all duration-300"
               >
                 <div className="text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5">✨</div>
                 <div>

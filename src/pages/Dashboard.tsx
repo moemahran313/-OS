@@ -70,8 +70,9 @@ import {
 import { db, auth } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
 import { useSettings } from "@/src/contexts/SettingsContext";
-import { handleFirestoreError, OperationType } from "@/src/lib/firestore-errors";
+import { handleFirestoreError, OperationType } from "@/src/lib/firestore-issues";
 import { PayrollService } from "@/src/services/payroll.service";
+import OSWorkspaceExplorer from "@/src/components/OSWorkspaceExplorer";
 
 interface WidgetConfig {
   id: string;
@@ -352,6 +353,7 @@ function QuickActionsWidget({
 export default function Dashboard() {
   const { user, updateProfile } = useUser();
   const { settings } = useSettings();
+  const isAr = settings.language === "ar";
   const location = useLocation();
   const navigate = useNavigate();
   const [showWelcomeModal, setShowWelcomeModal] = useState(location.state?.showWelcome || false);
@@ -759,7 +761,7 @@ export default function Dashboard() {
     if (!dashboardStats) {
       return (
         <section key="stats-skeleton" className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="p-6 bg-white dark:bg-zinc-900/40 backdrop-blur-md rounded-3xl border border-zinc-150 dark:border-zinc-850/60 shadow-sm animate-pulse md:col-span-2">
+          <div className="p-6 bg-white dark:bg-zinc-100/40 backdrop-blur-md rounded-3xl border border-zinc-150 dark:border-zinc-850/60 shadow-sm animate-pulse md:col-span-2">
             <div className="flex justify-between items-start mb-4">
               <div className="w-12 h-12 rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
               <div className="w-16 h-6 rounded-lg bg-zinc-200 dark:bg-zinc-800" />
@@ -770,7 +772,7 @@ export default function Dashboard() {
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="p-6 bg-white dark:bg-zinc-900/40 backdrop-blur-md rounded-3xl border border-zinc-150 dark:border-zinc-850/60 shadow-sm animate-pulse md:col-span-1"
+              className="p-6 bg-white dark:bg-zinc-100/40 backdrop-blur-md rounded-3xl border border-zinc-150 dark:border-zinc-850/60 shadow-sm animate-pulse md:col-span-1"
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
@@ -916,7 +918,7 @@ export default function Dashboard() {
               }}
               className={cn(
                 "p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between",
-                "bg-white dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20",
+                "bg-white dark:bg-zinc-100/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20",
                 isLarge ? "md:col-span-2" : "md:col-span-1"
               )}
             >
@@ -1184,7 +1186,7 @@ export default function Dashboard() {
         return (
           <section
             key="business_health"
-            className="bg-white dark:bg-zinc-900/40 backdrop-blur-md rounded-[2rem] border border-zinc-150 dark:border-zinc-850/60 shadow-sm p-6 relative overflow-hidden transition-all duration-300 hover:shadow-md"
+            className="bg-white dark:bg-zinc-100/40 backdrop-blur-md rounded-[2rem] border border-zinc-150 dark:border-zinc-850/60 shadow-sm p-6 relative overflow-hidden transition-all duration-300 hover:shadow-md"
             style={{ boxShadow: `0 10px 30px -10px ${glowColor}` }}
           >
             {/* Outer soft glowing background decorative circle */}
@@ -1315,7 +1317,7 @@ export default function Dashboard() {
                           key={idx}
                           type="button"
                           onClick={() => handleRecommendationClick(rec)}
-                          className="p-2.5 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-bold text-right rtl:text-right ltr:text-left hover:border-indigo-500 dark:hover:border-indigo-500 transition-all shadow-xxs hover:shadow-xs flex items-center justify-between group"
+                          className="p-2.5 bg-white dark:bg-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-850 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-bold text-right rtl:text-right ltr:text-left hover:border-indigo-500 dark:hover:border-indigo-500 transition-all shadow-xxs hover:shadow-xs flex items-center justify-between group"
                         >
                           <span className="flex-1 leading-tight">{rec}</span>
                           <ArrowUpRight className="w-3.5 h-3.5 text-zinc-400 group-hover:text-indigo-500 shrink-0 mx-1" />
@@ -1858,13 +1860,13 @@ export default function Dashboard() {
     }
 
     return (
-      <div className="space-y-8 animate-fade-in" dir="rtl">
+      <div className="space-y-8 animate-fade-in" dir={isAr ? "rtl" : "ltr"}>
         {/* Metric Cards - Modern Bento Grid */}
         <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <motion.div
             whileHover={{ y: -6, scale: 1.01 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-2"
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-100/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-2"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
             <div>
@@ -1906,7 +1908,7 @@ export default function Dashboard() {
           <motion.div
             whileHover={{ y: -6, scale: 1.01 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-100/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
           >
             <div>
               <div className="flex justify-between items-start mb-6">
@@ -1932,7 +1934,7 @@ export default function Dashboard() {
           <motion.div
             whileHover={{ y: -6, scale: 1.01 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-100/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
           >
             <div>
               <div className="flex justify-between items-start mb-6">
@@ -1955,6 +1957,9 @@ export default function Dashboard() {
             </div>
           </motion.div>
         </section>
+
+        {/* Mudarij OS Workspace Explorer */}
+        <OSWorkspaceExplorer />
 
         {/* Intelligence Recommender */}
         <section className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-[2rem] border border-primary/20 p-6 relative overflow-hidden">
@@ -2208,13 +2213,13 @@ export default function Dashboard() {
         .reduce((acc, i) => acc + (i.totalAmountHalalas || 0), 0) / 100;
 
     return (
-      <div className="space-y-8 animate-fade-in" dir="rtl">
+      <div className="space-y-8 animate-fade-in" dir={isAr ? "rtl" : "ltr"}>
         {/* KPI Row - Modern Bento Grid */}
         <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <motion.div
             whileHover={{ y: -6, scale: 1.01 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-2"
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-100/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-2"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 dark:bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
             <div>
@@ -2241,7 +2246,7 @@ export default function Dashboard() {
           <motion.div
             whileHover={{ y: -6, scale: 1.01 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-100/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
           >
             <div>
               <div className="flex justify-between items-start mb-6">
@@ -2267,7 +2272,7 @@ export default function Dashboard() {
           <motion.div
             whileHover={{ y: -6, scale: 1.01 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-100/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
           >
             <div>
               <div className="flex justify-between items-start mb-6">
@@ -2581,13 +2586,13 @@ export default function Dashboard() {
 
   const renderOperationsView = () => {
     return (
-      <div className="space-y-8 animate-fade-in" dir="rtl">
+      <div className="space-y-8 animate-fade-in" dir={isAr ? "rtl" : "ltr"}>
         {/* Metric Row - Modern Bento Grid */}
         <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <motion.div
             whileHover={{ y: -6, scale: 1.01 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-2"
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-100/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-2"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 dark:bg-rose-500/10 rounded-full blur-2xl pointer-events-none" />
             <div>
@@ -2614,7 +2619,7 @@ export default function Dashboard() {
           <motion.div
             whileHover={{ y: -6, scale: 1.01 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-100/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
           >
             <div>
               <div className="flex justify-between items-start mb-6">
@@ -2640,7 +2645,7 @@ export default function Dashboard() {
           <motion.div
             whileHover={{ y: -6, scale: 1.01 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-900/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
+            className="p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden flex flex-col justify-between bg-white/80 dark:bg-zinc-100/40 backdrop-blur-md border-zinc-150 dark:border-zinc-850/60 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 hover:border-emerald-500/20 dark:hover:border-emerald-500/20 md:col-span-1"
           >
             <div>
               <div className="flex justify-between items-start mb-6">
@@ -2919,7 +2924,7 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-rose-50 border border-rose-200 p-6 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden"
-          dir="rtl"
+          dir={isAr ? "rtl" : "ltr"}
         >
           <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-[40px] pointer-events-none" />
           <div className="flex items-center gap-4 relative z-10 w-full md:w-auto">
@@ -2959,7 +2964,7 @@ export default function Dashboard() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="bg-amber-50 border border-amber-200 p-6 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden"
-                dir="rtl"
+                dir={isAr ? "rtl" : "ltr"}
               >
                 <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-[40px] pointer-events-none" />
                 <div className="flex items-center gap-4 relative z-10 w-full md:w-auto">

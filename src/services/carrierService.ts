@@ -58,7 +58,7 @@ export class AramexAdapter implements CarrierAdapter {
     };
   }
 
-  async getRates(origin: string, destination: string, weight: number) {
+  async getRates(_origin: string, _destination: string, _weight: number) {
     return [
       { service: "Ground", price: 45.0, currency: "SAR", days: 5 },
       { service: "Express", price: 120.0, currency: "SAR", days: 2 },
@@ -117,7 +117,7 @@ export class DhlAdapter implements CarrierAdapter {
     };
   }
 
-  async getRates(origin: string, destination: string, weight: number) {
+  async getRates(_origin: string, _destination: string, _weight: number) {
     return [
       { service: "Express Worldwide", price: 15.0, currency: "USD", days: 3 },
       { service: "Express 12:00", price: 185.0, currency: "USD", days: 1 },

@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db } from "../services/firebase.js";
-import { authenticate } from "../middleware/auth.js";
+import { db } from "../services/firebase.ts";
+import { authenticate } from "../middleware/auth.ts";
 
 const router = Router();
 

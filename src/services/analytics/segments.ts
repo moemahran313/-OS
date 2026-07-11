@@ -1,5 +1,3 @@
-import { ChartDataPoint } from "./types";
-
 export class SegmentAnalyzer {
   /**
    * Analyzes customer segments and identifies growth opportunities.
@@ -19,10 +17,6 @@ export class SegmentAnalyzer {
       growth: `غير متوفر`,
       retention: "غير متوفر",
     }));
-  }
-
-  private calculateSegmentGrowth(segment: string): string {
-    return "+12%";
   }
 
   public generateCohortData(leads: any[]): any[] {

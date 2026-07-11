@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/auth.js";
-import { logAudit, generateContentWithRetry } from "../services/utils.js";
-import { db } from "../services/firebase.js";
-import { executeWebhooks } from "../services/webhooks.js";
+import { authenticate } from "../middleware/auth.ts";
+import { logAudit, generateContentWithRetry } from "../services/utils.ts";
+import { db } from "../services/firebase.ts";
+import { executeWebhooks } from "../services/webhooks.ts";
 import { GoogleGenAI, Type } from "@google/genai";
 
 const router = Router();

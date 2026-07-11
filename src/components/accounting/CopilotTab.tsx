@@ -159,7 +159,7 @@ export default function CopilotTab({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-right">
       {/* AI Chat Area */}
-      <div className="lg:col-span-2 bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-3xl shadow-sm flex flex-col justify-between h-[520px]">
+      <div className="lg:col-span-2 bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-3xl shadow-sm flex flex-col justify-between h-[520px]">
         {/* Header */}
         <div className="flex items-center gap-2 pb-3 border-b border-zinc-100 dark:border-zinc-850">
           <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center dark:bg-emerald-950/30 dark:text-emerald-400">
@@ -203,7 +203,7 @@ export default function CopilotTab({
 
                 {/* Simulated health score cards */}
                 {msg.healthScoreBreakdown && (
-                  <div className="space-y-3 pt-2 bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850">
+                  <div className="space-y-3 pt-2 bg-white dark:bg-zinc-100 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850">
                     <div className="flex justify-between items-center pb-2 border-b border-zinc-50 dark:border-zinc-850">
                       <span className="text-xs font-black text-zinc-800 dark:text-zinc-200">
                         النتيجة الإجمالية لصحة الأعمال (Score)
@@ -236,7 +236,7 @@ export default function CopilotTab({
 
                 {/* Suggested double entry journal card */}
                 {msg.suggestedJournal && (
-                  <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-150 dark:border-zinc-850 space-y-3">
+                  <div className="bg-white dark:bg-zinc-100 p-4 rounded-xl border border-zinc-150 dark:border-zinc-850 space-y-3">
                     <div className="text-[10px] text-zinc-400 font-black uppercase">
                       معاينة القيد المقترح:
                     </div>
@@ -302,7 +302,7 @@ export default function CopilotTab({
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSendMessage();
             }}
-            className="flex-1 bg-zinc-50 dark:bg-zinc-950 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs focus:outline-none"
+            className="flex-1 bg-zinc-50 dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-800 rounded-xl px-4 py-3 text-xs focus:outline-none"
           />
           <button
             onClick={() => handleSendMessage()}
@@ -314,7 +314,7 @@ export default function CopilotTab({
       </div>
 
       {/* Suggested Quick Commands Panel */}
-      <div className="bg-white dark:bg-zinc-900 border border-zinc-150 dark:border-zinc-850 p-5 rounded-3xl shadow-sm space-y-4">
+      <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-5 rounded-3xl shadow-sm space-y-4">
         <div>
           <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100">
             تحليلات وإجراءات تشغيل ذكية مقترحة
@@ -327,7 +327,7 @@ export default function CopilotTab({
         <div className="space-y-2.5">
           <button
             onClick={() => handleSendMessage("احسب مؤشر صحة العمل المالي وتوصيات تحسينه")}
-            className="w-full text-right p-3.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-850 hover:border-zinc-200 dark:hover:border-zinc-800 rounded-xl text-xs font-bold text-zinc-700 dark:text-zinc-300 transition-all flex items-center justify-between cursor-pointer"
+            className="w-full text-right p-3.5 bg-zinc-50 dark:bg-zinc-100 border border-zinc-100 dark:border-zinc-850 hover:border-zinc-200 dark:hover:border-zinc-800 rounded-xl text-xs font-bold text-zinc-700 dark:text-zinc-300 transition-all flex items-center justify-between cursor-pointer"
           >
             <div className="flex items-center gap-2">
               <HeartPulse className="w-4.5 h-4.5 text-emerald-500" />
@@ -338,7 +338,7 @@ export default function CopilotTab({
 
           <button
             onClick={() => handleSendMessage("أريد مراجعة واكتشاف الأخطاء أو القيود غير المتوازنة")}
-            className="w-full text-right p-3.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-850 hover:border-zinc-200 dark:hover:border-zinc-800 rounded-xl text-xs font-bold text-zinc-700 dark:text-zinc-300 transition-all flex items-center justify-between cursor-pointer"
+            className="w-full text-right p-3.5 bg-zinc-50 dark:bg-zinc-100 border border-zinc-100 dark:border-zinc-850 hover:border-zinc-200 dark:hover:border-zinc-800 rounded-xl text-xs font-bold text-zinc-700 dark:text-zinc-300 transition-all flex items-center justify-between cursor-pointer"
           >
             <div className="flex items-center gap-2">
               <ShieldAlert className="w-4.5 h-4.5 text-rose-500" />
@@ -349,7 +349,7 @@ export default function CopilotTab({
 
           <button
             onClick={() => handleSendMessage("دفعنا مبلغ 12000 ريال نقداً لإيجار مكتب فرع الرياض")}
-            className="w-full text-right p-3.5 bg-zinc-50 dark:bg-zinc-950 border border-zinc-100 dark:border-zinc-850 hover:border-zinc-200 dark:hover:border-zinc-800 rounded-xl text-xs font-bold text-zinc-700 dark:text-zinc-300 transition-all flex items-center justify-between cursor-pointer"
+            className="w-full text-right p-3.5 bg-zinc-50 dark:bg-zinc-100 border border-zinc-100 dark:border-zinc-850 hover:border-zinc-200 dark:hover:border-zinc-800 rounded-xl text-xs font-bold text-zinc-700 dark:text-zinc-300 transition-all flex items-center justify-between cursor-pointer"
           >
             <div className="flex items-center gap-2">
               <ArrowRightLeft className="w-4.5 h-4.5 text-indigo-500" />
@@ -359,7 +359,7 @@ export default function CopilotTab({
           </button>
         </div>
 
-        <div className="bg-zinc-50 dark:bg-zinc-950 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850 text-[10px] text-zinc-500 leading-relaxed font-bold space-y-1">
+        <div className="bg-zinc-50 dark:bg-zinc-100 p-4 rounded-xl border border-zinc-100 dark:border-zinc-850 text-[10px] text-zinc-500 leading-relaxed font-bold space-y-1">
           <span className="font-black text-zinc-700 dark:text-zinc-300 block mb-1">
             الامتثال والأمان الضريبي:
           </span>

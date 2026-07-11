@@ -48,6 +48,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
+import { useSettings } from "@/src/contexts/SettingsContext";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -157,6 +158,8 @@ interface LedgerViewProps {
 
 export default function LedgerView({ runs = [] }: LedgerViewProps) {
   const { user } = useUser();
+  const { settings } = useSettings();
+  const isAr = settings.language === "ar";
   const [profile, setProfile] = useState<"owner" | "accountant">("owner");
   const [accountantTab, setAccountantTab] = useState<
     | "journal"
@@ -2295,7 +2298,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
   }
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6" dir={isAr ? "rtl" : "ltr"}>
       {/* 1. Header with profile selector switcher */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-white border border-zinc-200 p-6 rounded-[2.5rem] shadow-sm select-none">
         <div>
@@ -6281,7 +6284,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         {selectedDrillDownAccount && (
           <div
             className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
-            dir="rtl"
+            dir={isAr ? "rtl" : "ltr"}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -6429,7 +6432,7 @@ export default function LedgerView({ runs = [] }: LedgerViewProps) {
         {selectedAuditLog && (
           <div
             className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[9999]"
-            dir="rtl"
+            dir={isAr ? "rtl" : "ltr"}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}

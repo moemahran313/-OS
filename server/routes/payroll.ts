@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/auth.js";
-import { PayrollService } from "../services/payroll.service.js";
-import { logAudit } from "../services/utils.js";
-import { db } from "../services/firebase.js";
+import { authenticate } from "../middleware/auth.ts";
+import { PayrollService } from "../services/payroll.service.ts";
+import { logAudit } from "../services/utils.ts";
+import { db } from "../services/firebase.ts";
 
 const router = Router();
 

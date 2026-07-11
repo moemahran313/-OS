@@ -11,10 +11,13 @@ import {
   Sparkles,
   ChevronDown,
   ArrowLeft,
+  ArrowRight,
   Menu,
   X,
+  Globe,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
+import { useSettings } from "@/src/contexts/SettingsContext";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,51 +26,65 @@ export default function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { settings, updateSettings } = useSettings();
+  const isAr = settings.language === "ar";
 
   const products = [
     {
-      title: "إدارة العملاء (CRM)",
-      subtitle: "أتمتة المحادثات وبطاقات العملاء والمتابعة الذكية الصادرة والواردة.",
+      title: isAr ? "إدارة العملاء (CRM)" : "Customer Management (CRM)",
+      subtitle: isAr
+        ? "أتمتة المحادثات وبطاقات العملاء والمتابعة الذكية الصادرة والواردة."
+        : "Automate chats, customer profiles, and smart inbound & outbound follow-ups.",
       icon: Users,
       href: "/product/crm",
       color: "text-blue-400",
       bg: "bg-blue-500/10 border-blue-500/20",
     },
     {
-      title: "الفوترة الذكية و ZATCA",
-      subtitle: "فواتير إلكترونية تامة الامتثال للمرحلة 2 مشفرة وموقعة رقمياً بضغطة زر.",
+      title: isAr ? "الفوترة الذكية و ZATCA" : "Smart Invoicing & ZATCA",
+      subtitle: isAr
+        ? "فواتير إلكترونية تامة الامتثال للمرحلة 2 مشفرة وموقعة رقمياً بضغطة زر."
+        : "Fully compliant Phase 2 e-invoicing, digitally signed & encrypted in one click.",
       icon: Receipt,
       href: "/product/invoicing",
       color: "text-amber-400",
       bg: "bg-amber-500/10 border-amber-500/20",
     },
     {
-      title: "مسير الرواتب وقوى",
-      subtitle: "الربط المباشر مع قوى ومدد والتأمينات، مع حساب التوطين والتزامات WPS.",
+      title: isAr ? "مسير الرواتب وقوى" : "Payroll & Qiwa",
+      subtitle: isAr
+        ? "الربط المباشر مع قوى ومدد والتأمينات، مع حساب التوطين والتزامات WPS."
+        : "Direct integration with Qiwa, Mudad & GOSI, calculating nationalization & WPS limits.",
       icon: CreditCard,
       href: "/product/payroll",
       color: "text-rose-400",
       bg: "bg-rose-500/10 border-rose-500/20",
     },
     {
-      title: "العقود والاتفاقيات الذكية",
-      subtitle: "صياغة وتوليد وتوقيع العقود إلكترونياً مع روابط قانونية موثقة وآمنة.",
+      title: isAr ? "العقود والاتفاقيات الذكية" : "Smart Contracts & Agreements",
+      subtitle: isAr
+        ? "صياغة وتوليد وتوقيع العقود إلكترونياً مع روابط قانونية موثقة وآمنة."
+        : "Draft, generate, and sign contracts electronically with secure legal links.",
       icon: FileText,
       href: "/product/contracts",
       color: "text-purple-400",
       bg: "bg-purple-500/10 border-purple-500/20",
     },
     {
-      title: "سلاسل الإمداد واللوجستية",
-      subtitle: "تتبع جمركي لحظي، بوابات فسح، وتكامل مع المخلصين والمستودعات.",
+      title: isAr ? "سلاسل الإمداد واللوجستية" : "Supply Chain & Logistics",
+      subtitle: isAr
+        ? "تتبع جمركي لحظي، بوابات فسح، وتكامل مع المخلصين والمستودعات."
+        : "Real-time customs tracking, clearance gateways, and integration with brokers & warehouses.",
       icon: Truck,
       href: "/product/supply-chain",
       color: "text-emerald-400",
       bg: "bg-emerald-500/10 border-emerald-500/20",
     },
     {
-      title: "مختبر الأتمتة بالذكاء الاصطناعي",
-      subtitle: "محرك وكلاء ذكي يقرأ الرسائل، يحلل الصفقات، ويكمل الإجراءات تلقائياً.",
+      title: isAr ? "مختبر الأتمتة بالذكاء الاصطناعي" : "AI Automation Lab",
+      subtitle: isAr
+        ? "محرك وكلاء ذكي يقرأ الرسائل، يحلل الصفقات، ويكمل الإجراءات تلقائياً."
+        : "Smart agent engine that reads messages, analyzes deals, and completes steps automatically.",
       icon: Sparkles,
       href: "/product/ai-automation",
       color: "text-cyan-400",
@@ -83,48 +100,60 @@ export default function Navbar() {
   const resourcesCategories = [
     {
       id: "e-invoicing",
-      title: "الفوترة الإلكترونية (ZATCA)",
-      description: "متطلبات الفواتير، التوقيع الرقمي، وحلول المطابقة للمرحلتين الأولى والثانية.",
+      title: isAr ? "الفوترة الإلكترونية (ZATCA)" : "E-Invoicing (ZATCA)",
+      description: isAr
+        ? "متطلبات الفواتير، التوقيع الرقمي، وحلول المطابقة للمرحلتين الأولى والثانية."
+        : "Invoice requirements, digital signing, and compliance solutions for Phase 1 & 2.",
       icon: Receipt,
       color: "text-amber-400",
       bg: "bg-amber-500/10 border-amber-500/20",
     },
     {
       id: "payroll",
-      title: "مسير الرواتب وحماية الأجور",
-      description: "دليل حماية الأجور (WPS)، منصة قوى ومدد، وحساب مستحقات الموظفين.",
+      title: isAr ? "مسير الرواتب وحماية الأجور" : "Payroll & Wage Protection",
+      description: isAr
+        ? "دليل حماية الأجور (WPS)، منصة قوى ومدد، وحساب مستحقات الموظفين."
+        : "Wages Protection System (WPS) guide, Qiwa & Mudad integration, and benefit calculation.",
       icon: CreditCard,
       color: "text-rose-400",
       bg: "bg-rose-500/10 border-rose-500/20",
     },
     {
       id: "crm",
-      title: "إدارة العملاء و المبيعات",
-      description: "أتمتة المتابعة وخدمة العملاء، دمج قنوات الواتساب، وأسرار إغلاق الصفقات.",
+      title: isAr ? "إدارة العملاء و المبيعات" : "CRM & Sales Management",
+      description: isAr
+        ? "أتمتة المتابعة وخدمة العملاء، دمج قنوات الواتساب، وأسرار إغلاق الصفقات."
+        : "Automate follow-ups, integrate WhatsApp channels, and close deals faster.",
       icon: Users,
       color: "text-blue-400",
       bg: "bg-blue-500/10 border-blue-500/20",
     },
     {
       id: "contracts",
-      title: "العقود والتوثيق القانوني",
-      description: "حجية العقود الرقمية، التوقيع الإلكتروني المعتمد، والأمن التشريعي للشركات.",
+      title: isAr ? "العقود والتوثيق القانوني" : "Contracts & Legal Verification",
+      description: isAr
+        ? "حجية العقود الرقمية، التوقيع الإلكتروني المعتمد، والأمن التشريعي للشركات."
+        : "Legal force of digital contracts, authorized e-signing, and legal safety.",
       icon: FileText,
       color: "text-purple-400",
       bg: "bg-purple-500/10 border-purple-500/20",
     },
     {
       id: "supply-chain",
-      title: "سلاسل الإمداد والجمارك",
-      description: "حساب التكلفة الفعلية (Landed Cost)، التخليص الجمركي وإدارة اللوجستيات.",
+      title: isAr ? "سلاسل الإمداد والجمارك" : "Supply Chain & Customs",
+      description: isAr
+        ? "حساب التكلفة الفعلية (Landed Cost)، التخليص الجمركي وإدارة اللوجستيات."
+        : "Landed cost calculation, customs clearance, and logistics management.",
       icon: Truck,
       color: "text-emerald-400",
       bg: "bg-emerald-500/10 border-emerald-500/20",
     },
     {
       id: "ai",
-      title: "الأتمتة والذكاء الاصطناعي",
-      description: "أتمتة الأعمال باستخدام وكلاء الذكاء الاصطناعي ومستقبل الإدارة الذكية.",
+      title: isAr ? "الأتمتة والذكاء الاصطناعي" : "Automation & AI",
+      description: isAr
+        ? "أتمتة الأعمال باستخدام وكلاء الذكاء الاصطناعي ومستقبل الإدارة الذكية."
+        : "Workflow automation using intelligent AI agents and the future of management.",
       icon: Sparkles,
       color: "text-cyan-400",
       bg: "bg-cyan-500/10 border-cyan-500/20",
@@ -169,13 +198,18 @@ export default function Navbar() {
   return (
     <nav
       className="fixed top-0 left-0 w-full z-50 px-6 py-4 transition-all duration-300 backdrop-blur-md bg-zinc-950/80 border-b border-white/5 shadow-2xl"
-      dir="rtl"
+      dir={isAr ? "rtl" : "ltr"}
     >
       <div className="container mx-auto max-w-7xl flex items-center justify-between">
         <Logo theme="dark" />
 
         {/* Desktop Navigation Links */}
-        <div className="hidden md:flex items-center gap-8 mr-12 ml-auto text-sm font-bold text-zinc-300">
+        <div
+          className={cn(
+            "hidden md:flex items-center gap-8 text-sm font-bold text-zinc-300",
+            isAr ? "mr-12 ml-auto" : "ml-12 mr-auto"
+          )}
+        >
           <Link
             to="/about"
             className={cn(
@@ -183,7 +217,7 @@ export default function Navbar() {
               location.pathname === "/about" && "text-white text-emerald-400"
             )}
           >
-            عن مدارج
+            {isAr ? "عن مدارج" : "About Mudarij"}
           </Link>
 
           {/* Hover Menu Trigger */}
@@ -199,7 +233,7 @@ export default function Navbar() {
                 (isOpen || location.pathname.startsWith("/product/")) && "text-white"
               )}
             >
-              <span>المنتجات والخدمات</span>
+              <span>{isAr ? "المنتجات والخدمات" : "Products & Services"}</span>
               <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
                 <ChevronDown className="w-4 h-4 text-zinc-500 group-hover:text-white" />
               </motion.span>
@@ -243,7 +277,11 @@ export default function Navbar() {
                         <div className="space-y-1">
                           <h4 className="text-white font-black text-sm group-hover:text-primary transition-colors flex items-center gap-1.5">
                             {p.title}
-                            <ArrowLeft className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-primary" />
+                            {isAr ? (
+                              <ArrowLeft className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-primary" />
+                            ) : (
+                              <ArrowRight className="w-3.5 h-3.5 opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-primary" />
+                            )}
                           </h4>
                           <p className="text-zinc-400 text-xs font-medium leading-relaxed">
                             {p.subtitle}
@@ -255,14 +293,20 @@ export default function Navbar() {
 
                   <div className="col-span-2 mt-2 pt-4 border-t border-white/5 flex justify-between items-center text-xs">
                     <span className="text-zinc-500 font-medium">
-                      نظام موحد ومترابط يغنيك عن عشرات البرامج والاشتراكات.
+                      {isAr
+                        ? "نظام موحد ومترابط يغنيك عن عشرات البرامج والاشتراكات."
+                        : "A unified, connected operating system that replaces dozens of software subscriptions."}
                     </span>
                     <Link
                       to="/product"
                       className="text-primary font-bold hover:underline flex items-center gap-1"
                     >
-                      <span>عرض كافة الميزات</span>
-                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>{isAr ? "عرض كافة الميزات" : "View All Features"}</span>
+                      {isAr ? (
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                      ) : (
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      )}
                     </Link>
                   </div>
                 </motion.div>
@@ -277,7 +321,7 @@ export default function Navbar() {
               location.pathname === "/solutions" && "text-white text-emerald-400"
             )}
           >
-            الحلول القطاعية
+            {isAr ? "الحلول القطاعية" : "Sector Solutions"}
           </Link>
           {/* Resources Hover Menu Trigger */}
           <div
@@ -293,7 +337,7 @@ export default function Navbar() {
                 (isResourcesOpen || location.pathname === "/resources") && "text-white"
               )}
             >
-              <span>المصادر والمعرفة</span>
+              <span>{isAr ? "المصادر والمعرفة" : "Resources & Knowledge"}</span>
               <motion.span
                 animate={{ rotate: isResourcesOpen ? 180 : 0 }}
                 transition={{ duration: 0.2 }}
@@ -340,7 +384,11 @@ export default function Navbar() {
                         <div className="space-y-1">
                           <h4 className="text-white font-black text-sm group-hover:text-primary transition-colors flex items-center gap-1.5">
                             {c.title}
-                            <ArrowLeft className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-primary" />
+                            {isAr ? (
+                              <ArrowLeft className="w-3.5 h-3.5 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-primary" />
+                            ) : (
+                              <ArrowRight className="w-3.5 h-3.5 opacity-0 translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-primary" />
+                            )}
                           </h4>
                           <p className="text-zinc-400 text-xs font-medium leading-relaxed">
                             {c.description}
@@ -352,14 +400,22 @@ export default function Navbar() {
 
                   <div className="col-span-2 mt-2 pt-4 border-t border-white/5 flex justify-between items-center text-xs">
                     <span className="text-zinc-500 font-medium">
-                      أدلة عملية وحاسبات ذكية لتعزيز ورفع جاهزية امتثال أعمالك.
+                      {isAr
+                        ? "أدلة عملية وحاسبات ذكية لتعزيز ورفع جاهزية امتثال أعمالك."
+                        : "Practical guides and smart calculators to boost your business compliance readiness."}
                     </span>
                     <Link
                       to="/resources"
                       className="text-primary font-bold hover:underline flex items-center gap-1"
                     >
-                      <span>الذهاب لكافة المصادر والمكتبة</span>
-                      <ArrowLeft className="w-3.5 h-3.5" />
+                      <span>
+                        {isAr ? "الذهاب لكافة المصادر والمكتبة" : "Go to All Resources & Library"}
+                      </span>
+                      {isAr ? (
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                      ) : (
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      )}
                     </Link>
                   </div>
                 </motion.div>
@@ -373,26 +429,39 @@ export default function Navbar() {
               location.pathname === "/security" && "text-white text-emerald-400"
             )}
           >
-            الامتثال والأمان
+            {isAr ? "الامتثال والأمان" : "Compliance & Security"}
           </Link>
           <Link to="/demo" className="text-primary hover:text-primary/80 transition-colors">
-            تجربة حية (Demo)
+            {isAr ? "تجربة حية (Demo)" : "Live Demo"}
           </Link>
         </div>
 
         {/* Actions Button */}
         <div className="flex items-center gap-4">
+          {/* Global Language Toggle Button */}
+          <button
+            onClick={() => {
+              const newLang = settings.language === "ar" ? "en" : "ar";
+              updateSettings({ language: newLang });
+            }}
+            className="px-3 py-1.5 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-xs font-bold text-zinc-350 hover:text-white transition-all cursor-pointer flex items-center gap-1.5 outline-none shadow-sm"
+            title={isAr ? "Switch to English" : "تغيير إلى العربية"}
+          >
+            <Globe className="w-3.5 h-3.5 text-zinc-400" />
+            <span className="font-bold">{isAr ? "EN" : "عربي"}</span>
+          </button>
+
           <Link
             to="/login"
             className="text-sm font-bold text-zinc-300 hover:text-white transition-colors hidden sm:block"
           >
-            تسجيل الدخول
+            {isAr ? "تسجيل الدخول" : "Login"}
           </Link>
           <Link
             to="/app"
-            className="px-5 py-2.5 bg-primary text-white text-sm font-black rounded-xl hover:bg-primary/90 transition-all shadow-md shadow-primary/20 hover:scale-105 active:scale-95"
+            className="px-5 py-2.5 bg-primary text-white text-sm font-black rounded-xl hover:bg-primary/90 transition-all shadow-md shadow-primary/20 hover:scale-105 active:scale-95 whitespace-nowrap"
           >
-            ابدأ الآن مجاناً
+            {isAr ? "ابدأ الآن مجاناً" : "Start Free Now"}
           </Link>
 
           {/* Mobile Menu Toggle Button */}
@@ -416,13 +485,13 @@ export default function Navbar() {
             className="md:hidden mt-4 pt-4 border-t border-white/5 flex flex-col gap-4 overflow-hidden"
           >
             <Link to="/about" className="py-2 text-zinc-300 font-bold hover:text-white">
-              عن مدارج
+              {isAr ? "عن مدارج" : "About Mudarij"}
             </Link>
 
             {/* Products Expansion in Mobile Menu */}
             <div className="border-y border-white/5 py-4 my-2">
               <span className="text-xs font-black text-zinc-500 uppercase tracking-widest block mb-3">
-                المنتجات والخدمات
+                {isAr ? "المنتجات والخدمات" : "Products & Services"}
               </span>
               <div className="grid grid-cols-1 gap-4">
                 {products.map((p) => (
@@ -448,19 +517,19 @@ export default function Navbar() {
             </div>
 
             <Link to="/solutions" className="py-2 text-zinc-300 font-bold hover:text-white">
-              الحلول القطاعية
+              {isAr ? "الحلول القطاعية" : "Sector Solutions"}
             </Link>
             <Link to="/resources" className="py-2 text-zinc-300 font-bold hover:text-white">
-              المصادر والمعرفة
+              {isAr ? "المصادر والمعرفة" : "Resources & Knowledge"}
             </Link>
             <Link to="/security" className="py-2 text-zinc-300 font-bold hover:text-white">
-              الامتثال والأمان
+              {isAr ? "الامتثال والأمان" : "Compliance & Security"}
             </Link>
             <Link to="/demo" className="py-2 text-primary font-bold hover:text-primary/80">
-              تجربة حية (Demo)
+              {isAr ? "تجربة حية (Demo)" : "Live Demo"}
             </Link>
             <Link to="/login" className="py-2 text-zinc-300 font-bold hover:text-white sm:hidden">
-              تسجيل الدخول
+              {isAr ? "تسجيل الدخول" : "Login"}
             </Link>
           </motion.div>
         )}

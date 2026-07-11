@@ -34,9 +34,10 @@ const BRAND_LOGOS: Record<string, React.ReactNode> = {
   zid: (
     <div className="w-full h-full bg-white flex items-center justify-center p-2 rounded-2xl">
       <img
-        src="https://upload.wikimedia.org/wikipedia/ar/5/52/%D8%B4%D9%8B%D8%B9%D8%A7%D8%B1_%D9%85%D9%86%D8%B5%D8%A9_%D8%B2%D8%AF.png"
+        src="https://zid.sa/wp-content/uploads/2021/04/cropped-Zid-Favicon-192x192.png"
         alt="Zid"
         className="w-full h-full object-contain"
+        referrerPolicy="no-referrer"
       />
     </div>
   ),
@@ -46,6 +47,7 @@ const BRAND_LOGOS: Record<string, React.ReactNode> = {
         src="https://upload.wikimedia.org/wikipedia/ar/b/be/%D8%B4%D8%B9%D8%A7%D8%B1_%D9%87%D9%8A%D8%A6%D8%A9_%D8%A7%D9%84%D8%B2%D9%83%D8%A7%D8%A9_%D9%88%D8%A7%D9%84%D8%B6%D8%B1%D9%8A%D8%A8%D8%A9_%D9%88%D8%A7%D9%84%D8%AC%D9%85%D8%A7%D8%B1%D9%83.svg"
         alt="ZATCA"
         className="w-full h-full object-contain"
+        referrerPolicy="no-referrer"
       />
     </div>
   ),
@@ -195,7 +197,7 @@ const APPS = [
     name: "زد",
     category: "e-commerce",
     description: "إدارة متجرك في زد مباشرة من مدارج، مزامنة الفواتير والعملاء بضغطة زر.",
-    icon: "https://zid.sa/wp-content/uploads/2021/04/Zid-Logo-01.png",
+    icon: "https://zid.sa/wp-content/uploads/2021/04/cropped-Zid-Favicon-192x192.png",
     status: "available",
   },
   {
@@ -203,7 +205,7 @@ const APPS = [
     name: "هيئة الزكاة والدخل (ZATCA)",
     category: "compliance",
     description: "الربط المباشر مع منصة فاتورة (المرحلة الثانية). معتمد رسمياً.",
-    icon: "https://zatca.gov.sa/ar/Style%20Library/ZATCA/assets/images/logo.svg",
+    icon: "https://upload.wikimedia.org/wikipedia/ar/b/be/%D8%B4%D8%B9%D8%A7%D8%B1_%D9%87%D9%8A%D8%A6%D8%A9_%D8%A7%D9%84%D8%B2%D9%83%D8%A7%D8%A9_%D9%88%D8%A7%D9%84%D8%B6%D8%B1%D9%8A%D8%A8%D8%A9_%D9%88%D8%A7%D9%84%D8%AC%D9%85%D8%A7%D8%B1%D9%83.svg",
     status: "connected",
   },
   {

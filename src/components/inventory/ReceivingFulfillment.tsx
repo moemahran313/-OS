@@ -270,13 +270,13 @@ export default function ReceivingFulfillment({
       <div className="flex border-b border-zinc-200 bg-zinc-50 dark:bg-zinc-800 p-1.5 rounded-2xl border gap-1">
         <button
           onClick={() => setSubTab("purchases")}
-          className={`flex-1 md:flex-none px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${subTab === "purchases" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-500 hover:bg-zinc-100"}`}
+          className={`flex-1 md:flex-none px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${subTab === "purchases" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-500 hover:bg-zinc-100"}`}
         >
           📥 استلام بضائع المشتريات (Goods Receiving - POs)
         </button>
         <button
           onClick={() => setSubTab("sales")}
-          className={`flex-1 md:flex-none px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${subTab === "sales" ? "bg-white dark:bg-zinc-900 text-indigo-600 shadow-sm" : "text-zinc-500 hover:bg-zinc-100"}`}
+          className={`flex-1 md:flex-none px-5 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer ${subTab === "sales" ? "bg-white dark:bg-zinc-100 text-indigo-600 shadow-sm" : "text-zinc-500 hover:bg-zinc-100"}`}
         >
           🚚 تلبية وشحن طلبات العملاء (Order Fulfillment - SOs)
         </button>
@@ -286,7 +286,7 @@ export default function ReceivingFulfillment({
       {subTab === "purchases" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
           {/* Create Purchase Order Form */}
-          <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 border-b pb-2">
               <ShoppingCart className="w-4 h-4 text-indigo-600" />
               إصدار أمر شراء رسمي جديد (New Purchase Order)
@@ -376,7 +376,7 @@ export default function ReceivingFulfillment({
           </div>
 
           {/* Active POs Monitor list */}
-          <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+          <div className="lg:col-span-2 bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
             <div>
               <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-4 border-b pb-2 flex items-center gap-1.5">
                 <Truck className="w-4.5 h-4.5 text-indigo-600" />
@@ -464,7 +464,7 @@ export default function ReceivingFulfillment({
       {subTab === "sales" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
           {/* Create Sales Order Form */}
-          <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-4">
             <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 border-b pb-2">
               <Users className="w-4 h-4 text-indigo-600" />
               أمر مبيعات لعميل وصرف مستودعي (New Sales Order)
@@ -553,7 +553,7 @@ export default function ReceivingFulfillment({
           </div>
 
           {/* Active SOs list */}
-          <div className="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
+          <div className="lg:col-span-2 bg-white dark:bg-zinc-100 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col justify-between">
             <div>
               <h3 className="text-xs font-black text-zinc-900 dark:text-zinc-100 mb-4 border-b pb-2 flex items-center gap-1.5">
                 <ClipboardList className="w-4.5 h-4.5 text-indigo-600" />

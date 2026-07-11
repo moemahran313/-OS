@@ -28,15 +28,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
-    const body = document.body;
-    const docEl = document.documentElement;
-    if (theme === "dark") {
-      body.classList.add("dark");
-      docEl.classList.add("dark");
-    } else {
-      body.classList.remove("dark");
-      docEl.classList.remove("dark");
-    }
   }, [theme]);
 
   const toggleTheme = () => {

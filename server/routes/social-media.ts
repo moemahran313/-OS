@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/auth.js";
-import { logAudit, generateContentWithRetry } from "../services/utils.js";
-import { db } from "../services/firebase.js";
+import { authenticate } from "../middleware/auth.ts";
+import { logAudit, generateContentWithRetry } from "../services/utils.ts";
+import { db } from "../services/firebase.ts";
 import { GoogleGenAI } from "@google/genai";
 
 const router = Router();
@@ -23,8 +23,54 @@ function getGeminiClient() {
 }
 
 // ==========================================
-// CONNECTED ACCOUNTS
+// CONNECTED ACCOUNTS & OAUTH 2.0
 // ==========================================
+
+// Initiate OAuth flow
+router.get("/connect/:platform", authenticate, (req: any, res) => {
+  const { platform } = req.params;
+  // This is a placeholder for real OAuth redirection.
+  // E.g., for Facebook: `https://www.facebook.com/v16.0/dialog/oauth?client_id=...&redirect_uri=...`
+  const redirectUri = encodeURIComponent(
+    `https://${req.get("host")}/api/social-media/callback/${platform}`
+  );
+  const simulatedConsentUrl = `/api/social-media/callback/${platform}?code=simulated_auth_code_12345`;
+
+  res.json({ url: simulatedConsentUrl, message: `Redirect to ${platform} consent screen` });
+});
+
+// OAuth Callback
+router.get("/callback/:platform", authenticate, async (req: any, res) => {
+  const { platform } = req.params;
+  const { code } = req.query;
+
+  if (!code) {
+    return res.status(400).json({ error: "Missing authorization code" });
+  }
+
+  try {
+    // Simulated token exchange
+    const accountData = {
+      platform,
+      handle: `${platform}_user`,
+      name: `Connected ${platform} Account`,
+      avatar: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150",
+      followers: Math.floor(Math.random() * 10000) + 100,
+      status: "Connected",
+      userId: req.user.uid,
+      accessToken: `simulated_access_token_${Date.now()}`,
+      refreshToken: `simulated_refresh_token_${Date.now()}`,
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour expiry
+      createdAt: new Date().toISOString(),
+    };
+
+    const docRef = await db.collection("social_accounts").add(accountData);
+    res.redirect(`/social-media?connected=${platform}`);
+  } catch (error: any) {
+    console.error(`OAuth Callback Error for ${platform}:`, error);
+    res.status(500).json({ error: "Failed to connect account" });
+  }
+});
 
 // List Social Accounts
 router.get("/accounts", authenticate, async (req: any, res) => {
@@ -32,97 +78,9 @@ router.get("/accounts", authenticate, async (req: any, res) => {
     const snap = await db.collection("social_accounts").where("userId", "==", req.user.uid).get();
     let accounts = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
 
-    // Pre-populate realistic social accounts if none exist
     if (accounts.length === 0) {
-      const defaults = [
-        {
-          platform: "linkedin",
-          handle: "Madarij OS",
-          name: "Madarij OS Corporate",
-          avatar: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150",
-          followers: 12500,
-          status: "Connected",
-          userId: req.user.uid,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          platform: "instagram",
-          handle: "madarij_os",
-          name: "Madarij OS Lifestyle",
-          avatar: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=150",
-          followers: 28400,
-          status: "Connected",
-          userId: req.user.uid,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          platform: "twitter",
-          handle: "Madarij_OS",
-          name: "Madarij OS Tech",
-          avatar: "https://images.unsplash.com/photo-1611605698335-8b15d27e03f3?w=150",
-          followers: 8500,
-          status: "Connected",
-          userId: req.user.uid,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          platform: "facebook",
-          handle: "MadarijOS",
-          name: "Madarij OS Business",
-          avatar: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=150",
-          followers: 4500,
-          status: "Connected",
-          userId: req.user.uid,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          platform: "tiktok",
-          handle: "madarijos",
-          name: "Madarij Shorts",
-          avatar: "https://images.unsplash.com/photo-1596495578065-6e076baf188f?w=150",
-          followers: 42100,
-          status: "Connected",
-          userId: req.user.uid,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          platform: "youtube",
-          handle: "MadarijOS_Tube",
-          name: "Madarij Academy",
-          avatar: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=150",
-          followers: 15400,
-          status: "Connected",
-          userId: req.user.uid,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          platform: "threads",
-          handle: "@madarij_os",
-          name: "Madarij Threads",
-          avatar: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=150",
-          followers: 3100,
-          status: "Connected",
-          userId: req.user.uid,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          platform: "pinterest",
-          handle: "madarij_pins",
-          name: "Madarij Visuals",
-          avatar: "https://images.unsplash.com/photo-1611606063065-ee7946f0787a?w=150",
-          followers: 1200,
-          status: "Connected",
-          userId: req.user.uid,
-          createdAt: new Date().toISOString(),
-        },
-      ];
-
-      const savedList = [];
-      for (const acc of defaults) {
-        const docRef = await db.collection("social_accounts").add(acc);
-        savedList.push({ id: docRef.id, ...acc });
-      }
-      return res.json(savedList);
+      // Return empty instead of mock, wait for real connection
+      return res.json([]);
     }
     res.json(accounts);
   } catch (err: any) {
@@ -130,7 +88,7 @@ router.get("/accounts", authenticate, async (req: any, res) => {
   }
 });
 
-// Create/Connect Social Account
+// Create/Connect Social Account (Manual fallback)
 router.post("/accounts", authenticate, async (req: any, res) => {
   try {
     const accountData = {
@@ -174,71 +132,13 @@ router.get("/posts", authenticate, async (req: any, res) => {
     const snap = await db.collection("social_posts").where("userId", "==", req.user.uid).get();
     const posts = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
 
-    // Pre-populate high-quality, relevant scheduled and published posts if empty
-    if (posts.length === 0) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(10, 0, 0, 0);
-
-      const dayAfter = new Date();
-      dayAfter.setDate(dayAfter.getDate() + 2);
-      dayAfter.setHours(14, 30, 0, 0);
-
-      const defaults = [
-        {
-          content:
-            "🚀 يسعدنا الإعلان عن إطلاق ميزة الفوترة الإلكترونية الذكية المتوافقة تماماً مع متطلبات هيئة الزكاة والضريبة والجمارك (المرحلة الثانية)! تحوّل رقمياً اليوم بلمسة زر واحده. #الفوترة_الإلكترونية #زد_سلة #مشاريع_سعودية",
-          platforms: ["linkedin", "twitter", "facebook"],
-          status: "Scheduled",
-          scheduledAt: tomorrow.toISOString(),
-          imageUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800",
-          userId: req.user.uid,
-          authorName: "أحمد العتيبي",
-          approvalStatus: "Approved",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          content:
-            "كيف تدير رواتب موظفيك بكفاءة دون أخطاء محاسبية؟ إليك 5 نصائح ذهبية لتبسيط حسابات النطاقات والبدلات عبر نظام الرواتب المؤتمت في Madarij OS. 💼💡 #إدارة_الموارد_البشرية #محاسبة",
-          platforms: ["instagram", "linkedin"],
-          status: "Pending Approval",
-          scheduledAt: dayAfter.toISOString(),
-          imageUrl: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800",
-          userId: req.user.uid,
-          authorName: "سارة القحطاني",
-          approvalStatus: "Pending",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          content:
-            "We are thrilled to be featured on TechCloud as one of the most promising enterprise operating systems in the MENA region! A big thank you to our incredible team and partners. 🌟📈 #SaaS #MENAtech #MadarijOS",
-          platforms: ["twitter", "linkedin"],
-          status: "Published",
-          scheduledAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800",
-          userId: req.user.uid,
-          authorName: "أحمد العتيبي",
-          approvalStatus: "Approved",
-          publishedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-          metrics: { reach: 8450, engagement: 912, clicks: 430, shares: 85 },
-          createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-      ];
-
-      const savedList = [];
-      for (const pst of defaults) {
-        const docRef = await db.collection("social_posts").add(pst);
-        savedList.push({ id: docRef.id, ...pst });
-      }
-      return res.json(savedList);
-    }
     res.json(posts);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Create Post
+// Create Post (With Platform Overrides)
 router.post("/posts", authenticate, async (req: any, res) => {
   try {
     const postData = {
@@ -246,9 +146,10 @@ router.post("/posts", authenticate, async (req: any, res) => {
       userId: req.user.uid,
       status: req.body.status || "Scheduled",
       approvalStatus: req.body.approvalStatus || "Pending",
-      authorName: req.user.name || "عضو الفريق",
+      authorName: req.user.name || "Team Member",
       createdAt: new Date().toISOString(),
     };
+    // req.body.overrides can contain { twitter: { content: '...', media: '...' }, linkedin: {...} }
     const docRef = await db.collection("social_posts").add(postData);
     logAudit("SocialMedia", { action: "Create Scheduled Post", id: docRef.id }, postData, req);
     res.status(201).json({ id: docRef.id, ...postData });
@@ -257,8 +158,8 @@ router.post("/posts", authenticate, async (req: any, res) => {
   }
 });
 
-// Update Post (Edit draft/scheduled post)
-router.put("/posts/:id", authenticate, async (req: any, res) => {
+// Update Post (Edit draft/scheduled post, reschedule drag-and-drop)
+router.patch("/posts/:id", authenticate, async (req: any, res) => {
   try {
     const { id } = req.params;
     const postRef = db.collection("social_posts").doc(id);
@@ -274,22 +175,40 @@ router.put("/posts/:id", authenticate, async (req: any, res) => {
   }
 });
 
-// Approve Scheduled Post
-router.post("/posts/:id/approve", authenticate, async (req: any, res) => {
+// Publish Post Now
+router.post("/posts/publish/:id", authenticate, async (req: any, res) => {
   try {
     const { id } = req.params;
     const postRef = db.collection("social_posts").doc(id);
     const snap = await postRef.get();
+
     if (!snap.exists) return res.status(404).json({ error: "Post not found" });
-    if (snap.data()?.userId !== req.user.uid)
-      return res.status(403).json({ error: "Unauthorized" });
+    const post = snap.data();
+    if (post?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+
+    // Fetch accounts to get tokens
+    const accountsSnap = await db
+      .collection("social_accounts")
+      .where("userId", "==", req.user.uid)
+      .get();
+    const accounts = accountsSnap.docs.map((doc) => doc.data());
+
+    // Simulated API Call to real platforms
+    for (const platform of post?.platforms || []) {
+      const account = accounts.find((a) => a.platform === platform);
+      if (account) {
+        console.log(`Publishing to ${platform} via token ${account.accessToken}`);
+        // e.g., axios.post('https://graph.facebook.com/...', { access_token: account.accessToken, message: post.content })
+      }
+    }
 
     const updateData = {
-      approvalStatus: "Approved",
-      status: "Scheduled",
+      status: "Published",
+      publishedAt: new Date().toISOString(),
     };
     await postRef.update(updateData);
-    logAudit("SocialMedia", { action: "Approve Post", id }, updateData, req);
+    logAudit("SocialMedia", { action: "Publish Post", id }, updateData, req);
+
     res.json({ id, ...updateData, success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -314,67 +233,72 @@ router.delete("/posts/:id", authenticate, async (req: any, res) => {
 });
 
 // ==========================================
-// UNIFIED INBOX & COMMENTS
+// DEEP ANALYTICS & ATTRIBUTION TRACKING
 // ==========================================
+
+// Lightweight link tracker (would normally be at root level /l/:id, but under api for now)
+router.get("/l/:id", async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const linkRef = db.collection("social_links").doc(id);
+    const snap = await linkRef.get();
+
+    if (!snap.exists) return res.status(404).send("Link not found");
+    const linkData = snap.data();
+
+    // Log click event
+    await db.collection("social_clicks").add({
+      linkId: id,
+      postId: linkData?.postId,
+      ip: req.ip,
+      userAgent: req.headers["user-agent"],
+      timestamp: new Date().toISOString(),
+    });
+
+    res.redirect(linkData?.url || "/");
+  } catch (error) {
+    res.status(500).send("Error tracking link");
+  }
+});
+
+// ==========================================
+// UNIFIED INBOX & WEBHOOK ENGINE
+// ==========================================
+
+// Webhook Receiver
+router.post("/webhooks/:platform", async (req: any, res) => {
+  const { platform } = req.params;
+  const payload = req.body;
+  // Verify HMAC signature here...
+
+  try {
+    // E.g., incoming comment
+    const inboxItem = {
+      platform,
+      authorName: payload.author || "Web User",
+      authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
+      message: payload.message || "Incoming event",
+      timestamp: new Date().toISOString(),
+      status: "Unresolved",
+      type: payload.type || "Comment",
+      replies: [],
+      // Would match with a userId in a real mapping, assigning a static one for demo
+      userId: payload.userId || "demo-user-id",
+    };
+
+    await db.collection("social_inbox").add(inboxItem);
+    res.status(200).send("Webhook received");
+  } catch (err) {
+    console.error("Webhook error:", err);
+    res.status(500).send("Error processing webhook");
+  }
+});
 
 // Get Unified Inbox / Comments feed
 router.get("/inbox", authenticate, async (req: any, res) => {
   try {
     const snap = await db.collection("social_inbox").where("userId", "==", req.user.uid).get();
     let items = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
-
-    if (items.length === 0) {
-      const defaults = [
-        {
-          platform: "instagram",
-          authorName: "خالد الحربي",
-          authorAvatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
-          message: "هل ميزة الربط مع ZATCA تدعم الفواتير المبسطة وفواتير الأعمال B2B معاً؟",
-          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30 mins ago
-          status: "Unread",
-          type: "Comment",
-          postTitle: "إطلاق ميزة الفوترة الإلكترونية الذكية",
-          replies: [],
-          userId: req.user.uid,
-        },
-        {
-          platform: "twitter",
-          authorName: "أمل الشهري",
-          authorAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
-          message: "Excellent customer service and highly intuitive UI, keep it up!",
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-          status: "Read",
-          type: "Mention",
-          postTitle: "TechCloud Feature",
-          replies: [
-            {
-              author: "Madarij OS Support",
-              text: "Thank you Amal! We are delighted to assist your enterprise journey.",
-              timestamp: new Date(Date.now() - 1.8 * 60 * 60 * 1000).toISOString(),
-            },
-          ],
-          userId: req.user.uid,
-        },
-        {
-          platform: "linkedin",
-          authorName: "Eng. Sultan Al-Sudairi",
-          authorAvatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150",
-          message: "هل من الممكن جدولة عرض توضيحي (Demo) مخصص لقطاع التجزئة وربط الفروع؟",
-          timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-          status: "Unread",
-          type: "Direct Message",
-          replies: [],
-          userId: req.user.uid,
-        },
-      ];
-
-      const savedList = [];
-      for (const item of defaults) {
-        const docRef = await db.collection("social_inbox").add(item);
-        savedList.push({ id: docRef.id, ...item });
-      }
-      return res.json(savedList);
-    }
     res.json(items);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -396,7 +320,7 @@ router.post("/inbox/:id/reply", authenticate, async (req: any, res) => {
     const updatedReplies = [
       ...currentReplies,
       {
-        author: "Madarij OS Team",
+        author: req.user.name || "Agent",
         text: replyText,
         timestamp: new Date().toISOString(),
       },
@@ -422,49 +346,62 @@ router.get("/monitoring", authenticate, async (req: any, res) => {
   try {
     const snap = await db.collection("social_monitoring").where("userId", "==", req.user.uid).get();
     let mentions = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
-
-    if (mentions.length === 0) {
-      const defaults = [
-        {
-          source: "Twitter",
-          author: "@saudi_tech_fan",
-          text: "نظام مداريج OS للأعمال يقدّم تجربة استثنائية في ربط العمليات وتسيير الرواتب تلقائياً. تطور رائع!",
-          sentiment: "Positive",
-          keyword: "مداريج OS",
-          reach: 4500,
-          createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-          userId: req.user.uid,
-        },
-        {
-          source: "Web Forum",
-          author: "محاسب سعودي محترف",
-          text: "هل واجه أحدكم مشكلة في موازنة القيود الافتتاحية على نظام مداريج الجديد؟ الدعم الفني متجاوب لكن يحتاج لسرعة أكبر.",
-          sentiment: "Neutral",
-          keyword: "مداريج",
-          reach: 1200,
-          createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-          userId: req.user.uid,
-        },
-        {
-          source: "LinkedIn",
-          author: "Yaser Al-Ghamdi",
-          text: "Empowering Saudi SaaS ecosystems with tools like Madarij OS will speed up digital transformation tremendously.",
-          sentiment: "Positive",
-          keyword: "Madarij OS",
-          reach: 15000,
-          createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-          userId: req.user.uid,
-        },
-      ];
-
-      const savedList = [];
-      for (const m of defaults) {
-        const docRef = await db.collection("social_monitoring").add(m);
-        savedList.push({ id: docRef.id, ...m });
-      }
-      return res.json(savedList);
-    }
     res.json(mentions);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Run live listening simulation
+router.post("/monitoring/listen", authenticate, async (req: any, res) => {
+  try {
+    const { keyword } = req.body;
+
+    // Simulating streaming parser fetching mentions
+    const simulatedMentions = [
+      `Just tried out ${keyword} and it completely changed our workflow. Excellent tool!`,
+      `Does anyone know how to configure the new update for ${keyword}? Support is a bit slow.`,
+      `${keyword} is okay, but compared to AcmeCorp it lacks a few features.`,
+    ];
+
+    const ai = getGeminiClient();
+    const systemContext = `You are a sentiment analysis and entity extraction engine. Score brand mentions in real-time.`;
+
+    const results = [];
+
+    for (const text of simulatedMentions) {
+      const userPrompt = `Analyze this social mention: "${text}"
+       Provide the response in strict JSON format:
+       {
+         "sentiment": "Positive" | "Neutral" | "Negative",
+         "urgency": "High" | "Medium" | "Low",
+         "entities": ["list", "of", "competitors", "or", "features"]
+       }`;
+
+      const response = await generateContentWithRetry(ai, {
+        model: "gemini-3.5-flash",
+        contents: [{ role: "user", parts: [{ text: `${systemContext}\n\n${userPrompt}` }] }],
+        config: { responseMimeType: "application/json" },
+      });
+
+      const parsed = JSON.parse(response.text || "{}");
+      const mention = {
+        source: ["Twitter", "LinkedIn", "Web Forum"][Math.floor(Math.random() * 3)],
+        author: "@user_" + Math.floor(Math.random() * 1000),
+        text,
+        sentiment: parsed.sentiment || "Neutral",
+        urgency: parsed.urgency || "Low",
+        entities: parsed.entities || [],
+        keyword,
+        reach: Math.floor(Math.random() * 10000),
+        createdAt: new Date().toISOString(),
+        userId: req.user.uid,
+      };
+      const docRef = await db.collection("social_monitoring").add(mention);
+      results.push({ id: docRef.id, ...mention });
+    }
+
+    res.json(results);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -473,6 +410,40 @@ router.get("/monitoring", authenticate, async (req: any, res) => {
 // ==========================================
 // AI-POWERED COPILOT GENERATION ENDPOINTS
 // ==========================================
+
+// Smart Reply Suggestions
+router.post("/inbox/:id/smart-reply", authenticate, async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const inboxRef = db.collection("social_inbox").doc(id);
+    const snap = await inboxRef.get();
+
+    if (!snap.exists) return res.status(404).json({ error: "Inbox item not found" });
+    const item = snap.data();
+    if (item?.userId !== req.user.uid) return res.status(403).json({ error: "Unauthorized" });
+
+    const ai = getGeminiClient();
+    const systemContext = `You are an expert customer support agent for a modern enterprise business suite. Generate 3 smart, professional, and helpful reply options to the user's message.`;
+    const userPrompt = `Message from user: "${item?.message}"
+    
+    Generate 3 distinct reply options. Provide the response in strict JSON format. Do not use markdown blocks.
+    JSON Structure:
+    {
+      "replies": ["Reply option 1", "Reply option 2", "Reply option 3"]
+    }`;
+
+    const response = await generateContentWithRetry(ai, {
+      model: "gemini-3.5-flash",
+      contents: [{ role: "user", parts: [{ text: `${systemContext}\n\n${userPrompt}` }] }],
+      config: { responseMimeType: "application/json" },
+    });
+
+    const parsed = JSON.parse(response.text || "{}");
+    res.json({ replies: parsed.replies || [] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // AI Content Generation (Posts, Reels script, Captions, Hashtags, SEO translations)
 router.post("/ai/generate", authenticate, async (req: any, res) => {
