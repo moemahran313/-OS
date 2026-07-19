@@ -1,0 +1,5 @@
+
+> react-example@0.0.0 build
+> DATABASE_URL="file:./dev.db" prisma generate && tsc && vite build && DATABASE_URL="file:./dev.db" esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs
+
+Prisma schema loaded from prisma/schema.prisma
