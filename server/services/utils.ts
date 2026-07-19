@@ -1,5 +1,7 @@
 import path from "path";
 import fs from "fs";
+import crypto from "crypto";
+import { prisma } from "./prisma.ts";
 
 const configPath = path.join(process.cwd(), "firebase-applet-config.json");
 let config: any = {};
@@ -28,8 +30,58 @@ export const scrubPII = (data: any) => {
 
 export const logAudit = async (module: string, payload: any, result: any, req: any) => {
   try {
-    const userId = req.user?.uid || req.user?.id || req.headers["x-user-id"];
-    const token = req.cookies?.mudarij_token || req.headers?.authorization?.split(" ")[1];
+    const userId = req?.user?.uid || req?.user?.id || req?.headers["x-user-id"];
+    const token = req?.cookies?.mudarij_token || req?.headers?.authorization?.split(" ")[1];
+    const ip = req?.ip || "";
+    const timestampStr = new Date().toISOString();
+
+    const cleanPayload = scrubPII(payload || {});
+    const cleanResult = scrubPII(result || {});
+
+    // Create an immutable regulatory SHA-256 action hash
+    const actionHash = crypto
+      .createHash("sha256")
+      .update(
+        JSON.stringify({
+          userId: userId || "",
+          module: module || "SYSTEM",
+          action: payload?.action || "Unknown",
+          payload: JSON.stringify(cleanPayload),
+          result: JSON.stringify(cleanResult),
+          timestamp: timestampStr,
+        })
+      )
+      .digest("hex");
+
+    // Embed action hash inside result
+    const enrichedResult = { ...cleanResult, actionHash };
+
+    // 1. Write to SQLite via Prisma (Local Compliance DB)
+    try {
+      let prismaUserId: string | null = null;
+      if (userId) {
+        const userExists = await prisma.user.findUnique({ where: { id: userId } });
+        if (userExists) {
+          prismaUserId = userId;
+        }
+      }
+
+      await prisma.auditLog.create({
+        data: {
+          userId: prismaUserId,
+          module: module || "SYSTEM",
+          action: payload?.action || "Unknown",
+          payload: JSON.stringify(cleanPayload),
+          result: JSON.stringify(enrichedResult),
+          timestamp: new Date(timestampStr),
+          ip,
+        },
+      });
+    } catch (prismaErr) {
+      console.warn("Prisma audit logging failed:", prismaErr);
+    }
+
+    // 2. Write to Firestore via Google API REST (if config allows)
     if (!token || !config.projectId || !config.firestoreDatabaseId) return;
 
     const url = `https://firestore.googleapis.com/v1/projects/${config.projectId}/databases/${config.firestoreDatabaseId}/documents/audit_logs`;
@@ -39,11 +91,11 @@ export const logAudit = async (module: string, payload: any, result: any, req: a
       fields: {
         userId: { stringValue: userId || "" },
         module: { stringValue: module || "SYSTEM" },
-        action: { stringValue: payload.action || "Unknown" },
-        payload: { stringValue: JSON.stringify(scrubPII(payload)) },
-        result: { stringValue: JSON.stringify(scrubPII(result)) },
-        ip: { stringValue: req.ip || "" },
-        timestamp: { timestampValue: new Date().toISOString() },
+        action: { stringValue: payload?.action || "Unknown" },
+        payload: { stringValue: JSON.stringify(cleanPayload) },
+        result: { stringValue: JSON.stringify(enrichedResult) },
+        ip: { stringValue: ip },
+        timestamp: { timestampValue: timestampStr },
       },
     };
 

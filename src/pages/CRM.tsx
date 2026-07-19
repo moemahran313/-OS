@@ -67,6 +67,7 @@ import { handleFirestoreError, OperationType } from "@/src/lib/firestore-issues"
 
 import PayrollComplianceWidget from "@/src/components/PayrollComplianceWidget";
 import { toast } from "sonner";
+import EmailCalendarSyncWorkspace from "@/src/components/crm/EmailCalendarSyncWorkspace";
 
 interface Client {
   id: string;
@@ -75,6 +76,14 @@ interface Client {
   phone: string;
   company: string;
   vatId?: string;
+  splStreetName?: string;
+  splDistrict?: string;
+  splBuildingNo?: string;
+  splPostalCode?: string;
+  splAdditionalNo?: string;
+  splVerificationRef?: string;
+  splCoordinates?: string;
+  splVerified?: boolean;
   status: "new" | "contacted" | "won" | "lost" | "contracted";
   value: number;
   expectedCloseDate?: string;
@@ -129,10 +138,12 @@ export default function CRM() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isVerifyingSplAddress, setIsVerifyingSplAddress] = useState(false);
+  const [splVerificationResult, setSplVerificationResult] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<"details" | "history" | "shipments" | "invoices">(
     "details"
   );
-  const [mainTab, setMainTab] = useState<"crm" | "identity">("crm");
+  const [mainTab, setMainTab] = useState<"crm" | "identity" | "sync">("crm");
   const [identityTab, setIdentityTab] = useState("companies");
   const [scoringInProgress, setScoringInProgress] = useState(false);
 
@@ -265,9 +276,73 @@ export default function CRM() {
     }
   }, [user, location]);
 
+  const handleVerifyNationalAddress = async () => {
+    if (!editingClient) return;
+    if (!editingClient.splStreetName || !editingClient.splDistrict || !editingClient.splBuildingNo || !editingClient.splPostalCode || !editingClient.splAdditionalNo) {
+      toast.error("الرجاء إدخال كافة حقول العنوان الوطني الموحد للتحقق الرقمي عبر البريد السعودي سبل");
+      return;
+    }
+
+    setIsVerifyingSplAddress(true);
+    setSplVerificationResult(null);
+
+    try {
+      const userToken = await auth.currentUser?.getIdToken();
+      const res = await fetch("/api/leads/validate-address", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: userToken ? `Bearer ${userToken}` : "",
+        },
+        body: JSON.stringify({
+          splStreetName: editingClient.splStreetName,
+          splDistrict: editingClient.splDistrict,
+          splBuildingNo: editingClient.splBuildingNo,
+          splPostalCode: editingClient.splPostalCode,
+          splAdditionalNo: editingClient.splAdditionalNo,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      const data = await res.json();
+      if (data.success && data.status === "VALID") {
+        setSplVerificationResult(data);
+        toast.success("تم التحقق بنجاح من العنوان الوطني من قاعدة بيانات سبل!");
+        setEditingClient({
+          ...editingClient,
+          splVerificationRef: data.verificationReference,
+          splCoordinates: `${data.details.coordinates.latitude}, ${data.details.coordinates.longitude}`,
+          splVerified: true,
+        });
+      } else {
+        toast.error(data.error_ar || "العنوان الوطني غير مسجل أو البيانات غير صالحة");
+        setSplVerificationResult(data);
+      }
+    } catch (err: any) {
+      console.error("Address validation error:", err);
+      toast.error("فشل الاتصال بخدمة التحقق من العناوين الوطنية سبل (SPL)");
+    } finally {
+      setIsVerifyingSplAddress(false);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingClient || !user) return;
+
+    // Validate Saudi Post/ZATCA address requirements
+    if (!editingClient.splStreetName || !editingClient.splDistrict || !editingClient.splBuildingNo || !editingClient.splPostalCode || !editingClient.splAdditionalNo) {
+      toast.error("الرجاء إكمال جميع حقول العنوان الوطني (الشارع، الحي، رقم المبنى، الرمز البريدي، الرقم الإضافي) لتتوافق مع متطلبات هيئة الزكاة والضريبة والجمارك (ZATCA)");
+      return;
+    }
+
+    if (!editingClient.splVerified) {
+      toast.error("الرجاء النقر على زر 'التحقق الرقمي من العنوان الوطني (SPL API)' لتأكيد تسجيل العنوان في منصة سبل الحكومية قبل الحفظ.");
+      return;
+    }
 
     try {
       const currentClient = { ...editingClient };
@@ -699,6 +774,12 @@ export default function CRM() {
           className={`pb-4 px-2 font-black text-sm flex items-center gap-2 border-b-2 transition-colors ${mainTab === "identity" ? "border-purple-600 text-purple-600" : "border-transparent text-zinc-500 hover:text-zinc-900"}`}
         >
           <IdCard className="w-5 h-5" /> محرك الهوية والبيانات (Identity Engine)
+        </button>
+        <button
+          onClick={() => setMainTab("sync")}
+          className={`pb-4 px-2 font-black text-sm flex items-center gap-2 border-b-2 transition-colors ${mainTab === "sync" ? "border-indigo-600 text-indigo-600" : "border-transparent text-zinc-500 hover:text-zinc-900"}`}
+        >
+          <Mail className="w-5 h-5" /> مزامنة البريد والتقويم (Email & Calendar Sync)
         </button>
       </div>
 
@@ -1602,6 +1683,108 @@ export default function CRM() {
                           </div>
                         </div>
 
+                        {/* العنوان الوطني الموحد (البريد السعودي SPL) */}
+                        <div className="bg-zinc-50 p-6 rounded-3xl border border-zinc-100 space-y-4">
+                          <h4 className="text-xs font-black text-zinc-900 flex items-center gap-2">
+                            <Truck className="w-4 h-4 text-emerald-500" />
+                            العنوان الوطني الموحد (سبل SPL)
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-zinc-400 uppercase">اسم الشارع</label>
+                              <input
+                                value={editingClient.splStreetName || ""}
+                                onChange={(e) => setEditingClient({ ...editingClient, splStreetName: e.target.value })}
+                                className="w-full px-4 py-2.5 bg-white border border-zinc-100 rounded-xl text-xs font-bold"
+                                placeholder="مثال: طريق الملك فهد"
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-zinc-400 uppercase">الحي</label>
+                              <input
+                                value={editingClient.splDistrict || ""}
+                                onChange={(e) => setEditingClient({ ...editingClient, splDistrict: e.target.value })}
+                                className="w-full px-4 py-2.5 bg-white border border-zinc-100 rounded-xl text-xs font-bold"
+                                placeholder="مثال: حي العليا"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-zinc-400 uppercase">رقم المبنى (٤ أرقام)</label>
+                              <input
+                                type="text"
+                                maxLength={4}
+                                value={editingClient.splBuildingNo || ""}
+                                onChange={(e) => setEditingClient({ ...editingClient, splBuildingNo: e.target.value.replace(/\D/g, '') })}
+                                className="w-full px-4 py-2.5 bg-white border border-zinc-100 rounded-xl text-xs font-mono font-bold text-center"
+                                placeholder="1234"
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-zinc-400 uppercase">الرمز البريدي (٥ أرقام)</label>
+                              <input
+                                type="text"
+                                maxLength={5}
+                                value={editingClient.splPostalCode || ""}
+                                onChange={(e) => setEditingClient({ ...editingClient, splPostalCode: e.target.value.replace(/\D/g, '') })}
+                                className="w-full px-4 py-2.5 bg-white border border-zinc-100 rounded-xl text-xs font-mono font-bold text-center"
+                                placeholder="11564"
+                              />
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-[10px] font-black text-zinc-400 uppercase">الرقم الإضافي (٤ أرقام)</label>
+                              <input
+                                type="text"
+                                maxLength={4}
+                                value={editingClient.splAdditionalNo || ""}
+                                onChange={(e) => setEditingClient({ ...editingClient, splAdditionalNo: e.target.value.replace(/\D/g, '') })}
+                                className="w-full px-4 py-2.5 bg-white border border-zinc-100 rounded-xl text-xs font-mono font-bold text-center"
+                                placeholder="5678"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-zinc-200/60 mt-3">
+                            <button
+                              type="button"
+                              onClick={handleVerifyNationalAddress}
+                              disabled={isVerifyingSplAddress}
+                              className="w-full sm:w-auto bg-[#0f172a] hover:bg-emerald-600 text-white transition-all font-black text-xs px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                            >
+                              <ShieldCheck className="w-4 h-4 text-emerald-400 animate-pulse" />
+                              <span>{isVerifyingSplAddress ? "جاري الاستعلام... Verifying..." : "التحقق الرقمي من العنوان الوطني (SPL API)"}</span>
+                            </button>
+
+                            {editingClient.splVerified && (
+                              <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-xl border border-emerald-200 text-xs font-black">
+                                <Check className="w-3.5 h-3.5" />
+                                <span>موثق بالرمز: {editingClient.splVerificationRef}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {splVerificationResult && (
+                            <div className={`p-4 rounded-2xl text-[11px] space-y-1.5 font-mono text-right mt-3 ${splVerificationResult.success ? "bg-emerald-50/50 border border-emerald-150 text-emerald-800" : "bg-rose-50/50 border border-rose-150 text-rose-800"}`} dir="rtl">
+                              {splVerificationResult.success ? (
+                                <>
+                                  <p className="font-extrabold text-[#0f172a] mb-1">✓ نتيجة مطابقة سبل (SPL Gateway Verification):</p>
+                                  <p>• مرجع التوثيق: {splVerificationResult.verificationReference}</p>
+                                  <p>• النطاق الجغرافي: {splVerificationResult.details.city} - {splVerificationResult.details.district}</p>
+                                  <p>• الإحداثيات الوطنية: {splVerificationResult.details.coordinates.latitude}, {splVerificationResult.details.coordinates.longitude}</p>
+                                  <p>• العنوان الموحد: {splVerificationResult.details.unifiedAddressString}</p>
+                                </>
+                              ) : (
+                                <>
+                                  <p className="font-extrabold text-[#0f172a] mb-1">❌ فشل التحقق من سبل (SPL Validation Alert):</p>
+                                  <p>• رمز الخطأ: {splVerificationResult.status}</p>
+                                  <p>• السبب: {splVerificationResult.error_ar}</p>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
                             <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest flex items-center gap-2">
@@ -2223,7 +2406,7 @@ export default function CRM() {
             )}
           </AnimatePresence>
         </>
-      ) : (
+      ) : mainTab === "identity" ? (
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {identityTabsArr.map((tab) => (
@@ -2429,6 +2612,8 @@ export default function CRM() {
             </div>
           </motion.div>
         </div>
+      ) : (
+        <EmailCalendarSyncWorkspace clients={clients} />
       )}
     </div>
   );

@@ -221,6 +221,11 @@ export default function Invoices() {
     if (!user) return;
     try {
       if (invoiceData.id) {
+        const existing = invoices.find((i) => i.id === invoiceData.id);
+        if (existing && existing.status !== "draft") {
+          alert("لا يمكن تعديل هذه الفاتورة نظراً لترحيلها مسبقاً وتأمينها في دفتر الأستاذ العام بموجب المعايير المحاسبية المعتمدة. لتصحيح هذه الفاتورة أو تعديلها، يرجى إصدار 'إشعار دائن' أو 'إشعار مدين' من القائمة المجاورة.");
+          return;
+        }
         const { id, ...data } = invoiceData;
         await updateDoc(doc(db, "invoices", id), {
           ...data,

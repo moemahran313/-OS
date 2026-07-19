@@ -270,3 +270,112 @@ model Comment {
   text       String
   createdAt  DateTime @default(now())
 }
+
+model Business {
+  id                String                 @id @default(cuid())
+  organizationId    String?                // Collection ID / Tenant ID
+  name              String
+  normalizedName    String?                // for deduplication
+  website           String?                // domain or URL
+  normalizedUrl     String?                // for deduplication
+  address           String?
+  normalizedAddress String?                // for deduplication
+  phone             String?
+  categoryTags      String?
+  sourceConnector   String                 @default("Browser Extension")
+  status            String                 @default("Discovered") // Discovered, Enriched, etc.
+  leadScore         Int                    @default(0)
+  confidenceScore   Int                    @default(0)
+  scoreReasons      String?                // JSON string list of score multipliers
+  suggestedActions  String?                // JSON string list of recommended next actions
+  socialProfiles    String?                // JSON string of social platform URLs
+  
+  // Custom enrichment details
+  estimatedARR      String?
+  employeeHeadcount String?
+  technologiesUsed  String?
+  aiAnalysis        String?                // JSON string for raw Gemini breakdown
+  
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  // Relationships
+  contacts          BusinessContact[]
+  enrichmentLogs    EnrichmentLog[]
+  auditMatches      DeduplicationAuditLog[] @relation("BusinessMatch")
+  originalMatches   DeduplicationAuditLog[] @relation("BusinessOriginal")
+  campaigns         CampaignBusiness[]
+}
+
+model BusinessContact {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  title      String?
+  email      String?
+  phone      String?
+  social     String?  // linkedin url etc
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Campaign {
+  id          String             @id @default(cuid())
+  name        String
+  subject     String?
+  template    String?
+  status      String             @default("Draft") // Draft, Active, Completed
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  businesses  CampaignBusiness[]
+}
+
+model CampaignBusiness {
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  status     String   @default("Pending") // Pending, Sent, Opened, Clicked, Bounced
+  sentAt     DateTime?
+  
+  @@id([campaignId, businessId])
+}
+
+model EnrichmentLog {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  timestamp  DateTime @default(now())
+  engineType String   // e.g. Gemini AI, Local Fallback
+  status     String   // Success, Failed
+  error      String?
+  details    String?  // JSON text of enriched payload
+}
+
+model DeduplicationAuditLog {
+  id               String   @id @default(cuid())
+  businessId       String
+  matchedId        String
+  business         Business @relation("BusinessOriginal", fields: [businessId], references: [id], onDelete: Cascade)
+  matchedBusiness  Business @relation("BusinessMatch", fields: [matchedId], references: [id], onDelete: Cascade)
+  confidenceScore  Float    // Score representing match strength (0 to 100)
+  matchCriteria    String   // e.g., "Normalized name match", "URL exact match"
+  actionTaken      String   // e.g., "Flagged as potential duplicate"
+  createdAt        DateTime @default(now())
+}
+
+model SearchJob {
+  id             String   @id @default(cuid())
+  query          String
+  location       String?
+  status         String   @default("Queued") // Queued, Processing, Completed, Failed
+  currentPage    Int      @default(1)
+  totalPages     Int      @default(1)
+  totalResults   Int      @default(0)
+  retryCount     Int      @default(0)
+  errorMessage   String?
+  metadata       String?  // JSON string
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}

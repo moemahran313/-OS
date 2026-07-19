@@ -53,8 +53,14 @@ export class PayrollService {
 
       // GOSI deduction computed legally on (basic + housing)
       const gosiBaseHalalas = (e.baseSalaryHalalas || 0) + (e.housingAllowanceHalalas || 0);
-      const gosiRate = isSaudi ? 0.0975 : 0.02; // 9.75% for Saudi, 2% for Non-Saudi
+      const gosiRate = isSaudi ? 0.0975 : 0.0; // 9.75% for Saudi employee, 0% for non-Saudi employee
       const gosiDeductionHalalas = Math.round(gosiBaseHalalas * gosiRate);
+
+      // GOSI Employer Share calculated legally
+      // Saudi: 11.75% (9% Pension + 2% Hazards + 0.75% SANED)
+      // Non-Saudi: 2% (Hazards)
+      const gosiEmployerRate = isSaudi ? 0.1175 : 0.02;
+      const gosiEmployerShareHalalas = Math.round(gosiBaseHalalas * gosiEmployerRate);
 
       // Absence deduction calculated as (Basic Salary / 30) * absenceDays
       const absenceDays = Number(e.absenceDays || 0);
@@ -79,6 +85,8 @@ export class PayrollService {
         transport: (e.transportAllowanceHalalas || 0) / 100,
         allowances: (grossHalalas - (e.baseSalaryHalalas || 0)) / 100,
         gosiDeduction: gosiDeductionHalalas / 100,
+        gosiEmployerShare: gosiEmployerShareHalalas / 100,
+        gosiTotalContribution: (gosiDeductionHalalas + gosiEmployerShareHalalas) / 100,
         absenceDeduction: absenceDeductionHalalas / 100,
         otherDeductions: (e.otherDeductionsHalalas || 0) / 100,
         advanceDeductions: advanceDeductionHalalas / 100,
@@ -91,6 +99,8 @@ export class PayrollService {
     });
 
     const totalGosi = payrollEntries.reduce((acc, p) => acc + (p.gosiDeduction || 0), 0);
+    const totalGosiEmployer = payrollEntries.reduce((acc, p) => acc + (p.gosiEmployerShare || 0), 0);
+    const totalGosiCombined = totalGosi + totalGosiEmployer;
     const totalAbsence = payrollEntries.reduce((acc, p) => acc + (p.absenceDeduction || 0), 0);
     const totalOtherDeductions = payrollEntries.reduce(
       (acc, p) => acc + (p.otherDeductions || 0),
@@ -108,6 +118,8 @@ export class PayrollService {
       totalNet: payrollEntries.reduce((acc, p) => acc + p.netPay, 0),
       totalDeductions: payrollEntries.reduce((acc, p) => acc + p.deductions, 0),
       totalGosi,
+      totalGosiEmployer,
+      totalGosiCombined,
       totalAbsence,
       totalOtherDeductions,
       totalAdvanceDeductions,
@@ -129,27 +141,41 @@ export class PayrollService {
       mudadSifGenerated: true,
     });
 
-    let csvData = "\uFEFF";
-    csvData += `رقم هوية الموظف,اسم الموظف,الايبان,الراتب الاساسي,بدل السكن,بدلات اخرى,الخصومات,الراتب الصافي\n`;
+    const crNumber = "1010123456"; // Standard 10-digit Saudi CR
+    const molId = "7001234567"; // Standard 10-digit MOL ID
+    const employerBankCode = "ALBI"; // Bank AlBilad
+    const creationDate = new Date().toISOString().split("T")[0].replace(/-/g, "");
+    const creationTime = new Date().toTimeString().split(" ")[0].substring(0, 5).replace(/:/g, "");
+    const periodStr = (run.period || "2026-07").replace("-", "");
+
+    let totalSalaries = 0;
+    const employeeRows: string[] = [];
 
     for (const e of run.entries) {
       const empDoc = await getDoc(doc(db, "employees", e.employeeId));
       const emp = empDoc.data() || {};
 
-      const empIdNumber = emp.idNumber || emp.employeeId || e.employeeId || "";
-      const name = e.employeeName || emp.name || "";
-      const iban = emp.iban || "";
-      const basic = e.basic || 0;
-      const housing = (emp.housingAllowanceHalalas || 0) / 100;
-      const otherAllowances = (e.allowances || 0) - housing;
-      const deductions = e.deductions || 0;
-      const netPay = e.netPay || 0;
+      const empIdNumber = (emp.idNumber || emp.employeeId || e.employeeId || "").trim();
+      const iban = (emp.iban || "SA0000000000000000000000").trim();
+      const basic = Number(e.basic || 0).toFixed(2);
+      const housing = Number((emp.housingAllowanceHalalas || 0) / 100).toFixed(2);
+      const otherAllowances = Number((e.allowances || 0) - Number(housing)).toFixed(2);
+      const deductions = Number(e.deductions || 0).toFixed(2);
+      const netPay = Number(e.netPay || 0).toFixed(2);
+      const empBankCode = iban.substring(4, 8) || "ALBI";
 
-      csvData += `"${empIdNumber}","${name}","${iban}",${basic},${housing},${otherAllowances > 0 ? otherAllowances : 0},${deductions},${netPay}\n`;
+      totalSalaries += Number(netPay);
+
+      // Saudi MHRSD WPS Employee Row: 15;Iqama;Bank;IBAN;Basic;Housing;Other;Deductions;NetPay;Remarks
+      employeeRows.push(`15;${empIdNumber};${empBankCode};${iban};${basic};${housing};${Number(otherAllowances) > 0 ? otherAllowances : "0.00"};${deductions};${netPay};01`);
     }
 
+    // Saudi MHRSD WPS Header Row: 14;CR;MOL_ID;Bank;Date;Time;Period;TotalNet;Count
+    const headerRow = `14;${crNumber};${molId};${employerBankCode};${creationDate};${creationTime};${periodStr};${totalSalaries.toFixed(2)};${employeeRows.length}`;
+    const sifData = [headerRow, ...employeeRows].join("\n");
+
     return {
-      data: csvData,
+      data: sifData,
       period: run.period,
     };
   }
@@ -166,11 +192,17 @@ export class PayrollService {
       throw new Error("No payroll runs found for this period");
     }
 
-    let csvData = "\uFEFF";
-    csvData += `رقم هوية الموظف,اسم الموظف,الايبان,الراتب الاساسي,بدل السكن,بدلات اخرى,الخصومات,الراتب الصافي\n`;
+    const crNumber = "1010123456";
+    const molId = "7001234567";
+    const employerBankCode = "ALBI";
+    const creationDate = new Date().toISOString().split("T")[0].replace(/-/g, "");
+    const creationTime = new Date().toTimeString().split(" ")[0].substring(0, 5).replace(/:/g, "");
+    const periodStr = period.replace("-", "");
+
+    let totalSalaries = 0;
+    const employeeRows: string[] = [];
 
     for (const d of snap.docs) {
-      // Mark run as having the SIF generated
       await updateDoc(doc(db, "payroll_runs", d.id), {
         mudadSifGenerated: true,
       });
@@ -180,39 +212,69 @@ export class PayrollService {
         const empDoc = await getDoc(doc(db, "employees", e.employeeId));
         const emp = empDoc.data() || {};
 
-        const empIdNumber = emp.idNumber || emp.employeeId || e.employeeId || "";
-        const name = e.employeeName || emp.name || "";
-        const iban = emp.iban || "";
-        const basic = e.basic || 0;
-        const housing = (emp.housingAllowanceHalalas || 0) / 100;
-        const otherAllowances = (e.allowances || 0) - housing;
-        const deductions = e.deductions || 0;
-        const netPay = e.netPay || 0;
+        const empIdNumber = (emp.idNumber || emp.employeeId || e.employeeId || "").trim();
+        const iban = (emp.iban || "SA0000000000000000000000").trim();
+        const basic = Number(e.basic || 0).toFixed(2);
+        const housing = Number((emp.housingAllowanceHalalas || 0) / 100).toFixed(2);
+        const otherAllowances = Number((e.allowances || 0) - Number(housing)).toFixed(2);
+        const deductions = Number(e.deductions || 0).toFixed(2);
+        const netPay = Number(e.netPay || 0).toFixed(2);
+        const empBankCode = iban.substring(4, 8) || "ALBI";
 
-        csvData += `"${empIdNumber}","${name}","${iban}",${basic},${housing},${otherAllowances > 0 ? otherAllowances : 0},${deductions},${netPay}\n`;
+        totalSalaries += Number(netPay);
+
+        employeeRows.push(`15;${empIdNumber};${empBankCode};${iban};${basic};${housing};${Number(otherAllowances) > 0 ? otherAllowances : "0.00"};${deductions};${netPay};01`);
       }
     }
 
+    const headerRow = `14;${crNumber};${molId};${employerBankCode};${creationDate};${creationTime};${periodStr};${totalSalaries.toFixed(2)};${employeeRows.length}`;
+    const sifData = [headerRow, ...employeeRows].join("\n");
+
     return {
-      data: csvData,
+      data: sifData,
       period,
     };
   }
 
   static async generateWPS(userId: string, runId: string) {
-    const runDoc = await getDoc(doc(db, "payroll_runs", runId));
+    const runRef = doc(db, "payroll_runs", runId);
+    const runDoc = await getDoc(runRef);
     const run = runDoc.data();
 
     if (!run || run.userId !== userId) {
       throw new Error("Payroll run not found");
     }
 
-    let wpsData = `EDB,1234567890,CompanyBankID,CompanyAccount,${run.period}\n`;
+    const crNumber = "1010123456";
+    const molId = "7001234567";
+    const employerBankCode = "ALBI";
+    const creationDate = new Date().toISOString().split("T")[0].replace(/-/g, "");
+    const creationTime = new Date().toTimeString().split(" ")[0].substring(0, 5).replace(/:/g, "");
+    const periodStr = (run.period || "2026-07").replace("-", "");
+
+    let totalSalaries = 0;
+    const employeeRows: string[] = [];
+
     for (const e of run.entries) {
       const empDoc = await getDoc(doc(db, "employees", e.employeeId));
-      const emp = empDoc.data();
-      wpsData += `EMP,${e.employeeId},${emp?.bank || ""},${emp?.iban || ""},${run.period},${e.basic},${e.allowances},${e.deductions},${e.netPay},G\n`;
+      const emp = empDoc.data() || {};
+
+      const empIdNumber = (emp.idNumber || emp.employeeId || e.employeeId || "").trim();
+      const iban = (emp.iban || "SA0000000000000000000000").trim();
+      const basic = Number(e.basic || 0).toFixed(2);
+      const housing = Number((emp.housingAllowanceHalalas || 0) / 100).toFixed(2);
+      const otherAllowances = Number((e.allowances || 0) - Number(housing)).toFixed(2);
+      const deductions = Number(e.deductions || 0).toFixed(2);
+      const netPay = Number(e.netPay || 0).toFixed(2);
+      const empBankCode = iban.substring(4, 8) || "ALBI";
+
+      totalSalaries += Number(netPay);
+
+      employeeRows.push(`15;${empIdNumber};${empBankCode};${iban};${basic};${housing};${Number(otherAllowances) > 0 ? otherAllowances : "0.00"};${deductions};${netPay};01`);
     }
+
+    const headerRow = `14;${crNumber};${molId};${employerBankCode};${creationDate};${creationTime};${periodStr};${totalSalaries.toFixed(2)};${employeeRows.length}`;
+    const wpsData = [headerRow, ...employeeRows].join("\n");
 
     return {
       data: wpsData,

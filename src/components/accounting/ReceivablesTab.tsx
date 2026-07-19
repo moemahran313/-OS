@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { db, auth } from "../../lib/firebase";
+import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { motion } from "motion/react";
 import {
   Users,
@@ -42,87 +44,30 @@ export default function ReceivablesTab({
   accounts?: any[];
   activeBranchId?: string;
 }) {
-  const [customers, setCustomers] = useState<Customer[]>([
-    {
-      id: "cust-1",
-      nameAr: "مجموعة الشايع التجارية",
-      nameEn: "Alshaya Trading Group",
-      vatNumber: "310123456700003",
-      status: "Active",
-      balance: 145000,
-      unpaidInvoicesCount: 3,
-    },
-    {
-      id: "cust-2",
-      nameAr: "شركة المراعي المحدودة",
-      nameEn: "Almarai Company Ltd.",
-      vatNumber: "300055443300003",
-      status: "Active",
-      balance: 89000,
-      unpaidInvoicesCount: 1,
-    },
-    {
-      id: "cust-3",
-      nameAr: "مؤسسة الحلول الرقمية",
-      nameEn: "Digital Solutions Est.",
-      vatNumber: "310987654300003",
-      status: "Active",
-      balance: 0,
-      unpaidInvoicesCount: 0,
-    },
-    {
-      id: "cust-4",
-      nameAr: "مستشفيات رعاية الصحية",
-      nameEn: "Riyadh Care Hospitals",
-      vatNumber: "300556677800003",
-      status: "Active",
-      balance: 240000,
-      unpaidInvoicesCount: 4,
-    },
-  ]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [invoices, setInvoices] = useState<Invoice[]>([
-    {
-      id: "inv-101",
-      invoiceNo: "INV-2026-001",
-      customerName: "مجموعة الشايع التجارية",
-      date: "2026-05-10",
-      dueDate: "2026-06-10",
-      amount: 45000,
-      tax: 6750,
-      status: "Unpaid",
-    },
-    {
-      id: "inv-102",
-      invoiceNo: "INV-2026-002",
-      customerName: "شركة المراعي المحدودة",
-      date: "2026-05-15",
-      dueDate: "2026-06-15",
-      amount: 89000,
-      tax: 13350,
-      status: "Unpaid",
-    },
-    {
-      id: "inv-103",
-      invoiceNo: "INV-2026-003",
-      customerName: "مستشفيات رعاية الصحية",
-      date: "2026-04-01",
-      dueDate: "2026-05-01",
-      amount: 120000,
-      tax: 18000,
-      status: "Overdue",
-    },
-    {
-      id: "inv-104",
-      invoiceNo: "INV-2026-004",
-      customerName: "مجموعة الشايع التجارية",
-      date: "2026-05-20",
-      dueDate: "2026-06-20",
-      amount: 100000,
-      tax: 15000,
-      status: "Unpaid",
-    },
-  ]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await auth.authStateReady();
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        const custSnap = await getDocs(query(collection(db, "accounting_customers"), where("userId", "==", user.uid)));
+        setCustomers(custSnap.docs.map(d => ({ id: d.id, ...d.data() } as Customer)));
+        
+        const invSnap = await getDocs(query(collection(db, "accounting_invoices"), where("userId", "==", user.uid)));
+        setInvoices(invSnap.docs.map(d => ({ id: d.id, ...d.data() } as Invoice)));
+      } catch (err) {
+        console.error("Error fetching receivables data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddCustomer, setShowAddCustomer] = useState(false);
@@ -140,21 +85,29 @@ export default function ReceivablesTab({
     description: "",
   });
 
-  const handleAddCustomer = (e: React.FormEvent) => {
+  const handleAddCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustomer.nameAr || !newCustomer.nameEn) return;
-    const added: Customer = {
-      id: "cust-" + (customers.length + 1),
-      nameAr: newCustomer.nameAr,
-      nameEn: newCustomer.nameEn,
-      vatNumber: newCustomer.vatNumber || undefined,
-      status: newCustomer.status,
-      balance: 0,
-      unpaidInvoicesCount: 0,
-    };
-    setCustomers([...customers, added]);
-    setNewCustomer({ nameAr: "", nameEn: "", vatNumber: "", status: "Active" });
-    setShowAddCustomer(false);
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      const newDoc = {
+        userId: user.uid,
+        nameAr: newCustomer.nameAr,
+        nameEn: newCustomer.nameEn,
+        vatNumber: newCustomer.vatNumber || null,
+        status: newCustomer.status,
+        balance: 0,
+        unpaidInvoicesCount: 0,
+        createdAt: new Date().toISOString()
+      };
+      const docRef = await addDoc(collection(db, "accounting_customers"), newDoc);
+      setCustomers([...customers, { id: docRef.id, ...newDoc } as Customer]);
+      setNewCustomer({ nameAr: "", nameEn: "", vatNumber: "", status: "Active" });
+      setShowAddCustomer(false);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleNoteSubmit = (e: React.FormEvent) => {

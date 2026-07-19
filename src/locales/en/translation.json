@@ -27,7 +27,8 @@
     "analytics": "Reports & Analytics",
     "accounting": "General Ledger & Accounting",
     "compliance": "Compliance & Security",
-    "negotiations": "Smart Negotiations"
+    "negotiations": "Smart Negotiations",
+    "marketing_copilot": "Marketing Copilot"
   },
   "settings": {
     "tabs": {

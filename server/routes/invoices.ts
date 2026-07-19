@@ -101,10 +101,69 @@ router.post("/", authenticate, async (req: any, res) => {
 
     const docRef = await db.collection("invoices").add(invoiceData);
 
+    // AUTOMATIC IMMUTABLE DOUBLE-ENTRY LEDGER INTEGRATION
+    if (status && status !== "draft") {
+      const journalData = {
+        userId: req.user.uid,
+        companyId: "default",
+        journalNumber: `JV-AUTO-${number}`,
+        date: new Date().toISOString().split("T")[0],
+        description: `قيد ترحيل آلي - مبيعات الفاتورة رقم ${number}`,
+        status: "Posted",
+        currency: currency || "SAR",
+        exchangeRate: 1,
+        totalDebits: totalAmountHalalas / 100,
+        totalCredits: totalAmountHalalas / 100,
+        createdAt: new Date().toISOString(),
+        lines: [
+          {
+            lineNo: 1,
+            accountId: "acc-ar",
+            accountCode: "1201",
+            accountName: "ذمم العملاء / Accounts Receivable",
+            debit: totalAmountHalalas / 100,
+            credit: 0,
+            baseDebit: totalAmountHalalas / 100,
+            baseCredit: 0,
+            originalCurrency: currency || "SAR",
+            exchangeRate: 1,
+            description: `إثبات مديونية الفاتورة رقم ${number} للعميل ${clientName}`,
+          },
+          {
+            lineNo: 2,
+            accountId: "acc-revenue",
+            accountCode: "4101",
+            accountName: "إيرادات المبيعات / Sales Revenue",
+            debit: 0,
+            credit: subtotalHalalas / 100,
+            baseDebit: 0,
+            baseCredit: subtotalHalalas / 100,
+            originalCurrency: currency || "SAR",
+            exchangeRate: 1,
+            description: `إيرادات مبيعات الفاتورة رقم ${number}`,
+          },
+          {
+            lineNo: 3,
+            accountId: "acc-vat-out",
+            accountCode: "2201",
+            accountName: "ضريبة مخرجات مستحقة / VAT Output Tax",
+            debit: 0,
+            credit: vatAmountHalalas / 100,
+            baseDebit: 0,
+            baseCredit: vatAmountHalalas / 100,
+            originalCurrency: currency || "SAR",
+            exchangeRate: 1,
+            description: `ضريبة مبيعات مستحقة للفاتورة رقم ${number}`,
+          }
+        ].filter(line => line.debit > 0 || line.credit > 0)
+      };
+      await db.collection("journals").add(journalData);
+    }
+
     logAudit(
       "INVOICE",
       { action: "Create Invoice", invoiceId: docRef.id, number },
-      { success: true },
+      { success: true, ledgerPosted: status !== "draft" },
       req
     );
     res.status(201).json({ id: docRef.id, ...invoiceData });
@@ -123,8 +182,9 @@ router.put("/:id", authenticate, async (req: any, res) => {
       return res.status(404).json({ error: "Invoice not found" });
     }
 
+    // STRICT RECONCILIATION & IMMUTABILITY ENFORCEMENT
     if (existing.isLocked && existing.status !== "draft" && !req.body.isForceUpdate) {
-      return res.status(403).json({ error: "Invoice is locked" });
+      return res.status(403).json({ error: "لا يمكن تعديل هذه الفاتورة. لقد تم ترحيلها مسبقاً وتأمينها في دفتر الأستاذ العام." });
     }
 
     const {
@@ -150,6 +210,9 @@ router.put("/:id", authenticate, async (req: any, res) => {
       });
     }
 
+    const nextStatus = req.body.status || existing.status;
+    const transitioningToLocked = existing.status === "draft" && nextStatus !== "draft";
+
     const updateData = {
       ...rest,
       dueDate: dueDate || existing.dueDate,
@@ -162,10 +225,78 @@ router.put("/:id", authenticate, async (req: any, res) => {
       zatcaConfig: zatcaConfig || existing.zatcaConfig,
       logs: currentLogs.slice(0, 20),
       version: (existing.version || 1) + (isDraftAutoSave ? 0 : 1),
+      isLocked: transitioningToLocked ? true : (existing.isLocked || false),
       updatedAt: new Date(),
     };
 
     await docRef.update(updateData);
+
+    // Transitioning from Draft to Active/Sent means we POST to GL automatically
+    if (transitioningToLocked) {
+      const subtotalHalalas = req.body.subtotalHalalas || existing.subtotalHalalas || 0;
+      const vatAmountHalalas = req.body.vatAmountHalalas || existing.vatAmountHalalas || 0;
+      const totalAmountHalalas = req.body.totalAmountHalalas || existing.totalAmountHalalas || 0;
+      const num = req.body.number || existing.number || "";
+      const clientName = req.body.clientName || existing.clientName || "";
+      const currency = req.body.currency || existing.currency || "SAR";
+
+      const journalData = {
+        userId: req.user.uid,
+        companyId: "default",
+        journalNumber: `JV-AUTO-${num}`,
+        date: new Date().toISOString().split("T")[0],
+        description: `قيد ترحيل آلي - مبيعات الفاتورة رقم ${num}`,
+        status: "Posted",
+        currency,
+        exchangeRate: 1,
+        totalDebits: totalAmountHalalas / 100,
+        totalCredits: totalAmountHalalas / 100,
+        createdAt: new Date().toISOString(),
+        lines: [
+          {
+            lineNo: 1,
+            accountId: "acc-ar",
+            accountCode: "1201",
+            accountName: "ذمم العملاء / Accounts Receivable",
+            debit: totalAmountHalalas / 100,
+            credit: 0,
+            baseDebit: totalAmountHalalas / 100,
+            baseCredit: 0,
+            originalCurrency: currency,
+            exchangeRate: 1,
+            description: `إثبات مديونية الفاتورة رقم ${num} للعميل ${clientName}`,
+          },
+          {
+            lineNo: 2,
+            accountId: "acc-revenue",
+            accountCode: "4101",
+            accountName: "إيرادات المبيعات / Sales Revenue",
+            debit: 0,
+            credit: subtotalHalalas / 100,
+            baseDebit: 0,
+            baseCredit: subtotalHalalas / 100,
+            originalCurrency: currency,
+            exchangeRate: 1,
+            description: `إيرادات مبيعات الفاتورة رقم ${num}`,
+          },
+          {
+            lineNo: 3,
+            accountId: "acc-vat-out",
+            accountCode: "2201",
+            accountName: "ضريبة مخرجات مستحقة / VAT Output Tax",
+            debit: 0,
+            credit: vatAmountHalalas / 100,
+            baseDebit: 0,
+            baseCredit: vatAmountHalalas / 100,
+            originalCurrency: currency,
+            exchangeRate: 1,
+            description: `ضريبة مبيعات مستحقة للفاتورة رقم ${num}`,
+          }
+        ].filter(line => line.debit > 0 || line.credit > 0)
+      };
+      await db.collection("journals").add(journalData);
+    }
+
     res.json({ id: req.params.id, ...updateData });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

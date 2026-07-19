@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { db, auth } from "../../lib/firebase";
+import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Briefcase,
@@ -31,52 +33,26 @@ export default function FixedAssetsTab({
 }: {
   onPostJournal?: (journal: any) => void;
 }) {
-  const [assets, setAssets] = useState<FixedAsset[]>([
-    {
-      id: "asset-1",
-      name: "مبنى الإدارة الرئيسي - الرياض",
-      category: "Buildings",
-      purchaseDate: "2024-01-01",
-      cost: 1200000,
-      residualValue: 200000,
-      usefulLifeYears: 25,
-      depreciationMethod: "Straight-Line",
-      accumulatedDepreciation: 96000,
-    },
-    {
-      id: "asset-2",
-      name: "خط إنتاج التعبئة والتغليف المطور",
-      category: "Machinery",
-      purchaseDate: "2025-01-01",
-      cost: 350000,
-      residualValue: 30000,
-      usefulLifeYears: 8,
-      depreciationMethod: "Declining-Balance",
-      accumulatedDepreciation: 87500,
-    },
-    {
-      id: "asset-3",
-      name: "خوادم الحوسبة السحابية والمعدات الشبكية",
-      category: "IT Equipment",
-      purchaseDate: "2025-06-01",
-      cost: 80000,
-      residualValue: 5000,
-      usefulLifeYears: 4,
-      depreciationMethod: "Straight-Line",
-      accumulatedDepreciation: 18750,
-    },
-    {
-      id: "asset-4",
-      name: "أسطول سيارات توزيع المواد المبردة",
-      category: "Vehicles",
-      purchaseDate: "2025-03-01",
-      cost: 240000,
-      residualValue: 40000,
-      usefulLifeYears: 5,
-      depreciationMethod: "Straight-Line",
-      accumulatedDepreciation: 40000,
-    },
-  ]);
+  const [assets, setAssets] = useState<FixedAsset[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await auth.authStateReady();
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        const assetsSnap = await getDocs(query(collection(db, "accounting_fixed_assets"), where("userId", "==", user.uid)));
+        setAssets(assetsSnap.docs.map(d => ({ id: d.id, ...d.data() } as FixedAsset)));
+      } catch (err) {
+        console.error("Error fetching fixed assets data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const [showAddAsset, setShowAddAsset] = useState(false);
   const [newAsset, setNewAsset] = useState<Omit<FixedAsset, "id" | "accumulatedDepreciation">>({
@@ -92,27 +68,36 @@ export default function FixedAssetsTab({
   const [depreciationReport, setDepreciationReport] = useState<any[] | null>(null);
   const [isDepreciating, setIsDepreciating] = useState(false);
 
-  const handleAddAsset = (e: React.FormEvent) => {
+  const handleAddAsset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAsset.name || newAsset.cost <= 0) return;
 
-    const created: FixedAsset = {
-      ...newAsset,
-      id: "asset-" + (assets.length + 1),
-      accumulatedDepreciation: 0,
-    };
-
-    setAssets([...assets, created]);
-    setShowAddAsset(false);
-    setNewAsset({
-      name: "",
-      category: "IT Equipment",
-      purchaseDate: "",
-      cost: 0,
-      residualValue: 0,
-      usefulLifeYears: 5,
-      depreciationMethod: "Straight-Line",
-    });
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      
+      const newDoc = {
+        userId: user.uid,
+        ...newAsset,
+        accumulatedDepreciation: 0,
+        createdAt: new Date().toISOString()
+      };
+      
+      const docRef = await addDoc(collection(db, "accounting_fixed_assets"), newDoc);
+      setAssets([{ id: docRef.id, ...newDoc } as FixedAsset, ...assets]);
+      setShowAddAsset(false);
+      setNewAsset({
+        name: "",
+        category: "IT Equipment",
+        purchaseDate: "",
+        cost: 0,
+        residualValue: 0,
+        usefulLifeYears: 5,
+        depreciationMethod: "Straight-Line",
+      });
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const calculateDepreciation = () => {
@@ -170,7 +155,7 @@ export default function FixedAssetsTab({
     );
 
     if (onPostJournal) {
-      // Mock journal dispatch
+      // Auto-dispatch journal
       onPostJournal({
         description: `تسجيل قيد الإهلاك الشهري التلقائي للأصول الثابتة - الربع المالي الحالي`,
         lines: [

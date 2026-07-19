@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { db, auth } from "../../lib/firebase";
+import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { motion } from "motion/react";
 import {
   PiggyBank,
@@ -24,40 +26,26 @@ interface BudgetAllocation {
 }
 
 export default function BudgetsTab() {
-  const [allocations, setAllocations] = useState<BudgetAllocation[]>([
-    {
-      id: "b-1",
-      accountCode: "501001",
-      accountName: "مصاريف التسويق الرقمي والدعاية",
-      department: "Marketing",
-      annualBudget: 150000,
-      actualSpent: 165000,
-    },
-    {
-      id: "b-2",
-      accountCode: "502005",
-      accountName: "إيجارات المكاتب والفروع",
-      department: "HR & Admin",
-      annualBudget: 450000,
-      actualSpent: 410000,
-    },
-    {
-      id: "b-3",
-      accountCode: "505001",
-      accountName: "البحوث والتطوير والبرمجيات",
-      department: "Engineering",
-      annualBudget: 300000,
-      actualSpent: 120000,
-    },
-    {
-      id: "b-4",
-      accountCode: "504003",
-      accountName: "مصاريف السفر والضيافة التنفيذية",
-      department: "Sales",
-      annualBudget: 60000,
-      actualSpent: 59000,
-    },
-  ]);
+  const [allocations, setAllocations] = useState<BudgetAllocation[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await auth.authStateReady();
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        const allocSnap = await getDocs(query(collection(db, "accounting_budgets"), where("userId", "==", user.uid)));
+        setAllocations(allocSnap.docs.map(d => ({ id: d.id, ...d.data() } as BudgetAllocation)));
+      } catch (err) {
+        console.error("Error fetching budgets data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const [showAddBudget, setShowAddBudget] = useState(false);
   const [newBudget, setNewBudget] = useState({
@@ -67,23 +55,30 @@ export default function BudgetsTab() {
     annualBudget: "",
   });
 
-  const handleAddBudget = (e: React.FormEvent) => {
+  const handleAddBudget = async (e: React.FormEvent) => {
     e.preventDefault();
     const amt = parseFloat(newBudget.annualBudget);
     if (!newBudget.accountCode || !newBudget.accountName || isNaN(amt) || amt <= 0) return;
 
-    const added: BudgetAllocation = {
-      id: "b-" + (allocations.length + 1),
-      accountCode: newBudget.accountCode,
-      accountName: newBudget.accountName,
-      department: newBudget.department,
-      annualBudget: amt,
-      actualSpent: 0,
-    };
-
-    setAllocations([...allocations, added]);
-    setShowAddBudget(false);
-    setNewBudget({ accountCode: "", accountName: "", department: "Marketing", annualBudget: "" });
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      const newDoc = {
+        userId: user.uid,
+        accountCode: newBudget.accountCode,
+        accountName: newBudget.accountName,
+        department: newBudget.department,
+        annualBudget: amt,
+        actualSpent: 0,
+        createdAt: new Date().toISOString()
+      };
+      const docRef = await addDoc(collection(db, "accounting_budgets"), newDoc);
+      setAllocations([...allocations, { id: docRef.id, ...newDoc } as BudgetAllocation]);
+      setShowAddBudget(false);
+      setNewBudget({ accountCode: "", accountName: "", department: "Marketing", annualBudget: "" });
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const totalBudget = allocations.reduce((sum, a) => sum + a.annualBudget, 0);

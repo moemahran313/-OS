@@ -44,6 +44,11 @@ import { useUser } from "@/src/contexts/UserContext";
 interface Shipment {
   id: string;
   supplierName: string;
+  splStreetName?: string;
+  splDistrict?: string;
+  splBuildingNo?: string;
+  splPostalCode?: string;
+  splAdditionalNo?: string;
   productDescription: string;
   countryOfOrigin: string;
   originPort?: string;
@@ -93,6 +98,11 @@ export default function Suppliers() {
   // Form State
   const [newShipment, setNewShipment] = useState({
     supplierName: "",
+    splStreetName: "",
+    splDistrict: "",
+    splBuildingNo: "",
+    splPostalCode: "",
+    splAdditionalNo: "",
     productDescription: "",
     countryOfOrigin: "الصين",
     originPort: "",
@@ -160,6 +170,11 @@ export default function Suppliers() {
       setSelectedShipment(null);
       setNewShipment({
         supplierName: "",
+        splStreetName: "",
+        splDistrict: "",
+        splBuildingNo: "",
+        splPostalCode: "",
+        splAdditionalNo: "",
         productDescription: "",
         countryOfOrigin: "الصين",
         originPort: "",
@@ -176,6 +191,13 @@ export default function Suppliers() {
 
   const handleCreateShipment = async () => {
     if (!user) return;
+
+    // Validate Saudi Post/ZATCA address requirements for suppliers
+    if (!newShipment.splStreetName || !newShipment.splDistrict || !newShipment.splBuildingNo || !newShipment.splPostalCode || !newShipment.splAdditionalNo) {
+      alert("الرجاء إكمال جميع حقول العنوان الوطني للمورد (الشارع، الحي، رقم المبنى، الرمز البريدي، الرقم الإضافي) لتتوافق مع متطلبات هيئة الزكاة والضريبة والجمارك (ZATCA)");
+      return;
+    }
+
     try {
       const data = {
         ...newShipment,
@@ -201,6 +223,11 @@ export default function Suppliers() {
       setEditingId(null);
       setNewShipment({
         supplierName: "",
+        splStreetName: "",
+        splDistrict: "",
+        splBuildingNo: "",
+        splPostalCode: "",
+        splAdditionalNo: "",
         productDescription: "",
         countryOfOrigin: "الصين",
         originPort: "",
@@ -222,6 +249,11 @@ export default function Suppliers() {
     setEditingId(s.id);
     setNewShipment({
       supplierName: s.supplierName,
+      splStreetName: s.splStreetName || "",
+      splDistrict: s.splDistrict || "",
+      splBuildingNo: s.splBuildingNo || "",
+      splPostalCode: s.splPostalCode || "",
+      splAdditionalNo: s.splAdditionalNo || "",
       productDescription: s.productDescription,
       countryOfOrigin: s.countryOfOrigin,
       originPort: s.originPort || "",
@@ -1185,6 +1217,68 @@ export default function Suppliers() {
                           }
                         />
                       </div>
+                      
+                      <div className="bg-zinc-50 border border-zinc-100 rounded-2xl p-6 space-y-4">
+                        <h4 className="text-xs font-black text-zinc-900 flex items-center gap-2">
+                          العنوان الوطني للمورد (متطلبات ZATCA)
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-zinc-400 uppercase">اسم الشارع</label>
+                            <input
+                              value={newShipment.splStreetName || ""}
+                              onChange={(e) => setNewShipment({ ...newShipment, splStreetName: e.target.value })}
+                              className="w-full px-4 py-2.5 bg-white border border-zinc-100 rounded-xl text-xs font-bold"
+                              placeholder="مثال: طريق الملك فهد"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-zinc-400 uppercase">الحي</label>
+                            <input
+                              value={newShipment.splDistrict || ""}
+                              onChange={(e) => setNewShipment({ ...newShipment, splDistrict: e.target.value })}
+                              className="w-full px-4 py-2.5 bg-white border border-zinc-100 rounded-xl text-xs font-bold"
+                              placeholder="مثال: حي العليا"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-zinc-400 uppercase">رقم المبنى</label>
+                            <input
+                              type="text"
+                              maxLength={4}
+                              value={newShipment.splBuildingNo || ""}
+                              onChange={(e) => setNewShipment({ ...newShipment, splBuildingNo: e.target.value.replace(/\D/g, '') })}
+                              className="w-full px-4 py-2.5 bg-white border border-zinc-100 rounded-xl text-xs font-mono font-bold text-center"
+                              placeholder="1234"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-zinc-400 uppercase">الرمز البريدي</label>
+                            <input
+                              type="text"
+                              maxLength={5}
+                              value={newShipment.splPostalCode || ""}
+                              onChange={(e) => setNewShipment({ ...newShipment, splPostalCode: e.target.value.replace(/\D/g, '') })}
+                              className="w-full px-4 py-2.5 bg-white border border-zinc-100 rounded-xl text-xs font-mono font-bold text-center"
+                              placeholder="11564"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-[10px] font-black text-zinc-400 uppercase">الرقم الإضافي</label>
+                            <input
+                              type="text"
+                              maxLength={4}
+                              value={newShipment.splAdditionalNo || ""}
+                              onChange={(e) => setNewShipment({ ...newShipment, splAdditionalNo: e.target.value.replace(/\D/g, '') })}
+                              className="w-full px-4 py-2.5 bg-white border border-zinc-100 rounded-xl text-xs font-mono font-bold text-center"
+                              placeholder="1234"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="space-y-3">
                         <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-1">
                           وصف البضاعة (Arabic/English)

@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { db, auth } from "../../lib/firebase";
+import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { motion } from "motion/react";
 import {
   Building2,
@@ -42,77 +44,30 @@ export default function PayablesTab({
   accounts?: any[];
   activeBranchId?: string;
 }) {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([
-    {
-      id: "supp-1",
-      nameAr: "مؤسسة التوريدات اللوجستية",
-      nameEn: "Logistics Supplies Est.",
-      vatNumber: "310334455600003",
-      status: "Active",
-      balance: 65000,
-      unpaidBillsCount: 2,
-    },
-    {
-      id: "supp-2",
-      nameAr: "شركة الخرسانة المتكاملة",
-      nameEn: "Integrated Concrete Co.",
-      vatNumber: "300445566700003",
-      status: "Active",
-      balance: 140000,
-      unpaidBillsCount: 3,
-    },
-    {
-      id: "supp-3",
-      nameAr: "عالم التقنية للاستيراد",
-      nameEn: "Import Tech World Ltd.",
-      vatNumber: "310556677800003",
-      status: "Active",
-      balance: 0,
-      unpaidBillsCount: 0,
-    },
-    {
-      id: "supp-4",
-      nameAr: "مصنع الرياض لقطع الغيار",
-      nameEn: "Riyadh Spare Parts Factory",
-      vatNumber: "300667788900003",
-      status: "Active",
-      balance: 35000,
-      unpaidBillsCount: 1,
-    },
-  ]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [bills, setBills] = useState<Bill[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [bills, setBills] = useState<Bill[]>([
-    {
-      id: "bill-201",
-      billNo: "BILL-2026-081",
-      supplierName: "مؤسسة التوريدات اللوجستية",
-      date: "2026-05-01",
-      dueDate: "2026-06-01",
-      amount: 40000,
-      tax: 6000,
-      status: "Unpaid",
-    },
-    {
-      id: "bill-202",
-      billNo: "BILL-2026-082",
-      supplierName: "شركة الخرسانة المتكاملة",
-      date: "2026-04-10",
-      dueDate: "2026-05-10",
-      amount: 90000,
-      tax: 13500,
-      status: "Overdue",
-    },
-    {
-      id: "bill-203",
-      billNo: "BILL-2026-083",
-      supplierName: "مصنع الرياض لقطع الغيار",
-      date: "2026-05-12",
-      dueDate: "2026-06-12",
-      amount: 35000,
-      tax: 5250,
-      status: "Unpaid",
-    },
-  ]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await auth.authStateReady();
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        const suppSnap = await getDocs(query(collection(db, "accounting_suppliers"), where("userId", "==", user.uid)));
+        setSuppliers(suppSnap.docs.map(d => ({ id: d.id, ...d.data() } as Supplier)));
+        
+        const billsSnap = await getDocs(query(collection(db, "accounting_bills"), where("userId", "==", user.uid)));
+        setBills(billsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Bill)));
+      } catch (err) {
+        console.error("Error fetching payables data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddSupplier, setShowAddSupplier] = useState(false);
@@ -130,21 +85,29 @@ export default function PayablesTab({
     description: "",
   });
 
-  const handleAddSupplier = (e: React.FormEvent) => {
+  const handleAddSupplier = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSupplier.nameAr || !newSupplier.nameEn) return;
-    const added: Supplier = {
-      id: "supp-" + (suppliers.length + 1),
-      nameAr: newSupplier.nameAr,
-      nameEn: newSupplier.nameEn,
-      vatNumber: newSupplier.vatNumber || undefined,
-      status: newSupplier.status,
-      balance: 0,
-      unpaidBillsCount: 0,
-    };
-    setSuppliers([...suppliers, added]);
-    setNewSupplier({ nameAr: "", nameEn: "", vatNumber: "", status: "Active" });
-    setShowAddSupplier(false);
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      const newDoc = {
+        userId: user.uid,
+        nameAr: newSupplier.nameAr,
+        nameEn: newSupplier.nameEn,
+        vatNumber: newSupplier.vatNumber || null,
+        status: newSupplier.status,
+        balance: 0,
+        unpaidBillsCount: 0,
+        createdAt: new Date().toISOString()
+      };
+      const docRef = await addDoc(collection(db, "accounting_suppliers"), newDoc);
+      setSuppliers([...suppliers, { id: docRef.id, ...newDoc } as Supplier]);
+      setNewSupplier({ nameAr: "", nameEn: "", vatNumber: "", status: "Active" });
+      setShowAddSupplier(false);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handlePaymentSubmit = (e: React.FormEvent) => {

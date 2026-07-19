@@ -75,7 +75,7 @@ import {
   orderBy,
   getDocs,
 } from "firebase/firestore";
-import { db } from "@/src/lib/firebase";
+import { db, auth } from "@/src/lib/firebase";
 import { useUser } from "@/src/contexts/UserContext";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -185,13 +185,31 @@ export default function Payroll() {
   const handleSimulate = async () => {
     if (!simulatePeriod || !user) return;
     try {
-      const { PayrollService } = await import("@/src/services/payroll.service");
-      const data = await PayrollService.simulatePayroll(user.uid, simulatePeriod);
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) {
+        alert("يرجى تسجيل الدخول أولاً للمتابعة.");
+        return;
+      }
+
+      const res = await fetch("/api/payroll/simulate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ period: simulatePeriod }),
+      });
+
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      const data = await res.json();
       setSimulationData(data);
       setShowSimulateModal(true);
     } catch (e) {
       console.error(e);
-      alert("حدث خطأ أثناء المحاكاة");
+      alert("حدث خطأ أثناء المحاكاة المحاسبية المعتمدة في الخادم");
     }
   };
 
@@ -261,6 +279,12 @@ export default function Payroll() {
         "GOSI Payable",
         "Liability"
       );
+      const gosiExpenseAcc = await findOrCreateAccount(
+        "510202",
+        "مصروف التأمينات الاجتماعية (حصة المنشأة)",
+        "GOSI Expense (Employer Share)",
+        "Expense"
+      );
       const adminExpAcc = await findOrCreateAccount(
         "510301",
         "مصاريف عمومية وإدارية",
@@ -271,6 +295,8 @@ export default function Payroll() {
       const Gross = Math.round(simulationData.totalGross * 100);
       const Net = Math.round(simulationData.totalNet * 100);
       const GOSI = Math.round((simulationData.totalGosi || 0) * 100);
+      const GOSIEmployer = Math.round((simulationData.totalGosiEmployer || 0) * 100);
+      const GOSICombined = GOSI + GOSIEmployer;
       const otherDeductionsHalalas = Gross - Net - GOSI;
 
       const lines = [
@@ -292,14 +318,25 @@ export default function Payroll() {
         },
       ];
 
-      if (GOSI > 0) {
+      if (GOSIEmployer > 0) {
+        lines.push({
+          accountId: gosiExpenseAcc.id,
+          accountCode: gosiExpenseAcc.accountCode,
+          accountNameAr: gosiExpenseAcc.nameAr,
+          accountNameEn: gosiExpenseAcc.nameEn,
+          debitHalalas: GOSIEmployer,
+          creditHalalas: 0,
+        });
+      }
+
+      if (GOSICombined > 0) {
         lines.push({
           accountId: gosiPayableAcc.id,
           accountCode: gosiPayableAcc.accountCode,
           accountNameAr: gosiPayableAcc.nameAr,
           accountNameEn: gosiPayableAcc.nameEn,
           debitHalalas: 0,
-          creditHalalas: GOSI,
+          creditHalalas: GOSICombined,
         });
       }
 
@@ -428,7 +465,7 @@ export default function Payroll() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `WPS_${period}.csv`);
+      link.setAttribute("download", `WPS_${period}.sif`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -616,7 +653,7 @@ export default function Payroll() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `SIF_MUDAD_${period}.csv`);
+      link.setAttribute("download", `SIF_MUDAD_${period}.sif`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -710,7 +747,7 @@ export default function Payroll() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `BATCH_SIF_MUDAD_${period}.csv`);
+      link.setAttribute("download", `BATCH_SIF_MUDAD_${period}.sif`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -2850,8 +2887,8 @@ export default function Payroll() {
                 </button>
               </div>
 
-              <div className="p-8 bg-white border-b border-zinc-100 flex gap-8">
-                <div className="flex-1">
+              <div className="p-8 bg-white border-b border-zinc-100 grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
                   <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">
                     إجمالي المستحقات (Gross)
                   </p>
@@ -2860,8 +2897,7 @@ export default function Payroll() {
                     <span className="text-xs text-zinc-500">ر.س</span>
                   </p>
                 </div>
-                <div className="w-px bg-zinc-100" />
-                <div className="flex-1">
+                <div className="border-r md:border-r border-zinc-150 pr-6">
                   <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">
                     الاستقطاعات والتأمينات (Deductions)
                   </p>
@@ -2870,8 +2906,7 @@ export default function Payroll() {
                     <span className="text-xs text-zinc-500">ر.س</span>
                   </p>
                 </div>
-                <div className="w-px bg-zinc-100" />
-                <div className="flex-1">
+                <div className="border-r md:border-r border-zinc-150 pr-6">
                   <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">
                     إجمالي الصافي للتحويل (Net Pay)
                   </p>
@@ -2879,6 +2914,28 @@ export default function Payroll() {
                     {simulationData.totalNet.toLocaleString()}{" "}
                     <span className="text-xs text-zinc-500">ر.س</span>
                   </p>
+                </div>
+                <div className="border-r md:border-r border-zinc-150 pr-6 col-span-2">
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-amber-500" />
+                    مساهمة التأمينات GOSI (تفصيلية)
+                  </p>
+                  <p className="text-2xl font-black text-amber-600 mb-2">
+                    {(simulationData.totalGosiCombined || 0).toLocaleString()}{" "}
+                    <span className="text-xs text-zinc-500">ر.س</span>
+                  </p>
+                  <div className="grid grid-cols-2 gap-4 bg-amber-50/50 p-3 rounded-xl border border-amber-100">
+                    <div>
+                      <p className="text-[10px] font-black text-amber-800 mb-1">حصة الموظف (9.75%)</p>
+                      <p className="text-sm font-bold text-amber-700">{(simulationData.totalGosi || 0).toLocaleString()} ر.س</p>
+                      <p className="text-[9px] text-amber-600/80 mt-0.5">تُخصم من الراتب (معاشات + ساند)</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-amber-800 mb-1">حصة المنشأة (أخطار مهنية + معاشات)</p>
+                      <p className="text-sm font-bold text-amber-700">{(simulationData.totalGosiEmployer || 0).toLocaleString()} ر.س</p>
+                      <p className="text-[9px] text-amber-600/80 mt-0.5">٢٪ أخطار مهنية (سعودي/مقيم) + ٩.٧٥٪ للسعودي</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -2889,7 +2946,7 @@ export default function Payroll() {
                       <th className="pb-3 text-right">الموظف</th>
                       <th className="pb-3">الأساسي</th>
                       <th className="pb-3">البدلات (سكن/نقل)</th>
-                      <th className="pb-3">التأمينات (GOSI)</th>
+                      <th className="pb-3">التأمينات GOSI (موظف / منشأة)</th>
                       <th className="pb-3">خصم الغياب / أخرى</th>
                       <th className="pb-3">الصافي</th>
                     </tr>
@@ -2915,8 +2972,16 @@ export default function Payroll() {
                             سكن: {entry.housing || 0} | نقل: {entry.transport || 0}
                           </div>
                         </td>
-                        <td className="py-4 font-black text-amber-600">
-                          -{entry.gosiDeduction?.toLocaleString()}
+                        <td className="py-4">
+                          <div className="font-black text-amber-600">
+                            خصم: -{entry.gosiDeduction?.toLocaleString()} ر.س
+                          </div>
+                          <div className="text-[10px] font-bold text-zinc-400 mt-0.5">
+                            المنشأة: +{entry.gosiEmployerShare?.toLocaleString()} ر.س
+                          </div>
+                          <div className="text-[9px] font-bold text-zinc-500 mt-1 bg-zinc-100 px-1.5 py-0.5 rounded w-max">
+                            المساهمة: {entry.gosiTotalContribution?.toLocaleString()} ر.س
+                          </div>
                         </td>
                         <td className="py-4 font-black text-rose-500">
                           <div>

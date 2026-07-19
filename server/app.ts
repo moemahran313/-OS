@@ -25,6 +25,7 @@ import workflowRoutes from "./routes/workflows.ts";
 import negotiationRoutes from "./routes/negotiations.ts";
 import openwaRoutes from "./routes/openwa.ts";
 import accountingRoutes from "./routes/accounting.ts";
+import bankingRoutes from "./routes/banking.ts";
 import organizationsRoutes from "./routes/organizations.ts";
 import dmsRoutes from "./routes/dms.ts";
 import zatcaRoutes from "./routes/zatca.ts";
@@ -32,10 +33,10 @@ import projectsRoutes from "./routes/projects.ts";
 import referralRoutes from "./routes/referrals.ts";
 import ticketRoutes from "./routes/tickets.ts";
 import leadGenRoutes from "./routes/lead-gen.ts";
-import emailMarketingRoutes from "./routes/email-marketing.ts";
-import socialMediaRoutes from "./routes/social-media.ts";
-import advertisingRoutes from "./routes/advertising.ts";
+import marketingCopilotRoutes from "./routes/marketing-copilot.ts";
 import demoRoutes from "./routes/demo.ts";
+import leadsIntelligenceRoutes from "./routes/leads-intelligence.ts";
+import stripeRoutes from "./routes/stripe.ts";
 
 export async function createApp() {
   const app = express();
@@ -73,6 +74,8 @@ export async function createApp() {
   app.use("/api/negotiations", negotiationRoutes);
   app.use("/api/openwa", openwaRoutes);
   app.use("/api/accounting", accountingRoutes);
+  app.use("/api/accounting/banking", bankingRoutes);
+  app.use("/api/banking", bankingRoutes);
   app.use("/api/organizations", organizationsRoutes);
   app.use("/api/dms", dmsRoutes);
   app.use("/api/zatca", zatcaRoutes);
@@ -80,10 +83,10 @@ export async function createApp() {
   app.use("/api/referrals", referralRoutes);
   app.use("/api/tickets", ticketRoutes);
   app.use("/api/lead-gen", leadGenRoutes);
-  app.use("/api/email-marketing", emailMarketingRoutes);
-  app.use("/api/social-media", socialMediaRoutes);
-  app.use("/api/advertising", advertisingRoutes);
+  app.use("/api/marketing-copilot", marketingCopilotRoutes);
   app.use("/api/demo", demoRoutes);
+  app.use("/api/leads-intelligence", leadsIntelligenceRoutes);
+  app.use("/api/stripe", stripeRoutes);
 
   // HR routes like /api/nitaqat/calculate and /api/workpermit/calculate
   app.use("/api", hrRoutes);

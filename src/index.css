@@ -15,8 +15,8 @@
 
 @theme {
   --font-sans:
-    "IBM Plex Sans Arabic", "Tajawal", "Cairo", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "IBM Plex Sans Arabic", "Tajawal", "Cairo", sans-serif;
+    "Cairo", "Tajawal", "IBM Plex Sans Arabic", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cairo", "Tajawal", "IBM Plex Sans Arabic", sans-serif;
 
   --color-primary: #10b981;
   --color-primary-foreground: #ffffff;
@@ -365,6 +365,30 @@
 [lang="ar"],
 [lang="ar"] * {
   letter-spacing: normal !important;
+}
+
+/* RTL Polish: Fix Margins and Alignments for Arabic Dropdowns, Popovers, and Select elements */
+[dir="rtl"] select {
+  background-position: left 0.75rem center !important;
+  padding-left: 2rem !important;
+  padding-right: 0.75rem !important;
+}
+
+[dir="rtl"] .dropdown-menu,
+[dir="rtl"] .popover,
+[dir="rtl"] select,
+[dir="rtl"] option {
+  text-align: right !important;
+}
+
+[dir="rtl"] .ml-auto {
+  margin-right: auto !important;
+  margin-left: 0 !important;
+}
+
+[dir="rtl"] .mr-auto {
+  margin-left: auto !important;
+  margin-right: 0 !important;
 }
 
 div#root:nth-of-type(1)

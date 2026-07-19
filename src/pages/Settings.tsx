@@ -28,6 +28,7 @@ import {
   Monitor,
   Code2,
   Loader2,
+  FileCode,
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useSettings } from "../contexts/SettingsContext";
@@ -51,6 +52,7 @@ import DeveloperTools from "./DeveloperTools";
 import MobileSimulator from "../components/MobileSimulator";
 import MultiTenancySettings from "../components/MultiTenancySettings";
 import AIPromptLibrary from "../components/AIPromptLibrary";
+import { ZatcaConfig } from "../components/ZatcaConfig";
 
 export default function Settings() {
   const { t } = useTranslation();
@@ -286,6 +288,11 @@ export default function Settings() {
     { id: "audit", label: t("settings.tabs.audit", "سجل العمليات"), icon: History },
     { id: "payment", label: t("settings.tabs.payment", "بوابات الدفع"), icon: Lock },
     { id: "referrals", label: t("settings.tabs.referrals", "برنامج الإحالة"), icon: Users },
+    {
+      id: "zatca",
+      label: t("settings.tabs.zatca", "ZATCA Phase 2"),
+      icon: FileCode,
+    },
     {
       id: "compliance",
       label: t("settings.tabs.compliance", "الامتثال والأمان المتقدم"),
@@ -2155,6 +2162,12 @@ export default function Settings() {
             {activeTab === "compliance" && (
               <div className="relative z-10 -mx-6 -mt-6">
                 <SecurityCompliance />
+              </div>
+            )}
+
+            {activeTab === "zatca" && (
+              <div className="relative z-10">
+                <ZatcaConfig />
               </div>
             )}
 

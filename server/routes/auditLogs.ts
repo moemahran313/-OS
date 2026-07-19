@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../services/prisma.ts";
 import { authenticate } from "../middleware/auth.ts";
+import crypto from "crypto";
 
 const router = Router();
 
@@ -13,11 +14,29 @@ router.get("/", authenticate, async (req: any, res) => {
       take: 100,
     });
 
-    const parsedLogs = logs.map((log) => ({
-      ...log,
-      payload: log.payload ? JSON.parse(log.payload) : {},
-      result: log.result ? JSON.parse(log.result) : {},
-    }));
+    const parsedLogs = logs.map((log) => {
+      const resultObj = log.result ? JSON.parse(log.result) : {};
+      const payloadObj = log.payload ? JSON.parse(log.payload) : {};
+      
+      // Extract or compute a compliant action hash
+      const actionHash = resultObj.actionHash || crypto
+        .createHash("sha256")
+        .update(JSON.stringify({
+          id: log.id,
+          userId: log.userId || "",
+          module: log.module,
+          action: log.action,
+          timestamp: log.timestamp.toISOString(),
+        }))
+        .digest("hex");
+
+      return {
+        ...log,
+        payload: payloadObj,
+        result: resultObj,
+        actionHash,
+      };
+    });
 
     res.json(parsedLogs);
   } catch (err) {

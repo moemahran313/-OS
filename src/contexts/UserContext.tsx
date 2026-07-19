@@ -27,7 +27,7 @@ export interface User {
   uid?: string; // added alias for compatibility
   name: string;
   email: string;
-  role: "Administrator" | "Manager" | "Employee";
+  role: "Administrator" | "Manager" | "Employee" | "CFO" | "Sales Lead" | "HR Manager";
   avatar?: string | null;
   organizations?: string[];
   activeOrganizationId?: string;
@@ -41,6 +41,13 @@ export interface User {
   quickActionsConfig?: string[];
   verifiedAt?: string;
   nafathVerified?: boolean;
+  onboarding?: {
+    completed: boolean;
+    step?: number;
+    industry?: string;
+    crNumber?: string;
+    vatStatus?: string;
+  };
 }
 
 interface UserContextType {
@@ -467,6 +474,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const permissions: Record<string, string[]> = {
       Manager: ["Dashboard", "CRM", "Invoices", "Analytics", "Settings", "Simulator", "Inventory"],
       Employee: ["Dashboard", "CRM", "Inventory"],
+      CFO: ["Dashboard", "Accounting", "Invoices", "Payroll", "Compliance", "ZatcaAi", "Settings"],
+      "Sales Lead": ["Dashboard", "CRM", "Invoices"],
+      "HR Manager": ["Dashboard", "Payroll", "Compliance"],
     };
 
     return permissions[user.role as keyof typeof permissions]?.includes(module) || false;

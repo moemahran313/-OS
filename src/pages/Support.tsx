@@ -461,6 +461,7 @@ export default function Support() {
     };
 
     try {
+      await auth.authStateReady();
       const token = await auth.currentUser?.getIdToken();
       const res = await fetch("/api/tickets", {
         method: "POST",
@@ -498,6 +499,7 @@ export default function Support() {
 
   const handleUpdateTicketStatus = async (ticketId: string, status: Ticket["status"]) => {
     try {
+      await auth.authStateReady();
       const token = await auth.currentUser?.getIdToken();
       const res = await fetch(`/api/tickets/${ticketId}`, {
         method: "PUT",
@@ -521,6 +523,7 @@ export default function Support() {
   const handleDeleteTicket = async (ticketId: string) => {
     if (!confirm("هل أنت متأكد من حذف هذه التذكرة نهائياً؟")) return;
     try {
+      await auth.authStateReady();
       const token = await auth.currentUser?.getIdToken();
       const res = await fetch(`/api/tickets/${ticketId}`, {
         method: "DELETE",
@@ -553,6 +556,7 @@ export default function Support() {
     };
 
     try {
+      await auth.authStateReady();
       const token = await auth.currentUser?.getIdToken();
       const res = await fetch(`/api/tickets/${activeTicket.id}/messages`, {
         method: "POST",
@@ -579,6 +583,7 @@ export default function Support() {
     if (!activeTicket) return;
     setAiAnalyzingTicket(true);
     try {
+      await auth.authStateReady();
       const token = await auth.currentUser?.getIdToken();
       const res = await fetch(`/api/tickets/${activeTicket.id}/copilot/summarize`, {
         method: "POST",
@@ -603,6 +608,7 @@ export default function Support() {
     if (!activeTicket) return;
     setAiDraftingReply(true);
     try {
+      await auth.authStateReady();
       const token = await auth.currentUser?.getIdToken();
       const res = await fetch(`/api/tickets/${activeTicket.id}/copilot/suggest-reply`, {
         method: "POST",
@@ -626,6 +632,7 @@ export default function Support() {
     if (!activeTicket) return;
     setAiAnalyzingTicket(true);
     try {
+      await auth.authStateReady();
       const token = await auth.currentUser?.getIdToken();
       const res = await fetch(`/api/tickets/${activeTicket.id}/copilot/categorize`, {
         method: "POST",
@@ -660,6 +667,7 @@ export default function Support() {
     }
     setAiGeneratingArticle(true);
     try {
+      await auth.authStateReady();
       const token = await auth.currentUser?.getIdToken();
       const res = await fetch("/api/tickets/kb/generate", {
         method: "POST",
@@ -689,6 +697,7 @@ export default function Support() {
       return;
     }
     try {
+      await auth.authStateReady();
       const token = await auth.currentUser?.getIdToken();
       const res = await fetch("/api/tickets/kb", {
         method: "POST",
@@ -720,6 +729,7 @@ export default function Support() {
   const handleDeleteArticle = async (id: string) => {
     if (!confirm("هل أنت متأكد من حذف هذا المقال؟")) return;
     try {
+      await auth.authStateReady();
       const token = await auth.currentUser?.getIdToken();
       const res = await fetch(`/api/tickets/kb/${id}`, {
         method: "DELETE",
@@ -785,6 +795,7 @@ export default function Support() {
     };
 
     try {
+      await auth.authStateReady();
       const token = await auth.currentUser?.getIdToken();
       await fetch(`/api/tickets/${activeTarget.id}/messages`, {
         method: "POST",

@@ -122,10 +122,7 @@ const Accounting = lazy(() => import("./pages/Accounting"));
 const ZatcaAi = lazy(() => import("./pages/ZatcaAi"));
 const Projects = lazy(() => import("./pages/Projects"));
 const Support = lazy(() => import("./pages/Support"));
-const LeadsPlatform = lazy(() => import("./pages/LeadsPlatform"));
-const EmailMarketing = lazy(() => import("./pages/EmailMarketing"));
-const SocialMedia = lazy(() => import("./pages/SocialMedia"));
-const Advertising = lazy(() => import("./pages/Advertising"));
+const MarketingCopilot = lazy(() => import("./pages/MarketingCopilot"));
 
 function LoadingSpinner() {
   return (
@@ -410,38 +407,19 @@ function AppInnerRoutes() {
                 </PageTransition>
               }
             />
+            <Route path="lead-gen" element={<Navigate to="/app/marketing-copilot" replace />} />
             <Route
-              path="lead-gen"
+              path="marketing-copilot"
               element={
                 <PageTransition>
-                  <LeadsPlatform />
+                  <MarketingCopilot />
                 </PageTransition>
               }
             />
-            <Route
-              path="email-marketing"
-              element={
-                <PageTransition>
-                  <EmailMarketing />
-                </PageTransition>
-              }
-            />
-            <Route
-              path="social-media"
-              element={
-                <PageTransition>
-                  <SocialMedia />
-                </PageTransition>
-              }
-            />
-            <Route
-              path="advertising"
-              element={
-                <PageTransition>
-                  <Advertising />
-                </PageTransition>
-              }
-            />
+            <Route path="growth-intelligence" element={<Navigate to="/app/marketing-copilot" replace />} />
+            <Route path="email-marketing" element={<Navigate to="/app/marketing-copilot" replace />} />
+            <Route path="social-media" element={<Navigate to="/app/marketing-copilot" replace />} />
+            <Route path="advertising" element={<Navigate to="/app/marketing-copilot" replace />} />
             <Route
               path="crm/new"
               element={

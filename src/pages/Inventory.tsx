@@ -46,6 +46,7 @@ import StocksAndLots from "../components/inventory/StocksAndLots";
 import OperationsAndTransfers from "../components/inventory/OperationsAndTransfers";
 import ReceivingFulfillment from "../components/inventory/ReceivingFulfillment";
 import AdvancedReports from "../components/inventory/AdvancedReports";
+import BarcodeAndAlertsModule from "../components/inventory/BarcodeAndAlertsModule";
 
 // Standard Accounts for Warehouses
 const WAREHOUSE_CODES = ["110301", "110302", "110303", "110304", "110305"];
@@ -95,7 +96,7 @@ interface InventoryItem {
 export default function InventoryDashboard() {
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState<
-    "overview" | "products" | "stocks" | "operations" | "fulfillment" | "reports" | "warehouses"
+    "overview" | "products" | "stocks" | "operations" | "fulfillment" | "reports" | "warehouses" | "barcode_alerts"
   >("overview");
 
   // Collections state
@@ -867,6 +868,17 @@ export default function InventoryDashboard() {
         >
           🏛️ تهيئة الفروع والمواقع المادية ({warehouses.length})
         </button>
+        <button
+          onClick={() => setActiveTab("barcode_alerts")}
+          className={cn(
+            "flex-1 md:flex-none px-4 py-2.5 text-xs font-black rounded-xl transition-all cursor-pointer bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100",
+            activeTab === "barcode_alerts"
+              ? "bg-indigo-600 dark:bg-indigo-800 text-white shadow-md border-indigo-600"
+              : ""
+          )}
+        >
+          🚨 الباركود والتنبيهات والحد الآمن
+        </button>
       </div>
 
       {loading && (
@@ -983,6 +995,14 @@ export default function InventoryDashboard() {
                 </table>
               </div>
             </div>
+          )}
+
+          {activeTab === "barcode_alerts" && (
+            <BarcodeAndAlertsModule
+              items={items}
+              warehouses={warehouses}
+              onUpdateProduct={handleUpdateProductWrapper}
+            />
           )}
         </div>
       )}

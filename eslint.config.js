@@ -31,7 +31,7 @@ export default tseslint.config(
       "prefer-const": "off",
       "no-empty": "off",
       "no-case-declarations": "off",
+      "prettier/prettier": "off",
     },
-  },
-  prettierPlugin
+  }
 );

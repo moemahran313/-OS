@@ -50,16 +50,13 @@ import { useTranslation } from "react-i18next";
 
 const navigationData = [
   { nameKey: "dashboard", id: "Dashboard", href: "/app", icon: LayoutDashboard },
-  { nameKey: "sidebar.employees", id: "CRM", href: "/app/crm", icon: Users },
-  { nameKey: "sidebar.lead_gen", id: "LeadGen", href: "/app/lead-gen", icon: Magnet },
   {
-    nameKey: "sidebar.email_marketing",
-    id: "EmailMarketing",
-    href: "/app/email-marketing",
-    icon: Mail,
+    nameKey: "sidebar.marketing_copilot",
+    id: "MarketingCopilot",
+    href: "/app/marketing-copilot",
+    icon: Sparkles,
   },
-  { nameKey: "sidebar.social_media", id: "SocialMedia", href: "/app/social-media", icon: Share2 },
-  { nameKey: "sidebar.advertising", id: "Advertising", href: "/app/advertising", icon: Sparkles },
+  { nameKey: "sidebar.employees", id: "CRM", href: "/app/crm", icon: Users },
   { nameKey: "sidebar.chat", id: "Chat", href: "/app/chat", icon: MessageSquare },
   { nameKey: "projects", id: "Projects", href: "/app/projects", icon: FolderKanban },
   { nameKey: "دفتر الأستاذ والقيود", id: "Accounting", href: "/app/accounting", icon: Scale },
@@ -86,39 +83,33 @@ const navigationData = [
 const navigationGroups = [
   {
     id: "core",
-    titleAr: "التحكم والقيادة",
-    titleEn: "Core & Control",
-    itemIds: ["Dashboard", "Analytics", "Calculations"],
+    titleAr: "التحكم",
+    titleEn: "Core",
+    itemIds: ["Dashboard", "Chat", "Projects"],
   },
   {
-    id: "marketing",
-    titleAr: "النمو والتسويق",
-    titleEn: "Growth & Marketing",
-    itemIds: ["LeadGen", "EmailMarketing", "SocialMedia", "Advertising"],
+    id: "crm",
+    titleAr: "العملاء",
+    titleEn: "CRM",
+    itemIds: ["CRM", "Suppliers"],
   },
   {
-    id: "crm_comms",
-    titleAr: "العملاء والتواصل",
-    titleEn: "CRM & Communications",
-    itemIds: ["CRM", "Chat", "SmartNegotiations"],
-  },
-  {
-    id: "financials",
-    titleAr: "المالية والامتثال",
-    titleEn: "Financials & Compliance",
-    itemIds: ["Accounting", "Invoices", "Payroll", "ZatcaAi", "Compliance"],
+    id: "accounting",
+    titleAr: "المالية",
+    titleEn: "Accounting",
+    itemIds: ["Accounting", "Invoices", "Payroll", "ZatcaAi"],
   },
   {
     id: "operations",
-    titleAr: "المشاريع والعمليات",
-    titleEn: "Projects & Operations",
-    itemIds: ["Projects", "Workflows", "Integrations", "Support"],
+    titleAr: "العمليات",
+    titleEn: "Operations",
+    itemIds: ["Inventory", "Contracts", "Compliance"],
   },
   {
-    id: "supply_chain",
-    titleAr: "سلسلة الإمداد والعقود",
-    titleEn: "Supply Chain & Contracts",
-    itemIds: ["Suppliers", "Contracts", "Inventory"],
+    id: "tools",
+    titleAr: "أدوات متقدمة",
+    titleEn: "Advanced Tools",
+    itemIds: ["MarketingCopilot", "SmartNegotiations", "Workflows", "Analytics", "Calculations", "Integrations", "Support"],
   },
 ];
 
@@ -250,6 +241,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       item.id === "SmartNegotiations" ||
       item.id === "Chat" ||
       item.id === "Projects" ||
+      item.id === "MarketingCopilot" ||
       hasPermission(item.id)
   );
 
@@ -262,15 +254,45 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     }));
   };
 
-  const groupedNavigation = navigationGroups
-    .map((group) => {
-      const items = filteredNavigation.filter((item) => group.itemIds.includes(item.id));
-      return {
-        ...group,
-        items,
-      };
-    })
-    .filter((group) => group.items.length > 0);
+  const [isToolsDrawerOpen, setIsToolsDrawerOpen] = useState(false);
+
+  const pinnedGroups = [
+    {
+      id: "pinned_core",
+      titleAr: "الرئيسية والمحادثة",
+      titleEn: "Core & Chat",
+      items: filteredNavigation.filter((item) => ["Dashboard", "Chat"].includes(item.id)),
+    },
+    {
+      id: "pinned_finance",
+      titleAr: "المالية والأعمال",
+      titleEn: "Finance & CRM",
+      items: filteredNavigation.filter((item) => ["CRM", "Invoices", "Accounting", "Payroll", "ZatcaAi"].includes(item.id)),
+    },
+  ].filter(g => g.items.length > 0);
+
+  const drawerGroups = [
+    {
+      id: "ops_and_projects",
+      titleAr: "العمليات والمشاريع",
+      titleEn: "Operations & Projects",
+      items: filteredNavigation.filter((item) => ["Projects", "Inventory", "Suppliers", "Contracts"].includes(item.id)),
+    },
+    {
+      id: "advanced_ai_tools",
+      titleAr: "الذكاء الاصطناعي والتسويق",
+      titleEn: "AI Assistants & Marketing",
+      items: filteredNavigation.filter((item) => ["MarketingCopilot", "SmartNegotiations", "Workflows"].includes(item.id)),
+    },
+    {
+      id: "gov_compliance",
+      titleAr: "الامتثال والتحليلات",
+      titleEn: "Compliance & Utilities",
+      items: filteredNavigation.filter((item) => ["Compliance", "Calculations", "Integrations", "Analytics", "Support"].includes(item.id)),
+    },
+  ].filter(g => g.items.length > 0);
+
+  const groupedNavigation = pinnedGroups;
 
   // Auto-expand group containing active route on mount/location change
   React.useEffect(() => {
@@ -468,31 +490,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                               ? settings.language === "ar"
                                 ? "التفاوض والاجتماعات"
                                 : "Smart Negotiations"
-                              : item.id === "Chat"
+                              : item.id === "MarketingCopilot"
                                 ? settings.language === "ar"
-                                  ? "مركز الاتصال الموحد"
-                                  : "Unified Communications"
-                                : item.id === "Projects"
+                                  ? "مساعد التسويق والعملاء"
+                                  : "Marketing Copilot"
+                                : item.id === "Chat"
                                   ? settings.language === "ar"
-                                    ? "إدارة المشاريع"
-                                    : "Project Management"
-                                  : item.id === "LeadGen"
+                                    ? "مركز الاتصال الموحد"
+                                    : "Unified Communications"
+                                  : item.id === "Projects"
                                     ? settings.language === "ar"
-                                      ? "منصة توليد العملاء"
-                                      : "Lead Generation Platform"
-                                    : item.id === "EmailMarketing"
+                                      ? "إدارة المشاريع"
+                                      : "Project Management"
+                                    : item.id === "LeadGen"
                                       ? settings.language === "ar"
-                                        ? "التسويق والبريد الإلكتروني"
-                                        : "Email Marketing & Growth"
-                                      : item.id === "SocialMedia"
-                                        ? settings.language === "ar"
-                                          ? "إدارة التواصل الاجتماعي"
-                                          : "Social Media & Growth"
-                                        : item.id === "Advertising"
-                                          ? settings.language === "ar"
-                                            ? "إدارة الحملات الإعلانية"
-                                            : "Advertising & Copilot"
-                                          : t(item.nameKey)}
+                                        ? "منصة توليد العملاء"
+                                        : "Lead Generation Platform"
+                                      : t(item.nameKey)}
                           </motion.span>
                         )}
 
@@ -520,19 +534,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                                     ? settings.language === "ar"
                                       ? "منصة توليد العملاء"
                                       : "Lead Generation Platform"
-                                    : item.id === "EmailMarketing"
+                                    : item.id === "MarketingCopilot"
                                       ? settings.language === "ar"
-                                        ? "التسويق والبريد الإلكتروني"
-                                        : "Email Marketing & Growth"
-                                      : item.id === "SocialMedia"
-                                        ? settings.language === "ar"
-                                          ? "إدارة التواصل الاجتماعي"
-                                          : "Social Media & Growth"
-                                        : item.id === "Advertising"
-                                          ? settings.language === "ar"
-                                            ? "إدارة الحملات الإعلانية"
-                                            : "Advertising & Copilot"
-                                          : t(item.nameKey)}
+                                        ? "مساعد التسويق والعملاء"
+                                        : "Marketing Copilot"
+                                      : t(item.nameKey)}
                           </div>
                         )}
                       </Link>
@@ -546,6 +552,34 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-zinc-200 dark:border-zinc-900/50 space-y-2 bg-zinc-50/50 dark:bg-zinc-100/40">
+          {/* Toggle Tools & Settings Drawer */}
+          <button
+            onClick={() => setIsToolsDrawerOpen(!isToolsDrawerOpen)}
+            className={cn(
+              "flex items-center gap-3 px-3.5 py-3 w-full rounded-xl transition-all duration-300 relative group text-xs font-black cursor-pointer",
+              isToolsDrawerOpen
+                ? "bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20"
+                : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900/50 hover:text-zinc-900 dark:hover:text-zinc-100"
+            )}
+          >
+            <Blocks className="w-4 h-4 shrink-0 text-zinc-500 group-hover:text-emerald-500 transition-colors" />
+            {!isSidebarCollapsed && (
+              <span className="whitespace-nowrap">
+                {settings.language === "ar" ? "أدوات متقدمة وإضافية" : "Advanced Tools Drawer"}
+              </span>
+            )}
+            {isSidebarCollapsed && (
+              <div
+                className={cn(
+                  "absolute top-1/2 -translate-y-1/2 bg-zinc-900 border border-zinc-800 text-zinc-100 px-3 py-1.5 rounded-lg text-xs opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-50 shadow-xl whitespace-nowrap",
+                  settings.language === "ar" ? "right-16" : "left-16"
+                )}
+              >
+                {settings.language === "ar" ? "أدوات متقدمة وإضافية" : "Advanced Tools"}
+              </div>
+            )}
+          </button>
+
           {user?.role === "Administrator" && (
             <Link
               to="/app/settings"
@@ -588,6 +622,103 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           )}
         </div>
       </motion.aside>
+
+      {/* Sliding Advanced Tools Drawer */}
+      <AnimatePresence>
+        {isToolsDrawerOpen && (
+          <>
+            {/* Backdrop Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsToolsDrawerOpen(false)}
+              className="fixed inset-0 bg-zinc-950/25 dark:bg-zinc-950/40 backdrop-blur-[1px] z-10 animate-fade-in"
+            />
+
+            {/* Sliding Drawer Container */}
+            <motion.div
+              initial={{ x: settings.language === "ar" ? "100%" : "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: settings.language === "ar" ? "100%" : "-100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 32 }}
+              className={cn(
+                "fixed top-0 bottom-0 w-80 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-zinc-200 dark:border-zinc-800 shadow-2xl z-30 flex flex-col p-6 text-right",
+                settings.language === "ar" ? "right-0 border-l" : "left-0 border-r"
+              )}
+            >
+              <div className="flex items-center justify-between pb-6 border-b border-zinc-100 dark:border-zinc-800">
+                <button
+                  onClick={() => setIsToolsDrawerOpen(false)}
+                  className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4 text-zinc-400" />
+                </button>
+                <div className="flex items-center gap-2">
+                  <span className="font-black text-sm text-zinc-900 dark:text-zinc-100">
+                    {settings.language === "ar" ? "الأدوات والإعدادات الإضافية" : "Advanced Tools & Settings"}
+                  </span>
+                  <Blocks className="w-4 h-4 text-emerald-500" />
+                </div>
+              </div>
+
+              {/* Drawer tools listing */}
+              <div className="flex-1 overflow-y-auto no-scrollbar py-6 space-y-6">
+                {drawerGroups.map((group) => (
+                  <div key={group.id} className="space-y-2">
+                    <h5 className="px-2 text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
+                      {settings.language === "ar" ? group.titleAr : group.titleEn}
+                    </h5>
+                    <div className="space-y-1">
+                      {group.items.map((item) => (
+                        <Link
+                          key={item.id}
+                          to={item.href}
+                          onClick={() => {
+                            setIsToolsDrawerOpen(false);
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800/60",
+                            location.pathname === item.href
+                              ? "text-emerald-500 dark:text-emerald-400 font-bold"
+                              : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
+                          )}
+                        >
+                          <item.icon className="w-4.5 h-4.5 shrink-0 text-zinc-400" />
+                          <span>
+                            {item.id === "SmartNegotiations"
+                              ? settings.language === "ar"
+                                ? "التفاوض والاجتماعات"
+                                : "Smart Negotiations"
+                              : item.id === "MarketingCopilot"
+                                ? settings.language === "ar"
+                                  ? "مساعد التسويق والعملاء"
+                                  : "Marketing Copilot"
+                                : item.id === "Chat"
+                                  ? settings.language === "ar"
+                                    ? "مركز الاتصال الموحد"
+                                    : "Unified Communications"
+                                  : item.id === "Projects"
+                                    ? settings.language === "ar"
+                                      ? "إدارة المشاريع"
+                                      : "Project Management"
+                                    : item.id === "LeadGen"
+                                      ? settings.language === "ar"
+                                        ? "منصة توليد العملاء"
+                                        : "Lead Generation Platform"
+                                      : t(item.nameKey)}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Mobile Drawer Sidebar */}
       <AnimatePresence>
@@ -721,6 +852,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                   );
                 })}
+
+                {/* Mobile Drawer Trigger */}
+                <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800/60">
+                  <button
+                    onClick={() => {
+                      setMobileSidebarOpen(false);
+                      setIsToolsDrawerOpen(true);
+                    }}
+                    className="flex items-center justify-between w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 rounded-xl text-sm font-black text-zinc-700 dark:text-zinc-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Blocks className="w-5 h-5 text-emerald-500" />
+                      <span>{settings.language === "ar" ? "أدوات متقدمة وإضافية" : "Advanced Tools & Settings"}</span>
+                    </div>
+                    <ChevronDown className="-rotate-90 rtl:rotate-90 w-4 h-4 text-zinc-400" />
+                  </button>
+                </div>
               </nav>
 
               <div
@@ -1103,7 +1251,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Viewport Content with custom animations */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 relative z-0">{children}</div>
+        <div className={cn(
+          "flex-1 relative z-0",
+          location.pathname === "/app/contracts" ? "overflow-hidden h-full w-full" : "overflow-y-auto p-4 md:p-8"
+        )}>
+          {children}
+        </div>
       </main>
     </div>
   );

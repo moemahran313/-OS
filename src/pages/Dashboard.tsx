@@ -73,6 +73,10 @@ import { useSettings } from "@/src/contexts/SettingsContext";
 import { handleFirestoreError, OperationType } from "@/src/lib/firestore-issues";
 import { PayrollService } from "@/src/services/payroll.service";
 import OSWorkspaceExplorer from "@/src/components/OSWorkspaceExplorer";
+import QuickActionsWidget from "@/src/components/QuickActionsWidget";
+import OnboardingWizard from "@/src/components/dashboard/OnboardingWizard";
+import LaunchpadOverview from "@/src/components/dashboard/LaunchpadOverview";
+import QuickActionsFAB from "@/src/components/dashboard/QuickActionsFAB";
 
 interface WidgetConfig {
   id: string;
@@ -159,196 +163,7 @@ const DEFAULT_QUICK_ACTIONS = [
   "payroll_report",
 ];
 
-function QuickActionsWidget({
-  quickActions,
-  setQuickActions,
-  user,
-  updateProfile,
-  onWhatsAppClick,
-}: {
-  quickActions: string[];
-  setQuickActions: any;
-  user: any;
-  updateProfile: any;
-  onWhatsAppClick: () => void;
-}) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [localActions, setLocalActions] = useState(quickActions);
 
-  useEffect(() => {
-    setLocalActions(quickActions);
-  }, [quickActions]);
-
-  const handleSave = async () => {
-    const finalActions = localActions;
-    if (finalActions.length === 0) {
-      toast.error("يجب اختيار إجراء واحد على الأقل");
-      return;
-    }
-    setQuickActions(finalActions);
-    setIsEditing(false);
-    if (user) {
-      try {
-        await updateProfile({ quickActionsConfig: finalActions });
-      } catch (err) {
-        toast.error("حدث خطأ أثناء الحفظ");
-      }
-    }
-  };
-
-  const removeAction = (id: string) => {
-    setLocalActions((prev) => prev.filter((a) => a !== id));
-  };
-
-  const addAction = (id: string) => {
-    if (!localActions.includes(id)) {
-      setLocalActions((prev) => [...prev, id]);
-    }
-  };
-
-  if (isEditing) {
-    const unpinnedActions = AVAILABLE_QUICK_ACTIONS.filter((a) => !localActions.includes(a.id));
-
-    return (
-      <section className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6 relative">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h3 className="font-bold text-lg">تخصيص الإجراءات السريعة</h3>
-            <p className="text-xs text-zinc-500 font-medium">
-              اسحب لترتيب الإجراءات، أو قم بإزالتها وإضافتها.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsEditing(false)}
-              className="px-4 py-2 text-sm font-bold text-zinc-500 bg-zinc-100 rounded-xl hover:bg-zinc-200"
-            >
-              إلغاء
-            </button>
-            <button
-              onClick={handleSave}
-              className="px-4 py-2 text-sm font-bold text-white bg-primary rounded-xl hover:bg-primary/90"
-            >
-              حفظ
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <Reorder.Group
-            axis="y"
-            values={localActions}
-            onReorder={setLocalActions}
-            className="space-y-2"
-          >
-            {localActions.map((id) => {
-              const action = AVAILABLE_QUICK_ACTIONS.find((a) => a.id === id);
-              if (!action) return null;
-              return (
-                <Reorder.Item
-                  key={id}
-                  value={id}
-                  className="flex justify-between items-center p-3 bg-zinc-50 border border-zinc-100 rounded-xl cursor-grab active:cursor-grabbing"
-                >
-                  <div className="flex items-center gap-3">
-                    <GripHorizontal className="w-5 h-5 text-zinc-400" />
-                    <div className={cn("p-2 rounded-lg", action.bg, action.color)}>
-                      <action.icon className="w-4 h-4" />
-                    </div>
-                    <span className="font-bold text-sm text-zinc-700">{action.label}</span>
-                  </div>
-                  <button
-                    onClick={() => removeAction(id)}
-                    className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </Reorder.Item>
-              );
-            })}
-          </Reorder.Group>
-
-          {unpinnedActions.length > 0 && (
-            <div className="pt-4 border-t border-zinc-100">
-              <h4 className="text-sm font-bold text-zinc-900 mb-3">إجراءات إضافية</h4>
-              <div className="flex flex-wrap gap-2">
-                {unpinnedActions.map((action) => (
-                  <button
-                    key={action.id}
-                    onClick={() => addAction(action.id)}
-                    className="flex items-center gap-2 px-3 py-2 bg-white border border-zinc-200 hover:border-primary/50 hover:bg-primary/5 rounded-xl transition-all text-sm font-bold text-zinc-600"
-                  >
-                    <Plus className="w-4 h-4 text-primary" />
-                    {action.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section className="bg-white rounded-3xl border border-zinc-100 shadow-sm p-6 relative">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="font-bold text-lg">الإجراءات السريعة</h3>
-        <button
-          onClick={() => setIsEditing(true)}
-          className="flex items-center gap-1 text-xs font-bold text-zinc-500 hover:text-primary transition-colors bg-zinc-100 hover:bg-primary/10 px-3 py-1.5 rounded-lg"
-        >
-          <Settings2 className="w-3 h-3" />
-          تخصيص
-        </button>
-      </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {localActions.map((id) => {
-          const action = AVAILABLE_QUICK_ACTIONS.find((a) => a.id === id);
-          if (!action) return null;
-          if (id === "send_whatsapp") {
-            return (
-              <button
-                key={id}
-                onClick={onWhatsAppClick}
-                className="flex flex-col items-center justify-center p-6 rounded-2xl border border-zinc-100 hover:border-primary/30 hover:shadow-md hover:-translate-y-1 bg-gradient-to-b from-white to-zinc-50/50 transition-all group cursor-pointer w-full"
-              >
-                <div
-                  className={cn(
-                    "p-4 rounded-2xl mb-4 group-hover:scale-110 group-active:scale-95 transition-transform",
-                    action.bg,
-                    action.color
-                  )}
-                >
-                  <action.icon className="w-6 h-6" />
-                </div>
-                <span className="text-sm font-bold text-zinc-800 text-center">{action.label}</span>
-              </button>
-            );
-          }
-          return (
-            <Link
-              key={id}
-              to={action.path}
-              className="flex flex-col items-center justify-center p-6 rounded-2xl border border-zinc-100 hover:border-primary/30 hover:shadow-md hover:-translate-y-1 bg-gradient-to-b from-white to-zinc-50/50 transition-all group"
-            >
-              <div
-                className={cn(
-                  "p-4 rounded-2xl mb-4 group-hover:scale-110 group-active:scale-95 transition-transform",
-                  action.bg,
-                  action.color
-                )}
-              >
-                <action.icon className="w-6 h-6" />
-              </div>
-              <span className="text-sm font-bold text-zinc-800 text-center">{action.label}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
 
 export default function Dashboard() {
   const { user, updateProfile } = useUser();
@@ -357,6 +172,20 @@ export default function Dashboard() {
   const location = useLocation();
   const navigate = useNavigate();
   const [showWelcomeModal, setShowWelcomeModal] = useState(location.state?.showWelcome || false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (user && user.onboarding?.completed !== true) {
+      setShowOnboarding(true);
+    } else {
+      setShowOnboarding(false);
+    }
+  }, [user]);
+
+  const handleNewInvoice = () => navigate("/app/invoices/new");
+  const handleNewLead = () => navigate("/app/crm/new");
+  const handleNewPayroll = () => navigate("/app/payroll/new");
+  const handleNewProject = () => navigate("/app/projects/new");
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [dashboardStats, setDashboardStats] = useState<any>(null);
   const [systemAlerts, setSystemAlerts] = useState<any[]>([]);
@@ -465,6 +294,7 @@ export default function Dashboard() {
 
     const checkStatus = async () => {
       try {
+        await auth.authStateReady();
         const token = await auth.currentUser?.getIdToken();
         const res = await fetch("/api/openwa/status", {
           headers: {
@@ -1466,7 +1296,7 @@ export default function Dashboard() {
             setQuickActions={setQuickActions}
             user={user}
             updateProfile={updateProfile}
-            onWhatsAppClick={() => setIsWhatsAppModalOpen(true)}
+            leads={leads}
           />
         );
       case "compliance":
@@ -1502,7 +1332,7 @@ export default function Dashboard() {
                         link.setAttribute("href", url);
                         link.setAttribute(
                           "download",
-                          `BATCH_SIF_MUDAD_${dashboardStats.latestPeriod}.csv`
+                          `BATCH_SIF_MUDAD_${dashboardStats.latestPeriod}.sif`
                         );
                         document.body.appendChild(link);
                         link.click();
@@ -2159,7 +1989,7 @@ export default function Dashboard() {
                               const url = URL.createObjectURL(blob);
                               const link = document.createElement("a");
                               link.setAttribute("href", url);
-                              link.setAttribute("download", `WPS_SIF_${run.period}.csv`);
+                              link.setAttribute("download", `WPS_SIF_${run.period}.sif`);
                               document.body.appendChild(link);
                               link.click();
                               document.body.removeChild(link);
@@ -3177,6 +3007,20 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="space-y-8">
+          <LaunchpadOverview
+            stats={{
+              leadsCount: leads?.length || 0,
+              employeesCount: dashboardStats?.employeesCount || 0,
+              saudiEmployees: dashboardStats?.saudiEmployees || 0,
+              pendingInvoices: dashboardStats?.pendingInvoices || 0,
+              vatExposure: dashboardStats?.vatExposure || 0,
+              payrollCost: dashboardStats?.payrollCost || 0,
+            }}
+            onNewInvoice={handleNewInvoice}
+            onNewLead={handleNewLead}
+            onNewPayroll={handleNewPayroll}
+            onNewProject={handleNewProject}
+          />
           {activeView === "ceo" && (
             <>
               {config
@@ -3377,7 +3221,23 @@ export default function Dashboard() {
             </motion.div>
           </div>
         )}
+
+        {showOnboarding && (
+          <OnboardingWizard
+            onComplete={() => setShowOnboarding(false)}
+            onClose={() => setShowOnboarding(false)}
+          />
+        )}
       </AnimatePresence>
+
+      {!showOnboarding && (
+        <QuickActionsFAB
+          onNewInvoice={handleNewInvoice}
+          onNewLead={handleNewLead}
+          onNewPayroll={handleNewPayroll}
+          onNewProject={handleNewProject}
+        />
+      )}
     </div>
   );
 }
