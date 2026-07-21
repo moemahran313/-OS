@@ -37,6 +37,7 @@ import marketingCopilotRoutes from "./routes/marketing-copilot.ts";
 import demoRoutes from "./routes/demo.ts";
 import leadsIntelligenceRoutes from "./routes/leads-intelligence.ts";
 import stripeRoutes from "./routes/stripe.ts";
+import aiRoutes from "./routes/ai.ts";
 
 export async function createApp() {
   const app = express();
@@ -54,6 +55,7 @@ export async function createApp() {
 
   // Attach routes
   app.use("/api/auth", authRoutes);
+  app.use("/api/ai", aiRoutes);
   app.use("/api/employees", employeeRoutes);
   app.use("/api/shipments", shipmentRoutes);
   app.use("/api/leads", leadRoutes);

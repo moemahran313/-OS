@@ -80,38 +80,37 @@ const navigationData = [
   { nameKey: "الدعم الفني والبطاقات", id: "Support", href: "/app/support", icon: LifeBuoy },
 ];
 
-const navigationGroups = [
-  {
-    id: "core",
-    titleAr: "التحكم",
-    titleEn: "Core",
-    itemIds: ["Dashboard", "Chat", "Projects"],
-  },
-  {
-    id: "crm",
-    titleAr: "العملاء",
-    titleEn: "CRM",
-    itemIds: ["CRM", "Suppliers"],
-  },
-  {
-    id: "accounting",
-    titleAr: "المالية",
-    titleEn: "Accounting",
-    itemIds: ["Accounting", "Invoices", "Payroll", "ZatcaAi"],
-  },
-  {
-    id: "operations",
-    titleAr: "العمليات",
-    titleEn: "Operations",
-    itemIds: ["Inventory", "Contracts", "Compliance"],
-  },
-  {
-    id: "tools",
-    titleAr: "أدوات متقدمة",
-    titleEn: "Advanced Tools",
-    itemIds: ["MarketingCopilot", "SmartNegotiations", "Workflows", "Analytics", "Calculations", "Integrations", "Support"],
-  },
-];
+const itemLabels: Record<string, { ar: string; en: string }> = {
+  Dashboard: { ar: "لوحة التحكم الرئيسية", en: "Main Dashboard" },
+  Chat: { ar: "مركز الاتصال الموحد", en: "Unified Communications" },
+  Projects: { ar: "إدارة المشاريع", en: "Project Management" },
+  MarketingCopilot: { ar: "مساعد التسويق والعملاء", en: "Marketing Copilot" },
+  CRM: { ar: "إدارة العملاء والبيع", en: "Customer Relations & Sales" },
+  Invoices: { ar: "الفواتير والمطالبات", en: "Invoices & Claims" },
+  Payroll: { ar: "مسيرات الرواتب والأجور", en: "Payroll & Wages" },
+  ZatcaAi: { ar: "عقود وفوترة ZATCA AI", en: "ZATCA AI & E-Invoicing" },
+  Accounting: { ar: "دفتر الأستاذ والقيود", en: "General Ledger & Accounting" },
+  Suppliers: { ar: "الموردون وسلاسل الإمداد", en: "Suppliers & Supply Chain" },
+  Contracts: { ar: "عقود العمل والاتفاقيات", en: "Work Contracts & Signatures" },
+  Workflows: { ar: "الأتمتة ومسارات العمل", en: "Workflows & Automation" },
+  Compliance: { ar: "الالتزام وحماية الأجور", en: "WPS & Regulatory Compliance" },
+  Inventory: { ar: "إدارة المخزون والمستودعات", en: "Inventory & Warehouses" },
+  Analytics: { ar: "التحليلات ولوحات التقارير", en: "Analytics & Reporting" },
+  Calculations: { ar: "الأدوات والمحاسبة الإدارية", en: "Business Tools & Calculations" },
+  Integrations: { ar: "سوق التطبيقات والربط", en: "App Integrations" },
+  Support: { ar: "الدعم الفني والبطاقات", en: "Technical Support & Tickets" },
+  SmartNegotiations: { ar: "التفاوض والاجتماعات الذكية", en: "Smart Meetings & Negotiations" }
+};
+
+const getItemLabel = (item: any, language: string) => {
+  const custom = itemLabels[item.id];
+  if (custom) {
+    return language === "ar" ? custom.ar : custom.en;
+  }
+  return item.id;
+};
+
+
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
@@ -245,73 +244,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       hasPermission(item.id)
   );
 
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
-
-  const toggleGroup = (groupId: string) => {
-    setCollapsedGroups((prev) => ({
-      ...prev,
-      [groupId]: !prev[groupId],
-    }));
-  };
-
   const [isToolsDrawerOpen, setIsToolsDrawerOpen] = useState(false);
-
-  const pinnedGroups = [
-    {
-      id: "pinned_core",
-      titleAr: "الرئيسية والمحادثة",
-      titleEn: "Core & Chat",
-      items: filteredNavigation.filter((item) => ["Dashboard", "Chat"].includes(item.id)),
-    },
-    {
-      id: "pinned_finance",
-      titleAr: "المالية والأعمال",
-      titleEn: "Finance & CRM",
-      items: filteredNavigation.filter((item) => ["CRM", "Invoices", "Accounting", "Payroll", "ZatcaAi"].includes(item.id)),
-    },
-  ].filter(g => g.items.length > 0);
-
-  const drawerGroups = [
-    {
-      id: "ops_and_projects",
-      titleAr: "العمليات والمشاريع",
-      titleEn: "Operations & Projects",
-      items: filteredNavigation.filter((item) => ["Projects", "Inventory", "Suppliers", "Contracts"].includes(item.id)),
-    },
-    {
-      id: "advanced_ai_tools",
-      titleAr: "الذكاء الاصطناعي والتسويق",
-      titleEn: "AI Assistants & Marketing",
-      items: filteredNavigation.filter((item) => ["MarketingCopilot", "SmartNegotiations", "Workflows"].includes(item.id)),
-    },
-    {
-      id: "gov_compliance",
-      titleAr: "الامتثال والتحليلات",
-      titleEn: "Compliance & Utilities",
-      items: filteredNavigation.filter((item) => ["Compliance", "Calculations", "Integrations", "Analytics", "Support"].includes(item.id)),
-    },
-  ].filter(g => g.items.length > 0);
-
-  const groupedNavigation = pinnedGroups;
-
-  // Auto-expand group containing active route on mount/location change
-  React.useEffect(() => {
-    const updates: Record<string, boolean> = {};
-    let changed = false;
-    groupedNavigation.forEach((group) => {
-      const hasActiveChild = group.items.some((item) => location.pathname === item.href);
-      if (hasActiveChild && collapsedGroups[group.id] !== false) {
-        updates[group.id] = false;
-        changed = true;
-      }
-    });
-    if (changed) {
-      setCollapsedGroups((prev) => ({
-        ...prev,
-        ...updates,
-      }));
-    }
-  }, [location.pathname]);
 
   const handleCommand = async (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && command.trim()) {
@@ -409,44 +342,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Navigation List */}
-        <nav className="flex-1 px-3 py-6 space-y-3 overflow-y-auto no-scrollbar scroll-smooth">
-          {groupedNavigation.map((group, groupIndex) => {
-            const isGroupCollapsed = !!collapsedGroups[group.id];
+        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto no-scrollbar scroll-smooth">
+          {filteredNavigation.map((item) => {
+            const isActive = location.pathname === item.href;
+            const label = getItemLabel(item, settings.language);
             return (
-              <div key={group.id} className="space-y-1">
-                {/* Group Header */}
-                {!isSidebarCollapsed ? (
-                  <div
-                    onClick={() => toggleGroup(group.id)}
-                    className="flex items-center justify-between px-3.5 pt-3 pb-1.5 text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest cursor-pointer hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors select-none group/hdr"
-                  >
-                    <span>{settings.language === "ar" ? group.titleAr : group.titleEn}</span>
-                    <ChevronDown
-                      className={cn(
-                        "w-3 h-3 text-zinc-400 dark:text-zinc-500 transition-transform duration-200 group-hover/hdr:text-emerald-500",
-                        isGroupCollapsed ? "-rotate-90 rtl:rotate-90" : "rotate-0"
-                      )}
-                    />
-                  </div>
-                ) : (
-                  groupIndex > 0 && (
-                    <div className="h-[1px] bg-zinc-200/40 dark:bg-zinc-100/40 my-2 mx-1" />
-                  )
-                )}
-
-                {/* Group Items container */}
-                <motion.div
-                  initial={false}
-                  animate={{
-                    height: !isSidebarCollapsed && isGroupCollapsed ? 0 : "auto",
-                    opacity: !isSidebarCollapsed && isGroupCollapsed ? 0 : 1,
-                  }}
-                  transition={{ duration: 0.2 }}
-                  className="space-y-1 overflow-hidden"
-                >
-                  {group.items.map((item) => {
-                    const isActive = location.pathname === item.href;
-                    return (
                       <Link
                         key={item.id}
                         to={item.href}
@@ -544,42 +444,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       </Link>
                     );
                   })}
-                </motion.div>
-              </div>
-            );
-          })}
         </nav>
 
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-zinc-200 dark:border-zinc-900/50 space-y-2 bg-zinc-50/50 dark:bg-zinc-100/40">
-          {/* Toggle Tools & Settings Drawer */}
-          <button
-            onClick={() => setIsToolsDrawerOpen(!isToolsDrawerOpen)}
-            className={cn(
-              "flex items-center gap-3 px-3.5 py-3 w-full rounded-xl transition-all duration-300 relative group text-xs font-black cursor-pointer",
-              isToolsDrawerOpen
-                ? "bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20"
-                : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900/50 hover:text-zinc-900 dark:hover:text-zinc-100"
-            )}
-          >
-            <Blocks className="w-4 h-4 shrink-0 text-zinc-500 group-hover:text-emerald-500 transition-colors" />
-            {!isSidebarCollapsed && (
-              <span className="whitespace-nowrap">
-                {settings.language === "ar" ? "أدوات متقدمة وإضافية" : "Advanced Tools Drawer"}
-              </span>
-            )}
-            {isSidebarCollapsed && (
-              <div
-                className={cn(
-                  "absolute top-1/2 -translate-y-1/2 bg-zinc-900 border border-zinc-800 text-zinc-100 px-3 py-1.5 rounded-lg text-xs opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-50 shadow-xl whitespace-nowrap",
-                  settings.language === "ar" ? "right-16" : "left-16"
-                )}
-              >
-                {settings.language === "ar" ? "أدوات متقدمة وإضافية" : "Advanced Tools"}
-              </div>
-            )}
-          </button>
-
           {user?.role === "Administrator" && (
             <Link
               to="/app/settings"
@@ -623,103 +491,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </motion.aside>
 
-      {/* Sliding Advanced Tools Drawer */}
-      <AnimatePresence>
-        {isToolsDrawerOpen && (
-          <>
-            {/* Backdrop Overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsToolsDrawerOpen(false)}
-              className="fixed inset-0 bg-zinc-950/25 dark:bg-zinc-950/40 backdrop-blur-[1px] z-10 animate-fade-in"
-            />
-
-            {/* Sliding Drawer Container */}
-            <motion.div
-              initial={{ x: settings.language === "ar" ? "100%" : "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: settings.language === "ar" ? "100%" : "-100%" }}
-              transition={{ type: "spring", stiffness: 300, damping: 32 }}
-              className={cn(
-                "fixed top-0 bottom-0 w-80 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-zinc-200 dark:border-zinc-800 shadow-2xl z-30 flex flex-col p-6 text-right",
-                settings.language === "ar" ? "right-0 border-l" : "left-0 border-r"
-              )}
-            >
-              <div className="flex items-center justify-between pb-6 border-b border-zinc-100 dark:border-zinc-800">
-                <button
-                  onClick={() => setIsToolsDrawerOpen(false)}
-                  className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all cursor-pointer"
-                >
-                  <X className="w-4 h-4 text-zinc-400" />
-                </button>
-                <div className="flex items-center gap-2">
-                  <span className="font-black text-sm text-zinc-900 dark:text-zinc-100">
-                    {settings.language === "ar" ? "الأدوات والإعدادات الإضافية" : "Advanced Tools & Settings"}
-                  </span>
-                  <Blocks className="w-4 h-4 text-emerald-500" />
-                </div>
-              </div>
-
-              {/* Drawer tools listing */}
-              <div className="flex-1 overflow-y-auto no-scrollbar py-6 space-y-6">
-                {drawerGroups.map((group) => (
-                  <div key={group.id} className="space-y-2">
-                    <h5 className="px-2 text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
-                      {settings.language === "ar" ? group.titleAr : group.titleEn}
-                    </h5>
-                    <div className="space-y-1">
-                      {group.items.map((item) => (
-                        <Link
-                          key={item.id}
-                          to={item.href}
-                          onClick={() => {
-                            setIsToolsDrawerOpen(false);
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          }}
-                          className={cn(
-                            "flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all hover:bg-zinc-100 dark:hover:bg-zinc-800/60",
-                            location.pathname === item.href
-                              ? "text-emerald-500 dark:text-emerald-400 font-bold"
-                              : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
-                          )}
-                        >
-                          <item.icon className="w-4.5 h-4.5 shrink-0 text-zinc-400" />
-                          <span>
-                            {item.id === "SmartNegotiations"
-                              ? settings.language === "ar"
-                                ? "التفاوض والاجتماعات"
-                                : "Smart Negotiations"
-                              : item.id === "MarketingCopilot"
-                                ? settings.language === "ar"
-                                  ? "مساعد التسويق والعملاء"
-                                  : "Marketing Copilot"
-                                : item.id === "Chat"
-                                  ? settings.language === "ar"
-                                    ? "مركز الاتصال الموحد"
-                                    : "Unified Communications"
-                                  : item.id === "Projects"
-                                    ? settings.language === "ar"
-                                      ? "إدارة المشاريع"
-                                      : "Project Management"
-                                    : item.id === "LeadGen"
-                                      ? settings.language === "ar"
-                                        ? "منصة توليد العملاء"
-                                        : "Lead Generation Platform"
-                                      : t(item.nameKey)}
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
       {/* Mobile Drawer Sidebar */}
       <AnimatePresence>
         {mobileSidebarOpen && (
@@ -758,117 +529,39 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </div>
 
               <nav
-                className="flex-1 px-4 py-6 space-y-3 overflow-y-auto no-scrollbar scroll-smooth"
+                className="flex-1 px-4 py-6 space-y-1 overflow-y-auto no-scrollbar scroll-smooth"
                 dir={settings.language === "ar" ? "rtl" : "ltr"}
               >
-                {groupedNavigation.map((group) => {
-                  const isGroupCollapsed = !!collapsedGroups[group.id];
+                {filteredNavigation.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  const label = getItemLabel(item, settings.language);
                   return (
-                    <div key={group.id} className="space-y-1">
-                      {/* Group Header */}
-                      <div
-                        onClick={() => toggleGroup(group.id)}
-                        className="flex items-center justify-between px-4 pt-3 pb-1.5 text-[10px] font-black text-zinc-400 dark:text-zinc-600 uppercase tracking-widest cursor-pointer hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors select-none group/hdr"
-                      >
-                        <span>{settings.language === "ar" ? group.titleAr : group.titleEn}</span>
-                        <ChevronDown
-                          className={cn(
-                            "w-3 h-3 text-zinc-400 dark:text-zinc-500 transition-transform duration-200 group-hover/hdr:text-emerald-500",
-                            isGroupCollapsed ? "-rotate-90 rtl:rotate-90" : "rotate-0"
-                          )}
-                        />
-                      </div>
-
-                      {/* Group Items */}
-                      <motion.div
-                        initial={false}
-                        animate={{
-                          height: isGroupCollapsed ? 0 : "auto",
-                          opacity: isGroupCollapsed ? 0 : 1,
-                        }}
-                        transition={{ duration: 0.2 }}
-                        className="space-y-1 overflow-hidden"
-                      >
-                        {group.items.map((item) => {
-                          const isActive = location.pathname === item.href;
-                          return (
-                            <Link
-                              key={item.id}
-                              to={item.href}
-                              onClick={() => {
-                                setMobileSidebarOpen(false);
-                                window.scrollTo({ top: 0, behavior: "smooth" });
-                              }}
-                              className={cn(
-                                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 relative group text-sm font-semibold cursor-pointer",
-                                isActive
-                                  ? "text-emerald-500 dark:text-emerald-400 bg-emerald-500/5 border border-emerald-500/20"
-                                  : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900/50 hover:text-zinc-900 dark:hover:text-zinc-100"
-                              )}
-                            >
-                              <item.icon
-                                className={cn(
-                                  "w-4 h-4 shrink-0 transition-transform group-hover:scale-110",
-                                  isActive
-                                    ? "text-emerald-400"
-                                    : "text-zinc-500 group-hover:text-emerald-400"
-                                )}
-                              />
-                              <span>
-                                {item.id === "SmartNegotiations"
-                                  ? settings.language === "ar"
-                                    ? "التفاوض والاجتماعات"
-                                    : "Smart Negotiations"
-                                  : item.id === "Chat"
-                                    ? settings.language === "ar"
-                                      ? "مركز الاتصال الموحد"
-                                      : "Unified Communications"
-                                    : item.id === "Projects"
-                                      ? settings.language === "ar"
-                                        ? "إدارة المشاريع"
-                                        : "Project Management"
-                                      : item.id === "LeadGen"
-                                        ? settings.language === "ar"
-                                          ? "منصة توليد العملاء"
-                                          : "Lead Generation Platform"
-                                        : item.id === "EmailMarketing"
-                                          ? settings.language === "ar"
-                                            ? "التسويق والبريد الإلكتروني"
-                                            : "Email Marketing & Growth"
-                                          : item.id === "SocialMedia"
-                                            ? settings.language === "ar"
-                                              ? "إدارة التواصل الاجتماعي"
-                                              : "Social Media & Growth"
-                                            : item.id === "Advertising"
-                                              ? settings.language === "ar"
-                                                ? "إدارة الحملات الإعلانية"
-                                                : "Advertising & Copilot"
-                                              : t(item.nameKey)}
-                              </span>
-                            </Link>
-                          );
-                        })}
-                      </motion.div>
-                    </div>
+                    <Link
+                      key={item.id}
+                      to={item.href}
+                      onClick={() => {
+                        setMobileSidebarOpen(false);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 relative group text-sm font-semibold cursor-pointer",
+                        isActive
+                          ? "text-emerald-500 dark:text-emerald-400 bg-emerald-500/5 border border-emerald-500/20"
+                          : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900/50 hover:text-zinc-900 dark:hover:text-zinc-100"
+                      )}
+                    >
+                      <item.icon
+                        className={cn(
+                          "w-4 h-4 shrink-0 transition-transform group-hover:scale-110",
+                          isActive
+                            ? "text-emerald-400"
+                            : "text-zinc-500 group-hover:text-emerald-400"
+                        )}
+                      />
+                      <span>{label}</span>
+                    </Link>
                   );
                 })}
-
-                {/* Mobile Drawer Trigger */}
-                <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800/60">
-                  <button
-                    onClick={() => {
-                      setMobileSidebarOpen(false);
-                      setIsToolsDrawerOpen(true);
-                    }}
-                    className="flex items-center justify-between w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-200 dark:border-zinc-700/60 rounded-xl text-sm font-black text-zinc-700 dark:text-zinc-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 transition-all cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Blocks className="w-5 h-5 text-emerald-500" />
-                      <span>{settings.language === "ar" ? "أدوات متقدمة وإضافية" : "Advanced Tools & Settings"}</span>
-                    </div>
-                    <ChevronDown className="-rotate-90 rtl:rotate-90 w-4 h-4 text-zinc-400" />
-                  </button>
-                </div>
               </nav>
 
               <div

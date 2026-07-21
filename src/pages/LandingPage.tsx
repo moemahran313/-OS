@@ -33,12 +33,12 @@ import {
 import { useSettings } from "@/src/contexts/SettingsContext";
 
 // --- Lazy loaded heavier sections to improve GCC load times ---
-const ProblemSection = lazy(() => import("@/src/components/landing/ProblemSection"));
-const FeatureShowcase = lazy(() => import("@/src/components/landing/FeatureShowcase"));
-const FlowTransformation = lazy(() => import("@/src/components/landing/FlowTransformation"));
-const SocialProofSection = lazy(() => import("@/src/components/landing/SocialProofSection"));
-const PricingSection = lazy(() => import("@/src/components/landing/PricingSection"));
-const FinalCTA = lazy(() => import("@/src/components/landing/FinalCTA"));
+const ProblemSection = lazy(() => import("../components/landing/ProblemSection"));
+const FeatureShowcase = lazy(() => import("../components/landing/FeatureShowcase"));
+const FlowTransformation = lazy(() => import("../components/landing/FlowTransformation"));
+const SocialProofSection = lazy(() => import("../components/landing/SocialProofSection"));
+const PricingSection = lazy(() => import("../components/landing/PricingSection"));
+const FinalCTA = lazy(() => import("../components/landing/FinalCTA"));
 
 // --- Elegant shimmer skeleton for GCC network speeds ---
 const SectionLoaderSkeleton = () => (
@@ -98,12 +98,18 @@ const HeroSection = () => {
       {/* Background Ambience */}
       <motion.div style={{ y, opacity }} className="absolute inset-0 z-0">
         <div
-          className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/20 blur-[120px] rounded-full pointer-events-none animate-pulse"
-          style={{ animationDuration: "8s" }}
+          className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full pointer-events-none animate-pulse"
+          style={{
+            animationDuration: "8s",
+            background: "radial-gradient(circle at center, rgba(16, 185, 129, 0.15) 0%, transparent 70%)"
+          }}
         />
         <div
-          className="absolute bottom-1/4 right-1/4 w-[600px] h-[300px] bg-emerald-500/10 blur-[100px] rounded-full pointer-events-none animate-pulse"
-          style={{ animationDuration: "10s" }}
+          className="absolute bottom-1/4 right-1/4 w-[600px] h-[300px] rounded-full pointer-events-none animate-pulse"
+          style={{
+            animationDuration: "10s",
+            background: "radial-gradient(circle at center, rgba(52, 211, 153, 0.08) 0%, transparent 70%)"
+          }}
         />
       </motion.div>
 
@@ -112,11 +118,11 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-8 shadow-2xl relative overflow-hidden"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-md mb-8 shadow-2xl relative overflow-hidden"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-transparent animate-pulse" />
-          <Sparkles className="w-4 h-4 text-emerald-400" />
-          <span className="text-sm font-semibold text-zinc-300">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent animate-pulse" />
+          <Sparkles className="w-4 h-4 text-emerald-400 animate-spin-slow" />
+          <span className="text-sm font-extrabold text-zinc-300 tracking-wide">
             {isAr
               ? "أتمتة كاملة لشركتك بالذكاء الاصطناعي السيادي"
               : "Complete enterprise automation with sovereign AI"}
@@ -127,19 +133,19 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="text-6xl md:text-8xl font-black tracking-tight mb-6 mt-4 leading-[1.1] max-w-5xl"
+          className="text-6xl md:text-8xl font-black tracking-tight mb-8 mt-4 leading-[1.15] max-w-5xl"
         >
           {isAr ? (
             <>
               نظام تشغيل <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-l from-white via-primary to-emerald-400">
+              <span className="text-emerald-400 supports-[background-clip:text]:text-transparent supports-[background-clip:text]:bg-clip-text supports-[background-clip:text]:bg-gradient-to-l supports-[background-clip:text]:from-white supports-[background-clip:text]:via-emerald-400 supports-[background-clip:text]:to-teal-300">
                 لا يقدر بثمن.
               </span>
             </>
           ) : (
             <>
               An Invaluable <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-primary to-emerald-400">
+              <span className="text-emerald-400 supports-[background-clip:text]:text-transparent supports-[background-clip:text]:bg-clip-text supports-[background-clip:text]:bg-gradient-to-r supports-[background-clip:text]:from-white supports-[background-clip:text]:via-emerald-400 supports-[background-clip:text]:to-teal-300">
                 Operating System.
               </span>
             </>
@@ -155,13 +161,13 @@ const HeroSection = () => {
           {isAr ? (
             <>
               كل ما تحتاجه للنمو السريع. CRM، فواتير ZATCA، رواتب مقيم، وتذكيرات واتساب —{" "}
-              <span className="text-white font-bold">جميعها مدمجة ومجانية 100%</span> مع باقتك.
+              <span className="text-emerald-400 font-extrabold">جميعها مدمجة ومجانية 100%</span> مع باقتك.
             </>
           ) : (
             <>
               Everything you need for rapid growth. CRM, ZATCA invoices, Muqeem payroll, and
               WhatsApp reminders —{" "}
-              <span className="text-white font-bold">all integrated and 100% free</span> with your
+              <span className="text-emerald-400 font-extrabold">all integrated and 100% free</span> with your
               plan.
             </>
           )}
@@ -171,14 +177,14 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col sm:flex-row gap-4 items-center mb-16"
+          className="flex flex-col sm:flex-row gap-6 items-center mb-16"
         >
           <Link
             to="/app"
             onClick={() => trackLandingEvent("ابدأ مجاناً الآن (البطل الرئيسي)", "CTA_START_FREE")}
-            className="group relative inline-flex items-center justify-center gap-3 px-10 py-5 bg-white text-zinc-950 font-black rounded-2xl text-lg hover:scale-105 active:scale-95 transition-all outline-none focus:ring-4 focus:ring-white/20"
+            className="group relative inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-emerald-400 to-teal-500 text-white font-black rounded-full text-lg shadow-[0_10px_35px_rgba(16,185,129,0.3)] hover:shadow-[0_15px_45px_rgba(16,185,129,0.5)] hover:scale-105 active:scale-95 transition-all duration-300 outline-none"
           >
-            <div className="absolute -top-3 -right-3 bg-red-500 text-white text-[10px] uppercase font-black tracking-widest py-1 px-3 rounded-full shadow-lg -rotate-12 animate-bounce">
+            <div className="absolute -top-3 -right-3 bg-rose-500 text-white text-[10px] uppercase font-black tracking-widest py-1 px-3 rounded-full shadow-lg -rotate-12 animate-bounce">
               {isAr ? "خيار الخبراء" : "Expert Choice"}
             </div>
             <span>{isAr ? "ابدأ مجاناً الآن" : "Start Free Now"}</span>
@@ -187,13 +193,12 @@ const HeroSection = () => {
             ) : (
               <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             )}
-            <div className="absolute inset-0 rounded-2xl ring-1 ring-white/50 shadow-[0_0_40px_rgba(255,255,255,0.4)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           </Link>
           <button
             onClick={() =>
               trackLandingEvent("شاهد كيف ينمو عملك (الفيديو التعريفي)", "DEMO_PLAYBACK")
             }
-            className="inline-flex items-center justify-center gap-3 px-8 py-5 bg-white/5 border border-white/10 text-white font-bold rounded-2xl text-lg hover:bg-white/10 transition-all outline-none focus:ring-4 focus:ring-white/10 group overflow-hidden relative"
+            className="inline-flex items-center justify-center gap-3 px-8 py-5 bg-white/5 border border-white/10 text-white font-bold rounded-full text-lg hover:bg-white/10 hover:border-white/20 transition-all duration-300 outline-none focus:ring-4 focus:ring-white/10 group overflow-hidden relative"
           >
             <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
             <Play className="w-5 h-5 z-10" fill="currentColor" />
@@ -291,8 +296,11 @@ const HeroSection = () => {
         >
           {/* 3D layers */}
           <motion.div
-            style={{ translateZ: -50 }}
-            className="absolute inset-[-4rem] bg-gradient-to-b from-primary/20 via-emerald-500/10 to-transparent blur-[100px] rounded-full"
+            style={{
+              translateZ: -50,
+              background: "radial-gradient(circle at center, rgba(16, 185, 129, 0.18) 0%, transparent 75%)"
+            }}
+            className="absolute inset-[-8rem] rounded-full"
           />
           <motion.div
             style={{ translateZ: 20 }}

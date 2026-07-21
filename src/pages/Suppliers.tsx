@@ -275,58 +275,15 @@ export default function Suppliers() {
     setIsCompLoading(true);
     setCompResult(null);
     try {
-      const { GoogleGenAI, Type } = await import("@google/genai");
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-      const params = {
-        model: "gemini-3.5-flash",
-        contents: `Analyze this ad-hoc shipment request for Saudi Arabian import requirements (ZATCA, SASO, SFDA).
-        
-        Product: ${compCheckData.desc}
-        Origin: ${compCheckData.country}
-        
-        Identify:
-        1. Required Documents (e.g., Commercial Invoice, COO, Packing List, SABER CoC).
-        2. Technical/Government Approvals (e.g., SFDA Registration, IECEE, GCTS).
-        3. Risk Flags or specific warnings (e.g., Restricted items, High Customs Fees).
-        
-        Return ONLY a raw JSON object with this structure:
-        {
-          "required_documents": ["string"],
-          "required_approvals": ["string"],
-          "risk_flags": ["string"]
-        }
-        
-        Ensure the strings are clear and professional in Arabic.`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              required_documents: { type: Type.ARRAY, items: { type: Type.STRING } },
-              required_approvals: { type: Type.ARRAY, items: { type: Type.STRING } },
-              risk_flags: { type: Type.ARRAY, items: { type: Type.STRING } },
-            },
-            required: ["required_documents", "required_approvals", "risk_flags"],
-          },
-        },
-      };
-
-      let response;
-      try {
-        response = await ai.models.generateContent(params);
-      } catch (apiErr: any) {
-        console.warn(
-          "Primary model gemini-3.5-flash failed or busy, trying gemini-3.1-flash-lite",
-          apiErr
-        );
-        response = await ai.models.generateContent({
-          ...params,
-          model: "gemini-3.1-flash-lite",
-        });
+      const res = await fetch("/api/ai/ad-hoc-compliance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ desc: compCheckData.desc, country: compCheckData.country }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to perform ad-hoc compliance check");
       }
-
-      const data = JSON.parse(response.text || "{}");
+      const data = await res.json();
       setCompResult(data);
     } catch (err) {
       console.error("Compliance Check Failed:", err);

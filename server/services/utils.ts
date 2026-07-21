@@ -38,16 +38,30 @@ export const logAudit = async (module: string, payload: any, result: any, req: a
     const cleanPayload = scrubPII(payload || {});
     const cleanResult = scrubPII(result || {});
 
+    let payloadStr = "{}";
+    try {
+      payloadStr = JSON.stringify(cleanPayload);
+    } catch (e) {
+      console.warn("Failed to stringify cleanPayload in logAudit:", e);
+    }
+
+    let resultStr = "{}";
+    try {
+      resultStr = JSON.stringify(cleanResult);
+    } catch (e) {
+      console.warn("Failed to stringify cleanResult in logAudit:", e);
+    }
+
     // Create an immutable regulatory SHA-256 action hash
     const actionHash = crypto
       .createHash("sha256")
       .update(
         JSON.stringify({
-          userId: userId || "",
-          module: module || "SYSTEM",
-          action: payload?.action || "Unknown",
-          payload: JSON.stringify(cleanPayload),
-          result: JSON.stringify(cleanResult),
+          userId: String(userId || ""),
+          module: String(module || "SYSTEM"),
+          action: payload?.action ? String(payload.action) : "Unknown",
+          payload: payloadStr,
+          result: resultStr,
           timestamp: timestampStr,
         })
       )
@@ -55,26 +69,36 @@ export const logAudit = async (module: string, payload: any, result: any, req: a
 
     // Embed action hash inside result
     const enrichedResult = { ...cleanResult, actionHash };
+    let enrichedResultStr = "{}";
+    try {
+      enrichedResultStr = JSON.stringify(enrichedResult);
+    } catch (e) {
+      console.warn("Failed to stringify enrichedResult in logAudit:", e);
+    }
 
     // 1. Write to SQLite via Prisma (Local Compliance DB)
     try {
       let prismaUserId: string | null = null;
-      if (userId) {
-        const userExists = await prisma.user.findUnique({ where: { id: userId } });
-        if (userExists) {
-          prismaUserId = userId;
+      if (userId && typeof userId === "string") {
+        try {
+          const userExists = await prisma.user.findUnique({ where: { id: userId } });
+          if (userExists) {
+            prismaUserId = userId;
+          }
+        } catch (userErr) {
+          console.warn("Prisma user look up failed in logAudit:", userErr);
         }
       }
 
       await prisma.auditLog.create({
         data: {
           userId: prismaUserId,
-          module: module || "SYSTEM",
-          action: payload?.action || "Unknown",
-          payload: JSON.stringify(cleanPayload),
-          result: JSON.stringify(enrichedResult),
+          module: String(module || "SYSTEM"),
+          action: payload?.action ? String(payload.action) : "Unknown",
+          payload: payloadStr,
+          result: enrichedResultStr,
           timestamp: new Date(timestampStr),
-          ip,
+          ip: ip ? String(ip) : "",
         },
       });
     } catch (prismaErr) {

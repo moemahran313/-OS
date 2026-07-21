@@ -177,55 +177,12 @@ export default function ShipmentDetails() {
 
   const fetchComplianceReport = async () => {
     try {
-      const { GoogleGenAI, Type } = await import("@google/genai");
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-      const params = {
-        model: "gemini-3.5-flash",
-        contents: `Analyze this shipment for Saudi Arabian import requirements (ZATCA, SASO, SFDA).
-        
-        Product: ${shipment?.productDescription || "General Goods"}
-        Origin: ${shipment?.countryOfOrigin || "Unknown"}
-        
-        Return ONLY a JSON object with this structure:
-        {
-          "isCompliant": boolean,
-          "requirements": ["string"],
-          "missingDocs": ["string"],
-          "riskFlags": ["string"]
-        }
-        
-        Ensure the strings are clear and professional in Arabic.`,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              isCompliant: { type: Type.BOOLEAN },
-              requirements: { type: Type.ARRAY, items: { type: Type.STRING } },
-              missingDocs: { type: Type.ARRAY, items: { type: Type.STRING } },
-              riskFlags: { type: Type.ARRAY, items: { type: Type.STRING } },
-            },
-            required: ["isCompliant", "requirements", "missingDocs", "riskFlags"],
-          },
-        },
-      };
-
-      let response;
-      try {
-        response = await ai.models.generateContent(params);
-      } catch (apiErr: any) {
-        console.warn(
-          "Primary model gemini-3.5-flash busy or failed, using gemini-3.1-flash-lite fallback",
-          apiErr
-        );
-        response = await ai.models.generateContent({
-          ...params,
-          model: "gemini-3.1-flash-lite",
-        });
+      if (!shipment?.id) return;
+      const res = await fetch(`/api/ai/shipment-compliance/${shipment.id}`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch compliance report");
       }
-
-      const report = JSON.parse(response.text || "{}");
+      const report = await res.json();
       setComplianceReport(report);
     } catch (err) {
       console.error("Compliance fetch error", err);
@@ -290,38 +247,13 @@ export default function ShipmentDetails() {
     setIsAnalyzing(true);
     setAiResponse(null);
     try {
-      const { GoogleGenAI } = await import("@google/genai");
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-      const prompt = `
-        Shipment Analysis Request:
-        Supplier: ${shipment?.supplierName}
-        Product: ${shipment?.productDescription}
-        Origin: ${shipment?.countryOfOrigin}
-        Status: ${shipment?.status}
-
-        Provide a brief compliance summary and next steps for this shipment in Arabic.
-        Mention required certificates if applicable.
-      `;
-
-      let response;
-      try {
-        response = await ai.models.generateContent({
-          model: "gemini-3.5-flash",
-          contents: prompt,
-        });
-      } catch (apiErr: any) {
-        console.warn(
-          "Primary model gemini-3.5-flash busy or failed, trying gemini-3.1-flash-lite fallback",
-          apiErr
-        );
-        response = await ai.models.generateContent({
-          model: "gemini-3.1-flash-lite",
-          contents: prompt,
-        });
+      if (!shipment?.id) return;
+      const res = await fetch(`/api/ai/shipment-analysis/${shipment.id}`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch shipment analysis");
       }
-
-      setAiResponse(response.text || "لم نتمكن من الحصول على رد حالياً.");
+      const data = await res.json();
+      setAiResponse(data.text || "لم نتمكن من الحصول على رد حالياً.");
       fetchComplianceReport();
     } catch (err) {
       console.error("AI Analysis failed", err);

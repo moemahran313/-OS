@@ -252,8 +252,14 @@ export default function Navbar() {
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
                 >
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] pointer-events-none" />
-                  <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none" />
+                  <div
+                    className="absolute top-0 right-0 w-64 h-64 rounded-full pointer-events-none"
+                    style={{ background: "radial-gradient(circle at center, rgba(16, 185, 129, 0.12) 0%, transparent 70%)" }}
+                  />
+                  <div
+                    className="absolute bottom-0 left-0 w-64 h-64 rounded-full pointer-events-none"
+                    style={{ background: "radial-gradient(circle at center, rgba(52, 211, 153, 0.05) 0%, transparent 70%)" }}
+                  />
 
                   {products.map((p, idx) => (
                     <motion.div
@@ -359,8 +365,14 @@ export default function Navbar() {
                   onMouseEnter={handleResourcesMouseEnter}
                   onMouseLeave={handleResourcesMouseLeave}
                 >
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[80px] pointer-events-none" />
-                  <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none" />
+                  <div
+                    className="absolute top-0 right-0 w-64 h-64 rounded-full pointer-events-none"
+                    style={{ background: "radial-gradient(circle at center, rgba(16, 185, 129, 0.12) 0%, transparent 70%)" }}
+                  />
+                  <div
+                    className="absolute bottom-0 left-0 w-64 h-64 rounded-full pointer-events-none"
+                    style={{ background: "radial-gradient(circle at center, rgba(52, 211, 153, 0.05) 0%, transparent 70%)" }}
+                  />
 
                   {resourcesCategories.map((c, idx) => (
                     <motion.div

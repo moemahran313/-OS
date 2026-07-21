@@ -502,8 +502,8 @@ const getOrCreateDefaultCompany = async (userId: string) => {
   if (compSnap.empty) {
     const defaultComp = {
       userId,
-      nameAr: "شركة مدارج التقنية المحدودة (مقر رئيسي)",
-      nameEn: "Madarij Tech Co. Ltd. (HQ)",
+      nameAr: "شركتي الموقرة",
+      nameEn: "My Company",
       crNumber: "1010892345",
       vatNumber: "300098765400003",
       defaultCurrency: "SAR",

@@ -222,14 +222,7 @@ export default function OnboardingWizard({ onComplete, onClose }: OnboardingWiza
         toast.error(isAr ? "الرقم الضريبي يجب ألا يقل عن 10 أرقام" : "VAT number must be at least 10 digits");
         return;
       }
-      if (!splVerified) {
-        toast.error(
-          isAr
-            ? "يرجى التحقق بنجاح من العنوان الوطني (عبر سبل) قبل المتابعة"
-            : "Please verify your National Address (via SPL) successfully before continuing"
-        );
-        return;
-      }
+      // Note: The user requested that National ID/Address verification be completed after onboarding, so it is optional here.
       setStep(3);
     } else if (step === 3) {
       // Go to simulation screen
@@ -548,7 +541,7 @@ export default function OnboardingWizard({ onComplete, onClose }: OnboardingWiza
                         <Building className="w-5 h-5 text-emerald-500" />
                         <div>
                           <h4 className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
-                            {isAr ? "التحقق من العنوان الوطني الموحد (سبل) *" : "Unified National Address Verification (SPL) *"}
+                            {isAr ? "التحقق من العنوان الوطني الموحد (سبل)" : "Unified National Address Verification (SPL)"}
                           </h4>
                           <p className="text-[10px] text-zinc-400 font-bold">
                             {isAr ? "مطلوب لتفادي رفض فواتير الزكاة وامتثال الأنظمة" : "Required to prevent ZATCA invoice rejections & comply with regulations"}

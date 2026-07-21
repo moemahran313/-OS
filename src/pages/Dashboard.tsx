@@ -74,7 +74,6 @@ import { handleFirestoreError, OperationType } from "@/src/lib/firestore-issues"
 import { PayrollService } from "@/src/services/payroll.service";
 import OSWorkspaceExplorer from "@/src/components/OSWorkspaceExplorer";
 import QuickActionsWidget from "@/src/components/QuickActionsWidget";
-import OnboardingWizard from "@/src/components/dashboard/OnboardingWizard";
 import LaunchpadOverview from "@/src/components/dashboard/LaunchpadOverview";
 import QuickActionsFAB from "@/src/components/dashboard/QuickActionsFAB";
 
@@ -85,6 +84,7 @@ interface WidgetConfig {
 }
 
 const DEFAULT_CONFIG: WidgetConfig[] = [
+  { id: "unified_actions", title: "لوحة المهام والإجراءات الموحدة (Unified Action Center)", visible: true },
   { id: "business_health", title: "مؤشر صحة الأعمال الذكي (AI Health Score)", visible: true },
   { id: "intelligence", title: "توصيات مدارج الذكية للنمو", visible: true },
   { id: "quick_actions", title: "الإجراءات السريعة", visible: true },
@@ -809,6 +809,197 @@ export default function Dashboard() {
 
   const renderWidget = (widgetId: string) => {
     switch (widgetId) {
+      case "unified_actions": {
+        const isAr = settings.language === "ar";
+        
+        // Gather Dynamic Actions across segmented systems (CRM, Payroll, Invoicing)
+        const getUnifiedActionItems = () => {
+          const items: {
+            id: string;
+            type: "crm" | "payroll" | "accounting" | "project";
+            titleAr: string;
+            titleEn: string;
+            descAr: string;
+            descEn: string;
+            badgeAr: string;
+            badgeEn: string;
+            badgeColor: string;
+            actionPath: string;
+            actionLabelAr: string;
+            actionLabelEn: string;
+            urgency: "high" | "medium" | "low";
+          }[] = [];
+
+          // 1. CRM Action Items (Leads in early stage)
+          const pendingLeads = leads.filter((l) => l.status === "lead" || l.status === "contacted");
+          pendingLeads.slice(0, 2).forEach((lead, idx) => {
+            items.push({
+              id: `crm-lead-${lead.id || idx}`,
+              type: "crm",
+              titleAr: `متابعة فرصة بيع: ${lead.name || "عميل محتمل"}`,
+              titleEn: `Follow up Lead: ${lead.name || "Sales Lead"}`,
+              descAr: `العميل مهتم بـ ${lead.interest || "الخدمات العامة"}. القيمة المتوقعة: ${lead.value || 0} ر.س. يرجى التواصل عبر واتساب.`,
+              descEn: `Interested in ${lead.interest || "General services"}. Value: ${lead.value || 0} SAR. Please initiate contact.`,
+              badgeAr: "مبيعات CRM",
+              badgeEn: "Sales CRM",
+              badgeColor: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800",
+              actionPath: "/app/crm",
+              actionLabelAr: "فتح المبيعات",
+              actionLabelEn: "Open CRM",
+              urgency: "medium",
+            });
+          });
+
+          // 2. Payroll & WPS Action Items
+          const now = new Date();
+          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          const lastMonthStr = lastMonth.toLocaleString("en-US", { month: "long", year: "numeric" });
+          const lastMonthStrAr = lastMonth.toLocaleString("ar-SA", { month: "long", year: "numeric" });
+          
+          const hasLastMonthPayroll = payrollRuns.some((r) => r.period === lastMonth.toISOString().slice(0, 7));
+          if (!hasLastMonthPayroll || dashboardStats?.isLockdown) {
+            items.push({
+              id: "payroll-wps-alert",
+              type: "payroll",
+              titleAr: `رفع مسير رواتب شهر ${lastMonthStrAr}`,
+              titleEn: `Generate WPS payroll for ${lastMonthStr}`,
+              descAr: dashboardStats?.isLockdown 
+                ? "تنبيه حرج: تم تجاوز المهلة النظامية لرفع حماية الأجور! اتخذ إجراء عاجل لمنع قيود الحساب."
+                : `يرجى إعداد مسير الرواتب وتوليد ملف حماية الأجور (SIF) لشهر ${lastMonthStrAr} ورفعه عبر منصة مدد لتفادي المخالفات.`,
+              descEn: dashboardStats?.isLockdown
+                ? "CRITICAL ALERT: Overdue compliance deadline! Take immediate action to avoid account restrictions."
+                : `Please prepare payroll sheet, generate SIF file for ${lastMonthStr}, and upload to Mudad to maintain compliance.`,
+              badgeAr: "الرواتب والامتثال",
+              badgeEn: "Payroll & Compliance",
+              badgeColor: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800",
+              actionPath: "/app/payroll",
+              actionLabelAr: "إعداد الرواتب",
+              actionLabelEn: "Manage Payroll",
+              urgency: "high",
+            });
+          }
+
+          // 3. Accounting & Invoicing Action Items
+          const unpaidInvoices = invoices.filter((inv) => inv.status === "unpaid" || inv.status === "overdue");
+          unpaidInvoices.slice(0, 2).forEach((inv, idx) => {
+            const amt = (inv.totalAmountHalalas || 0) / 100;
+            items.push({
+              id: `acc-invoice-${inv.id || idx}`,
+              type: "accounting",
+              titleAr: `متابعة تحصيل الفاتورة #${inv.invoiceNumber}`,
+              titleEn: `Collect Invoice #${inv.invoiceNumber}`,
+              descAr: `الفاتورة صادرة لـ ${inv.customerName || "عميل"} متأخرة السداد. القيمة: ${amt.toLocaleString()} ر.س. يوصى بإرسال تذكير سداد بنقرة واحدة عبر واتساب.`,
+              descEn: `Invoice issued to ${inv.customerName || "Client"} is unpaid. Amount: ${amt.toLocaleString()} SAR. Send automated WhatsApp payment reminder.`,
+              badgeAr: "المحاسبة والمالية",
+              badgeEn: "Accounting & Finance",
+              badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800",
+              actionPath: "/app/invoices",
+              actionLabelAr: "إدارة الفواتير",
+              actionLabelEn: "View Invoices",
+              urgency: inv.status === "overdue" ? "high" : "medium",
+            });
+          });
+
+          // 4. Logistics/Supplier alerts
+          if (activeShipments && activeShipments.length > 0) {
+            const customsShipments = activeShipments.filter((s) => s.status === "customs");
+            customsShipments.slice(0, 1).forEach((ship, idx) => {
+              items.push({
+                id: `ops-ship-${ship.id || idx}`,
+                type: "project",
+                titleAr: "شحنة عالقة في الجمارك السعودية",
+                titleEn: "Shipment Held in Saudi Customs",
+                descAr: `الشحنة القادمة من المورد ${ship.supplierName || "شريك"} متوقفة في ميناء الجمارك للفسح والبيان الجمركي.`,
+                descEn: `Incoming shipment from ${ship.supplierName || "Supplier"} is pending clearance at Saudi Customs port.`,
+                badgeAr: "التشغيل والجمارك",
+                badgeEn: "Operations & Customs",
+                badgeColor: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800",
+                actionPath: "/app/suppliers",
+                actionLabelAr: "سلاسل الإمداد",
+                actionLabelEn: "Supply Chain",
+                urgency: "high",
+              });
+            });
+          }
+
+          return items;
+        };
+
+        const actionItems = getUnifiedActionItems();
+
+        return (
+          <section
+            key="unified_actions"
+            className="bg-white dark:bg-zinc-900/40 backdrop-blur-md rounded-[2rem] border border-zinc-150 dark:border-zinc-800/60 shadow-sm p-6 relative overflow-hidden transition-all duration-300 hover:shadow-md"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+            
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 relative z-10 border-b border-zinc-100 dark:border-zinc-800/40 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-emerald-500/10 text-emerald-600 rounded-2xl flex items-center justify-center border border-emerald-500/20 shrink-0">
+                  <Briefcase className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-black text-lg text-zinc-900 dark:text-zinc-100">
+                    {isAr ? "لوحة المهام والإجراءات الموحدة" : "Unified Actions & Task Control"}
+                  </h3>
+                  <p className="text-xs text-zinc-400 font-bold">
+                    {isAr ? "مجمع تنبيهات الفروع والإجراءات المتبقية للمؤسسة" : "Aggregated cross-system operations, compliance & sales actions"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 px-3 py-1 text-[11px] font-black bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 rounded-full">
+                  {isAr ? `${actionItems.length} مهام معلقة` : `${actionItems.length} Pending Actions`}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-4 relative z-10">
+              {actionItems.length === 0 ? (
+                <div className="py-12 text-center text-zinc-400 dark:text-zinc-500 text-xs font-bold uppercase tracking-widest">
+                  {isAr ? "تهانينا! لا توجد مهام معلقة حالياً" : "All clear! No pending actions across systems"}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {actionItems.map((item) => (
+                    <motion.div
+                      key={item.id}
+                      whileHover={{ scale: 1.01, y: -2 }}
+                      className="p-5 bg-zinc-50/50 dark:bg-zinc-800/20 rounded-2xl border border-zinc-100 dark:border-zinc-800/60 flex flex-col justify-between transition-all"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-3 mb-2.5">
+                          <span className={cn("px-2.5 py-1 text-[10px] font-black border rounded-lg", item.badgeColor)}>
+                            {isAr ? item.badgeAr : item.badgeEn}
+                          </span>
+                          <span className={cn(
+                            "w-2 h-2 rounded-full",
+                            item.urgency === "high" ? "bg-rose-500 animate-pulse" : item.urgency === "medium" ? "bg-amber-500" : "bg-blue-500"
+                          )} />
+                        </div>
+                        <h4 className="font-black text-sm text-zinc-900 dark:text-zinc-100 mb-1.5 leading-snug">
+                          {isAr ? item.titleAr : item.titleEn}
+                        </h4>
+                        <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400 leading-relaxed mb-4">
+                          {isAr ? item.descAr : item.descEn}
+                        </p>
+                      </div>
+                      <Link
+                        to={item.actionPath}
+                        className="w-full text-center bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 py-2.5 rounded-xl text-xs font-black transition-colors block shadow-xxs"
+                      >
+                        {isAr ? item.actionLabelAr : item.actionLabelEn}
+                      </Link>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      }
+
       case "openwa_status":
         return (
           <section
@@ -2746,14 +2937,18 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-20">
+    <div className="space-y-10 max-w-7xl mx-auto pb-24 px-4 relative">
+      {/* Premium ambient glows behind the layout to break the sterile grey grids */}
+      <div className="absolute top-[-100px] left-[-150px] w-[500px] h-[500px] bg-gradient-to-tr from-emerald-400/[0.04] to-indigo-500/[0.04] rounded-full blur-[100px] pointer-events-none -z-10" />
+      <div className="absolute top-[400px] right-[-200px] w-[600px] h-[600px] bg-gradient-to-br from-indigo-500/[0.04] to-emerald-400/[0.04] rounded-full blur-[120px] pointer-events-none -z-10" />
+
       <EmergencyLockdownIndicator navigateToPayroll={() => navigate("/app/payroll")} />
 
       {waStatus === "disconnected" && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-rose-50 border border-rose-200 p-6 rounded-3xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden"
+          className="bg-rose-50 border border-rose-200/80 p-6 rounded-[2rem] shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden"
           dir={isAr ? "rtl" : "ltr"}
         >
           <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 rounded-full blur-[40px] pointer-events-none" />
@@ -2838,7 +3033,7 @@ export default function Dashboard() {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-rose-600 text-white p-6 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border-4 border-rose-200"
+          className="bg-rose-600 text-white p-6 rounded-[2rem] shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border-4 border-rose-200"
         >
           <div className="flex items-center gap-4">
             <div className="bg-white/20 p-4 rounded-full animate-pulse">
@@ -2864,64 +3059,52 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-4">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">نظرة عامة</h1>
-            {isEditing && (
-              <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest leading-none border border-amber-200">
+          <div className="flex items-center gap-4">
+            <h1 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">نظرة عامة</h1>
+            {isEditing ? (
+              <span className="bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest leading-none">
                 وضع التخصيص
               </span>
+            ) : (
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                <span>نشط حياً</span>
+              </div>
             )}
           </div>
-          <p className="text-zinc-500 mt-1 mb-4">مرحباً بك مجدداً، إليك أحدث نشاطات عملك اليوم.</p>
+          <p className="text-zinc-400 mt-2 text-xs font-semibold">مرحباً بك مجدداً، إليك أحدث نشاطات عملك اليوم.</p>
 
           {!isEditing && (
-            <div className="flex bg-zinc-100 p-1 rounded-2xl flex-wrap gap-1 md:w-fit">
-              <button
-                onClick={() => setActiveView("ceo")}
-                className={cn(
-                  "px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap",
-                  activeView === "ceo"
-                    ? "bg-white text-zinc-900 shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700"
-                )}
-              >
-                نظرة الإدارة (CEO)
-              </button>
-              <button
-                onClick={() => setActiveView("hr")}
-                className={cn(
-                  "px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap",
-                  activeView === "hr"
-                    ? "bg-white text-zinc-900 shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700"
-                )}
-              >
-                شؤون الموظفين (HR)
-              </button>
-              <button
-                onClick={() => setActiveView("accountant")}
-                className={cn(
-                  "px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap",
-                  activeView === "accountant"
-                    ? "bg-white text-zinc-900 shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700"
-                )}
-              >
-                المحاسبة والمالية
-              </button>
-              <button
-                onClick={() => setActiveView("operations")}
-                className={cn(
-                  "px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap",
-                  activeView === "operations"
-                    ? "bg-white text-zinc-900 shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-700"
-                )}
-              >
-                التشغيل وسلاسل الإمداد
-              </button>
+            <div className="flex bg-zinc-100/70 dark:bg-zinc-800/60 backdrop-blur-md p-1.5 rounded-2xl flex-wrap gap-1 mt-6 border border-zinc-200/50 dark:border-zinc-700/50 md:w-fit relative">
+              {[
+                { id: "ceo" as const, labelAr: "نظرة الإدارة (CEO)", labelEn: "Management (CEO)" },
+                { id: "hr" as const, labelAr: "شؤون الموظفين (HR)", labelEn: "Human Resources (HR)" },
+                { id: "accountant" as const, labelAr: "المحاسبة والمالية", labelEn: "Finance & Accounting" },
+                { id: "operations" as const, labelAr: "التشغيل وسلاسل الإمداد", labelEn: "Operations & Supply" },
+              ].map((view) => {
+                const isActive = activeView === view.id;
+                return (
+                  <button
+                    key={view.id}
+                    onClick={() => setActiveView(view.id)}
+                    className={cn(
+                      "relative px-5 py-2.5 rounded-xl text-xs font-black transition-all whitespace-nowrap overflow-hidden z-10",
+                      isActive ? "text-zinc-950 dark:text-white" : "text-zinc-500 hover:text-zinc-850 dark:hover:text-zinc-300"
+                    )}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeViewTab"
+                        className="absolute inset-0 bg-white dark:bg-zinc-900 shadow-[0_4px_15px_rgba(0,0,0,0.06)] rounded-xl -z-10"
+                        transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                      />
+                    )}
+                    {isAr ? view.labelAr : view.labelEn}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -3222,22 +3405,13 @@ export default function Dashboard() {
           </div>
         )}
 
-        {showOnboarding && (
-          <OnboardingWizard
-            onComplete={() => setShowOnboarding(false)}
-            onClose={() => setShowOnboarding(false)}
-          />
-        )}
-      </AnimatePresence>
-
-      {!showOnboarding && (
-        <QuickActionsFAB
+      <QuickActionsFAB
           onNewInvoice={handleNewInvoice}
           onNewLead={handleNewLead}
           onNewPayroll={handleNewPayroll}
           onNewProject={handleNewProject}
         />
-      )}
+      </AnimatePresence>
     </div>
   );
 }
