@@ -4,7 +4,7 @@ import { db } from "@/src/lib/firebase";
 export interface LandingTrackEvent {
   id: string;
   eventName: string;
-  category: "CTA" | "DEMO_VIDEO" | "INTEGRATION" | "PRICING" | "AI_INTERACTION";
+  category: "CTA" | "DEMO_VIDEO" | "INTEGRATION" | "PRICING" | "AI_INTERACTION" | "CALCULATOR" | "FAQ";
   timestamp: string;
   metadata?: Record<string, any>;
 }
@@ -16,6 +16,11 @@ export const HIGH_INTENT_CATEGORIES = {
   PARTNER_INTEGRATION: "Partner Integration Discovery",
   PRICING_SELECTION: "Pricing Subscription Intent",
   AI_CONVERSATION: "AI Consultation Consultation Initiated",
+  ROI_CALCULATOR_CTA: "ROI Savings Calculator Interaction",
+  MODULE_TAB_CLICK: "Module Interactive Exploration",
+  FAQ_TOGGLE: "FAQ Deep Inquiry Toggle",
+  MIGRATION_CTA: "System Migration Request",
+  FINAL_CTA_CLICK: "Final Conversion Action",
 };
 
 export const trackLandingEvent = async (
@@ -67,15 +72,22 @@ export const trackLandingEvent = async (
 const getCategoryKey = (category: keyof typeof HIGH_INTENT_CATEGORIES) => {
   switch (category) {
     case "CTA_START_FREE":
+    case "FINAL_CTA_CLICK":
+    case "MIGRATION_CTA":
       return "CTA";
     case "DEMO_PLAYBACK":
       return "DEMO_VIDEO";
     case "PARTNER_INTEGRATION":
+    case "MODULE_TAB_CLICK":
       return "INTEGRATION";
     case "PRICING_SELECTION":
       return "PRICING";
     case "AI_CONVERSATION":
       return "AI_INTERACTION";
+    case "ROI_CALCULATOR_CTA":
+      return "CALCULATOR";
+    case "FAQ_TOGGLE":
+      return "FAQ";
     default:
       return "CTA";
   }

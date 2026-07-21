@@ -165,6 +165,7 @@ export default function Accounting() {
     | "audit"
   >("accounts");
   const [loading, setLoading] = useState(true);
+  const [isNavExpanded, setIsNavExpanded] = useState(true);
 
   // Entities state
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -1274,6 +1275,58 @@ export default function Accounting() {
     return matchesSearch && matchesType;
   });
 
+  const categories = [
+    {
+      id: "ledger",
+      name: "الدفاتر والقيود المحاسبية",
+      description: "الحسابات الرئيسية وقيود اليومية المزدوجة والأستاذ العام",
+      icon: FolderTree,
+      items: [
+        { id: "accounts", label: "دليل شجرة الحسابات (COA)", icon: FolderTree },
+        { id: "journals", label: "دفتر اليومية المساعد", icon: FileText },
+        { id: "audit", label: "سجل التدقيق والأستاذ العام", icon: ShieldAlert },
+      ],
+    },
+    {
+      id: "operations",
+      name: "العمليات التجارية والتشغيلية",
+      description: "حسابات العملاء، الموردين، الخزينة، والأصول الثابتة",
+      icon: Coins,
+      items: [
+        { id: "receivables", label: "حسابات العملاء والمدينين (AR)", icon: UserCheck },
+        { id: "payables", label: "حسابات الموردين والدائنين (AP)", icon: Building2 },
+        { id: "banking", label: "الخزينة والربط البنكي", icon: Coins },
+        { id: "fixed-assets", label: "الأصول الثابتة والإهلاك", icon: Briefcase },
+      ],
+    },
+    {
+      id: "reports",
+      name: "التقارير المالية والالتزامات",
+      description: "موازين المراجعة اللحظية، القوائم الختامية، والضرائب",
+      icon: FileSpreadsheet,
+      items: [
+        { id: "trial", label: "ميزان المراجعة اللحظي", icon: ArrowRightLeft },
+        { id: "statements", label: "القوائم المالية للشركة", icon: FileSpreadsheet },
+        { id: "budgets", label: "الموازنات التقديرية", icon: PiggyBank },
+        { id: "vat-tax", label: "الضرائب وضريبة القيمة المضافة", icon: Percent },
+      ],
+    },
+    {
+      id: "closing",
+      name: "المستشار والإغلاق المالي",
+      description: "تحليلات المستشار الذكي AI وإجراءات إقفال الفترات",
+      icon: Sparkles,
+      items: [
+        { id: "copilot", label: "المستشار الذكي (AI Copilot)", icon: Sparkles },
+        { id: "periods", label: "الأقفال والفترات المالية", icon: Calendar },
+      ],
+    },
+  ];
+
+  const activeCategory = categories.find((cat) =>
+    cat.items.some((item) => item.id === activeTab)
+  ) || categories[0];
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-20" dir="rtl">
       {/* 1. DYNAMIC MULTI-COMPANY & MULTI-BRANCH ERP HEADER CONTROL */}
@@ -1379,39 +1432,134 @@ export default function Accounting() {
         </div>
       </div>
 
-      {/* 2. TABS CONTROLLER */}
-      <div className="flex border-b border-zinc-200 dark:border-zinc-800 gap-2 overflow-x-auto no-scrollbar pb-px">
-        {[
-          { id: "accounts", label: "دليل شجرة الحسابات (COA)", icon: FolderTree },
-          { id: "journals", label: "دفتر اليومية المساعد", icon: FileText },
-          { id: "receivables", label: "حسابات العملاء والمدينين (AR)", icon: UserCheck },
-          { id: "payables", label: "حسابات الموردين والدائنين (AP)", icon: Building2 },
-          { id: "banking", label: "الخزينة والربط البنكي", icon: Coins },
-          { id: "fixed-assets", label: "الأصول الثابتة والإهلاك", icon: Briefcase },
-          { id: "budgets", label: "الموازنات التقديرية", icon: PiggyBank },
-          { id: "vat-tax", label: "الضرائب وضريبة القيمة المضافة", icon: Percent },
-          { id: "copilot", label: "المستشار الذكي (AI Copilot)", icon: Sparkles },
-          { id: "periods", label: "الأقفال والفترات المالية", icon: Calendar },
-          { id: "trial", label: "ميزان المراجعة اللحظي", icon: ArrowRightLeft },
-          { id: "statements", label: "القوائم المالية للشركة", icon: FileSpreadsheet },
-          { id: "audit", label: "سجل التدقيق والأستاذ العام", icon: ShieldAlert },
-        ].map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-6 py-3.5 border-b-2 font-black text-xs transition-all cursor-pointer whitespace-nowrap ${
-                isActive
-                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400"
-                  : "border-transparent text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
-              }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          );
-        })}
+      {/* 2. SMART COMPACT TABS & OPERATIONS CONTROL PANEL */}
+      <div className="bg-white dark:bg-zinc-100 border border-zinc-150 dark:border-zinc-850 p-6 rounded-[2rem] shadow-sm space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="space-y-1">
+            <h3 className="text-sm font-black text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-emerald-500" />
+              خريطة العمليات والأدوات المحاسبية
+            </h3>
+            <p className="text-[10.5px] text-zinc-400 font-bold">
+              تصنيف ذكي لكافة وظائف وأدوات الأستاذ العام والدفاتر الفرعية لمنظومة مدارج OS
+            </p>
+          </div>
+
+          <button
+            onClick={() => setIsNavExpanded(!isNavExpanded)}
+            className="flex items-center gap-2 px-4 py-2 bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 border border-zinc-150 dark:border-zinc-800 rounded-xl text-xs font-black transition-all cursor-pointer shadow-sm shrink-0"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+            {isNavExpanded ? "تبسيط العرض (Compact)" : "عرض الخريطة الكاملة (Expanded)"}
+          </button>
+        </div>
+
+        {isNavExpanded ? (
+          /* EXPANDED DIRECTORY MODE: 4 Column Beautifully Structured Grid */
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {categories.map((cat) => {
+              const hasActiveChild = cat.items.some((item) => item.id === activeTab);
+              return (
+                <div
+                  key={cat.id}
+                  className={`border p-4 rounded-2xl flex flex-col justify-between transition-all relative ${
+                    hasActiveChild
+                      ? "border-emerald-500/30 bg-emerald-500/[0.01] shadow-sm"
+                      : "border-zinc-100 dark:border-zinc-800 hover:border-zinc-200"
+                  }`}
+                >
+                  <div className="space-y-1.5 mb-4">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`p-2 rounded-xl shrink-0 ${
+                          hasActiveChild
+                            ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                            : "bg-zinc-50 dark:bg-zinc-800 text-zinc-400"
+                        }`}
+                      >
+                        <cat.icon className="w-4 h-4" />
+                      </div>
+                      <h4 className="text-xs font-black text-zinc-800 dark:text-zinc-200">
+                        {cat.name}
+                      </h4>
+                    </div>
+                    <p className="text-[10px] text-zinc-400 font-bold leading-normal">
+                      {cat.description}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {cat.items.map((item) => {
+                      const isActive = activeTab === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => setActiveTab(item.id as any)}
+                          className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                            isActive
+                              ? "bg-emerald-650 text-white shadow-md shadow-emerald-500/10 border border-transparent"
+                              : "bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-600 hover:text-zinc-850 dark:text-zinc-400 dark:hover:text-zinc-200 border border-zinc-100 dark:border-zinc-800"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <item.icon className={`w-3.5 h-3.5 ${isActive ? "text-white" : "text-zinc-400"}`} />
+                            <span className="text-[11px] truncate">{item.label}</span>
+                          </div>
+                          {isActive && <CheckCircle2 className="w-3.5 h-3.5 text-white shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* COMPACT GROUPED MODE: Horizontal Category Selectors + Sub-tabs Row */
+          <div className="space-y-4">
+            {/* Category Selectors */}
+            <div className="flex flex-wrap gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+              {categories.map((cat) => {
+                const isSelected = cat.items.some((item) => item.id === activeTab);
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveTab(cat.items[0].id as any)}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer border ${
+                      isSelected
+                        ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                        : "bg-zinc-50 dark:bg-zinc-800 text-zinc-500 border-transparent hover:text-zinc-700 dark:hover:text-zinc-300"
+                    }`}
+                  >
+                    <cat.icon className="w-4 h-4" />
+                    <span>{cat.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Sub-tabs Row */}
+            <div className="flex border-b border-zinc-150 dark:border-zinc-800/80 gap-2 overflow-x-auto no-scrollbar pb-px">
+              {activeCategory.items.map((item) => {
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id as any)}
+                    className={`flex items-center gap-2 px-5 py-3 border-b-2 font-black text-xs transition-all cursor-pointer whitespace-nowrap ${
+                      isActive
+                        ? "border-emerald-500 text-emerald-600 dark:text-emerald-400"
+                        : "border-transparent text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300"
+                    }`}
+                  >
+                    <item.icon className="w-3.5 h-3.5" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 3. MAIN CONTENT MODULES */}

@@ -1282,6 +1282,8 @@ export default function Contracts() {
   const [highlightedClauses, setHighlightedClauses] = useState<Record<number, boolean>>({});
   const [pageWidthMode, setPageWidthMode] = useState<"standard" | "fit">("fit");
   const [scale, setScale] = useState(1);
+  const [hoverZoom, setHoverZoom] = useState(false);
+  const [zoomOrigin, setZoomOrigin] = useState({ x: 50, y: 0 });
   const [clauseSearchQuery, setClauseSearchQuery] = useState("");
   const [documentSearchQuery, setDocumentSearchQuery] = useState("");
   const [docLayoutTheme, setDocLayoutTheme] = useState<"compact" | "wide">(() => {
@@ -4073,7 +4075,7 @@ export default function Contracts() {
             <div className="flex flex-col items-center gap-4 w-full">
               <div
                 ref={documentWrapperRef}
-                className={`min-h-[297mm] p-0 print:w-full print:h-auto overflow-hidden relative shrink-0 transition-all duration-500 origin-top shadow-2xl border border-zinc-100 hover:border-zinc-300 hover:shadow-[0_30px_70px_rgba(0,0,0,0.15)] hover:-translate-y-0.5 cursor-default select-text scroll-smooth ${
+                className={`min-h-[297mm] p-0 print:w-full print:h-auto overflow-hidden relative shrink-0 shadow-2xl border border-zinc-100 hover:border-zinc-300 hover:shadow-[0_30px_70px_rgba(0,0,0,0.15)] hover:-translate-y-0.5 cursor-default select-text scroll-smooth ${
                   docLayoutTheme === "wide" ? "w-[240mm]" : "w-[210mm]"
                 }`}
                 style={{
@@ -4085,11 +4087,32 @@ export default function Contracts() {
                     docLayoutTheme === "wide"
                       ? '"Tajawal", "Inter", sans-serif'
                       : '"Cairo", "Tajawal", "IBM Plex Sans Arabic", sans-serif',
-                  transform: pageWidthMode === "fit" && scale < 1 ? `scale(${scale})` : undefined,
+                  transform: hoverZoom
+                    ? (pageWidthMode === "fit" && scale < 1
+                        ? `scale(${scale * 1.4})`
+                        : "scale(1.4)")
+                    : (pageWidthMode === "fit" && scale < 1
+                        ? `scale(${scale})`
+                        : undefined),
+                  transformOrigin: hoverZoom ? `${zoomOrigin.x}% ${zoomOrigin.y}%` : "top center",
+                  transition: hoverZoom
+                    ? "transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.5s, box-shadow 0.5s"
+                    : "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform-origin 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.5s, box-shadow 0.5s",
                   marginBottom:
                     pageWidthMode === "fit" && scale < 1
                       ? `calc(-297mm * ${1 - scale})`
                       : undefined,
+                }}
+                onMouseEnter={() => setHoverZoom(true)}
+                onMouseLeave={() => {
+                  setHoverZoom(false);
+                  setZoomOrigin({ x: 50, y: 0 });
+                }}
+                onMouseMove={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = ((e.clientX - rect.left) / rect.width) * 100;
+                  const y = ((e.clientY - rect.top) / rect.height) * 100;
+                  setZoomOrigin({ x, y });
                 }}
                 id="contract-document"
               >

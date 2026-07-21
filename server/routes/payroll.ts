@@ -121,18 +121,45 @@ router.get("/sif/:runId", authenticate, async (req: any, res) => {
     const numEntries = run.entries.length;
     const totalNet = run.totalNet || run.entries.reduce((acc: number, entry: any) => acc + (entry.netPay || 0), 0);
 
+    // Helpers to cleanse fields to satisfy strict Saudi Corporate Bank schema parsers
+    const cleanId = (id: string) => id.replace(/[^\d]/g, "").substring(0, 10);
+    const cleanIban = (iban: string) => iban.replace(/[^A-Za-z0-9]/g, "").toUpperCase().substring(0, 24);
+    const cleanBank = (bank: string) => bank.replace(/[^A-Za-z0-9]/g, "").toUpperCase().substring(0, 4);
+    const cleanName = (name: string) => {
+      // SIF files must not contain tab, carriage return or newlines inside the text fields
+      let cleaned = name.replace(/[\t\r\n]/g, " ");
+      cleaned = cleaned.replace(/[@#$%*#_<>!?/\\()[\]{}]/g, ""); // strip characters that trip up parses
+      cleaned = cleaned.replace(/\s+/g, " ").trim();
+      return cleaned.substring(0, 45); // Standard maximum length limit
+    };
+
+    let headerEmployerId = cleanId(employerId).padEnd(10, "0");
+    let headerEmployerIban = cleanIban(employerIban).padEnd(24, "0");
+
+    // Construct tab-delimited SIF lines safely
+    const sifRows: string[] = [];
+
     // Header Row (Type 14)
-    let sifContent = `14\t${employerId}\t${employerIban}\t${fileDate}\t${fileTime}\t${periodStr}\t${totalNet.toFixed(2)}\t${numEntries}\tSAR\n`;
+    sifRows.push(`14\t${headerEmployerId}\t${headerEmployerIban}\t${fileDate}\t${fileTime}\t${periodStr}\t${totalNet.toFixed(2)}\t${numEntries}\tSAR`);
 
     // Employee Rows (Type 15)
     for (const entry of run.entries) {
       const empSnap = await db.collection("employees").doc(entry.employeeId).get();
       const empData = empSnap.data();
 
-      // Iqama or National ID (10 digits)
-      const iqamaOrId = empData?.iqamaNumber || empData?.nationalId || empData?.visaNumber || entry.employeeId.replace(/[^\d]/g, "").substring(0, 10).padEnd(10, "0");
-      const iban = empData?.iban || "SA0000000000000000000000";
-      const bank = empData?.bank || "ALBI";
+      // Iqama or National ID (10 digits starting with 1 or 2)
+      let iqamaOrId = empData?.iqamaNumber || empData?.nationalId || empData?.visaNumber || entry.employeeId;
+      iqamaOrId = cleanId(iqamaOrId);
+      if (!/^[12]\d{9}$/.test(iqamaOrId)) {
+        iqamaOrId = iqamaOrId.substring(0, 10).padEnd(10, "0");
+        if (!iqamaOrId.startsWith("1") && !iqamaOrId.startsWith("2")) {
+          iqamaOrId = "1" + iqamaOrId.substring(1);
+        }
+      }
+
+      const iban = cleanIban(empData?.iban || "SA0000000000000000000000");
+      const bank = cleanBank(empData?.bank || "ALBI");
+      const empName = cleanName(entry.employeeName || empData?.name || "Employee");
 
       const basic = Number(entry.basic || 0).toFixed(2);
       const housing = Number(entry.housing || 0).toFixed(2);
@@ -140,12 +167,18 @@ router.get("/sif/:runId", authenticate, async (req: any, res) => {
       const deductions = Number(entry.deductions || 0).toFixed(2);
       const netPay = Number(entry.netPay || 0).toFixed(2);
 
-      sifContent += `15\t${iqamaOrId}\t${iban}\t${entry.employeeName}\t${bank}\t${basic}\t${housing}\t${otherAllowances}\t${deductions}\t${netPay}\tG\n`;
+      sifRows.push(`15\t${iqamaOrId}\t${iban}\t${empName}\t${bank}\t${basic}\t${housing}\t${otherAllowances}\t${deductions}\t${netPay}\tG`);
     }
 
-    res.setHeader("Content-Type", "text/plain");
+    const sifContent = sifRows.join("\n") + "\n";
+
+    // Binary Stream Generation: Use Buffer.from with UTF-8 encoding to prevent system conversion and char-length corruption
+    const binaryBuffer = Buffer.from(sifContent, "utf-8");
+
+    res.setHeader("Content-Type", "application/octet-stream");
     res.setHeader("Content-Disposition", `attachment; filename=SIF_${run.period}.sif`);
-    res.send(sifContent);
+    res.setHeader("Content-Length", binaryBuffer.length.toString());
+    res.send(binaryBuffer);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

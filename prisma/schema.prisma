@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url = "file:./dev.db"
 }
 
 model Tenant {
@@ -379,3 +379,24 @@ model SearchJob {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
+
+model Outbox {
+  id            String   @id @default(cuid())
+  aggregateType String   // e.g., "Invoice", "AuditLog", "User", "Employee"
+  aggregateId   String
+  eventType     String   // e.g., "Created", "Updated", "Deleted"
+  payload       String   // JSON payload string
+  status        String   @default("PENDING") // PENDING, PROCESSED, FAILED
+  attempts      Int      @default(0)
+  lastError     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ZatcaSequence {
+  id             String   @id @default("singleton")
+  invoiceCounter Int      @default(0)
+  lastXmlHash    String   @default("0000000000000000000000000000000000000000000000000000000000000000")
+  updatedAt      DateTime @updatedAt
+}
+

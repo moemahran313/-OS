@@ -62,7 +62,6 @@ const navigationData = [
   { nameKey: "دفتر الأستاذ والقيود", id: "Accounting", href: "/app/accounting", icon: Scale },
   { nameKey: "sidebar.suppliers", id: "Suppliers", href: "/app/suppliers", icon: Truck },
   { nameKey: "sidebar.contracts", id: "Contracts", href: "/app/contracts", icon: FileSignature },
-  { nameKey: "sidebar.zatca_ai", id: "ZatcaAi", href: "/app/zatca-ai", icon: Sparkles },
   {
     nameKey: "sidebar.negotiations",
     id: "SmartNegotiations",
@@ -88,7 +87,6 @@ const itemLabels: Record<string, { ar: string; en: string }> = {
   CRM: { ar: "إدارة العملاء والبيع", en: "Customer Relations & Sales" },
   Invoices: { ar: "الفواتير والمطالبات", en: "Invoices & Claims" },
   Payroll: { ar: "مسيرات الرواتب والأجور", en: "Payroll & Wages" },
-  ZatcaAi: { ar: "عقود وفوترة ZATCA AI", en: "ZATCA AI & E-Invoicing" },
   Accounting: { ar: "دفتر الأستاذ والقيود", en: "General Ledger & Accounting" },
   Suppliers: { ar: "الموردون وسلاسل الإمداد", en: "Suppliers & Supply Chain" },
   Contracts: { ar: "عقود العمل والاتفاقيات", en: "Work Contracts & Signatures" },

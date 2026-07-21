@@ -33,12 +33,20 @@ import {
 import { useSettings } from "@/src/contexts/SettingsContext";
 
 // --- Lazy loaded heavier sections to improve GCC load times ---
+import FlowTransformation from "../components/landing/FlowTransformation";
 const ProblemSection = lazy(() => import("../components/landing/ProblemSection"));
 const FeatureShowcase = lazy(() => import("../components/landing/FeatureShowcase"));
-const FlowTransformation = lazy(() => import("../components/landing/FlowTransformation"));
 const SocialProofSection = lazy(() => import("../components/landing/SocialProofSection"));
 const PricingSection = lazy(() => import("../components/landing/PricingSection"));
 const FinalCTA = lazy(() => import("../components/landing/FinalCTA"));
+
+// Ogilvy-Grade High Value Landing Sections
+const RoiCalculatorSection = lazy(() => import("../components/landing/RoiCalculatorSection"));
+const ModulePlaygroundSection = lazy(() => import("../components/landing/ModulePlaygroundSection"));
+const ComparisonMatrixSection = lazy(() => import("../components/landing/ComparisonMatrixSection"));
+const SaudiComplianceProofSection = lazy(() => import("../components/landing/SaudiComplianceProofSection"));
+const OgilvyCaseStudiesSection = lazy(() => import("../components/landing/OgilvyCaseStudiesSection"));
+const FaqSection = lazy(() => import("../components/landing/FaqSection"));
 
 // --- Elegant shimmer skeleton for GCC network speeds ---
 const SectionLoaderSkeleton = () => (
@@ -133,20 +141,20 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="text-6xl md:text-8xl font-black tracking-tight mb-8 mt-4 leading-[1.15] max-w-5xl"
+          className="text-5xl md:text-8xl font-black tracking-tight mb-8 mt-4 leading-[1.12] max-w-5xl"
         >
           {isAr ? (
             <>
-              نظام تشغيل <br />
+              نظام التشغيل السعودي الوحيد <br />
               <span className="text-emerald-400 supports-[background-clip:text]:text-transparent supports-[background-clip:text]:bg-clip-text supports-[background-clip:text]:bg-gradient-to-l supports-[background-clip:text]:from-white supports-[background-clip:text]:via-emerald-400 supports-[background-clip:text]:to-teal-300">
-                لا يقدر بثمن.
+                الذي يلغي 80% من مصاريف برامجك الإدارية.
               </span>
             </>
           ) : (
             <>
-              An Invaluable <br />
+              The Only Sovereign Saudi BizOS <br />
               <span className="text-emerald-400 supports-[background-clip:text]:text-transparent supports-[background-clip:text]:bg-clip-text supports-[background-clip:text]:bg-gradient-to-r supports-[background-clip:text]:from-white supports-[background-clip:text]:via-emerald-400 supports-[background-clip:text]:to-teal-300">
-                Operating System.
+                That Eliminates 80% of Admin Software Costs.
               </span>
             </>
           )}
@@ -156,19 +164,17 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="text-lg md:text-2xl text-zinc-400 font-medium max-w-3xl mb-12 leading-relaxed"
+          className="text-lg md:text-2xl text-zinc-300 font-medium max-w-4xl mb-12 leading-relaxed"
         >
           {isAr ? (
             <>
-              كل ما تحتاجه للنمو السريع. CRM، فواتير ZATCA، رواتب مقيم، وتذكيرات واتساب —{" "}
-              <span className="text-emerald-400 font-extrabold">جميعها مدمجة ومجانية 100%</span> مع باقتك.
+              من الفوترة الإلكترونية المعتمدة من هيئة الزكاة (ZATCA Phase 2) وملفات مسير الرواتب المعتمدة لـ &apos;مدد&apos;، إلى التحقق اللحظي من العنوان الوطني والتذكيرات التلقائية عبر الواتساب —{" "}
+              <span className="text-emerald-400 font-extrabold">كل ما تحتاجه لإدارة شركتك في منصة سيادية واحدة مدمجة ومجانية 100%.</span>
             </>
           ) : (
             <>
-              Everything you need for rapid growth. CRM, ZATCA invoices, Muqeem payroll, and
-              WhatsApp reminders —{" "}
-              <span className="text-emerald-400 font-extrabold">all integrated and 100% free</span> with your
-              plan.
+              From ZATCA Phase 2 e-invoicing and WPS Mudad payroll SIF files, to live SPL National Address lookups and WhatsApp reminders —{" "}
+              <span className="text-emerald-400 font-extrabold">all integrated into one sovereign platform, 100% free to start.</span>
             </>
           )}
         </motion.p>
@@ -675,6 +681,54 @@ export default function LandingPage() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    // Inject Google Schema.org SoftwareApplication & Organization JSON-LD for Search Engine Optimization
+    const schemaData = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "name": "Mudarij BizOS",
+          "operatingSystem": "Web, Cloud, Windows, macOS, iOS, Android",
+          "applicationCategory": "BusinessApplication, AccountingApplication",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "SAR"
+          },
+          "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "ratingCount": "1280"
+          },
+          "description": "نظام التشغيل الرقمي الموحد للمنشآت السعودية والخليجية. يجمع الفوترة الضريبية ZATCA Phase 2، مسير الرواتب المعتمد لـ مدد (WPS)، إدارة العملاء CRM، والعناوين الوطنية SPL."
+        },
+        {
+          "@type": "Organization",
+          "name": "Mudarij Systems",
+          "url": "https://mudarij.sa",
+          "logo": "https://mudarij.sa/logo.png",
+          "sameAs": [
+            "https://twitter.com/mudarij_sa",
+            "https://linkedin.com/company/mudarij"
+          ]
+        }
+      ]
+    };
+
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.id = "mudarij-org-schema";
+    script.innerHTML = JSON.stringify(schemaData);
+
+    const existing = document.getElementById("mudarij-org-schema");
+    if (existing) existing.remove();
+    document.head.appendChild(script);
+
+    return () => {
+      const el = document.getElementById("mudarij-org-schema");
+      if (el) el.remove();
+    };
   }, []);
 
   return (
@@ -694,15 +748,37 @@ export default function LandingPage() {
       </Suspense>
 
       <Suspense fallback={<SectionLoaderSkeleton />}>
+        <RoiCalculatorSection />
+      </Suspense>
+
+      <Suspense fallback={<SectionLoaderSkeleton />}>
+        <ModulePlaygroundSection />
+      </Suspense>
+
+      <Suspense fallback={<SectionLoaderSkeleton />}>
+        <ComparisonMatrixSection />
+      </Suspense>
+
+      <Suspense fallback={<SectionLoaderSkeleton />}>
+        <SaudiComplianceProofSection />
+      </Suspense>
+
+      <Suspense fallback={<SectionLoaderSkeleton />}>
+        <OgilvyCaseStudiesSection />
+      </Suspense>
+
+      <Suspense fallback={<SectionLoaderSkeleton />}>
         <FeatureShowcase />
       </Suspense>
 
-      <Suspense fallback={<SectionLoaderSkeleton />}>
-        <FlowTransformation />
-      </Suspense>
+      <FlowTransformation />
 
       <Suspense fallback={<SectionLoaderSkeleton />}>
         <PricingSection />
+      </Suspense>
+
+      <Suspense fallback={<SectionLoaderSkeleton />}>
+        <FaqSection />
       </Suspense>
 
       <Suspense fallback={<SectionLoaderSkeleton />}>

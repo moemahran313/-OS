@@ -128,7 +128,7 @@ export class DataAnalyticsEngine {
   private generateGrowthData(baseValue: number, rate: number) {
     const data = [];
     const months = ["يناير", "فبراير", "مارس", "إبريل", "مايو", "يونيو"];
-    let current = baseValue || 50000;
+    let current = baseValue || 0;
     for (const month of months) {
       data.push({ label: month, value: Math.round(current) });
       current *= 1 + rate;

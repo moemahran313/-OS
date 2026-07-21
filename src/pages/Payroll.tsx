@@ -2752,19 +2752,82 @@ export default function Payroll() {
 
                 const entriesWithEmpData = (sifValidateRun.entries || []).map((entry: any) => {
                   const empObj = employees.find((e) => e.id === entry.employeeId) || {};
-                  return { ...entry, empObj };
+                  
+                  // Saudi ID / Iqama Validation (10 digits starting with 1 or 2)
+                  const iqamaOrId = (empObj.iqamaNumber || empObj.nationalId || empObj.visaNumber || "").trim();
+                  const isIdValid = /^[12]\d{9}$/.test(iqamaOrId);
+                  
+                  // IBAN Validation (SA followed by 22 alphanumeric characters, total 24)
+                  const iban = (empObj.iban || "").trim();
+                  const isIbanValid = /^SA[a-zA-Z0-9]{22}$/i.test(iban);
+                  
+                  // Bank Code Validation (non-empty, alphanumeric, 2 to 4 characters)
+                  const bank = (empObj.bank || "").trim();
+                  const isBankValid = /^[A-Z0-9]{2,4}$/i.test(bank);
+                  
+                  // Name Validation (No special characters, length >= 3)
+                  const name = (entry.employeeName || empObj.name || "").trim();
+                  const hasSpecialChars = /[@#$%*#_<>!?/\\()[\]{}]/.test(name);
+                  const isNameValid = name.length >= 3 && !hasSpecialChars;
+                  
+                  return {
+                    ...entry,
+                    empObj,
+                    iqamaOrId,
+                    isIdValid,
+                    iban,
+                    isIbanValid,
+                    bank,
+                    isBankValid,
+                    name,
+                    isNameValid
+                  };
                 });
 
-                const missingBank = entriesWithEmpData.filter(
-                  (e: any) => !e.empObj.iban || e.empObj.iban.trim() === ""
-                );
+                const invalidIds = entriesWithEmpData.filter((e: any) => !e.isIdValid);
+                const invalidIbans = entriesWithEmpData.filter((e: any) => !e.isIbanValid);
+                const invalidBanks = entriesWithEmpData.filter((e: any) => !e.isBankValid);
+                const invalidNames = entriesWithEmpData.filter((e: any) => !e.isNameValid);
                 const zeroSalary = entriesWithEmpData.filter((e: any) => e.netPay <= 0);
 
-                const hasWarning = missingBank.length > 0 || zeroSalary.length > 0;
+                // Employer profile validations
+                const employerCr = ((user as any)?.crNumber || "").trim();
+                const isEmployerCrValid = /^\d{10}$/.test(employerCr);
+                
+                const employerIban = ((user as any)?.iban || "").trim();
+                const isEmployerIbanValid = /^SA[a-zA-Z0-9]{22}$/i.test(employerIban);
+
+                const hasCriticalError = 
+                  invalidIds.length > 0 || 
+                  invalidIbans.length > 0 || 
+                  invalidBanks.length > 0 || 
+                  invalidNames.length > 0 || 
+                  !isEmployerCrValid ||
+                  !isEmployerIbanValid;
+
+                const hasWarning = hasCriticalError || zeroSalary.length > 0;
 
                 return (
                   <div className="flex flex-col gap-4">
                     <div className="bg-zinc-50 rounded-2xl p-4 border border-zinc-100 flex flex-col gap-3">
+                      
+                      {/* Employer Status */}
+                      <div className="flex justify-between items-center text-sm font-bold">
+                        <span className="flex items-center gap-2 text-zinc-700">
+                          <Building className="w-4 h-4" /> بيانات ملف المنشأة (السجل والآيبان)
+                        </span>
+                        {isEmployerCrValid && isEmployerIbanValid ? (
+                          <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs">
+                            سليم
+                          </span>
+                        ) : (
+                          <span className="text-rose-600 bg-rose-50 px-2 py-1 rounded-md text-xs">
+                            خطأ في ملف المنشأة
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Active Employees */}
                       <div className="flex justify-between items-center text-sm font-bold">
                         <span className="flex items-center gap-2 text-zinc-700">
                           <Users className="w-4 h-4" /> جميع الموظفين النشطين متضمنون
@@ -2780,36 +2843,87 @@ export default function Payroll() {
                         )}
                       </div>
 
+                      {/* Iqama / National ID */}
                       <div className="flex justify-between items-center text-sm font-bold">
                         <span className="flex items-center gap-2 text-zinc-700">
-                          <CheckCircle2 className="w-4 h-4" /> بيانات الحساب البنكي (IBAN) متوفرة
+                          <ShieldCheck className="w-4 h-4" /> أرقام الهوية والإقامة (10 أرقام تبدأ بـ 1 أو 2)
                         </span>
-                        {missingBank.length === 0 ? (
+                        {invalidIds.length === 0 ? (
                           <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs">
-                            مكتمل
+                            سليم
                           </span>
                         ) : (
-                          <span className="text-rose-600 bg-rose-50 px-2 py-1 rounded-md text-xs">
-                            {missingBank.length} موظف بدون آيبان
+                          <span className="text-rose-600 bg-rose-50 px-2 py-1 rounded-md text-xs font-black">
+                            {invalidIds.length} خطأ
                           </span>
                         )}
                       </div>
 
+                      {/* Employee IBANs */}
                       <div className="flex justify-between items-center text-sm font-bold">
                         <span className="flex items-center gap-2 text-zinc-700">
-                          <AlertOctagon className="w-4 h-4" /> لا يوجد رواتب صفرية
+                          <CheckCircle2 className="w-4 h-4" /> آيبانات الموظفين (SA + 22 خانة)
+                        </span>
+                        {invalidIbans.length === 0 ? (
+                          <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs">
+                            سليم
+                          </span>
+                        ) : (
+                          <span className="text-rose-600 bg-rose-50 px-2 py-1 rounded-md text-xs font-black">
+                            {invalidIbans.length} آيبان غير صالح
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Bank Codes */}
+                      <div className="flex justify-between items-center text-sm font-bold">
+                        <span className="flex items-center gap-2 text-zinc-700">
+                          <Clock className="w-4 h-4" /> رموز توجيه البنوك (Bank Codes)
+                        </span>
+                        {invalidBanks.length === 0 ? (
+                          <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs">
+                            سليم
+                          </span>
+                        ) : (
+                          <span className="text-rose-600 bg-rose-50 px-2 py-1 rounded-md text-xs font-black">
+                            {invalidBanks.length} رمز غير صالح
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Names Cleanliness */}
+                      <div className="flex justify-between items-center text-sm font-bold">
+                        <span className="flex items-center gap-2 text-zinc-700">
+                          <FileText className="w-4 h-4" /> أسماء الموظفين (خالية من الرموز الخاصة)
+                        </span>
+                        {invalidNames.length === 0 ? (
+                          <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs">
+                            سليم
+                          </span>
+                        ) : (
+                          <span className="text-rose-600 bg-rose-50 px-2 py-1 rounded-md text-xs font-black">
+                            {invalidNames.length} اسم غير مسموح
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Zero Salaries */}
+                      <div className="flex justify-between items-center text-sm font-bold">
+                        <span className="flex items-center gap-2 text-zinc-700">
+                          <AlertOctagon className="w-4 h-4" /> لا يوجد رواتب صفرية أو سلبية
                         </span>
                         {zeroSalary.length === 0 ? (
                           <span className="text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs">
                             سليم
                           </span>
                         ) : (
-                          <span className="text-rose-600 bg-rose-50 px-2 py-1 rounded-md text-xs">
+                          <span className="text-amber-600 bg-amber-50 px-2 py-1 rounded-md text-xs font-black">
                             {zeroSalary.length} رواتب بقيمة صفر
                           </span>
                         )}
                       </div>
 
+                      {/* Net Total Match */}
                       <div className="flex justify-between items-center text-sm font-bold">
                         <span className="flex items-center gap-2 text-zinc-700">
                           <DollarSign className="w-4 h-4" /> مطابقة مطالبات البنك والإجمالي
@@ -2821,10 +2935,45 @@ export default function Payroll() {
                     </div>
 
                     {hasWarning && (
-                      <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-xl text-xs font-bold leading-relaxed">
-                        تنبيه: يوجد نقص في البيانات الأساسية. الاستمرار سيؤدي لرفض الملف في أنظمة
-                        مدد. يرجى تحديث بيانات الموظفين (الآيبان) من صفحة الموظفين أو مراجعة قيم
-                        الرواتب.
+                      <div className="max-h-40 overflow-y-auto border border-rose-100 bg-rose-50/50 rounded-2xl p-4 flex flex-col gap-2 font-medium">
+                        <h4 className="text-xs font-bold text-rose-800">تفاصيل الأخطاء والتحذيرات المكتشفة:</h4>
+                        
+                        {!isEmployerCrValid && (
+                          <p className="text-[11px] text-rose-700 font-bold">• السجل التجاري الخاص بمنشأتك غير صالح أو ناقص (يجب أن يتكون من 10 أرقام).</p>
+                        )}
+                        {!isEmployerIbanValid && (
+                          <p className="text-[11px] text-rose-700 font-bold">• الآيبان الخاص بمنشأتك غير صالح أو لا يبدأ بـ SA بالكامل.</p>
+                        )}
+
+                        {invalidIds.map((e: any) => (
+                          <p key={`id-${e.employeeId}`} className="text-[11px] text-rose-700 font-medium">
+                            • الموظف <strong>{e.employeeName || e.name}</strong>: رقم الهوية غائب أو غير صالح ({e.iqamaOrId || 'فارغ'}). يجب أن يكون 10 أرقام ويبدأ بـ 1 أو 2.
+                          </p>
+                        ))}
+                        
+                        {invalidIbans.map((e: any) => (
+                          <p key={`iban-${e.employeeId}`} className="text-[11px] text-rose-700 font-medium">
+                            • الموظف <strong>{e.employeeName || e.name}</strong>: رقم الآيبان غير صالح ({e.iban || 'فارغ'}). يجب أن يبدأ بـ SA ومكون من 24 خانة.
+                          </p>
+                        ))}
+
+                        {invalidBanks.map((e: any) => (
+                          <p key={`bank-${e.employeeId}`} className="text-[11px] text-rose-700 font-medium">
+                            • الموظف <strong>{e.employeeName || e.name}</strong>: رمز البنك غير صالح ({e.bank || 'فارغ'}). يجب أن يكون رمزاً بنكياً من 2 إلى 4 خانات.
+                          </p>
+                        ))}
+
+                        {invalidNames.map((e: any) => (
+                          <p key={`name-${e.employeeId}`} className="text-[11px] text-rose-700 font-medium">
+                            • الموظف <strong>{e.employeeName || e.name}</strong>: الاسم غائب أو يحتوي على رموز خاصة غير مقبولة بنكياً.
+                          </p>
+                        ))}
+
+                        {zeroSalary.map((e: any) => (
+                          <p key={`sal-${e.employeeId}`} className="text-[11px] text-amber-700 font-medium font-bold">
+                            • الموظف <strong>{e.employeeName || e.name}</strong>: لديه راتب صافي يساوي صفر أو سلبي ({e.netPay} ر.س).
+                          </p>
+                        ))}
                       </div>
                     )}
 
@@ -2837,7 +2986,7 @@ export default function Payroll() {
                       </button>
                       <button
                         onClick={confirmDownloadMudadSif}
-                        disabled={hasWarning}
+                        disabled={hasCriticalError}
                         className="px-6 py-3 font-bold text-white bg-primary rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 disabled:bg-primary/50 disabled:cursor-not-allowed"
                       >
                         <Download className="w-4 h-4" /> تأكيد وتنزيل SIF

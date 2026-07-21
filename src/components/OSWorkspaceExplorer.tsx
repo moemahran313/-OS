@@ -204,15 +204,6 @@ const WORKSPACE_DATA: WorkspaceGroup[] = [
         badgeEn: "Essential",
       },
       {
-        id: "ZatcaAi",
-        nameAr: "مساعد هيئة الزكاة الذكي (Zatca AI)",
-        nameEn: "ZATCA Compliance Copilot",
-        descriptionAr: "التدقيق الذكي للفواتير والتحقق من التشفير الثنائي والربط الفني",
-        descriptionEn: "Instant XML validation against official Saudi ZATCA portals",
-        path: "/app/zatca-ai",
-        icon: Sparkles,
-      },
-      {
         id: "Compliance",
         nameAr: "بوابة لوائح وقوانين الموارد",
         nameEn: "Labor Compliance Guard",

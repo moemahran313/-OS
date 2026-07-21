@@ -42,10 +42,8 @@ export default function BankingSyncHealth() {
 
         // Determine health based on actual connections
         if (!data || data.length === 0) {
-          // Fallback if no real connections are added yet, mock a sandbox connection health so it's not RED by default,
-          // or show yellow/green sandbox indicator
           setPingStatus("YELLOW");
-          setLastPullTime(new Date(Date.now() - 3600000 * 2.5).toISOString()); // 2.5 hours ago
+          setLastPullTime("");
         } else {
           // Check last sync time of the most recent connection
           const sorted = [...data].sort((a, b) => {

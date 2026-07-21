@@ -2,6 +2,7 @@ import path from "path";
 import fs from "fs";
 import crypto from "crypto";
 import { prisma } from "./prisma.ts";
+import { enqueueOutboxEvent } from "./outbox.ts";
 
 const configPath = path.join(process.cwd(), "firebase-applet-config.json");
 let config: any = {};
@@ -76,64 +77,47 @@ export const logAudit = async (module: string, payload: any, result: any, req: a
       console.warn("Failed to stringify enrichedResult in logAudit:", e);
     }
 
-    // 1. Write to SQLite via Prisma (Local Compliance DB)
+    // 1. Write to PostgreSQL and enqueue Outbox event atomically in a transaction
     try {
-      let prismaUserId: string | null = null;
-      if (userId && typeof userId === "string") {
-        try {
-          const userExists = await prisma.user.findUnique({ where: { id: userId } });
-          if (userExists) {
-            prismaUserId = userId;
+      await prisma.$transaction(async (tx) => {
+        let prismaUserId: string | null = null;
+        if (userId && typeof userId === "string") {
+          try {
+            const userExists = await tx.user.findUnique({ where: { id: userId } });
+            if (userExists) {
+              prismaUserId = userId;
+            }
+          } catch (userErr) {
+            console.warn("Prisma user look up failed in logAudit:", userErr);
           }
-        } catch (userErr) {
-          console.warn("Prisma user look up failed in logAudit:", userErr);
         }
-      }
 
-      await prisma.auditLog.create({
-        data: {
-          userId: prismaUserId,
+        const auditRecord = await tx.auditLog.create({
+          data: {
+            userId: prismaUserId,
+            module: String(module || "SYSTEM"),
+            action: payload?.action ? String(payload.action) : "Unknown",
+            payload: payloadStr,
+            result: enrichedResultStr,
+            timestamp: new Date(timestampStr),
+            ip: ip ? String(ip) : "",
+          },
+        });
+
+        // Atomic Transactional Outbox Pattern:
+        // Write the "Cloud Sync" instruction as part of the same transaction
+        await enqueueOutboxEvent(tx, "AuditLog", auditRecord.id, "Created", {
+          userId: userId || "",
           module: String(module || "SYSTEM"),
-          action: payload?.action ? String(payload.action) : "Unknown",
+          action: payload?.action || "Unknown",
           payload: payloadStr,
           result: enrichedResultStr,
-          timestamp: new Date(timestampStr),
           ip: ip ? String(ip) : "",
-        },
+          timestamp: timestampStr,
+        });
       });
     } catch (prismaErr) {
-      console.warn("Prisma audit logging failed:", prismaErr);
-    }
-
-    // 2. Write to Firestore via Google API REST (if config allows)
-    if (!token || !config.projectId || !config.firestoreDatabaseId) return;
-
-    const url = `https://firestore.googleapis.com/v1/projects/${config.projectId}/databases/${config.firestoreDatabaseId}/documents/audit_logs`;
-
-    // Convert to Firestore REST API document format
-    const docData = {
-      fields: {
-        userId: { stringValue: userId || "" },
-        module: { stringValue: module || "SYSTEM" },
-        action: { stringValue: payload?.action || "Unknown" },
-        payload: { stringValue: JSON.stringify(cleanPayload) },
-        result: { stringValue: JSON.stringify(enrichedResult) },
-        ip: { stringValue: ip },
-        timestamp: { timestampValue: timestampStr },
-      },
-    };
-
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(docData),
-    });
-
-    if (!res.ok) {
-      console.error("Firestore REST API Error:", await res.text());
+      console.warn("Prisma audit logging and transactional outbox failed:", prismaErr);
     }
   } catch (err) {
     console.error("Failed to log audit:", err);

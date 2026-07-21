@@ -474,7 +474,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const permissions: Record<string, string[]> = {
       Manager: ["Dashboard", "CRM", "Invoices", "Analytics", "Settings", "Simulator", "Inventory"],
       Employee: ["Dashboard", "CRM", "Inventory"],
-      CFO: ["Dashboard", "Accounting", "Invoices", "Payroll", "Compliance", "ZatcaAi", "Settings"],
+      CFO: ["Dashboard", "Accounting", "Invoices", "Payroll", "Compliance", "Settings"],
       "Sales Lead": ["Dashboard", "CRM", "Invoices"],
       "HR Manager": ["Dashboard", "Payroll", "Compliance"],
     };

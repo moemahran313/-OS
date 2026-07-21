@@ -35,7 +35,7 @@ const SECTORS = [
     titleEn: "Retail & E-commerce",
     descAr: "نقاط بيع، مخزون ومستودعات، فوترة إلكترونية متكاملة مع سلة وزيد.",
     descEn: "POS, inventory, and e-invoicing integrated with Salla & Zid.",
-    defaultModules: ["Invoices", "Accounting", "Inventory", "ZatcaAi"],
+    defaultModules: ["Invoices", "Accounting", "Inventory"],
   },
   {
     id: "services",

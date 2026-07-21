@@ -1,6 +1,7 @@
 import { createApp } from "./server/app.ts";
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { startOutboxWorker } from "./server/services/outboxWorker.ts";
 import {
   getFirestore,
   collection,
@@ -111,6 +112,7 @@ async function start() {
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Mudarij OS running on http://localhost:${PORT}`);
       startPayrollCronJob();
+      startOutboxWorker();
     });
   } catch (err) {
     console.error("Failed to start server:", err);

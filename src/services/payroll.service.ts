@@ -141,9 +141,29 @@ export class PayrollService {
       mudadSifGenerated: true,
     });
 
-    const crNumber = "1010123456"; // Standard 10-digit Saudi CR
-    const molId = "7001234567"; // Standard 10-digit MOL ID
-    const employerBankCode = "ALBI"; // Bank AlBilad
+    let crNumber = "1010123456"; // Default standard 10-digit Saudi CR
+    let molId = "7001234567"; // Default standard 10-digit MOL ID
+    let employerBankCode = "ALBI"; // Bank AlBilad fallback
+
+    try {
+      const userSnap = await getDoc(doc(db, "users", userId));
+      const userData = userSnap.data();
+      if (userData?.crNumber && userData.crNumber.trim().length === 10) {
+        crNumber = userData.crNumber.trim();
+      }
+      if (userData?.molId && userData.molId.trim().length === 10) {
+        molId = userData.molId.trim();
+      } else if (userData?.crNumber) {
+        molId = "700" + userData.crNumber.trim().substring(3);
+      }
+      if (userData?.iban) {
+        const cleanedIban = userData.iban.replace(/[^A-Za-z0-9]/g, "");
+        employerBankCode = cleanedIban.substring(4, 8).toUpperCase() || "ALBI";
+      }
+    } catch (e) {
+      console.warn("Could not load user profile for SIF:", e);
+    }
+
     const creationDate = new Date().toISOString().split("T")[0].replace(/-/g, "");
     const creationTime = new Date().toTimeString().split(" ")[0].substring(0, 5).replace(/:/g, "");
     const periodStr = (run.period || "2026-07").replace("-", "");
@@ -151,18 +171,24 @@ export class PayrollService {
     let totalSalaries = 0;
     const employeeRows: string[] = [];
 
+    // Helper to cleanse fields to satisfy strict Saudi bank parsers
+    const cleanId = (id: string) => id.replace(/[^\d]/g, "").substring(0, 10);
+    const cleanIban = (iban: string) => iban.replace(/[^A-Za-z0-9]/g, "").toUpperCase().substring(0, 24);
+
     for (const e of run.entries) {
       const empDoc = await getDoc(doc(db, "employees", e.employeeId));
       const emp = empDoc.data() || {};
 
-      const empIdNumber = (emp.idNumber || emp.employeeId || e.employeeId || "").trim();
-      const iban = (emp.iban || "SA0000000000000000000000").trim();
+      let empIdNumber = (emp.idNumber || emp.iqamaNumber || emp.nationalId || emp.employeeId || e.employeeId || "").trim();
+      empIdNumber = cleanId(empIdNumber).padEnd(10, "0");
+      
+      const iban = cleanIban(emp.iban || "SA0000000000000000000000").padEnd(24, "0");
       const basic = Number(e.basic || 0).toFixed(2);
       const housing = Number((emp.housingAllowanceHalalas || 0) / 100).toFixed(2);
       const otherAllowances = Number((e.allowances || 0) - Number(housing)).toFixed(2);
       const deductions = Number(e.deductions || 0).toFixed(2);
       const netPay = Number(e.netPay || 0).toFixed(2);
-      const empBankCode = iban.substring(4, 8) || "ALBI";
+      const empBankCode = iban.substring(4, 8).toUpperCase() || "ALBI";
 
       totalSalaries += Number(netPay);
 
@@ -192,15 +218,37 @@ export class PayrollService {
       throw new Error("No payroll runs found for this period");
     }
 
-    const crNumber = "1010123456";
-    const molId = "7001234567";
-    const employerBankCode = "ALBI";
+    let crNumber = "1010123456";
+    let molId = "7001234567";
+    let employerBankCode = "ALBI";
+
+    try {
+      const userSnap = await getDoc(doc(db, "users", userId));
+      const userData = userSnap.data();
+      if (userData?.crNumber && userData.crNumber.trim().length === 10) {
+        crNumber = userData.crNumber.trim();
+      }
+      if (userData?.molId && userData.molId.trim().length === 10) {
+        molId = userData.molId.trim();
+      } else if (userData?.crNumber) {
+        molId = "700" + userData.crNumber.trim().substring(3);
+      }
+      if (userData?.iban) {
+        const cleanedIban = userData.iban.replace(/[^A-Za-z0-9]/g, "");
+        employerBankCode = cleanedIban.substring(4, 8).toUpperCase() || "ALBI";
+      }
+    } catch (e) {
+      console.warn("Could not load user profile for SIF:", e);
+    }
+
     const creationDate = new Date().toISOString().split("T")[0].replace(/-/g, "");
     const creationTime = new Date().toTimeString().split(" ")[0].substring(0, 5).replace(/:/g, "");
     const periodStr = period.replace("-", "");
 
     let totalSalaries = 0;
     const employeeRows: string[] = [];
+    const cleanId = (id: string) => id.replace(/[^\d]/g, "").substring(0, 10);
+    const cleanIban = (iban: string) => iban.replace(/[^A-Za-z0-9]/g, "").toUpperCase().substring(0, 24);
 
     for (const d of snap.docs) {
       await updateDoc(doc(db, "payroll_runs", d.id), {
@@ -212,14 +260,16 @@ export class PayrollService {
         const empDoc = await getDoc(doc(db, "employees", e.employeeId));
         const emp = empDoc.data() || {};
 
-        const empIdNumber = (emp.idNumber || emp.employeeId || e.employeeId || "").trim();
-        const iban = (emp.iban || "SA0000000000000000000000").trim();
+        let empIdNumber = (emp.idNumber || emp.iqamaNumber || emp.nationalId || emp.employeeId || e.employeeId || "").trim();
+        empIdNumber = cleanId(empIdNumber).padEnd(10, "0");
+
+        const iban = cleanIban(emp.iban || "SA0000000000000000000000").padEnd(24, "0");
         const basic = Number(e.basic || 0).toFixed(2);
         const housing = Number((emp.housingAllowanceHalalas || 0) / 100).toFixed(2);
         const otherAllowances = Number((e.allowances || 0) - Number(housing)).toFixed(2);
         const deductions = Number(e.deductions || 0).toFixed(2);
         const netPay = Number(e.netPay || 0).toFixed(2);
-        const empBankCode = iban.substring(4, 8) || "ALBI";
+        const empBankCode = iban.substring(4, 8).toUpperCase() || "ALBI";
 
         totalSalaries += Number(netPay);
 
@@ -245,28 +295,52 @@ export class PayrollService {
       throw new Error("Payroll run not found");
     }
 
-    const crNumber = "1010123456";
-    const molId = "7001234567";
-    const employerBankCode = "ALBI";
+    let crNumber = "1010123456";
+    let molId = "7001234567";
+    let employerBankCode = "ALBI";
+
+    try {
+      const userSnap = await getDoc(doc(db, "users", userId));
+      const userData = userSnap.data();
+      if (userData?.crNumber && userData.crNumber.trim().length === 10) {
+        crNumber = userData.crNumber.trim();
+      }
+      if (userData?.molId && userData.molId.trim().length === 10) {
+        molId = userData.molId.trim();
+      } else if (userData?.crNumber) {
+        molId = "700" + userData.crNumber.trim().substring(3);
+      }
+      if (userData?.iban) {
+        const cleanedIban = userData.iban.replace(/[^A-Za-z0-9]/g, "");
+        employerBankCode = cleanedIban.substring(4, 8).toUpperCase() || "ALBI";
+      }
+    } catch (e) {
+      console.warn("Could not load user profile for SIF:", e);
+    }
+
     const creationDate = new Date().toISOString().split("T")[0].replace(/-/g, "");
     const creationTime = new Date().toTimeString().split(" ")[0].substring(0, 5).replace(/:/g, "");
     const periodStr = (run.period || "2026-07").replace("-", "");
 
     let totalSalaries = 0;
     const employeeRows: string[] = [];
+    const cleanId = (id: string) => id.replace(/[^\d]/g, "").substring(0, 10);
+    const cleanIban = (iban: string) => iban.replace(/[^A-Za-z0-9]/g, "").toUpperCase().substring(0, 24);
 
     for (const e of run.entries) {
       const empDoc = await getDoc(doc(db, "employees", e.employeeId));
       const emp = empDoc.data() || {};
 
-      const empIdNumber = (emp.idNumber || emp.employeeId || e.employeeId || "").trim();
-      const iban = (emp.iban || "SA0000000000000000000000").trim();
+      let empIdNumber = (emp.idNumber || emp.iqamaNumber || emp.nationalId || emp.employeeId || e.employeeId || "").trim();
+      empIdNumber = cleanId(empIdNumber).padEnd(10, "0");
+
+      const iban = cleanIban(emp.iban || "SA0000000000000000000000").padEnd(24, "0");
       const basic = Number(e.basic || 0).toFixed(2);
       const housing = Number((emp.housingAllowanceHalalas || 0) / 100).toFixed(2);
       const otherAllowances = Number((e.allowances || 0) - Number(housing)).toFixed(2);
       const deductions = Number(e.deductions || 0).toFixed(2);
       const netPay = Number(e.netPay || 0).toFixed(2);
-      const empBankCode = iban.substring(4, 8) || "ALBI";
+      const empBankCode = iban.substring(4, 8).toUpperCase() || "ALBI";
 
       totalSalaries += Number(netPay);
 

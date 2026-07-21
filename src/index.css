@@ -112,6 +112,50 @@
     width: 100% !important;
   }
 
+  /* Explicitly handle RTL layout mirroring for Arabic documents */
+  [dir="rtl"] #contract-document,
+  .rtl #contract-document {
+    direction: rtl !important;
+    text-align: right !important;
+  }
+
+  /* Explicitly handle LTR layout mirroring for English documents */
+  [dir="ltr"] #contract-document,
+  .ltr #contract-document {
+    direction: ltr !important;
+    text-align: left !important;
+  }
+
+  /* Mirror structural layout offsets, spacing, and flex items in RTL print */
+  [dir="rtl"] #contract-document .ml-auto {
+    margin-right: auto !important;
+    margin-left: 0 !important;
+  }
+  [dir="rtl"] #contract-document .mr-auto {
+    margin-left: auto !important;
+    margin-right: 0 !important;
+  }
+  [dir="rtl"] #contract-document .text-left {
+    text-align: right !important;
+  }
+  [dir="rtl"] #contract-document .text-right {
+    text-align: left !important;
+  }
+
+  /* Consistent mirrored margins for table headers, tables and metadata */
+  [dir="rtl"] #contract-document table,
+  [dir="rtl"] #contract-document th,
+  [dir="rtl"] #contract-document td {
+    text-align: right !important;
+    direction: rtl !important;
+  }
+
+  /* Ensure signature fields, grids, and tables maintain symmetrical, consistent margins and borders during export */
+  #contract-document table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
   /* Prevent elements from breaking mid-page */
   #contract-document p,
   #contract-document h1,
@@ -131,7 +175,8 @@
 
   /* Create repeating table headers/footers trick or fixed elements for print */
   @page {
-    margin: 20mm;
+    size: A4 portrait;
+    margin: 20mm 15mm 20mm 15mm !important; /* Balanced left & right margins for binding symmetry */
     @top-center {
       content: "عقد موثق - مدارج OS";
     }

@@ -4,6 +4,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { generateContentWithRetry, logAudit } from "../services/utils.ts";
 import crypto from "crypto";
 import { db } from "../services/firebase.ts";
+import { prisma } from "../services/prisma.ts";
+import { lockManager } from "../services/lockManager.ts";
 
 const router = Router();
 
@@ -169,42 +171,78 @@ Key Guidance:
 
 // 3. Cryptographic ZATCA Phase 2 Submission & XML Signing with Chaining
 router.post("/submit-phase2", authenticate, async (req: any, res) => {
+  const { sellerName, sellerVat, buyerName, buyerVat, total, vat, currency, lineItems, invoiceDateInput, prevHashInput } = req.body;
+
+  if (!sellerVat || !buyerVat) {
+    return res.status(400).json({ error: "Seller and Buyer VAT numbers are required" });
+  }
+
+  // A. Acquire exclusive lock on the sequence generator (Distributed Lock Engine)
+  const lockKey = `lock:zatca:sequence:${req.user.uid}`;
+  const lockToken = await lockManager.acquire(lockKey, 10000, 5000);
+  if (!lockToken) {
+    return res.status(423).json({
+      error: "Could not acquire exclusive lock on ZATCA sequence generator. Please try again.",
+    });
+  }
+
   try {
-    const { sellerName, sellerVat, buyerName, buyerVat, total, vat, currency, lineItems, invoiceDateInput, prevHashInput } = req.body;
-
-    if (!sellerVat || !buyerVat) {
-      return res.status(400).json({ error: "Seller and Buyer VAT numbers are required" });
-    }
-
-    // 1. Determine Previous Invoice Hash (Cryptographic Chaining)
     let prevHash = prevHashInput || "0000000000000000000000000000000000000000000000000000000000000000";
     let invoiceCounter = 1;
-
-    try {
-      const submissionsColl = db.collection("zatca_submissions");
-      const snapshot = await submissionsColl
-        .where("userId", "==", req.user.uid)
-        .orderBy("timestamp", "desc")
-        .limit(1)
-        .get();
-
-      if (!snapshot.empty) {
-        const lastDoc = snapshot.docs[0].data();
-        prevHash = lastDoc.xmlHash || prevHash;
-        invoiceCounter = (lastDoc.invoiceCounter || 0) + 1;
-      }
-    } catch (dbErr) {
-      console.warn("Failed to retrieve previous ZATCA hash, defaulting chain start:", dbErr);
-    }
-
-    const uuid = crypto.randomUUID();
+    let uuid = crypto.randomUUID();
     const dateStr = invoiceDateInput || new Date().toISOString().split("T")[0];
     const totalVal = Number(total || 0).toFixed(2);
     const vatVal = Number(vat || 0).toFixed(2);
     const currencyCode = currency || "SAR";
+    let xml = "";
+    let xmlHash = "";
 
-    // 2. Generate UBL 2.1 compliant XML structure representation
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+    // B. Strict isolation levels inside a serializable transaction block
+    let txSuccess = false;
+    let retries = 5;
+
+    while (retries > 0 && !txSuccess) {
+      try {
+        await prisma.$transaction(
+          async (tx) => {
+            let seq = await tx.zatcaSequence.findUnique({
+              where: { id: `seq_${req.user.uid}` },
+            });
+            if (!seq) {
+              // Try to find the latest from Firestore first to bootstrap from existing state if present
+              let bootstrapHash = "0000000000000000000000000000000000000000000000000000000000000000";
+              let bootstrapCounter = 0;
+              try {
+                const submissionsColl = db.collection("zatca_submissions");
+                const snapshot = await submissionsColl
+                  .where("userId", "==", req.user.uid)
+                  .orderBy("timestamp", "desc")
+                  .limit(1)
+                  .get();
+
+                if (!snapshot.empty) {
+                  const lastDoc = snapshot.docs[0].data();
+                  bootstrapHash = lastDoc.xmlHash || bootstrapHash;
+                  bootstrapCounter = lastDoc.invoiceCounter || 0;
+                }
+              } catch (fsErr) {
+                console.warn("[ZATCA Bootstrap] Failed to read from Firestore:", fsErr);
+              }
+
+              seq = await tx.zatcaSequence.create({
+                data: {
+                  id: `seq_${req.user.uid}`,
+                  invoiceCounter: bootstrapCounter,
+                  lastXmlHash: bootstrapHash,
+                },
+              });
+            }
+
+            prevHash = prevHashInput || seq.lastXmlHash;
+            invoiceCounter = seq.invoiceCounter + 1;
+
+            // Generate UBL 2.1 compliant XML structure representation within transaction
+            xml = `<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
   <cbc:UUID>${uuid}</cbc:UUID>
   <cbc:ID>INV-${invoiceCounter}</cbc:ID>
@@ -241,8 +279,38 @@ router.post("/submit-phase2", authenticate, async (req: any, res) => {
   </cac:LegalMonetaryTotal>
 </Invoice>`;
 
-    // 3. Compute Real SHA-256 Hash of the XML
-    const xmlHash = crypto.createHash("sha256").update(xml).digest("hex");
+            xmlHash = crypto.createHash("sha256").update(xml).digest("hex");
+
+            await tx.zatcaSequence.update({
+              where: { id: `seq_${req.user.uid}` },
+              data: {
+                invoiceCounter,
+                lastXmlHash: xmlHash,
+              },
+            });
+          },
+          {
+            isolationLevel: "Serializable",
+          }
+        );
+        txSuccess = true;
+      } catch (txErr: any) {
+        if (
+          txErr.code === "P2034" ||
+          String(txErr.message).includes("serialization") ||
+          String(txErr.message).includes("conflict")
+        ) {
+          retries--;
+          if (retries === 0) throw txErr;
+          console.warn(
+            `[ZATCA Sequence] Serializable transaction conflict. Retrying... (${retries} attempts left)`
+          );
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        } else {
+          throw txErr;
+        }
+      }
+    }
 
     // 4. Generate EC keypair and sign the XML with ECDSA secp256k1
     let signature = "";
@@ -358,6 +426,8 @@ router.post("/submit-phase2", authenticate, async (req: any, res) => {
   } catch (err: any) {
     console.error("[ZATCA Phase 2 Cryptographic Submission Error]:", err);
     res.status(500).json({ error: "Failed to submit cryptographically to ZATCA Phase 2", details: err.message });
+  } finally {
+    await lockManager.release(lockKey, lockToken);
   }
 });
 
