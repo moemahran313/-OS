@@ -57,6 +57,7 @@ import ComparisonMatrixSection from "@/src/components/landing/ComparisonMatrixSe
 import SaudiComplianceProofSection from "@/src/components/landing/SaudiComplianceProofSection";
 import OgilvyCaseStudiesSection from "@/src/components/landing/OgilvyCaseStudiesSection";
 import FaqSection from "@/src/components/landing/FaqSection";
+import CurvedDivider from "@/src/components/landing/CurvedDivider";
 
 // --- Elegant shimmer skeleton for GCC network speeds ---
 const SectionLoaderSkeleton = () => (
@@ -802,9 +803,25 @@ export default function LandingPage() {
         <SocialProofSection />
       </Suspense>
 
+      <CurvedDivider
+        direction="dark-to-light"
+        topColorClass="bg-zinc-950"
+        bottomColorClass="bg-white"
+        bottomFillHex="#ffffff"
+        glowColor="emerald"
+      />
+
       <Suspense fallback={<SectionLoaderSkeleton />}>
         <ProblemSection />
       </Suspense>
+
+      <CurvedDivider
+        direction="light-to-dark"
+        topColorClass="bg-white"
+        bottomColorClass="bg-zinc-950"
+        bottomFillHex="#09090b"
+        glowColor="teal"
+      />
 
       <Suspense fallback={<SectionLoaderSkeleton />}>
         <ValueJourneySection />
@@ -818,13 +835,37 @@ export default function LandingPage() {
         <ModulePlaygroundSection />
       </Suspense>
 
+      <CurvedDivider
+        direction="dark-to-light"
+        topColorClass="bg-zinc-900"
+        bottomColorClass="bg-white"
+        bottomFillHex="#ffffff"
+        glowColor="blue"
+      />
+
       <Suspense fallback={<SectionLoaderSkeleton />}>
         <ComparisonMatrixSection />
       </Suspense>
 
+      <CurvedDivider
+        direction="light-to-dark"
+        topColorClass="bg-white"
+        bottomColorClass="bg-zinc-950"
+        bottomFillHex="#09090b"
+        glowColor="emerald"
+      />
+
       <Suspense fallback={<SectionLoaderSkeleton />}>
         <SaudiComplianceProofSection />
       </Suspense>
+
+      <CurvedDivider
+        direction="dark-to-light"
+        topColorClass="bg-zinc-950"
+        bottomColorClass="bg-white"
+        bottomFillHex="#ffffff"
+        glowColor="teal"
+      />
 
       <Suspense fallback={<SectionLoaderSkeleton />}>
         <OgilvyCaseStudiesSection />
@@ -834,11 +875,27 @@ export default function LandingPage() {
         <FeatureShowcase />
       </Suspense>
 
+      <CurvedDivider
+        direction="light-to-dark"
+        topColorClass="bg-zinc-50"
+        bottomColorClass="bg-zinc-950"
+        bottomFillHex="#09090b"
+        glowColor="purple"
+      />
+
       <Suspense fallback={<SectionLoaderSkeleton />}>
         <SeoCopyGenerator />
       </Suspense>
 
       <FlowTransformation />
+
+      <CurvedDivider
+        direction="dark-to-light"
+        topColorClass="bg-zinc-950"
+        bottomColorClass="bg-white"
+        bottomFillHex="#ffffff"
+        glowColor="emerald"
+      />
 
       <Suspense fallback={<SectionLoaderSkeleton />}>
         <PricingSection />
@@ -847,6 +904,14 @@ export default function LandingPage() {
       <Suspense fallback={<SectionLoaderSkeleton />}>
         <FaqSection />
       </Suspense>
+
+      <CurvedDivider
+        direction="light-to-dark"
+        topColorClass="bg-zinc-50"
+        bottomColorClass="bg-zinc-950"
+        bottomFillHex="#09090b"
+        glowColor="teal"
+      />
 
       <Suspense fallback={<SectionLoaderSkeleton />}>
         <FinalCTA />

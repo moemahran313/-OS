@@ -32,11 +32,14 @@ import {
   X,
   Smartphone,
   MapPin,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 import { Logo } from "@/src/components/Logo";
 import CompetitorComparison from "@/src/components/demo/CompetitorComparison";
 import { useUser } from "@/src/contexts/UserContext";
+import { useTheme } from "@/src/contexts/ThemeContext";
 import {
   INDUSTRIES_TEMPLATES,
   ROLES_TEMPLATES,
@@ -79,146 +82,135 @@ function CustomSparkline({ data, color = "#10b981" }: { data: number[]; color?: 
 }
 
 export default function Demo() {
-  const [lang, setLang] = useState<"ar" | "en" | "fr">("ar");
+  const [lang, setLang] = useState<"ar" | "en">("ar");
   const [industry, setIndustry] = useState<string>("retail");
   const [role, setRole] = useState<string>("ceo");
 
-  const t = (ar: string, en: string, fr: string): string => {
+  const t = (ar: string, en: string, fr?: string): string => {
     if (lang === "ar") return ar;
-    if (lang === "fr") return fr;
     return en;
   };
 
   const tr = (text: string): string => {
     if (!text) return text;
-    const dictionary: Record<string, Record<"ar" | "en" | "fr", string>> = {
+    const dictionary: Record<string, Record<"ar" | "en", string>> = {
       // Roles
-      "رئيس الحسابات": { ar: "رئيس الحسابات", en: "Chief Accountant", fr: "Chef Comptable" },
-      "مهندس واجهات": { ar: "مهندس واجهات", en: "Frontend Engineer", fr: "Ingénieur Frontend" },
-      "أخصائي مبيعات كبار العملاء": { ar: "أخصائي مبيعات كبار العملاء", en: "Key Account Sales Specialist", fr: "Spécialiste Ventes Grands Comptes" },
-      "أخصائي موارد بشرية": { ar: "أخصائي موارد بشرية", en: "HR Specialist", fr: "Spécialiste RH" },
-      "مشرف مستودعات وخدمات لوجستية": { ar: "مشرف مستودعات وخدمات لوجستية", en: "Warehouse & Logistics Supervisor", fr: "Superviseur Entrepôt & Logistique" },
-      "مدير تسويق": { ar: "مدير تسويق", en: "Marketing Manager", fr: "Directeur Marketing" },
-      "أخصائي عمليات": { ar: "أخصائي عمليات", en: "Operations Specialist", fr: "Spécialiste Opérations" },
+      "رئيس الحسابات": { ar: "رئيس الحسابات", en: "Chief Accountant" },
+      "مهندس واجهات": { ar: "مهندس واجهات", en: "Frontend Engineer" },
+      "أخصائي مبيعات كبار العملاء": { ar: "أخصائي مبيعات كبار العملاء", en: "Key Account Sales Specialist" },
+      "أخصائي موارد بشرية": { ar: "أخصائي موارد بشرية", en: "HR Specialist" },
+      "مشرف مستودعات وخدمات لوجستية": { ar: "مشرف مستودعات وخدمات لوجستية", en: "Warehouse & Logistics Supervisor" },
+      "مدير تسويق": { ar: "مدير تسويق", en: "Marketing Manager" },
+      "أخصائي عمليات": { ar: "أخصائي عمليات", en: "Operations Specialist" },
       
       // Departments
-      "المالية": { ar: "المالية", en: "Finance", fr: "Finance" },
-      "التقنية": { ar: "التقنية", en: "Technology", fr: "Technologie" },
-      "المبيعات": { ar: "المبيعات", en: "Sales", fr: "Ventes" },
-      "الموارد البشرية": { ar: "الموارد البشرية", en: "HR", fr: "Ressources Humaines" },
-      "سلاسل الإمداد": { ar: "سلاسل الإمداد", en: "Supply Chain", fr: "Chaîne d'Approvisionnement" },
+      "المالية": { ar: "المالية", en: "Finance" },
+      "التقنية": { ar: "التقنية", en: "Technology" },
+      "المبيعات": { ar: "المبيعات", en: "Sales" },
+      "الموارد البشرية": { ar: "الموارد البشرية", en: "HR" },
+      "سلاسل الإمداد": { ar: "سلاسل الإمداد", en: "Supply Chain" },
 
       // Products
-      "شاحن لاسلكي ذكي 15 واط": { ar: "شاحن لاسلكي ذكي 15 واط", en: "Smart Wireless Charger 15W", fr: "Chargeur Sans Fil Intelligent 15W" },
-      "سماعات رأس عازلة للضوضاء": { ar: "سماعات رأس عازلة للضوضاء", en: "Noise-Cancelling Headphones", fr: "Casque Réducteur de Bruit" },
-      "ساعة ليد رياضية مضادة للماء": { ar: "ساعة ليد رياضية مضادة للماء", en: "Waterproof Sports LED Watch", fr: "Montre LED de Sport Étanche" },
-      "كابل شحن فائق السرعة 1.5م": { ar: "كابل شحن فائق السرعة 1.5م", en: "Ultra Fast Charging Cable 1.5m", fr: "Câble de Charge Ultra Rapide 1.5m" },
-      "بولي بروبيلين عالي الكثافة (طن)": { ar: "بولي بروبيلين عالي الكثافة (طن)", en: "High-Density Polypropylene (ton)", fr: "Polypropylène Haute Densité (tonne)" },
-      "قوالب حقن بلاستيكية قياس 5": { ar: "قوالب حقن بلاستيكية قياس 5", en: "Plastic Injection Molds Size 5", fr: "Moules d'Injection Plastique Taille 5" },
-      "ملونات صناعية أساسية (كجم)": { ar: "ملونات صناعية أساسية (كجم)", en: "Basic Industrial Colorants (kg)", fr: "Colorants Industriels de Base (kg)" },
-      "رخصة نظام مدارج السحابية": { ar: "رخصة نظام مدارج السحابية", en: "Madarij Cloud System License", fr: "Licence de Système Cloud Madarij" },
-      "استشارات أتمتة الأعمال وسلاسل الإمداد": { ar: "استشارات أتمتة الأعمال وسلاسل الإمداد", en: "Business Automation & Supply Chain Consulting", fr: "Conseil en Automatisation & Chaîne d'Approvisionnement" },
-      "دعم فني مخصص ذهبي (سنوي)": { ar: "دعم فني مخصص ذهبي (سنوي)", en: "Dedicated Gold Tech Support (Annual)", fr: "Support Technique Dédié Or (Annuel)" },
+      "شاحن لاسلكي ذكي 15 واط": { ar: "شاحن لاسلكي ذكي 15 واط", en: "Smart Wireless Charger 15W" },
+      "سماعات رأس عازلة للضوضاء": { ar: "سماعات رأس عازلة للضوضاء", en: "Noise-Cancelling Headphones" },
+      "ساعة ليد رياضية مضادة للماء": { ar: "ساعة ليد رياضية مضادة للماء", en: "Waterproof Sports LED Watch" },
+      "كابل شحن فائق السرعة 1.5م": { ar: "كابل شحن فائق السرعة 1.5م", en: "Ultra Fast Charging Cable 1.5m" },
+      "بولي بروبيلين عالي الكثافة (طن)": { ar: "بولي بروبيلين عالي الكثافة (طن)", en: "High-Density Polypropylene (ton)" },
+      "قوالب حقن بلاستيكية قياس 5": { ar: "قوالب حقن بلاستيكية قياس 5", en: "Plastic Injection Molds Size 5" },
+      "ملونات صناعية أساسية (كجم)": { ar: "ملونات صناعية أساسية (كجم)", en: "Basic Industrial Colorants (kg)" },
+      "رخصة نظام مدارج السحابية": { ar: "رخصة نظام مدارج السحابية", en: "Madarij Cloud System License" },
+      "استشارات أتمتة الأعمال وسلاسل الإمداد": { ar: "استشارات أتمتة الأعمال وسلاسل الإمداد", en: "Business Automation & Supply Chain Consulting" },
+      "دعم فني مخصص ذهبي (سنوي)": { ar: "دعم فني مخصص ذهبي (سنوي)", en: "Dedicated Gold Tech Support (Annual)" },
 
       // Warehouses
-      "مستودع السلي الرئيسي": { ar: "مستودع السلي الرئيسي", en: "As-Sulay Main Warehouse", fr: "Entrepôt Principal d'As-Sulay" },
-      "مستودع جدة الفرعي": { ar: "مستودع جدة الفرعي", en: "Jeddah Branch Warehouse", fr: "Entrepôt de la Branche de Djeddah" },
+      "مستودع السلي الرئيسي": { ar: "مستودع السلي الرئيسي", en: "As-Sulay Main Warehouse" },
+      "مستودع جدة الفرعي": { ar: "مستودع جدة الفرعي", en: "Jeddah Branch Warehouse" },
 
       // Projects
-      "تأسيس نظام الفوترة الإلكترونية والمزامنة الفورية": { ar: "تأسيس نظام الفوترة الإلكترونية والمزامنة الفورية", en: "E-Invoicing Integration & Real-time Sync", fr: "Intégration de la Facturation Électronique & Synchro Temps Réel" },
-      "جرد سنوي ومطابقة المخزون في فروع المنطقة الغربية": { ar: "جرد سنوي ومطابقة المخزون في فروع المنطقة الغربية", en: "Annual Stock Count & Auditing - Western Region Branches", fr: "Inventaire Annuel & Audit du Stock - Branches de la Région Ouest" },
-      "إطلاق حملة الإعلانات الذكية وتوليد قنوات البيع للربع الثالث": { ar: "إطلاق حملة الإعلانات الذكية وتوليد قنوات البيع للربع الثالث", en: "Smart Ad Campaign Launch & Lead Generation Q3", fr: "Lancement de Campagne Publicitaire Intelligente & Génération de Leads T3" },
+      "تأسيس نظام الفوترة الإلكترونية والمزامنة الفورية": { ar: "تأسيس نظام الفوترة الإلكترونية والمزامنة الفورية", en: "E-Invoicing Integration & Real-time Sync" },
+      "جرد سنوي ومطابقة المخزون في فروع المنطقة الغربية": { ar: "جرد سنوي ومطابقة المخزون في فروع المنطقة الغربية", en: "Annual Stock Count & Auditing - Western Region Branches" },
+      "إطلاق حملة الإعلانات الذكية وتوليد قنوات البيع للربع الثالث": { ar: "إطلاق حملة الإعلانات الذكية وتوليد قنوات البيع للربع الثالث", en: "Smart Ad Campaign Launch & Lead Generation Q3" },
 
       // Transactions
-      "سداد فاتورة مبيعات #INV-2026-1002": { ar: "سداد فاتورة مبيعات #INV-2026-1002", en: "Payment received for invoice #INV-2026-1002", fr: "Règlement reçu pour la facture #INV-2026-1002" },
-      "صرف رواتب الموظفين لشهر يونيو": { ar: "صرف رواتب الموظفين لشهر يونيو", en: "Employee salaries disbursement - June", fr: "Versement des salaires des employés - Juin" },
-      "شراء مواد خام ومستلزمات": { ar: "شراء مواد خام ومستلزمات", en: "Purchase of raw materials and supplies", fr: "Achat de matières premières et fournitures" },
-      "تحصيل دفعة مقدمة من عميل": { ar: "تحصيل دفعة مقدمة من عميل", en: "Advance payment collected from client", fr: "Acompte encaissé du client" },
-      "سداد مستحقات المورد": { ar: "سداد مستحقات المورد", en: "Payment to supplier", fr: "Règlement du fournisseur" },
-      "فاتورة كهرباء ومرافق": { ar: "فاتورة كهرباء ومرافق", en: "Electricity and utilities bill", fr: "Facture d'électricité et services publics" },
-      "خدمات استشارية": { ar: "خدمات استشارية", en: "Consulting services", fr: "Services de conseil" },
+      "سداد فاتورة مبيعات #INV-2026-1002": { ar: "سداد فاتورة مبيعات #INV-2026-1002", en: "Payment received for invoice #INV-2026-1002" },
+      "صرف رواتب الموظفين لشهر يونيو": { ar: "صرف رواتب الموظفين لشهر يونيو", en: "Employee salaries disbursement - June" },
+      "شراء مواد خام ومستلزمات": { ar: "شراء مواد خام ومستلزمات", en: "Purchase of raw materials and supplies" },
+      "تحصيل دفعة مقدمة من عميل": { ar: "تحصيل دفعة مقدمة من عميل", en: "Advance payment collected from client" },
+      "سداد مستحقات المورد": { ar: "سداد مستحقات المورد", en: "Payment to supplier" },
+      "فاتورة كهرباء ومرافق": { ar: "فاتورة كهرباء ومرافق", en: "Electricity and utilities bill" },
+      "خدمات استشارية": { ar: "خدمات استشارية", en: "Consulting services" },
 
       // Categories
-      "التشغيل": { ar: "التشغيل", en: "Operations", fr: "Opérations" },
-      "المشتريات": { ar: "المشتريات", en: "Purchases", fr: "Achats" },
-      "المرافق": { ar: "المرافق", en: "Utilities", fr: "Services Publics" },
-      "الخدمات": { ar: "الخدمات", en: "Services", fr: "Services" },
+      "التشغيل": { ar: "التشغيل", en: "Operations" },
+      "المشتريات": { ar: "المشتريات", en: "Purchases" },
+      "المرافق": { ar: "المرافق", en: "Utilities" },
+      "الخدمات": { ar: "الخدمات", en: "Services" },
       
       // WhatsApp chats
       "السلام عليكم، هل تتوفر لديكم عروض أسعار تنافسية للموسم القادم؟": {
         ar: "السلام عليكم، هل تتوفر لديكم عروض أسعار تنافسية للموسم القادم؟",
-        en: "Hello, do you have competitive price quotes available for the next season?",
-        fr: "Bonjour, proposez-vous des tarifs compétitifs pour la saison prochaine?"
+        en: "Hello, do you have competitive price quotes available for the next season?"
       },
       "أهلاً بك يا فندم. بالتأكيد، سيقوم مستشار المبيعات بالتواصل معك فوراً وتقديم باقة مخصصة.": {
         ar: "أهلاً بك يا فندم. بالتأكيد، سيقوم مستشار المبيعات بالتواصل معك فوراً وتقديم باقة مخصصة.",
-        en: "Welcome, sir. Absolutely, a sales consultant will contact you immediately and provide a customized package.",
-        fr: "Bienvenue, Monsieur. Absolument, un conseiller commercial vous contactera immédiatement pour vous proposer une offre personnalisée."
+        en: "Welcome, sir. Absolutely, a sales consultant will contact you immediately and provide a customized package."
       },
       "ممتاز، أريد أيضاً التحقق من تكامل الفاتورة مع نظام الزكاة.": {
         ar: "ممتاز، أريد أيضاً التحقق من تكامل الفاتورة مع نظام الزكاة.",
-        en: "Excellent, I also want to verify the invoice integration with the ZATCA system.",
-        fr: "Excellent, je souhaite également vérifier l'intégration de la facture avec le système de la ZATCA."
+        en: "Excellent, I also want to verify the invoice integration with the ZATCA system."
       },
       
       // Cities & Districts
-      "حي الياسمين": { ar: "حي الياسمين", en: "Al Yasmeen District", fr: "Quartier Al Yasmeen" },
-      "طريق الملك عبدالعزيز": { ar: "طريق الملك عبدالعزيز", en: "King Abdulaziz Road", fr: "Route du Roi Abdulaziz" },
-      "الرياض": { ar: "الرياض", en: "Riyadh", fr: "Riyad" },
-      "حي الحمراء": { ar: "حي الحمراء", en: "Al Hamra District", fr: "Quartier Al Hamra" },
-      "طريق الكورنيش": { ar: "طريق الكورنيش", en: "Corniche Road", fr: "Route de la Corniche" },
-      "جدة": { ar: "جدة", en: "Jeddah", fr: "Djeddah" },
-      "حي الشاطئ": { ar: "حي الشاطئ", en: "Al Shatea District", fr: "Quartier Al Shatea" },
-      "طريق الملك فيصل": { ar: "طريق الملك فيصل", en: "King Faisal Road", fr: "Route du Roi Faisal" },
-      "الدمام": { ar: "الدمام", en: "Dammam", fr: "Dammam" },
-      "حي مجتمعات نيوم": { ar: "حي مجتمعات نيوم", en: "NEOM Communities District", fr: "Quartier des Communautés de NEOM" },
-      "طريق المستقبل": { ar: "طريق المستقبل", en: "Future Avenue", fr: "Avenue du Futur" },
-      "نيوم": { ar: "نيوم", en: "NEOM", fr: "NEOM" },
-      "حي العزيزية": { ar: "حي العزيزية", en: "Al Aziziyah District", fr: "Quartier Al Aziziyah" },
-      "طريق المسجد الحرام": { ar: "طريق المسجد الحرام", en: "Masjid Al Haram Road", fr: "Route de la Mosquée Al Haram" },
-      "مكة المكرمة": { ar: "مكة المكرمة", en: "Makkah", fr: "La Mecque" },
-      "حي بئر عثمان": { ar: "حي بئر عثمان", en: "Bir Uthman District", fr: "Quartier Bir Uthman" },
-      "طريق سلطانة": { ar: "طريق سلطانة", en: "Sultana Road", fr: "Route Sultana" },
-      "المدينة المنورة": { ar: "المدينة المنورة", en: "Madinah", fr: "Médine" },
-      "حي الحزام الذهبي": { ar: "حي الحزام الذهبي", en: "Al Hizam Al Thahaby District", fr: "Quartier Al Hizam Al Thahaby" },
-      "طريق الملك فهد": { ar: "طريق الملك فهد", en: "King Fahd Road", fr: "Route du Roi Fahd" },
-      "الخبر": { ar: "الخبر", en: "Khobar", fr: "Khobar" },
+      "حي الياسمين": { ar: "حي الياسمين", en: "Al Yasmeen District" },
+      "طريق الملك عبدالعزيز": { ar: "طريق الملك عبدالعزيز", en: "King Abdulaziz Road" },
+      "الرياض": { ar: "الرياض", en: "Riyadh" },
+      "حي الحمراء": { ar: "حي الحمراء", en: "Al Hamra District" },
+      "طريق الكورنيش": { ar: "طريق الكورنيش", en: "Corniche Road" },
+      "جدة": { ar: "جدة", en: "Jeddah" },
+      "حي الشاطئ": { ar: "حي الشاطئ", en: "Al Shatea District" },
+      "طريق الملك فيصل": { ar: "طريق الملك فيصل", en: "King Faisal Road" },
+      "الدمام": { ar: "الدمام", en: "Dammam" },
+      "حي مجتمعات نيوم": { ar: "حي مجتمعات نيوم", en: "NEOM Communities District" },
+      "طريق المستقبل": { ar: "طريق المستقبل", en: "Future Avenue" },
+      "نيوم": { ar: "نيوم", en: "NEOM" },
+      "حي العزيزية": { ar: "حي العزيزية", en: "Al Aziziyah District" },
+      "طريق المسجد الحرام": { ar: "طريق المسجد الحرام", en: "Masjid Al Haram Road" },
+      "مكة المكرمة": { ar: "مكة المكرمة", en: "Makkah" },
+      "حي بئر عثمان": { ar: "حي بئر عثمان", en: "Bir Uthman District" },
+      "طريق سلطانة": { ar: "طريق سلطانة", en: "Sultana Road" },
+      "المدينة المنورة": { ar: "المدينة المنورة", en: "Madinah" },
+      "حي الحزام الذهبي": { ar: "حي الحزام الذهبي", en: "Al Hizam Al Thahaby District" },
+      "طريق الملك فهد": { ar: "طريق الملك فهد", en: "King Fahd Road" },
+      "الخبر": { ar: "الخبر", en: "Khobar" },
 
       // ZATCA / Cryptographic logs & steps
       "بدء عملية الفوترة الإلكترونية وتبادل حزم البيانات...": {
         ar: "بدء عملية الفوترة الإلكترونية وتبادل حزم البيانات...",
-        en: "Starting electronic invoicing and data packet transmission...",
-        fr: "Démarrage de la facturation électronique et de la transmission des données..."
+        en: "Starting electronic invoicing and data packet transmission..."
       },
       "توليد مستند XML المطابق لمعيار UBL 2.1...": {
         ar: "توليد مستند XML المطابق لمعيار UBL 2.1...",
-        en: "Generating XML document compliant with UBL 2.1 standard...",
-        fr: "Génération du document XML conforme à la norme UBL 2.1..."
+        en: "Generating XML document compliant with UBL 2.1 standard..."
       },
       "حساب رمز SHA-256 الفرعي وتشفير الهاش الفوري...": {
         ar: "حساب رمز SHA-256 الفرعي وتشفير الهاش الفوري...",
-        en: "Computing unique SHA-256 hash and instant hash encryption...",
-        fr: "Calcul du hachage unique SHA-256 et chiffrement instantané..."
+        en: "Computing unique SHA-256 hash and instant hash encryption..."
       },
       "التوقيع الرقمي للمستند باستخدام مفتاح التشفير الخاص RSA...": {
         ar: "التوقيع الرقمي للمستند باستخدام مفتاح التشفير الخاص RSA...",
-        en: "Digital signing of document using private cryptographic RSA key...",
-        fr: "Signature numérique du document à l'aide de la clé cryptographique privée RSA..."
+        en: "Digital signing of document using private cryptographic RSA key..."
       },
       "توليد رمز الاستجابة السريعة (QR Code) المتوافق مع الفئة ب...": {
         ar: "توليد رمز الاستجابة السريعة (QR Code) المتوافق مع الفئة ب...",
-        en: "Generating QR Code compliant with category B requirements...",
-        fr: "Génération du QR Code conforme aux exigences de la catégorie B..."
+        en: "Generating QR Code compliant with category B requirements..."
       },
       "ربط مباشر واستعلام API مع خوادم هيئة الزكاة والضريبة والجمارك (ZATCA)...": {
         ar: "ربط مباشر واستعلام API مع خوادم هيئة الزكاة والضريبة والجمارك (ZATCA)...",
-        en: "Direct link and API query with ZATCA servers...",
-        fr: "Lien direct et requête API avec les serveurs de la ZATCA..."
+        en: "Direct link and API query with ZATCA servers..."
       },
       "الاستجابة: تم المصادقة والاعتماد الفوري وجاهز للتكامل!": {
         ar: "الاستجابة: تم المصادقة والاعتماد الفوري وجاهز للتكامل!",
-        en: "Response: Instant authorization and validation complete, ready for sync!",
-        fr: "Réponse: Autorisation instantanée et validation terminées, prêt pour la synchro!"
+        en: "Response: Instant authorization and validation complete, ready for sync!"
       }
     };
 
@@ -237,6 +229,7 @@ export default function Demo() {
   };
 
   const { user } = useUser();
+  const { theme, toggleTheme } = useTheme();
   const [isRealDataSynced, setIsRealDataSynced] = useState(false);
 
   // ZATCA Cryptographic Simulation States
@@ -814,7 +807,7 @@ export default function Demo() {
   const showToast = (msg: string) => {
     const toastDiv = document.createElement("div");
     toastDiv.className =
-      "fixed bottom-8 left-8 bg-zinc-900 border-2 border-primary text-white font-bold py-3 px-6 rounded-2xl shadow-2xl z-50 animate-bounce flex items-center gap-2";
+      "fixed bottom-8 left-8 bg-zinc-100 border-2 border-primary text-white font-bold py-3 px-6 rounded-2xl shadow-2xl z-50 animate-bounce flex items-center gap-2";
     toastDiv.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span> <span>${msg}</span>`;
     document.body.appendChild(toastDiv);
     setTimeout(() => {
@@ -942,7 +935,7 @@ export default function Demo() {
 
   return (
     <div
-      className="min-h-screen bg-zinc-950 font-sans antialiased text-white selection:bg-primary/30 relative overflow-hidden public-dark-page"
+      className="min-h-screen bg-zinc-50 font-sans antialiased text-zinc-900 selection:bg-primary/30 relative overflow-hidden"
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       {/* Absolute background visual flares */}
@@ -956,13 +949,13 @@ export default function Demo() {
             initial={{ opacity: 0, scale: 0.8, y: 50 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: -20 }}
-            className="fixed top-1/4 left-1/2 -translate-x-1/2 bg-zinc-900 border-4 border-emerald-400 p-8 rounded-[2.5rem] shadow-2xl z-50 text-center max-w-md"
+            className="fixed top-1/4 left-1/2 -translate-x-1/2 bg-zinc-100 border-4 border-emerald-400 p-8 rounded-[2.5rem] shadow-2xl z-50 text-center max-w-md"
           >
             <div className="text-6xl mb-4">🏆</div>
             <h3 className="text-2xl font-black text-emerald-400 mb-2">
               {lang === "ar" ? "تم إنجاز المهمة بنجاح!" : "Mission Accomplished!"}
             </h3>
-            <p className="text-zinc-200 text-lg font-medium leading-relaxed">{celebration}</p>
+            <p className="text-zinc-700 text-lg font-medium leading-relaxed">{celebration}</p>
             <button
               onClick={() => setCelebration(null)}
               className="mt-6 px-6 py-2 bg-emerald-500 text-black font-black rounded-xl hover:bg-emerald-400 transition-colors"
@@ -983,21 +976,21 @@ export default function Demo() {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-zinc-900 border border-white/10 p-6 rounded-[2rem] w-full max-w-xl shadow-2xl space-y-4 text-right"
+              className="bg-zinc-100 border border-zinc-200 p-6 rounded-[2rem] w-full max-w-xl shadow-2xl space-y-4 text-right"
               dir="rtl"
             >
-              <div className="flex justify-between items-center border-b border-white/5 pb-3">
+              <div className="flex justify-between items-center border-b border-zinc-200 pb-3">
                 <span className="px-2 py-0.5 text-[10px] font-bold bg-primary/20 text-primary rounded-md animate-pulse">
                   {t("ممتثل بالكامل", "ZATCA COMPLIANT", "CONFORME À LA ZATCA")}
                 </span>
-                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                <h3 className="text-lg font-black text-zinc-900 flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-primary" />
                   {t("مجمع التوقيع الإلكتروني والربط الضريبي", "ZATCA Cryptographic Signing Terminal", "Terminal de Signature Cryptographique ZATCA")}
                 </h3>
               </div>
 
-              <div className="bg-black/50 border border-white/5 p-4 rounded-xl font-mono text-xs text-zinc-300 space-y-2.5 min-h-[180px] overflow-y-auto">
-                <div className="text-[10px] text-zinc-500 border-b border-white/5 pb-1.5 mb-2 flex justify-between items-center font-sans">
+              <div className="bg-black/50 border border-zinc-200 p-4 rounded-xl font-mono text-xs text-zinc-600 space-y-2.5 min-h-[180px] overflow-y-auto">
+                <div className="text-[10px] text-zinc-500 border-b border-zinc-200 pb-1.5 mb-2 flex justify-between items-center font-sans">
                   <span>Invoice Ref: {zatcaSigningInvoiceId}</span>
                   <span className="text-primary font-bold">SHA-256 Engine v2.0</span>
                 </div>
@@ -1006,7 +999,7 @@ export default function Demo() {
                     key={i}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className={`leading-relaxed ${i === zatcaSigningStep ? "text-primary font-bold animate-pulse" : "text-zinc-400"}`}
+                    className={`leading-relaxed ${i === zatcaSigningStep ? "text-primary font-bold animate-pulse" : "text-zinc-500"}`}
                   >
                     {tr(log)}
                   </motion.div>
@@ -1016,7 +1009,7 @@ export default function Demo() {
               <div className="flex items-center justify-between pt-2 font-sans">
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-                  <span className="text-[10px] text-zinc-400">
+                  <span className="text-[10px] text-zinc-500">
                     {lang === "ar"
                       ? "جاري معالجة الهاش والتسجيل الفوري..."
                       : "Computing ECDSA-256 digital signature..."}
@@ -1033,11 +1026,11 @@ export default function Demo() {
       </AnimatePresence>
 
       {/* Header bar */}
-      <nav className="fixed top-0 left-0 w-full z-40 px-6 py-4 backdrop-blur-md bg-zinc-950/80 border-b border-white/10">
+      <nav className="fixed top-0 left-0 w-full z-40 px-6 py-4 backdrop-blur-md bg-zinc-50/80 dark:bg-zinc-50/80 border-b border-zinc-200 dark:border-zinc-200">
         <div className="container mx-auto max-w-7xl flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Logo theme="dark" />
-            <div className="hidden lg:flex items-center gap-2 bg-zinc-900 px-3 py-1 rounded-full border border-white/5 text-xs text-zinc-400 font-medium">
+            <Logo theme={theme === "dark" ? "dark" : "light"} />
+            <div className="hidden lg:flex items-center gap-2 bg-zinc-100 dark:bg-zinc-100 px-3 py-1 rounded-full border border-zinc-200 dark:border-zinc-200 text-xs text-zinc-600 dark:text-zinc-500 font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               {t("نظام الديمو التفاعلي النشط", "Live Simulation Engine", "Moteur de Simulation Actif")}
             </div>
@@ -1045,41 +1038,38 @@ export default function Demo() {
 
           <div className="flex items-center gap-3">
             {/* Lang toggle */}
-            <div className="flex bg-zinc-900/90 border border-white/10 rounded-xl p-0.5 gap-0.5">
-              <button
-                onClick={() => {
-                  setLang("ar");
-                  showToast("تم تغيير اللغة للعربية");
-                }}
-                className={`px-2 py-1 text-[10px] font-black rounded-lg transition-all ${
-                  lang === "ar" ? "bg-primary text-white" : "text-zinc-400 hover:text-white"
-                }`}
-              >
-                عربي
-              </button>
-              <button
-                onClick={() => {
-                  setLang("en");
-                  showToast("Language switched to English");
-                }}
-                className={`px-2 py-1 text-[10px] font-black rounded-lg transition-all ${
-                  lang === "en" ? "bg-primary text-white" : "text-zinc-400 hover:text-white"
-                }`}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => {
-                  setLang("fr");
-                  showToast("Langue changée en Français");
-                }}
-                className={`px-2 py-1 text-[10px] font-black rounded-lg transition-all ${
-                  lang === "fr" ? "bg-primary text-white" : "text-zinc-400 hover:text-white"
-                }`}
-              >
-                FR
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                const newLang = lang === "ar" ? "en" : "ar";
+                setLang(newLang);
+                showToast(
+                  newLang === "ar" ? "تم تغيير اللغة للعربية" : "Language switched to English"
+                );
+              }}
+              className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-200 text-zinc-700 dark:text-zinc-700 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-200 transition-all text-xs font-bold flex items-center gap-2"
+            >
+              <Globe className="w-4 h-4 text-primary" />
+              <span>{lang === "ar" ? "English" : "عربي"}</span>
+            </button>
+
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-200 rounded-xl hover:bg-zinc-200 dark:hover:bg-zinc-200 transition-all text-xs font-bold flex items-center gap-2 text-zinc-700 dark:text-white"
+              title={lang === "ar" ? "تغيير المظهر" : "Toggle Theme"}
+            >
+              {theme === "dark" ? (
+                <>
+                  <Sun className="w-4 h-4 text-amber-500" />
+                  <span className="hidden sm:inline">{lang === "ar" ? "مظهر مضيء" : "Light"}</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4 text-indigo-500" />
+                  <span className="hidden sm:inline">{lang === "ar" ? "مظهر داكن" : "Dark"}</span>
+                </>
+              )}
+            </button>
 
             {/* Reset button */}
             <button
@@ -1093,7 +1083,7 @@ export default function Demo() {
                   )
                 );
               }}
-              className="px-3 py-1.5 bg-zinc-900 border border-white/10 text-rose-400 hover:text-white hover:bg-rose-900/30 rounded-xl transition-all text-xs font-bold flex items-center gap-2"
+              className="px-3 py-1.5 bg-zinc-100 dark:bg-zinc-100 border border-zinc-200 dark:border-zinc-200 text-rose-500 dark:text-rose-400 hover:text-zinc-900 dark:hover:text-white hover:bg-rose-900/30 rounded-xl transition-all text-xs font-bold flex items-center gap-2"
               title={t("إعادة تعيين الديمو", "Reset Demo", "Réinitialiser la Démo")}
             >
               <RotateCcw className="w-4 h-4" />
@@ -1115,16 +1105,16 @@ export default function Demo() {
       <main className="pt-28 pb-20 px-4 md:px-6">
         <div className="container mx-auto max-w-7xl space-y-10">
           {/* Controls: Industry & Role selectors */}
-          <div className="bg-zinc-900 border border-white/10 rounded-3xl p-6 relative">
+          <div className="bg-zinc-100 border border-zinc-200 rounded-3xl p-6 relative">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
               <div>
                 <span className="text-xs text-primary font-black uppercase tracking-wider block mb-1">
                   {lang === "ar" ? "تخصيص الساندبوكس بالكامل" : "Full Sandbox Customization"}
                 </span>
-                <h2 className="text-2xl md:text-3xl font-black text-white">
+                <h2 className="text-2xl md:text-3xl font-black text-zinc-900">
                   {lang === "ar" ? "شاهد نظامك في ثوانٍ" : "See Your Business Live"}
                 </h2>
-                <p className="text-zinc-400 text-sm md:text-base mt-2 leading-relaxed">
+                <p className="text-zinc-500 text-sm md:text-base mt-2 leading-relaxed">
                   {lang === "ar"
                     ? "اختر قطاع شركتك ودور الموظف لتوليد قاعدة بيانات متكاملة ومترابطة تحاكي المعاملات الحقيقية."
                     : "Pick your industry and team role to populate a live interconnected transactional database for your business model."}
@@ -1134,7 +1124,7 @@ export default function Demo() {
               <div className="space-y-4">
                 {/* Industry Picker */}
                 <div>
-                  <label className="block text-xs text-zinc-400 font-bold mb-2">
+                  <label className="block text-xs text-zinc-500 font-bold mb-2">
                     {lang === "ar" ? "١. قطاع الشركة المستهدفة:" : "1. Pick Target Industry:"}
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -1145,7 +1135,7 @@ export default function Demo() {
                         className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all border ${
                           industry === indKey
                             ? "bg-primary text-white border-primary shadow-lg shadow-primary/20"
-                            : "bg-zinc-950 text-zinc-400 border-white/5 hover:border-white/20 hover:text-white"
+                            : "bg-zinc-950 text-zinc-500 border-zinc-200 hover:border-zinc-300 hover:text-zinc-900 dark:hover:text-white"
                         }`}
                       >
                         {getIndustryLabel(indKey)}
@@ -1156,7 +1146,7 @@ export default function Demo() {
 
                 {/* Role Picker */}
                 <div>
-                  <label className="block text-xs text-zinc-400 font-bold mb-2">
+                  <label className="block text-xs text-zinc-500 font-bold mb-2">
                     {lang === "ar" ? "٢. دور ووظيفة العميل التجريبي:" : "2. Choose User Role:"}
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -1167,7 +1157,7 @@ export default function Demo() {
                         className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all border ${
                           role === roleKey
                             ? "bg-white text-black border-white shadow-lg"
-                            : "bg-zinc-950 text-zinc-400 border-white/5 hover:border-white/20 hover:text-white"
+                            : "bg-zinc-950 text-zinc-500 border-zinc-200 hover:border-zinc-300 hover:text-zinc-900 dark:hover:text-white"
                         }`}
                       >
                         {getRoleLabel(roleKey)}
@@ -1181,7 +1171,7 @@ export default function Demo() {
 
           {/* Real-time Business Account Synchronization Banner */}
           {user ? (
-            <div className="bg-zinc-900 border border-emerald-500/30 rounded-3xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden">
+            <div className="bg-zinc-100 border border-emerald-500/30 rounded-3xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
@@ -1192,11 +1182,11 @@ export default function Demo() {
                     <span className="px-2 py-0.5 text-[9px] font-bold bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
                       {lang === "ar" ? "جاهز للمزامنة" : "SYNC READY"}
                     </span>
-                    <h3 className="text-sm font-black text-white">
+                    <h3 className="text-sm font-black text-zinc-900">
                       {lang === "ar" ? "تكامل حسابك التجاري الحقيقي نشط" : "Live Corporate Synchronization"}
                     </h3>
                   </div>
-                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                  <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
                     {lang === "ar"
                       ? `مرحباً ${user.name}. تم التحقق من هويتك. هل ترغب بربط الساندبوكس ببيانات شركتك الرسمية (${user.companyName || "تأسيس منشأة"}) وسجلك التجاري (${user.crNumber || "سجل معتمد"})؟`
                       : `Welcome ${user.name}. Verified. Would you like to bind the sandbox with your official registered name (${user.companyName || "Company Profile"}) and CR record (${user.crNumber || "Verified"})?`}
@@ -1208,7 +1198,7 @@ export default function Demo() {
                 disabled={isRealDataSynced}
                 className={`px-5 py-2 text-xs font-black rounded-xl transition-all shadow-lg shrink-0 ${
                   isRealDataSynced
-                    ? "bg-zinc-800 text-zinc-500 border border-zinc-700/50 cursor-not-allowed"
+                    ? "bg-zinc-200 text-zinc-500 border border-zinc-700/50 cursor-not-allowed"
                     : "bg-emerald-500 text-black hover:bg-emerald-400 shadow-emerald-500/15"
                 }`}
               >
@@ -1222,17 +1212,17 @@ export default function Demo() {
               </button>
             </div>
           ) : (
-            <div className="bg-zinc-900 border border-white/5 rounded-3xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden">
+            <div className="bg-zinc-100 border border-zinc-200 rounded-3xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
                   <Sparkles className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-white">
+                  <h3 className="text-sm font-black text-zinc-900">
                     {lang === "ar" ? "هل ترغب بتجربة الساندبوكس ببياناتك الفعلية؟" : "Want to test sandbox with your live profile?"}
                   </h3>
-                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                  <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
                     {lang === "ar"
                       ? "قم بتسجيل الدخول أو إنشاء حساب الآن لربط اسم شركتك، سجلك التجاري الفعلي، والموارد البشرية تلقائياً داخل لوحة القيادة التفاعلية."
                       : "Login or register now to automatically bind your actual business name, active CR, and payroll directly inside the sandbox."}
@@ -1241,7 +1231,7 @@ export default function Demo() {
               </div>
               <Link
                 to="/login"
-                className="px-5 py-2.5 bg-zinc-950 border border-white/10 hover:border-white/20 text-xs font-black rounded-xl text-white transition-all text-center shrink-0"
+                className="px-5 py-2.5 bg-zinc-950 border border-zinc-200 hover:border-zinc-300 text-xs font-black rounded-xl text-white transition-all text-center shrink-0"
               >
                 {lang === "ar" ? "سجل دخولك الآن" : "Sign In / Register"}
               </Link>
@@ -1251,18 +1241,18 @@ export default function Demo() {
           {/* Interactive Split Layout */}
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
             {/* LEFT Column (4/12): AI Sales specialist & Dynamic Agent */}
-            <div className="xl:col-span-4 bg-zinc-900 border border-white/10 rounded-[2rem] p-6 h-[640px] flex flex-col justify-between relative overflow-hidden shadow-xl">
+            <div className="xl:col-span-4 bg-zinc-100 border border-zinc-200 rounded-[2rem] p-6 h-[640px] flex flex-col justify-between relative overflow-hidden shadow-xl">
               <div className="absolute top-0 left-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
 
               <div>
-                <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+                <div className="flex items-center justify-between border-b border-zinc-200 pb-4 mb-4">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-primary animate-pulse" />
                     <div>
-                      <h4 className="font-black text-white text-sm md:text-base">
+                      <h4 className="font-black text-zinc-900 text-sm md:text-base">
                         {lang === "ar" ? "مساعد مدارج الذكي (AI Copilot)" : "Madarij AI Copilot"}
                       </h4>
-                      <p className="text-[10px] text-zinc-400">
+                      <p className="text-[10px] text-zinc-500">
                         {lang === "ar"
                           ? "مستشار المنتجات وتغيير الشاشات تلقائياً"
                           : "Product consultant & UI action handler"}
@@ -1295,7 +1285,7 @@ export default function Demo() {
                         onClick={() => {
                           setAiInput(q);
                         }}
-                        className="text-[10px] font-medium bg-zinc-950 hover:bg-zinc-800 text-zinc-300 px-2 py-1 rounded-lg border border-white/5 transition-all text-right"
+                        className="text-[10px] font-medium bg-zinc-950 hover:bg-zinc-200 text-zinc-600 px-2 py-1 rounded-lg border border-zinc-200 transition-all text-right"
                       >
                         {q}
                       </button>
@@ -1312,10 +1302,10 @@ export default function Demo() {
                     className={`p-3.5 rounded-2xl text-xs leading-relaxed max-w-[90%] ${
                       msg.role === "user"
                         ? "bg-primary text-white mr-auto text-left rounded-br-none"
-                        : "bg-zinc-950 text-zinc-300 ml-auto rounded-bl-none border border-white/5"
+                        : "bg-zinc-950 text-zinc-600 ml-auto rounded-bl-none border border-zinc-200"
                     }`}
                   >
-                    <div className="font-bold text-[10px] mb-1 text-zinc-400">
+                    <div className="font-bold text-[10px] mb-1 text-zinc-500">
                       {msg.role === "user"
                         ? lang === "ar"
                           ? "أنت"
@@ -1328,7 +1318,7 @@ export default function Demo() {
                   </div>
                 ))}
                 {isAiLoading && (
-                  <div className="p-3 bg-zinc-950 text-zinc-400 rounded-2xl text-xs max-w-[80%] ml-auto flex items-center gap-2">
+                  <div className="p-3 bg-zinc-950 text-zinc-500 rounded-2xl text-xs max-w-[80%] ml-auto flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
                     <span>
                       {lang === "ar" ? "يرتب الرد المحاسبي الذكي..." : "Thinking deeply..."}
@@ -1349,7 +1339,7 @@ export default function Demo() {
                       ? "اسألني أي شيء عن النظام أو جودة الفوترة..."
                       : "Ask about compliance, competitors, or automate records..."
                   }
-                  className="flex-1 bg-zinc-950 border border-white/10 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-primary text-white"
+                  className="flex-1 bg-zinc-950 border border-zinc-200 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-primary text-white"
                 />
                 <button
                   type="submit"
@@ -1362,9 +1352,9 @@ export default function Demo() {
             </div>
 
             {/* RIGHT Column (8/12): Main Interactive Sandbox Frame */}
-            <div className="xl:col-span-8 bg-zinc-900 border border-white/10 rounded-[2rem] overflow-hidden min-h-[640px] flex flex-col shadow-xl relative">
+            <div className="xl:col-span-8 bg-zinc-100 border border-zinc-200 rounded-[2rem] overflow-hidden min-h-[640px] flex flex-col shadow-xl relative">
               {/* Simulator Navigation Bar */}
-              <div className="bg-zinc-950 border-b border-white/5 px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+              <div className="bg-zinc-950 border-b border-zinc-200 px-6 py-3 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-full bg-rose-500" />
                   <div className="w-3 h-3 rounded-full bg-amber-500" />
@@ -1377,15 +1367,15 @@ export default function Demo() {
                 {/* Sub-tabs menu */}
                 <div className="flex items-center gap-1.5 overflow-x-auto max-w-full">
                   {[
-                    { id: "dashboard", labelAr: "لوحة القيادة", labelEn: "Cockpit", labelFr: "Cockpit / TDB" },
-                    { id: "invoices", labelAr: "الفواتير والزكاة", labelEn: "Invoicing", labelFr: "Facturation & ZATCA" },
-                    { id: "crm", labelAr: "المبيعات والواتساب", labelEn: "CRM & WA", labelFr: "CRM & WhatsApp" },
-                    { id: "accounting", labelAr: "المحاسبة المتقدمة", labelEn: "Ledger", labelFr: "Grand Livre" },
-                    { id: "payroll", labelAr: "الموارد والرواتب", labelEn: "WPS Payroll", labelFr: "Paie WPS" },
-                    { id: "shipping", labelAr: "المستودعات والشحن", labelEn: "Logistics", labelFr: "Logistique & Stock" },
-                    { id: "marketing", labelAr: "الحملات الإعلانية", labelEn: "AD Platform", labelFr: "Publicité" },
-                    { id: "tours_missions", labelAr: "المهام والجولات", labelEn: "Missions", labelFr: "Missions" },
-                    { id: "comparison", labelAr: "مقارنة المنافسين", labelEn: "Compare", labelFr: "Comparatif" },
+                    { id: "dashboard", labelAr: "لوحة القيادة", labelEn: "Cockpit" },
+                    { id: "invoices", labelAr: "الفواتير والزكاة", labelEn: "Invoicing" },
+                    { id: "crm", labelAr: "المبيعات والواتساب", labelEn: "CRM & WA" },
+                    { id: "accounting", labelAr: "المحاسبة المتقدمة", labelEn: "Ledger" },
+                    { id: "payroll", labelAr: "الموارد والرواتب", labelEn: "WPS Payroll" },
+                    { id: "shipping", labelAr: "المستودعات والشحن", labelEn: "Logistics" },
+                    { id: "marketing", labelAr: "الحملات الإعلانية", labelEn: "AD Platform" },
+                    { id: "tours_missions", labelAr: "المهام والجولات", labelEn: "Missions" },
+                    { id: "comparison", labelAr: "مقارنة المنافسين", labelEn: "Compare" },
                   ].map((tab) => (
                     <button
                       key={tab.id}
@@ -1402,17 +1392,17 @@ export default function Demo() {
                       className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all shrink-0 ${
                         activeTab === tab.id
                           ? "bg-primary/20 text-primary border border-primary/30"
-                          : "text-zinc-400 hover:text-white hover:bg-white/5"
+                          : "text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-white/5"
                       }`}
                     >
-                      {lang === "ar" ? tab.labelAr : lang === "fr" ? tab.labelFr : tab.labelEn}
+                      {lang === "ar" ? tab.labelAr : tab.labelEn}
                     </button>
                   ))}
                 </div>
               </div>
 
               {/* Main Tab Screen Area */}
-              <div className="flex-1 p-6 md:p-8 bg-zinc-950/60">
+              <div className="flex-1 p-6 md:p-8 bg-zinc-50/60">
                 <AnimatePresence mode="wait">
                   {/* TAB: DASHBOARD */}
                   {activeTab === "dashboard" && (
@@ -1425,17 +1415,17 @@ export default function Demo() {
                     >
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                          <h3 className="text-xl md:text-2xl font-black text-white flex items-center gap-2">
+                          <h3 className="text-xl md:text-2xl font-black text-zinc-900 flex items-center gap-2">
                             <TrendingUp className="w-6 h-6 text-primary" />
                             {lang === "ar"
                               ? "لوحة القيادة والمؤشرات العامة"
                               : "Executive Cockpit Dashboard"}
                           </h3>
-                          <p className="text-xs text-zinc-400 mt-1">
+                          <p className="text-xs text-zinc-500 mt-1">
                             {company.name} | {getIndustryLabel(company.industry)}
                           </p>
                         </div>
-                        <span className="px-3 py-1 bg-zinc-900 border border-white/10 rounded-xl text-xs text-zinc-400 font-bold">
+                        <span className="px-3 py-1 bg-zinc-100 border border-zinc-200 rounded-xl text-xs text-zinc-500 font-bold">
                           {lang === "ar"
                             ? "حالة الديمو: sandbox_active"
                             : "Demo Session: sandbox_active"}
@@ -1444,7 +1434,7 @@ export default function Demo() {
 
                       {/* Top Metrics Cards */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="bg-zinc-900 p-5 rounded-2xl border border-white/5">
+                        <div className="bg-zinc-100 p-5 rounded-2xl border border-zinc-200">
                           <span className="text-zinc-500 text-xs font-bold">
                             {t("الرصيد الإجمالي", "Net Revenue", "Chiffre d'Affaires Net")}
                           </span>
@@ -1457,7 +1447,7 @@ export default function Demo() {
                           </span>
                         </div>
 
-                        <div className="bg-zinc-900 p-5 rounded-2xl border border-white/5">
+                        <div className="bg-zinc-100 p-5 rounded-2xl border border-zinc-200">
                           <span className="text-zinc-500 text-xs font-bold">
                             {t("إجمالي المصاريف", "Operating Expenses", "Charges d'Exploitation")}
                           </span>
@@ -1470,19 +1460,19 @@ export default function Demo() {
                           </span>
                         </div>
 
-                        <div className="bg-zinc-900 p-5 rounded-2xl border border-white/5">
+                        <div className="bg-zinc-100 p-5 rounded-2xl border border-zinc-200">
                           <span className="text-zinc-500 text-xs font-bold">
                             {t("قوة المبيعات والعملاء", "Total Customers", "Nombre de Clients")}
                           </span>
                           <div className="text-xl md:text-2xl font-black mt-1 text-white">
                             {company.customersCount.toLocaleString()}
                           </div>
-                          <span className="text-[10px] text-zinc-400 mt-1 block">
+                          <span className="text-[10px] text-zinc-500 mt-1 block">
                             {t("نشطين عبر الواتساب والويب", "Active on WhatsApp & Web", "Actifs sur WhatsApp & Web")}
                           </span>
                         </div>
 
-                        <div className="bg-zinc-900 p-5 rounded-2xl border border-white/5">
+                        <div className="bg-zinc-100 p-5 rounded-2xl border border-zinc-200">
                           <span className="text-zinc-500 text-xs font-bold">
                             {t("الربح الصافي المستهدف", "Target Net Profit", "Bénéfice Net Cible")}
                           </span>
@@ -1498,9 +1488,9 @@ export default function Demo() {
 
                       {/* Live Sparkline Charting */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div className="bg-zinc-900 p-5 rounded-2xl border border-white/5">
+                        <div className="bg-zinc-100 p-5 rounded-2xl border border-zinc-200">
                           <div className="flex justify-between items-center mb-4">
-                            <span className="text-xs font-bold text-zinc-400">
+                            <span className="text-xs font-bold text-zinc-500">
                               {t(
                                 "رسم بياني: التدفق النقدي والسيولة",
                                 "Graph: Cash Flow & Liquidity",
@@ -1511,21 +1501,21 @@ export default function Demo() {
                               {t("صعود إيجابي", "Positive flow", "Flux Positif")}
                             </span>
                           </div>
-                          <div className="h-28 flex items-center justify-center bg-zinc-950 rounded-xl border border-white/5 px-4">
+                          <div className="h-28 flex items-center justify-center bg-zinc-950 rounded-xl border border-zinc-200 px-4">
                             <CustomSparkline data={[10, 24, 18, 42, 35, 68, 80, 75, 95]} />
                           </div>
                         </div>
 
-                        <div className="bg-zinc-900 p-5 rounded-2xl border border-white/5">
+                        <div className="bg-zinc-100 p-5 rounded-2xl border border-zinc-200">
                           <div className="flex justify-between items-center mb-4">
-                            <span className="text-xs font-bold text-zinc-400">
+                            <span className="text-xs font-bold text-zinc-500">
                               {t("أداء المبيعات والرواد", "Graph: Sales Performance", "Graphique: Performance des Ventes")}
                             </span>
                             <span className="text-xs text-primary font-bold">
                               {t("محدث لحظياً", "Live synced", "Synchro en Direct")}
                             </span>
                           </div>
-                          <div className="h-28 flex items-center justify-center bg-zinc-950 rounded-xl border border-white/5 px-4">
+                          <div className="h-28 flex items-center justify-center bg-zinc-950 rounded-xl border border-zinc-200 px-4">
                             <CustomSparkline
                               data={[50, 42, 60, 55, 78, 92, 85, 110]}
                               color="#fb923c"
@@ -1538,7 +1528,7 @@ export default function Demo() {
                       <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
                           <ShieldCheck className="w-5 h-5 text-primary" />
-                          <span className="text-xs font-bold text-zinc-300">
+                          <span className="text-xs font-bold text-zinc-600">
                             {lang === "ar"
                               ? "جميع بيانات الساندبوكس معزولة وتأمين الحسابات يتطابق مع المعايير السعودية والخليجية."
                               : "This is an isolated sandbox workspace. Financials are auto-reconciled and fully protected."}
@@ -1559,13 +1549,13 @@ export default function Demo() {
                     >
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                          <h3 className="text-xl md:text-2xl font-black text-white flex items-center gap-2">
+                          <h3 className="text-xl md:text-2xl font-black text-zinc-900 flex items-center gap-2">
                             <FileText className="w-6 h-6 text-primary" />
                             {lang === "ar"
                               ? "إصدار الفواتير وامتثال الزكاة (ZATCA)"
                               : "Compliant Invoicing & ZATCA"}
                           </h3>
-                          <p className="text-xs text-zinc-400 mt-1">
+                          <p className="text-xs text-zinc-500 mt-1">
                             {lang === "ar"
                               ? "تصدير فواتير بصيغة XML والربط الفوري مع المرحلة الثانية لهيئة الزكاة والجمارك"
                               : "Sign XML and instantly report tax-compliant invoices to Saudi government portal"}
@@ -1574,7 +1564,7 @@ export default function Demo() {
 
                         <button
                           onClick={() => setShowInvoiceModal(true)}
-                          className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 transition-all flex items-center gap-2"
+                          className="px-4 py-2 bg-primary text-zinc-900 text-xs font-bold rounded-xl hover:bg-primary/90 transition-all flex items-center gap-2"
                         >
                           <Plus className="w-4 h-4" />
                           <span>{lang === "ar" ? "فاتورة جديدة" : "New Invoice"}</span>
@@ -1582,10 +1572,10 @@ export default function Demo() {
                       </div>
 
                       {/* Invoices List Table */}
-                      <div className="overflow-x-auto bg-zinc-900 border border-white/5 rounded-2xl">
+                      <div className="overflow-x-auto bg-zinc-100 border border-zinc-200 rounded-2xl">
                         <table className="w-full text-right text-xs">
                           <thead>
-                            <tr className="border-b border-white/5 text-zinc-500">
+                            <tr className="border-b border-zinc-200 text-zinc-500">
                               <th className="p-4">
                                 {lang === "ar" ? "رقم الفاتورة" : "Invoice ID"}
                               </th>
@@ -1607,10 +1597,10 @@ export default function Demo() {
                           </thead>
                           <tbody className="divide-y divide-white/5">
                             {invoices.map((inv) => (
-                              <tr key={inv.id} className="hover:bg-zinc-950/40">
-                                <td className="p-4 font-mono font-bold text-white">{inv.id}</td>
-                                <td className="p-4 font-bold text-zinc-300">{inv.clientName}</td>
-                                <td className="p-4 text-zinc-400">{inv.date}</td>
+                              <tr key={inv.id} className="hover:bg-zinc-50/40">
+                                <td className="p-4 font-mono font-bold text-zinc-900">{inv.id}</td>
+                                <td className="p-4 font-bold text-zinc-600">{inv.clientName}</td>
+                                <td className="p-4 text-zinc-500">{inv.date}</td>
                                 <td className="p-4 font-bold">
                                   {inv.total.toLocaleString()}{" "}
                                   <span className="text-[10px] text-zinc-500">SAR</span>
@@ -1683,7 +1673,7 @@ export default function Demo() {
                                           : "Downloaded VAT compliant PDF"
                                       )
                                     }
-                                    className="px-2.5 py-1 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 rounded-lg text-[10px] font-bold"
+                                    className="px-2.5 py-1 bg-zinc-200 text-zinc-600 hover:bg-zinc-300 rounded-lg text-[10px] font-bold"
                                   >
                                     <Printer className="w-3 h-3 inline-block" /> PDF
                                   </button>
@@ -1707,13 +1697,13 @@ export default function Demo() {
                     >
                       <div className="flex justify-between items-center gap-4">
                         <div>
-                          <h3 className="text-xl md:text-2xl font-black text-white flex items-center gap-2">
+                          <h3 className="text-xl md:text-2xl font-black text-zinc-900 flex items-center gap-2">
                             <Magnet className="w-6 h-6 text-primary" />
                             {lang === "ar"
                               ? "إدارة العملاء والصفقات والواتساب"
                               : "CRM & WhatsApp Sales Hub"}
                           </h3>
-                          <p className="text-xs text-zinc-400 mt-1">
+                          <p className="text-xs text-zinc-500 mt-1">
                             {lang === "ar"
                               ? "مركز مبيعات متكامل لمحادثات الواتساب وتصنيف العملاء آلياً"
                               : "Track leads, manage deal stages and review integrated WhatsApp messages in real-time"}
@@ -1723,17 +1713,17 @@ export default function Demo() {
 
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Deals Pipeline / Kanban */}
-                        <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
-                          <h4 className="font-bold text-white text-sm border-b border-white/5 pb-2">
+                        <div className="bg-zinc-100 border border-zinc-200 rounded-2xl p-5 space-y-4">
+                          <h4 className="font-bold text-zinc-900 text-sm border-b border-zinc-200 pb-2">
                             {lang === "ar" ? "قمع صفقات المبيعات النشط" : "Active Deal Pipeline"}
                           </h4>
                           <div className="grid grid-cols-4 gap-2 text-[10px] text-center">
                             {["جديد", "تواصل", "تفاوض", "مغلق رابح"].map((s, idx) => (
                               <div
                                 key={idx}
-                                className="bg-zinc-950 p-2 rounded-xl border border-white/5"
+                                className="bg-zinc-950 p-2 rounded-xl border border-zinc-200"
                               >
-                                <span className="font-bold text-zinc-400 block mb-1">{s}</span>
+                                <span className="font-bold text-zinc-500 block mb-1">{s}</span>
                                 <div className="text-primary font-black text-xs">
                                   {
                                     leads.filter((l) => {
@@ -1752,10 +1742,10 @@ export default function Demo() {
                             {leads.map((ld) => (
                               <div
                                 key={ld.id}
-                                className="bg-zinc-950 p-3.5 rounded-xl border border-white/5 flex justify-between items-center"
+                                className="bg-zinc-950 p-3.5 rounded-xl border border-zinc-200 flex justify-between items-center"
                               >
                                 <div>
-                                  <span className="font-bold text-zinc-300 block text-xs">
+                                  <span className="font-bold text-zinc-600 block text-xs">
                                     {ld.name}
                                   </span>
                                   <span className="text-[10px] text-zinc-500">{ld.company}</span>
@@ -1774,12 +1764,12 @@ export default function Demo() {
                         </div>
 
                         {/* WhatsApp Simulator Frame */}
-                        <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 flex flex-col justify-between h-[360px]">
+                        <div className="bg-zinc-100 border border-zinc-200 rounded-2xl p-5 flex flex-col justify-between h-[360px]">
                           <div>
-                            <div className="flex items-center gap-2 border-b border-white/5 pb-3">
+                            <div className="flex items-center gap-2 border-b border-zinc-200 pb-3">
                               <Smartphone className="w-5 h-5 text-emerald-400" />
                               <div>
-                                <h4 className="font-bold text-white text-xs">
+                                <h4 className="font-bold text-zinc-800 text-xs">
                                   {lang === "ar"
                                     ? "محادثة عميل: أحمد القحطاني"
                                     : "Client: Ahmad Al-Qahtani"}
@@ -1796,7 +1786,7 @@ export default function Demo() {
                                   key={i}
                                   className={`p-2.5 rounded-xl text-[11px] leading-relaxed max-w-[85%] ${
                                     log.sender === "client"
-                                      ? "bg-zinc-950 text-zinc-300 ml-auto"
+                                      ? "bg-zinc-950 text-zinc-600 ml-auto"
                                       : "bg-emerald-500/10 text-emerald-400 mr-auto border border-emerald-500/20"
                                   }`}
                                 >
@@ -1817,7 +1807,7 @@ export default function Demo() {
                                   ? "اكتب رداً لإرساله عبر واتساب مدارج..."
                                   : "Write a response..."
                               }
-                              className="flex-1 bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-xs text-white"
+                              className="flex-1 bg-zinc-950 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-white"
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   const text = (e.target as HTMLInputElement).value;
@@ -1866,13 +1856,13 @@ export default function Demo() {
                     >
                       <div className="flex justify-between items-center gap-4">
                         <div>
-                          <h3 className="text-xl md:text-2xl font-black text-white flex items-center gap-2">
+                          <h3 className="text-xl md:text-2xl font-black text-zinc-900 flex items-center gap-2">
                             <Scale className="w-6 h-6 text-primary" />
                             {lang === "ar"
                               ? "المحاسبة المتقدمة ودفتر الأستاذ"
                               : "Double-Entry Ledger & Accounts"}
                           </h3>
-                          <p className="text-xs text-zinc-400 mt-1">
+                          <p className="text-xs text-zinc-500 mt-1">
                             {lang === "ar"
                               ? "إعداد القيود المحاسبية الآلية، الأستاذ العام والقوائم المالية الختامية"
                               : "View transaction logs, double-entry journal items and financial statements"}
@@ -1882,8 +1872,8 @@ export default function Demo() {
 
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Financial Statements Links */}
-                        <div className="lg:col-span-1 bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
-                          <h4 className="font-bold text-white text-xs uppercase tracking-wider">
+                        <div className="lg:col-span-1 bg-zinc-100 border border-zinc-200 rounded-2xl p-5 space-y-4">
+                          <h4 className="font-bold text-zinc-800 text-xs uppercase tracking-wider">
                             {lang === "ar" ? "التقارير المالية المعتمدة" : "Financial Audits"}
                           </h4>
 
@@ -1912,7 +1902,7 @@ export default function Demo() {
                                   });
                                   showToast(`${rep.label} generated instantly for audited company`);
                                 }}
-                                className="w-full text-right p-3 bg-zinc-950 hover:bg-zinc-800 rounded-xl border border-white/5 transition-all flex justify-between items-center text-xs font-bold text-zinc-300"
+                                className="w-full text-right p-3 bg-zinc-950 hover:bg-zinc-200 rounded-xl border border-zinc-200 transition-all flex justify-between items-center text-xs font-bold text-zinc-600"
                               >
                                 <span>{rep.label}</span>
                                 <ChevronRight className="w-4 h-4 text-primary" />
@@ -1922,8 +1912,8 @@ export default function Demo() {
                         </div>
 
                         {/* Recent Transactions & Ledgers */}
-                        <div className="lg:col-span-2 bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
-                          <h4 className="font-bold text-white text-xs uppercase tracking-wider">
+                        <div className="lg:col-span-2 bg-zinc-100 border border-zinc-200 rounded-2xl p-5 space-y-4">
+                          <h4 className="font-bold text-zinc-800 text-xs uppercase tracking-wider">
                             {t("سجل القيود اليومية والمطابقة البنكية", "Double-Entry Journal Entries", "Entrées de Journal à Double Entrée")}
                           </h4>
 
@@ -1931,13 +1921,13 @@ export default function Demo() {
                             {transactions.map((txn) => (
                               <div
                                 key={txn.id}
-                                className="bg-zinc-950 p-3.5 rounded-xl border border-white/5 flex justify-between items-center text-xs"
+                                className="bg-zinc-950 p-3.5 rounded-xl border border-zinc-200 flex justify-between items-center text-xs"
                               >
                                 <div>
                                   <span className="font-mono text-zinc-500 block text-[10px]">
                                     {txn.id} | {txn.date}
                                   </span>
-                                  <span className="font-bold text-zinc-300 mt-1 block">
+                                  <span className="font-bold text-zinc-600 mt-1 block">
                                     {tr(txn.description)}
                                   </span>
                                 </div>
@@ -1969,13 +1959,13 @@ export default function Demo() {
                     >
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                          <h3 className="text-xl md:text-2xl font-black text-white flex items-center gap-2">
+                          <h3 className="text-xl md:text-2xl font-black text-zinc-900 flex items-center gap-2">
                             <Users className="w-6 h-6 text-primary" />
                             {lang === "ar"
                               ? "الموارد البشرية والرواتب (WPS)"
                               : "GCC WPS Payroll & HR"}
                           </h3>
-                          <p className="text-xs text-zinc-400 mt-1">
+                          <p className="text-xs text-zinc-500 mt-1">
                             {lang === "ar"
                               ? "تأصيل نظام مسيرات حماية الأجور، كشوفات البنوك، ونسب توطين الوظائف (نطاقات)"
                               : "Manage employees, generate compliant salary sheets and export WPS files"}
@@ -1985,13 +1975,13 @@ export default function Demo() {
                         <div className="flex gap-2">
                           <button
                             onClick={() => setShowEmployeeModal(true)}
-                            className="px-3 py-1.5 bg-zinc-900 border border-white/10 rounded-xl text-xs font-bold text-white hover:bg-zinc-800"
+                            className="px-3 py-1.5 bg-zinc-100 border border-zinc-200 rounded-xl text-xs font-bold text-white hover:bg-zinc-200"
                           >
                             + {lang === "ar" ? "إضافة موظف" : "Add Employee"}
                           </button>
                           <button
                             onClick={handleRunPayroll}
-                            className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 shadow-md transition-all"
+                            className="px-4 py-2 bg-primary text-zinc-900 text-xs font-bold rounded-xl hover:bg-primary/90 shadow-md transition-all"
                           >
                             {lang === "ar" ? "صرف مسير الرواتب" : "Generate Payroll"}
                           </button>
@@ -2008,18 +1998,18 @@ export default function Demo() {
 
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Employees List */}
-                        <div className="lg:col-span-2 bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-2">
-                            <h4 className="font-bold text-white text-xs">
+                        <div className="lg:col-span-2 bg-zinc-100 border border-zinc-200 rounded-2xl p-5 space-y-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-200 pb-2">
+                            <h4 className="font-bold text-zinc-800 text-xs">
                               {t("قاعدة بيانات الموظفين والرواتب", "Employee & Payroll Registry", "Registre des Employés & Paie")}
                             </h4>
-                            <div className="flex bg-zinc-950 p-1 rounded-xl border border-white/5 self-start sm:self-auto">
+                            <div className="flex bg-zinc-950 p-1 rounded-xl border border-zinc-200 self-start sm:self-auto">
                               <button
                                 onClick={() => setPayrollViewTab("roster")}
                                 className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${
                                   payrollViewTab === "roster"
                                     ? "bg-primary text-white"
-                                    : "text-zinc-400 hover:text-white"
+                                    : "text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
                                 }`}
                               >
                                 {t("قائمة الموظفين", "Staff List", "Liste du Personnel")}
@@ -2029,7 +2019,7 @@ export default function Demo() {
                                 className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${
                                   payrollViewTab === "wps"
                                     ? "bg-primary text-white"
-                                    : "text-zinc-400 hover:text-white"
+                                    : "text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
                                 }`}
                               >
                                 {t("مسير حماية الأجور (WPS)", "WPS Audit Sheet", "Fiche de Paie WPS")}
@@ -2042,14 +2032,14 @@ export default function Demo() {
                               {employees.map((emp) => (
                                 <div
                                   key={emp.id}
-                                  className="bg-zinc-950 p-3.5 rounded-xl border border-white/5 flex justify-between items-center text-xs"
+                                  className="bg-zinc-950 p-3.5 rounded-xl border border-zinc-200 flex justify-between items-center text-xs"
                                 >
                                   <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-primary">
+                                    <div className="w-8 h-8 rounded-full bg-zinc-200 flex items-center justify-center font-bold text-primary">
                                       {emp.name[0]}
                                     </div>
                                     <div>
-                                      <span className="font-bold text-zinc-300 block">
+                                      <span className="font-bold text-zinc-600 block">
                                         {emp.name}
                                       </span>
                                       <span className="text-[10px] text-zinc-500">
@@ -2058,7 +2048,7 @@ export default function Demo() {
                                     </div>
                                   </div>
                                   <div className="text-right">
-                                    <span className="font-bold text-white block">
+                                    <span className="font-bold text-zinc-900 block">
                                       {emp.salary.toLocaleString()} SAR
                                     </span>
                                     <span className="text-[9px] text-emerald-400">
@@ -2069,9 +2059,9 @@ export default function Demo() {
                               ))}
                             </div>
                           ) : (
-                            <div className="overflow-x-auto border border-white/5 rounded-xl bg-zinc-950 scrollbar-thin">
-                              <table className="w-full text-[11px] text-zinc-300 min-w-[700px] border-collapse">
-                                <thead className="bg-zinc-900/50 text-zinc-400 font-bold border-b border-white/5">
+                            <div className="overflow-x-auto border border-zinc-200 rounded-xl bg-zinc-950 scrollbar-thin">
+                              <table className="w-full text-[11px] text-zinc-600 min-w-[700px] border-collapse">
+                                <thead className="bg-zinc-100/50 text-zinc-500 font-bold border-b border-zinc-200">
                                   <tr>
                                     <th className="px-3 py-2 text-right">{t("الموظف", "Employee", "Employé")}</th>
                                     <th className="px-2 py-2 text-center">{t("رقم الهوية / الإقامة", "National ID / Iqama", "ID National / Iqama")}</th>
@@ -2097,12 +2087,12 @@ export default function Demo() {
                                     const netPay = emp.salary - deductions;
 
                                     return (
-                                      <tr key={emp.id} className="border-b border-white/5 hover:bg-zinc-900/40 transition-colors">
+                                      <tr key={emp.id} className="border-b border-zinc-200 hover:bg-zinc-100/40 transition-colors">
                                         <td className="px-3 py-2.5 font-bold text-white text-right">
                                           <div>{emp.name}</div>
                                           <div className="text-[9px] text-zinc-500 font-normal">{tr(emp.role)}</div>
                                         </td>
-                                        <td className="px-2 py-2.5 text-center font-mono text-zinc-400">{nationalId}</td>
+                                        <td className="px-2 py-2.5 text-center font-mono text-zinc-500">{nationalId}</td>
                                         <td className="px-2 py-2.5 text-center font-black text-primary">{bankCode}</td>
                                         <td className="px-2 py-2.5 text-center">{basic.toLocaleString()}</td>
                                         <td className="px-2 py-2.5 text-center">{housing.toLocaleString()}</td>
@@ -2122,15 +2112,15 @@ export default function Demo() {
                         </div>
 
                         {/* Nitaqat & GOSI KPI */}
-                        <div className="lg:col-span-1 bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4 flex flex-col justify-between">
+                        <div className="lg:col-span-1 bg-zinc-100 border border-zinc-200 rounded-2xl p-5 space-y-4 flex flex-col justify-between">
                           <div>
-                            <h4 className="font-bold text-white text-xs border-b border-white/5 pb-2 mb-3">
+                            <h4 className="font-bold text-zinc-800 text-xs border-b border-zinc-200 pb-2 mb-3">
                               {lang === "ar" ? "مؤشرات نطاقات والتأمين" : "Compliance KPIs"}
                             </h4>
 
                             <div className="space-y-4">
                               <div>
-                                <div className="flex justify-between text-[11px] font-bold text-zinc-400 mb-1">
+                                <div className="flex justify-between text-[11px] font-bold text-zinc-500 mb-1">
                                   <span>
                                     {lang === "ar" ? "نطاق التوطين الفعلي" : "Saudization Quota"}
                                   </span>
@@ -2147,7 +2137,7 @@ export default function Demo() {
                               </div>
 
                               <div>
-                                <div className="flex justify-between text-[11px] font-bold text-zinc-400 mb-1">
+                                <div className="flex justify-between text-[11px] font-bold text-zinc-500 mb-1">
                                   <span>
                                     {lang === "ar"
                                       ? "الامتثال لنظام حماية الأجور (WPS)"
@@ -2165,7 +2155,7 @@ export default function Demo() {
                             </div>
                           </div>
 
-                          <div className="bg-zinc-950 p-4 rounded-xl border border-white/5 text-[11px] text-zinc-400">
+                          <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-200 text-[11px] text-zinc-500">
                             {lang === "ar"
                               ? "تم توليد وتدقيق ملف مسير الرواتب الأخير بنجاح. ملف الـ .WPS جاهز للتصدير البنكي الفوري."
                               : "Latest payroll audited. Compliant .WPS files prepared."}
@@ -2186,13 +2176,13 @@ export default function Demo() {
                     >
                       <div className="flex justify-between items-center gap-4">
                         <div>
-                          <h3 className="text-xl md:text-2xl font-black text-white flex items-center gap-2">
+                          <h3 className="text-xl md:text-2xl font-black text-zinc-900 flex items-center gap-2">
                             <Truck className="w-6 h-6 text-primary" />
                             {lang === "ar"
                               ? "إدارة المستودعات والشحنات"
                               : "Warehousing & Logistics"}
                           </h3>
-                          <p className="text-xs text-zinc-400 mt-1">
+                          <p className="text-xs text-zinc-500 mt-1">
                             {lang === "ar"
                               ? "تتبع بوالص الشحن، وإرسال الطلبات، ومطابقة وجرد المخزون"
                               : "Track dispatch shipments, inter-warehouse transfers and print barcodes"}
@@ -2202,8 +2192,8 @@ export default function Demo() {
 
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Products Inventory List */}
-                        <div className="lg:col-span-2 bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
-                          <h4 className="font-bold text-white text-xs">
+                        <div className="lg:col-span-2 bg-zinc-100 border border-zinc-200 rounded-2xl p-5 space-y-4">
+                          <h4 className="font-bold text-zinc-800 text-xs">
                             {t("مستويات المخزون والوفرة", "Live Product Stock Metrics", "Métriques de Stock en Direct")}
                           </h4>
 
@@ -2211,19 +2201,19 @@ export default function Demo() {
                             {products.map((p) => (
                               <div
                                 key={p.id}
-                                className="bg-zinc-950 p-3.5 rounded-xl border border-white/5 flex justify-between items-center text-xs"
+                                className="bg-zinc-950 p-3.5 rounded-xl border border-zinc-200 flex justify-between items-center text-xs"
                               >
                                 <div>
-                                  <span className="font-bold text-zinc-300 block">{tr(p.name)}</span>
+                                  <span className="font-bold text-zinc-600 block">{tr(p.name)}</span>
                                   <span className="text-[10px] text-zinc-500">
                                     {t("رمز المنتج SKU:", "SKU:", "SKU:")} {p.sku} | {tr(p.warehouse)}
                                   </span>
                                 </div>
                                 <div className="text-right">
-                                  <span className="font-bold text-white block">
+                                  <span className="font-bold text-zinc-900 block">
                                     {t("المخزون:", "Stock:", "Stock:")} {p.stock} {t("وحدة", "units", "unités")}
                                   </span>
-                                  <span className="text-[10px] text-zinc-400">
+                                  <span className="text-[10px] text-zinc-500">
                                     {t("سعر البيع:", "Selling Price:", "Prix de Vente:")} {p.price} SAR
                                   </span>
                                 </div>
@@ -2234,8 +2224,8 @@ export default function Demo() {
 
                         {/* Dispatch Actions & SPL address verification */}
                         <div className="lg:col-span-1 space-y-6">
-                          <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
-                            <h4 className="font-bold text-white text-xs border-b border-white/5 pb-2">
+                          <div className="bg-zinc-100 border border-zinc-200 rounded-2xl p-5 space-y-4">
+                            <h4 className="font-bold text-zinc-800 text-xs border-b border-zinc-200 pb-2">
                               {lang === "ar" ? "إجراءات لوجستية سريعة" : "Dispatch Controls"}
                             </h4>
 
@@ -2248,7 +2238,7 @@ export default function Demo() {
                                       : "Generated Barcode labels for inventory"
                                   )
                                 }
-                                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 rounded-xl border border-white/5 text-zinc-300 font-bold"
+                                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-200 rounded-xl border border-zinc-200 text-zinc-600 font-bold"
                               >
                                 📦 {lang === "ar" ? "طباعة ملصقات الباركود" : "Print Barcodes"}
                               </button>
@@ -2260,7 +2250,7 @@ export default function Demo() {
                                       : "Scheduled cycle counts for branches"
                                   )
                                 }
-                                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 rounded-xl border border-white/5 text-zinc-300 font-bold"
+                                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-200 rounded-xl border border-zinc-200 text-zinc-600 font-bold"
                               >
                                 📋 {lang === "ar" ? "طلب جرد دوري" : "Request Cycle Count"}
                               </button>
@@ -2268,14 +2258,14 @@ export default function Demo() {
                           </div>
 
                           {/* SPL National Address Validator */}
-                          <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
-                            <h4 className="font-bold text-white text-xs border-b border-white/5 pb-2 flex items-center gap-2">
+                          <div className="bg-zinc-100 border border-zinc-200 rounded-2xl p-5 space-y-4">
+                            <h4 className="font-bold text-zinc-800 text-xs border-b border-zinc-200 pb-2 flex items-center gap-2">
                               <MapPin className="w-4 h-4 text-primary" />
                               {lang === "ar" ? "موثق العنوان الوطني الموحد (SPL)" : "SPL National Address Validator"}
                             </h4>
                             
                             <form onSubmit={handleNationalAddressLookup} className="space-y-2">
-                              <label className="block text-[10px] text-zinc-400 font-bold">
+                              <label className="block text-[10px] text-zinc-500 font-bold">
                                 {lang === "ar" ? "أدخل العنوان الوطني (مثال: 8329, 13315):" : "Enter Building No, Postal Code:"}
                               </label>
                               <div className="flex gap-2">
@@ -2284,12 +2274,12 @@ export default function Demo() {
                                   value={nationalAddressInput}
                                   onChange={(e) => setNationalAddressInput(e.target.value)}
                                   placeholder={lang === "ar" ? "رقم المبنى، الرمز البريدي" : "8329, 13315"}
-                                  className="flex-1 bg-zinc-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white"
+                                  className="flex-1 bg-zinc-950 border border-zinc-200 rounded-xl px-3 py-2 text-xs text-white"
                                 />
                                 <button
                                   type="submit"
                                   disabled={isSearchingAddress}
-                                  className="px-3 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/95 transition-colors"
+                                  className="px-3 py-2 bg-primary text-zinc-900 text-xs font-bold rounded-xl hover:bg-primary/95 transition-colors"
                                 >
                                   {isSearchingAddress ? "..." : (lang === "ar" ? "تحقق" : "Verify")}
                                 </button>
@@ -2306,10 +2296,10 @@ export default function Demo() {
                                   <ShieldCheck className="w-4 h-4" />
                                   <span>{lang === "ar" ? "عنوان وطني معتمد وموثق" : "Address Verified"}</span>
                                 </div>
-                                <p className="text-[11px] text-zinc-300 leading-relaxed">
+                                <p className="text-[11px] text-zinc-600 leading-relaxed">
                                   {lang === "ar" ? searchedAddressResult.fullAddressAr : searchedAddressResult.fullAddressEn}
                                 </p>
-                                <div className="flex items-center gap-3 border-t border-white/5 pt-3">
+                                <div className="flex items-center gap-3 border-t border-zinc-200 pt-3">
                                   <img
                                     src={searchedAddressResult.qrDataUrl}
                                     alt="SPL QR"
@@ -2341,13 +2331,13 @@ export default function Demo() {
                     >
                       <div className="flex justify-between items-center gap-4">
                         <div>
-                          <h3 className="text-xl md:text-2xl font-black text-white flex items-center gap-2">
+                          <h3 className="text-xl md:text-2xl font-black text-zinc-900 flex items-center gap-2">
                             <Sparkles className="w-6 h-6 text-primary animate-pulse" />
                             {lang === "ar"
                               ? "لوحة الإعلانات الذكية وتأثير الـ ROAS"
                               : "AI Advertising Platform & ROAS"}
                           </h3>
-                          <p className="text-xs text-zinc-400 mt-1">
+                          <p className="text-xs text-zinc-500 mt-1">
                             {lang === "ar"
                               ? "قياس العائد على الإنفاق الإعلاني ودعم المزيج التسويقي بالذكاء الاصطناعي"
                               : "Multi-touch ROAS attribution and AI text/image generator for campaigns"}
@@ -2357,27 +2347,27 @@ export default function Demo() {
 
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* ROAS Multi-touch */}
-                        <div className="lg:col-span-2 bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
-                          <h4 className="font-bold text-white text-xs">
+                        <div className="lg:col-span-2 bg-zinc-100 border border-zinc-200 rounded-2xl p-5 space-y-4">
+                          <h4 className="font-bold text-zinc-800 text-xs">
                             {lang === "ar"
                               ? "تتبع قنوات التسويق وعائد الإعلانات"
                               : "Multi-touch ROAS Analytics"}
                           </h4>
 
                           <div className="grid grid-cols-3 gap-3 text-center text-xs">
-                            <div className="bg-zinc-950 p-4 rounded-xl border border-white/5">
+                            <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-200">
                               <span className="text-zinc-500 block text-[10px]">
                                 {lang === "ar" ? "حملات سناب شات" : "Snapchat Ads"}
                               </span>
                               <span className="font-black text-white mt-1 block">4.2x ROAS</span>
                             </div>
-                            <div className="bg-zinc-950 p-4 rounded-xl border border-white/5">
+                            <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-200">
                               <span className="text-zinc-500 block text-[10px]">
                                 {lang === "ar" ? "حملات تيك توك" : "TikTok Ads"}
                               </span>
                               <span className="font-black text-white mt-1 block">5.8x ROAS</span>
                             </div>
-                            <div className="bg-zinc-950 p-4 rounded-xl border border-white/5">
+                            <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-200">
                               <span className="text-zinc-500 block text-[10px]">
                                 {lang === "ar" ? "جوجل سيرش" : "Google Search"}
                               </span>
@@ -2387,12 +2377,12 @@ export default function Demo() {
                         </div>
 
                         {/* Creative generator mock */}
-                        <div className="lg:col-span-1 bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4 flex flex-col justify-between">
+                        <div className="lg:col-span-1 bg-zinc-100 border border-zinc-200 rounded-2xl p-5 space-y-4 flex flex-col justify-between">
                           <div>
-                            <h4 className="font-bold text-white text-xs border-b border-white/5 pb-2 mb-3">
+                            <h4 className="font-bold text-zinc-800 text-xs border-b border-zinc-200 pb-2 mb-3">
                               {lang === "ar" ? "توليد نصوص إعلانية بالذكاء" : "AI Ad Copywriter"}
                             </h4>
-                            <p className="text-[10px] text-zinc-400">
+                            <p className="text-[10px] text-zinc-500">
                               {lang === "ar"
                                 ? "توليد محتوى تسويقي ترويجي متكامل للخليج العربي في ثوانٍ"
                                 : "Generate localized ad copy for Saudi/GCC audiences instantly"}
@@ -2437,12 +2427,12 @@ export default function Demo() {
                       exit={{ opacity: 0, y: -10 }}
                       className="space-y-6"
                     >
-                      <h3 className="text-xl md:text-2xl font-black text-white">
+                      <h3 className="text-xl md:text-2xl font-black text-zinc-900">
                         {lang === "ar"
                           ? "مهمات الساندبوكس التفاعلية"
                           : "Sandbox Challenge Missions"}
                       </h3>
-                      <p className="text-xs text-zinc-400">
+                      <p className="text-xs text-zinc-500">
                         {lang === "ar"
                           ? "جرب هذه المسارات المحددة لتعيش تجربة استخدام النظام المحاسبي الفعلي."
                           : "Follow these structural paths to experience direct hands-on enterprise compliance."}
@@ -2450,9 +2440,9 @@ export default function Demo() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* MISSION 1 CHECKLIST */}
-                        <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
-                          <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                            <h4 className="font-bold text-white text-xs flex items-center gap-2">
+                        <div className="bg-zinc-100 border border-zinc-200 rounded-2xl p-5 space-y-4">
+                          <div className="flex justify-between items-center border-b border-zinc-200 pb-2">
+                            <h4 className="font-bold text-zinc-800 text-xs flex items-center gap-2">
                               <span className="w-5 h-5 rounded-full bg-primary text-black flex items-center justify-center font-bold text-[10px]">
                                 1
                               </span>
@@ -2477,7 +2467,7 @@ export default function Demo() {
                             </span>
                           </div>
 
-                          <div className="space-y-2.5 text-xs text-zinc-300">
+                          <div className="space-y-2.5 text-xs text-zinc-600">
                             <div className="flex items-center gap-3">
                               <input
                                 type="checkbox"
@@ -2547,9 +2537,9 @@ export default function Demo() {
                         </div>
 
                         {/* MISSION 2 CHECKLIST */}
-                        <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
-                          <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                            <h4 className="font-bold text-white text-xs flex items-center gap-2">
+                        <div className="bg-zinc-100 border border-zinc-200 rounded-2xl p-5 space-y-4">
+                          <div className="flex justify-between items-center border-b border-zinc-200 pb-2">
+                            <h4 className="font-bold text-zinc-800 text-xs flex items-center gap-2">
                               <span className="w-5 h-5 rounded-full bg-primary text-black flex items-center justify-center font-bold text-[10px]">
                                 2
                               </span>
@@ -2574,7 +2564,7 @@ export default function Demo() {
                             </span>
                           </div>
 
-                          <div className="space-y-2.5 text-xs text-zinc-300">
+                          <div className="space-y-2.5 text-xs text-zinc-600">
                             <div className="flex items-center gap-3">
                               <input
                                 type="checkbox"
@@ -2640,7 +2630,7 @@ export default function Demo() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-zinc-900 border border-white/10 p-6 rounded-[2rem] w-full max-w-sm space-y-4"
+            className="bg-zinc-100 border border-zinc-200 p-6 rounded-[2rem] w-full max-w-sm space-y-4"
           >
             <h4 className="font-black text-lg text-white">
               {lang === "ar" ? "إصدار فاتورة سريعة" : "Generate Fast Invoice"}
@@ -2648,7 +2638,7 @@ export default function Demo() {
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-zinc-400 mb-1">
+                <label className="block text-zinc-500 mb-1">
                   {lang === "ar" ? "اسم العميل:" : "Client Name:"}
                 </label>
                 <input
@@ -2656,12 +2646,12 @@ export default function Demo() {
                   placeholder="شركة اليمامة المحدودة"
                   value={newInvoice.client}
                   onChange={(e) => setNewInvoice({ ...newInvoice, client: e.target.value })}
-                  className="w-full bg-zinc-950 border border-white/10 rounded-xl p-2.5 text-white"
+                  className="w-full bg-zinc-950 border border-zinc-200 rounded-xl p-2.5 text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1">
+                <label className="block text-zinc-500 mb-1">
                   {lang === "ar" ? "القيمة الإجمالية (ريال):" : "Amount (SAR):"}
                 </label>
                 <input
@@ -2669,7 +2659,7 @@ export default function Demo() {
                   placeholder="8500"
                   value={newInvoice.amount}
                   onChange={(e) => setNewInvoice({ ...newInvoice, amount: e.target.value })}
-                  className="w-full bg-zinc-950 border border-white/10 rounded-xl p-2.5 text-white"
+                  className="w-full bg-zinc-950 border border-zinc-200 rounded-xl p-2.5 text-white"
                 />
               </div>
             </div>
@@ -2687,7 +2677,7 @@ export default function Demo() {
               </button>
               <button
                 onClick={() => setShowInvoiceModal(false)}
-                className="flex-1 py-2.5 bg-zinc-800 text-zinc-300 font-bold rounded-xl text-xs hover:bg-zinc-700"
+                className="flex-1 py-2.5 bg-zinc-200 text-zinc-600 font-bold rounded-xl text-xs hover:bg-zinc-300"
               >
                 {lang === "ar" ? "إلغاء" : "Cancel"}
               </button>
@@ -2702,7 +2692,7 @@ export default function Demo() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-zinc-900 border border-white/10 p-6 rounded-[2rem] w-full max-w-sm space-y-4"
+            className="bg-zinc-100 border border-zinc-200 p-6 rounded-[2rem] w-full max-w-sm space-y-4"
           >
             <h4 className="font-black text-lg text-white">
               {lang === "ar" ? "إضافة موظف جديد" : "Hire New Employee"}
@@ -2710,7 +2700,7 @@ export default function Demo() {
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="block text-zinc-400 mb-1">
+                <label className="block text-zinc-500 mb-1">
                   {lang === "ar" ? "الاسم الكامل للموظف:" : "Full Name:"}
                 </label>
                 <input
@@ -2718,12 +2708,12 @@ export default function Demo() {
                   placeholder="فيصل المطيري"
                   value={newEmployee.name}
                   onChange={(e) => setNewEmployee({ ...newEmployee, name: e.target.value })}
-                  className="w-full bg-zinc-950 border border-white/10 rounded-xl p-2.5 text-white"
+                  className="w-full bg-zinc-950 border border-zinc-200 rounded-xl p-2.5 text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1">
+                <label className="block text-zinc-500 mb-1">
                   {lang === "ar" ? "المسمى الوظيفي:" : "Role / Title:"}
                 </label>
                 <input
@@ -2731,12 +2721,12 @@ export default function Demo() {
                   placeholder="أخصائي عمليات شحن"
                   value={newEmployee.role}
                   onChange={(e) => setNewEmployee({ ...newEmployee, role: e.target.value })}
-                  className="w-full bg-zinc-950 border border-white/10 rounded-xl p-2.5 text-white"
+                  className="w-full bg-zinc-950 border border-zinc-200 rounded-xl p-2.5 text-white"
                 />
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1">
+                <label className="block text-zinc-500 mb-1">
                   {lang === "ar" ? "الراتب الأساسي (ريال):" : "Base Salary (SAR):"}
                 </label>
                 <input
@@ -2744,7 +2734,7 @@ export default function Demo() {
                   placeholder="6500"
                   value={newEmployee.salary}
                   onChange={(e) => setNewEmployee({ ...newEmployee, salary: e.target.value })}
-                  className="w-full bg-zinc-950 border border-white/10 rounded-xl p-2.5 text-white"
+                  className="w-full bg-zinc-950 border border-zinc-200 rounded-xl p-2.5 text-white"
                 />
               </div>
             </div>
@@ -2766,7 +2756,7 @@ export default function Demo() {
               </button>
               <button
                 onClick={() => setShowEmployeeModal(false)}
-                className="flex-1 py-2.5 bg-zinc-800 text-zinc-300 font-bold rounded-xl text-xs hover:bg-zinc-700"
+                className="flex-1 py-2.5 bg-zinc-200 text-zinc-600 font-bold rounded-xl text-xs hover:bg-zinc-300"
               >
                 {lang === "ar" ? "إلغاء" : "Cancel"}
               </button>
@@ -2777,7 +2767,7 @@ export default function Demo() {
 
       {/* Footer credits bar */}
       <footer
-        className="bg-zinc-950 py-12 border-t border-white/10 text-center text-white"
+        className="bg-zinc-950 py-12 border-t border-zinc-200 text-center text-white"
         dir="rtl"
       >
         <p className="text-zinc-600 text-sm font-medium">
