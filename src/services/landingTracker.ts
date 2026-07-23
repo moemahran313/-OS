@@ -21,6 +21,8 @@ export const HIGH_INTENT_CATEGORIES = {
   FAQ_TOGGLE: "FAQ Deep Inquiry Toggle",
   MIGRATION_CTA: "System Migration Request",
   FINAL_CTA_CLICK: "Final Conversion Action",
+  VALUE_JOURNEY_TAB: "Value Journey Step Exploration",
+  AI_SEO_GENERATOR: "AI SEO & Copy Generator Interaction",
 };
 
 export const trackLandingEvent = async (

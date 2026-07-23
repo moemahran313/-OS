@@ -24,6 +24,7 @@ import certificateRoutes from "./routes/certificate.ts";
 import workflowRoutes from "./routes/workflows.ts";
 import negotiationRoutes from "./routes/negotiations.ts";
 import openwaRoutes from "./routes/openwa.ts";
+import whatsappRoutes from "./routes/whatsapp.ts";
 import accountingRoutes from "./routes/accounting.ts";
 import bankingRoutes from "./routes/banking.ts";
 import organizationsRoutes from "./routes/organizations.ts";
@@ -38,6 +39,9 @@ import demoRoutes from "./routes/demo.ts";
 import leadsIntelligenceRoutes from "./routes/leads-intelligence.ts";
 import stripeRoutes from "./routes/stripe.ts";
 import aiRoutes from "./routes/ai.ts";
+import emailRoutes from "./routes/email.ts";
+import automationRoutes from "./routes/automation.ts";
+import chatRoutes from "./routes/chat.ts";
 
 export async function createApp() {
   const app = express();
@@ -56,6 +60,7 @@ export async function createApp() {
   // Attach routes
   app.use("/api/auth", authRoutes);
   app.use("/api/ai", aiRoutes);
+  app.use("/api/chat", chatRoutes);
   app.use("/api/employees", employeeRoutes);
   app.use("/api/shipments", shipmentRoutes);
   app.use("/api/leads", leadRoutes);
@@ -75,6 +80,7 @@ export async function createApp() {
   app.use("/api/workflows", workflowRoutes);
   app.use("/api/negotiations", negotiationRoutes);
   app.use("/api/openwa", openwaRoutes);
+  app.use("/api/whatsapp", whatsappRoutes);
   app.use("/api/accounting", accountingRoutes);
   app.use("/api/accounting/banking", bankingRoutes);
   app.use("/api/banking", bankingRoutes);
@@ -86,6 +92,9 @@ export async function createApp() {
   app.use("/api/tickets", ticketRoutes);
   app.use("/api/lead-gen", leadGenRoutes);
   app.use("/api/marketing-copilot", marketingCopilotRoutes);
+  app.use("/api/email-marketing", marketingCopilotRoutes);
+  app.use("/api/email", emailRoutes);
+  app.use("/api/automation", automationRoutes);
   app.use("/api/demo", demoRoutes);
   app.use("/api/leads-intelligence", leadsIntelligenceRoutes);
   app.use("/api/stripe", stripeRoutes);
@@ -96,6 +105,11 @@ export async function createApp() {
   // Health check
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", message: "Mudarij OS API is active" });
+  });
+
+  // Catch-all handler for any unmatched /api routes - returns JSON to avoid HTML fallback
+  app.all("/api/*", (req, res) => {
+    res.status(404).json({ error: `API route ${req.originalUrl} not found` });
   });
 
   // Vite integration

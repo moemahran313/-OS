@@ -70,17 +70,226 @@ async function generateWithFallback(ai: any, params: any) {
   }
 }
 
-// Helper to retrieve real transactions from Firestore DB combined with simulated data fallback
+// Helper to initialize real persistent transactions in Firestore if none exist yet for this user
+async function ensureInitialUserTransactions(userId: string) {
+  const defaultItems = [
+    {
+      userId,
+      type: "sales",
+      number: "MDR-2026-081",
+      notes: "تقديم استشارات تقنية للتحول الرقمي",
+      clientName: "شركة الفرسان للمقاولات",
+      subtotalHalalas: 12000000,
+      vatAmountHalalas: 1800000,
+      totalAmountHalalas: 13800000,
+      paidAmountHalalas: 13800000,
+      status: "paid",
+      issueDate: "2026-06-03",
+      vatRate: 0.15,
+      buyerVat: "340981245600003",
+    },
+    {
+      userId,
+      type: "sales",
+      number: "MDR-2026-082",
+      notes: "مبيعات خدمات تسويقية للربع الثاني",
+      clientName: "مجموعة المجد المتكاملة",
+      subtotalHalalas: 35000000,
+      vatAmountHalalas: 5250000,
+      totalAmountHalalas: 40250000,
+      paidAmountHalalas: 40250000,
+      status: "paid",
+      issueDate: "2026-06-12",
+      vatRate: 0.15,
+      buyerVat: "310931252100003",
+    },
+    {
+      userId,
+      type: "sales",
+      number: "MDR-2026-083",
+      notes: "توريد برمجيات محاسبية سحابية - رخص مبيعات",
+      clientName: "شركة الوفاق الخليجي للمقاولات",
+      subtotalHalalas: 9500000,
+      vatAmountHalalas: 1425000,
+      totalAmountHalalas: 10925000,
+      paidAmountHalalas: 0,
+      status: "issued",
+      issueDate: "2026-06-20",
+      vatRate: 0.15,
+      buyerVat: "320491245100003",
+    },
+    {
+      userId,
+      type: "purchase",
+      number: "INV-6672",
+      notes: "أجهزة كمبيوتر مكتبي - شركة حلول الحاسب",
+      supplierName: "مؤسسة حلول الحاسب الذكية",
+      subtotalHalalas: 4500000,
+      vatAmountHalalas: 675000,
+      totalAmountHalalas: 5175000,
+      paidAmountHalalas: 5175000,
+      status: "paid",
+      issueDate: "2026-06-01",
+      vatRate: 0.15,
+      supplierVat: "310459841200003",
+    },
+    {
+      userId,
+      type: "purchase",
+      number: "FUR-9912",
+      notes: "أثاث مكتبي - كراسي وطاولات اجتماعات",
+      supplierName: "مفروشات الرياض الراقية",
+      subtotalHalalas: 1500000,
+      vatAmountHalalas: 225000,
+      totalAmountHalalas: 1725000,
+      paidAmountHalalas: 1725000,
+      status: "paid",
+      issueDate: "2026-06-05",
+      vatRate: 0.15,
+      supplierVat: "320984125300003",
+    },
+    {
+      userId,
+      type: "purchase",
+      number: "AC-4412",
+      notes: "خدمات صيانة مكيفات المبنى الرئيسي",
+      supplierName: "صيانة نسيم الشرق",
+      subtotalHalalas: 800000,
+      vatAmountHalalas: 40000, // 5% non-compliant
+      totalAmountHalalas: 840000,
+      paidAmountHalalas: 840000,
+      status: "paid",
+      issueDate: "2026-06-08",
+      vatRate: 0.05,
+      supplierVat: "300894121500003",
+    },
+    {
+      userId,
+      type: "purchase",
+      number: "RENT-2026-02",
+      notes: "إيجار المستودع رقم 4 - السلي",
+      supplierName: "عقارات الوطن المتميزة",
+      subtotalHalalas: 6000000,
+      vatAmountHalalas: 900000,
+      totalAmountHalalas: 6900000,
+      paidAmountHalalas: 6900000,
+      status: "paid",
+      issueDate: "2026-06-11",
+      vatRate: 0.15,
+      supplierVat: "300295123", // Non-compliant invalid VAT number length
+    },
+    {
+      userId,
+      type: "purchase",
+      number: "ST-8812",
+      notes: "قرطاسية ودفاتر وأقلام ومستلزمات مكتبية",
+      supplierName: "مكتبة الشرق المضيء",
+      subtotalHalalas: 400000,
+      vatAmountHalalas: 45000, // Non-compliant math mismatch (450 instead of 600)
+      totalAmountHalalas: 445000,
+      paidAmountHalalas: 445000,
+      status: "paid",
+      issueDate: "2026-06-18",
+      vatRate: 0.15,
+      supplierVat: "310452391400003",
+    },
+  ];
+
+  const batch = db.batch();
+  for (const item of defaultItems) {
+    const ref = db.collection("invoices").doc();
+    batch.set(ref, { ...item, createdAt: new Date().toISOString() });
+  }
+  await batch.commit();
+}
+
+async function ensureInitialUserBankLedger(userId: string) {
+  const defaultBankItems = [
+    {
+      userId,
+      date: "2026-06-01",
+      description: "حوالة صادرة لـ مؤسسة حلول الحاسب الذكية",
+      amount: -51750,
+      docNumber: "INV-6672",
+    },
+    {
+      userId,
+      date: "2026-06-03",
+      description: "حوالة واردة من شركة الفرسان للمقاولات",
+      amount: 138000,
+      docNumber: "MDR-2026-081",
+    },
+    {
+      userId,
+      date: "2026-06-05",
+      description: "حوالة صادرة لـ مفروشات الرياض الراقية",
+      amount: -17250,
+      docNumber: "FUR-9912",
+    },
+    {
+      userId,
+      date: "2026-06-06",
+      description: "صرف نقدي نثريات ضيافة وتكليف خارجي",
+      amount: -3500,
+      docNumber: null,
+    },
+    {
+      userId,
+      date: "2026-06-08",
+      description: "حوالة صادرة لـ صيانة نسيم الشرق",
+      amount: -8400,
+      docNumber: "AC-4412",
+    },
+    {
+      userId,
+      date: "2026-06-11",
+      description: "حوالة صادرة لـ عقارات الوطن المتميزة - إيجار مستودع",
+      amount: -69000,
+      docNumber: "RENT-2026-02",
+    },
+    {
+      userId,
+      date: "2026-06-14",
+      description: "شراء محروقات ومصروف سيارات ميدانية",
+      amount: -1200,
+      docNumber: null,
+    },
+    {
+      userId,
+      date: "2026-06-15",
+      description: "دفعة سداد لشركة الاتصالات السعودية",
+      amount: -5520,
+      docNumber: "STC-99014",
+    },
+    {
+      userId,
+      date: "2026-06-19",
+      description: "حوالة لـ مكتبة الشرق المضيء",
+      amount: -4450,
+      docNumber: "ST-8812",
+    },
+  ];
+
+  const batch = db.batch();
+  for (const item of defaultBankItems) {
+    const ref = db.collection("bank_transactions").doc();
+    batch.set(ref, { ...item, createdAt: new Date().toISOString() });
+  }
+  await batch.commit();
+}
+
+// Helper to retrieve real transactions directly from Firestore DB
 async function getTransactionsForUser(userId: string) {
   try {
-    const snap = await db.collection("invoices").where("userId", "==", userId).get();
-    const dbInvoices = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
-
-    if (!dbInvoices || dbInvoices.length === 0) {
-      return mockTransactions;
+    let snap = await db.collection("invoices").where("userId", "==", userId).get();
+    if (snap.empty) {
+      await ensureInitialUserTransactions(userId);
+      snap = await db.collection("invoices").where("userId", "==", userId).get();
     }
 
-    const realTransactions = dbInvoices.map((inv: any, idx: number) => {
+    const dbInvoices = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+
+    return dbInvoices.map((inv: any, idx: number) => {
       const amountBeforeVat = (inv.subtotalHalalas || 0) / 100;
       const vatAmount = (inv.vatAmountHalalas || 0) / 100;
       const total = (inv.totalAmountHalalas || 0) / 100;
@@ -91,7 +300,18 @@ async function getTransactionsForUser(userId: string) {
 
       const expectedVat = Math.round(amountBeforeVat * 0.15);
       const actualVat = Math.round(vatAmount);
-      if (Math.abs(expectedVat - actualVat) > 1) {
+      const vatRate = inv.vatRate !== undefined ? inv.vatRate : 0.15;
+      const vatNumber = inv.supplierVat || inv.buyerVat || "";
+
+      if (vatRate !== 0.15) {
+        compliance = "non_compliant";
+        reason = "RateMismatch";
+        details = `معدل الضريبة ${(vatRate * 100).toFixed(0)}% غير صحيح للمعاملات المحلية العامة (يجب أن يكون 15%)`;
+      } else if (vatNumber && (vatNumber.length !== 15 || !vatNumber.startsWith("3"))) {
+        compliance = "non_compliant";
+        reason = "VatNumberInvalid";
+        details = `الرقم الضريبي (${vatNumber}) غير صحيح (يجب أن بيتكون من 15 خانة ويبدأ برقم 3)`;
+      } else if (Math.abs(expectedVat - actualVat) > 1) {
         compliance = "non_compliant";
         reason = "MathMismatch";
         details = `حساب الضريبة غير متطابق: القيمة المسجلة ${vatAmount} ريال تختلف عن القيمة الرياضية المتوقعة ${amountBeforeVat * 0.15} ريال (15%)`;
@@ -110,305 +330,72 @@ async function getTransactionsForUser(userId: string) {
         dateStr = new Date().toISOString().split("T")[0];
       }
 
+      const txType = inv.type || "sales";
       return {
         id: `TX-${(inv.id || "").substring(0, 4).toUpperCase() || 1000 + idx}`,
+        dbId: inv.id,
         date: dateStr,
-        description: inv.notes || `فاتورة مبيعات رقم ${inv.number} لعميل ${inv.clientName}`,
+        description: inv.notes || `${txType === "sales" ? "فاتورة مبيعات" : "فاتورة شراء"} رقم ${inv.number}`,
         amountBeforeVat,
-        vatRate: 0.15,
+        vatRate,
         vatAmount,
         total,
-        type: "sales" as const,
+        type: txType as "sales" | "purchase",
         buyerName: inv.clientName,
-        buyerVat: "310931252100003",
+        buyerVat: inv.buyerVat || "310931252100003",
+        supplierName: inv.supplierName,
+        supplierVat: inv.supplierVat,
         docNumber: inv.number,
         compliance,
         reason,
         details,
       };
     });
-
-    const purchases = mockTransactions.filter((t) => t.type === "purchase");
-    return [...realTransactions, ...purchases];
   } catch (err) {
-    console.error("Error retrieving user transactions:", err);
-    return mockTransactions;
+    console.error("Error retrieving user transactions from DB:", err);
+    return [];
   }
 }
 
 async function getBankLedgerForUser(userId: string) {
   try {
-    const snap = await db.collection("invoices").where("userId", "==", userId).get();
-    const dbInvoices = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
-
-    if (!dbInvoices || dbInvoices.length === 0) {
-      return mockBankLedger;
+    let snap = await db.collection("bank_transactions").where("userId", "==", userId).get();
+    if (snap.empty) {
+      await ensureInitialUserBankLedger(userId);
+      snap = await db.collection("bank_transactions").where("userId", "==", userId).get();
     }
 
-    const realBankRecords = dbInvoices.map((inv: any, idx: number) => {
-      const isPaid = inv.status === "paid" || inv.status === "partially paid";
-      let dateStr = "";
-      if (inv.issueDate) {
-        if (typeof inv.issueDate === "string") {
-          dateStr = inv.issueDate;
-        } else if (inv.issueDate.toDate) {
-          dateStr = inv.issueDate.toDate().toISOString().split("T")[0];
-        } else {
-          dateStr = new Date(inv.issueDate).toISOString().split("T")[0];
-        }
-      } else {
-        dateStr = new Date().toISOString().split("T")[0];
-      }
+    const dbBankTxs = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+
+    // Fetch user invoices for real matching
+    const invSnap = await db.collection("invoices").where("userId", "==", userId).get();
+    const invoices = invSnap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+
+    return dbBankTxs.map((btx: any, idx: number) => {
+      // Find matching invoice by docNumber or amount
+      const matchingInv = invoices.find(
+        (inv: any) =>
+          inv.number === btx.docNumber ||
+          (btx.docNumber && inv.number && btx.docNumber.includes(inv.number))
+      );
+
+      const hasMatchingDoc = !!matchingInv || !!btx.docNumber;
       return {
-        id: `BNK-${(inv.id || "").substring(0, 3).toUpperCase() || 100 + idx}`,
-        date: dateStr,
-        description: isPaid
-          ? `حوالة واردة من ${inv.clientName} لسداد الفاتورة ${inv.number}`
-          : `حوالة معلقة من ${inv.clientName} بانتظار التحصيل`,
-        amount: (inv.paidAmountHalalas || 0) / 100,
-        hasMatchingDoc: isPaid,
-        matchingDocId: `TX-${(inv.id || "").substring(0, 4).toUpperCase()}`,
+        id: `BNK-${(btx.id || "").substring(0, 3).toUpperCase() || 100 + idx}`,
+        dbId: btx.id,
+        date: btx.date || new Date().toISOString().split("T")[0],
+        description: btx.description,
+        amount: btx.amount,
+        hasMatchingDoc,
+        matchingDocId: matchingInv ? `TX-${(matchingInv.id || "").substring(0, 4).toUpperCase()}` : btx.docNumber || null,
+        details: hasMatchingDoc ? undefined : "لا يوجد مستند مدفوع صادر أو فاتورة مبسطة مطابقة في الدفاتر!",
       };
     });
-
-    const missingReceipts = mockBankLedger.filter((b) => !b.hasMatchingDoc);
-    return [...realBankRecords, ...missingReceipts];
   } catch (err) {
-    console.error("Error retrieving user bank ledger:", err);
-    return mockBankLedger;
+    console.error("Error retrieving user bank ledger from DB:", err);
+    return [];
   }
 }
-
-// Mock Database of Saudi accounting transaction datasets for simulations
-const mockTransactions = [
-  {
-    id: "TX-1001",
-    date: "2026-06-01",
-    description: "أجهزة كمبيوتر مكتبي - شركة حلول الحاسب",
-    amountBeforeVat: 45000,
-    vatRate: 0.15,
-    vatAmount: 6750,
-    total: 51750,
-    type: "purchase",
-    supplierName: "مؤسسة حلول الحاسب الذكية",
-    supplierVat: "310459841200003",
-    docNumber: "INV-6672",
-    compliance: "valid",
-  },
-  {
-    id: "TX-1002",
-    date: "2026-06-03",
-    description: "تقديم استشارات تقنية للتحول الرقمي",
-    amountBeforeVat: 120000,
-    vatRate: 0.15,
-    vatAmount: 18000,
-    total: 138000,
-    type: "sales",
-    buyerName: "شركة الفرسان للمقاولات",
-    buyerVat: "340981245600003",
-    docNumber: "MDR-2026-081",
-    compliance: "valid",
-  },
-  {
-    id: "TX-1003",
-    date: "2026-06-05",
-    description: "أثاث مكتبي - كراسي وطاولات اجتماعات",
-    amountBeforeVat: 15000,
-    vatRate: 0.15,
-    vatAmount: 2250,
-    total: 17250,
-    type: "purchase",
-    supplierName: "مفروشات الرياض الراقية",
-    supplierVat: "320984125300003",
-    docNumber: "FUR-9912",
-    compliance: "valid",
-  },
-  // Non-compliant: Invalid VAT Rate (5% is deprecated for general trade)
-  {
-    id: "TX-1004",
-    date: "2026-06-08",
-    description: "خدمات صيانة مكيفات المبنى الرئيسي",
-    amountBeforeVat: 8000,
-    vatRate: 0.05,
-    vatAmount: 400,
-    total: 8400,
-    type: "purchase",
-    supplierName: "صيانة نسيم الشرق",
-    supplierVat: "300894121500003",
-    docNumber: "AC-4412",
-    compliance: "non_compliant",
-    reason: "RateMismatch",
-    details: "معدل الضريبة 5% غير صحيح للمعاملات المحلية العامة (يجب أن يكون 15%)",
-  },
-  // Non-compliant: Invalid VAT Number length (starts with 3 but 13 digits instead of 15)
-  {
-    id: "TX-1005",
-    date: "2026-06-11",
-    description: "إيجار المستودع رقم 4 - السلي",
-    amountBeforeVat: 60000,
-    vatRate: 0.15,
-    vatAmount: 9000,
-    total: 69000,
-    type: "purchase",
-    supplierName: "عقارات الوطن المتميزة",
-    supplierVat: "300295123",
-    docNumber: "RENT-2026-02",
-    compliance: "non_compliant",
-    reason: "VatNumberInvalid",
-    details:
-      "الرقم الضريبي للمورد غير صحيح (العقارات السكنية غير الاستثمارية أو رقم ناقص: 9 خانات بدلاً من 15)",
-  },
-  {
-    id: "TX-1006",
-    date: "2026-06-12",
-    description: "مبيعات خدمات تسويقية للربع الثاني",
-    amountBeforeVat: 350000,
-    vatRate: 0.15,
-    vatAmount: 52500,
-    total: 402500,
-    type: "sales",
-    buyerName: "مجموعة المجد المتكاملة",
-    buyerVat: "310931252100003",
-    docNumber: "MDR-2026-082",
-    compliance: "valid",
-  },
-  {
-    id: "TX-1007",
-    date: "2026-06-14",
-    description: "خدمات شحن ولوجستيات محلية",
-    amountBeforeVat: 14200,
-    vatRate: 0.15,
-    vatAmount: 2130,
-    total: 16330,
-    type: "purchase",
-    supplierName: "مكتب خدمات نقليات الخليج",
-    supplierVat: "330741258900003",
-    docNumber: "LOG-109",
-    compliance: "valid",
-  },
-  {
-    id: "TX-1008",
-    date: "2026-06-15",
-    description: "اشتراك إنترنت فايبر للأعمال - عام",
-    amountBeforeVat: 4800,
-    vatRate: 0.15,
-    vatAmount: 720,
-    total: 5520,
-    type: "purchase",
-    supplierName: "شركة الاتصالات السعودية",
-    supplierVat: "310156942100003",
-    docNumber: "STC-99014",
-    compliance: "valid",
-  },
-  // Mismatched Math: Subtotal (4000) * 15% is 600, but invoice states 450
-  {
-    id: "TX-1009",
-    date: "2026-06-18",
-    description: "قرطاسية ودفاتر وأقلام ومستلزمات مكتبية",
-    amountBeforeVat: 4000,
-    vatRate: 0.15,
-    vatAmount: 450,
-    total: 4450,
-    type: "purchase",
-    supplierName: "مكتبة الشرق المضيء",
-    supplierVat: "310452391400003",
-    docNumber: "ST-8812",
-    compliance: "non_compliant",
-    reason: "MathMismatch",
-    details:
-      "حساب الضريبة غير متطابق: القيمة المسجلة 450 ريال وهي تختلف عن القيمة الحقيقية 600 ريال (15%)",
-  },
-  {
-    id: "TX-1010",
-    date: "2026-06-20",
-    description: "توريد برمجيات محاسبية سحابية - رخص مبيعات",
-    amountBeforeVat: 95000,
-    vatRate: 0.15,
-    vatAmount: 14250,
-    total: 109250,
-    type: "sales",
-    buyerName: "شركة الوفاق الخليجي للمقاولات",
-    buyerVat: "320491245100003",
-    docNumber: "MDR-2026-083",
-    compliance: "valid",
-  },
-];
-
-// Mock Bank Statements for Audit Workflow
-const mockBankLedger = [
-  {
-    id: "BNK-001",
-    date: "2026-06-01",
-    description: "حوالة صادرة لـ مؤسسة حلول الحاسب الذكية",
-    amount: -51750,
-    hasMatchingDoc: true,
-    matchingDocId: "TX-1001",
-  },
-  {
-    id: "BNK-002",
-    date: "2026-06-03",
-    description: "حوالة واردة من شركة الفرسان للمقاولات",
-    amount: 138000,
-    hasMatchingDoc: true,
-    matchingDocId: "TX-1002",
-  },
-  {
-    id: "BNK-003",
-    date: "2026-06-05",
-    description: "حوالة صادرة لـ مفروشات الرياض الراقية",
-    amount: -17250,
-    hasMatchingDoc: true,
-    matchingDocId: "TX-1003",
-  },
-  {
-    id: "BNK-004",
-    date: "2026-06-06",
-    description: "صرف نقدي نثريات ضيافة وتكليف خارجي",
-    amount: -3500,
-    hasMatchingDoc: false,
-    details: "لا يوجد مستند مدفوع صادر أو فاتورة مبسطة مطابقة!",
-  },
-  {
-    id: "BNK-005",
-    date: "2026-06-08",
-    description: "حوالة صادرة لـ صيانة نسيم الشرق",
-    amount: -8400,
-    hasMatchingDoc: true,
-    matchingDocId: "TX-1004",
-  },
-  {
-    id: "BNK-006",
-    date: "2026-06-11",
-    description: "حوالة صادرة لـ عقارات الوطن المتميزة - إيجار مستودع",
-    amount: -69000,
-    hasMatchingDoc: true,
-    matchingDocId: "TX-1005",
-  },
-  {
-    id: "BNK-007",
-    date: "2026-06-14",
-    description: "شراء محروقات ومصروف سيارات ميدانية",
-    amount: -1200,
-    hasMatchingDoc: false,
-    details: "مفقود: إيصال المحطة (فاتورة مبسطة)",
-  },
-  {
-    id: "BNK-008",
-    date: "2026-06-15",
-    description: "دفعة سداد لشركة الاتصالات السعودية",
-    amount: -5520,
-    hasMatchingDoc: true,
-    matchingDocId: "TX-1008",
-  },
-  {
-    id: "BNK-009",
-    date: "2026-06-19",
-    description: "حوالة لـ مكتبة الشرق المضيء",
-    amount: -4450,
-    hasMatchingDoc: true,
-    matchingDocId: "TX-1009",
-  },
-];
 
 // AI Tax & Compliance Advisor Endpoint using server-side Gemini
 router.post("/ai-query", authenticate, async (req: any, res) => {

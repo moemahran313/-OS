@@ -5,13 +5,15 @@ import firebaseConfig from "../../firebase-applet-config.json";
 
 const app = initializeApp(firebaseConfig);
 
+const databaseId = (firebaseConfig as any).firestoreDatabaseId || "ai-studio-mudarijos-2de0c09a-34d2-4c2c-988b-3b6c1326a68d";
+
 export const auth = getAuth(app);
 export const db = initializeFirestore(
   app,
   {
     experimentalAutoDetectLongPolling: true,
   },
-  (firebaseConfig as any).firestoreDatabaseId
+  databaseId
 );
 export const googleProvider = new GoogleAuthProvider();
 

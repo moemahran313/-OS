@@ -73,25 +73,92 @@ function GlobalPayrollMonitor() {
   return null;
 }
 
-const Login = lazy(() => import("./pages/Login"));
-const Onboarding = lazy(() => import("./pages/Onboarding"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const About = lazy(() => import("./pages/About"));
-const Security = lazy(() => import("./pages/Security"));
-const Contact = lazy(() => import("./pages/Contact"));
-const Demo = lazy(() => import("./pages/Demo"));
-const InvoicingFeature = lazy(() => import("./pages/InvoicingFeature"));
-const Product = lazy(() => import("./pages/Product"));
-const Solutions = lazy(() => import("./pages/Solutions"));
-const Resources = lazy(() => import("./pages/Resources"));
+function lazyRetry<T extends React.ComponentType<any>>(
+  componentImport: () => Promise<{ default: T }>
+) {
+  return lazy(async () => {
+    const pageHasAlreadyBeenReloaded = window.sessionStorage.getItem("retry_lazy_reload");
+    try {
+      const component = await componentImport();
+      window.sessionStorage.removeItem("retry_lazy_reload");
+      return component;
+    } catch (error) {
+      if (!pageHasAlreadyBeenReloaded) {
+        window.sessionStorage.setItem("retry_lazy_reload", "true");
+        window.location.reload();
+        return new Promise<{ default: T }>(() => {});
+      }
+      throw error;
+    }
+  });
+}
+
+class ErrorBoundary extends React.Component<
+  { children: ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("App Error Boundary caught an error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen w-full flex flex-col items-center justify-center bg-zinc-900 text-white p-6 text-center font-sans">
+          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center mb-4">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-black mb-2">حدث خطأ في تحميل الصفحة</h2>
+          <p className="text-zinc-400 text-sm max-w-md mb-6 font-bold">
+            يرجى تحديث الصفحة لإعادة تحميل وحدات النظام المحدثة.
+          </p>
+          <button
+            onClick={() => {
+              window.sessionStorage.removeItem("retry_lazy_reload");
+              window.location.reload();
+            }}
+            className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-black font-black text-sm rounded-xl transition-colors shadow-lg cursor-pointer"
+          >
+            إعادة تحميل الصفحة
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+const Login = lazyRetry(() => import("./pages/Login"));
+const Onboarding = lazyRetry(() => import("./pages/Onboarding"));
+const Dashboard = lazyRetry(() => import("./pages/Dashboard"));
+const About = lazyRetry(() => import("./pages/About"));
+const Security = lazyRetry(() => import("./pages/Security"));
+const Contact = lazyRetry(() => import("./pages/Contact"));
+const Demo = lazyRetry(() => import("./pages/Demo"));
+const InvoicingFeature = lazyRetry(() => import("./pages/InvoicingFeature"));
+const Product = lazyRetry(() => import("./pages/Product"));
+const Solutions = lazyRetry(() => import("./pages/Solutions"));
+const Resources = lazyRetry(() => import("./pages/Resources"));
 
 // Product subpages
-const ProductCRM = lazy(() => import("./pages/products/ProductCRM"));
-const ProductInvoicing = lazy(() => import("./pages/products/ProductInvoicing"));
-const ProductPayroll = lazy(() => import("./pages/products/ProductPayroll"));
-const ProductContracts = lazy(() => import("./pages/products/ProductContracts"));
-const ProductSupplyChain = lazy(() => import("./pages/products/ProductSupplyChain"));
-const ProductAI = lazy(() => import("./pages/products/ProductAI"));
+const ProductCRM = lazyRetry(() => import("./pages/products/ProductCRM"));
+const ProductInvoicing = lazyRetry(() => import("./pages/products/ProductInvoicing"));
+const ProductPayroll = lazyRetry(() => import("./pages/products/ProductPayroll"));
+const ProductContracts = lazyRetry(() => import("./pages/products/ProductContracts"));
+const ProductSupplyChain = lazyRetry(() => import("./pages/products/ProductSupplyChain"));
+const ProductAI = lazyRetry(() => import("./pages/products/ProductAI"));
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useUser();
@@ -105,23 +172,22 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-const CRM = lazy(() => import("./pages/CRM"));
-const Invoices = lazy(() => import("./pages/Invoices"));
-const Payroll = lazy(() => import("./pages/Payroll"));
-const Analytics = lazy(() => import("./pages/Analytics"));
-const PublicInvoiceView = lazy(() => import("./pages/PublicInvoiceView"));
-const FWCOS = lazy(() => import("./pages/FWCOS"));
-const LandingPage = lazy(() => import("./pages/LandingPage"));
-const Calculations = lazy(() => import("./pages/Calculations"));
-const Contracts = lazy(() => import("./pages/Contracts"));
-const Settings = lazy(() => import("./pages/Settings"));
-const Suppliers = lazy(() => import("./pages/Suppliers"));
-const Chat = lazy(() => import("./pages/Chat"));
-const SmartNegotiations = lazy(() => import("./pages/SmartNegotiations"));
-const Accounting = lazy(() => import("./pages/Accounting"));
-const Projects = lazy(() => import("./pages/Projects"));
-const Support = lazy(() => import("./pages/Support"));
-const MarketingCopilot = lazy(() => import("./pages/MarketingCopilot"));
+const CRM = lazyRetry(() => import("./pages/CRM"));
+const Invoices = lazyRetry(() => import("./pages/Invoices"));
+const Payroll = lazyRetry(() => import("./pages/Payroll"));
+const Analytics = lazyRetry(() => import("./pages/Analytics"));
+const PublicInvoiceView = lazyRetry(() => import("./pages/PublicInvoiceView"));
+const FWCOS = lazyRetry(() => import("./pages/FWCOS"));
+const LandingPage = lazyRetry(() => import("./pages/LandingPage"));
+const Calculations = lazyRetry(() => import("./pages/Calculations"));
+const Contracts = lazyRetry(() => import("./pages/Contracts"));
+const Settings = lazyRetry(() => import("./pages/Settings"));
+const Suppliers = lazyRetry(() => import("./pages/Suppliers"));
+const Chat = lazyRetry(() => import("./pages/Chat"));
+const Accounting = lazyRetry(() => import("./pages/Accounting"));
+const Projects = lazyRetry(() => import("./pages/Projects"));
+const Support = lazyRetry(() => import("./pages/Support"));
+const MarketingCopilot = lazyRetry(() => import("./pages/MarketingCopilot"));
 
 function LoadingSpinner() {
   return (
@@ -366,12 +432,12 @@ function AppRoutes() {
   );
 }
 
-const SecurityCompliance = lazy(() => import("./pages/SecurityCompliance"));
-const DeveloperTools = lazy(() => import("./pages/DeveloperTools"));
-const ShipmentDetails = lazy(() => import("./pages/ShipmentDetails"));
-const Inventory = lazy(() => import("./pages/Inventory"));
+const SecurityCompliance = lazyRetry(() => import("./pages/SecurityCompliance"));
+const DeveloperTools = lazyRetry(() => import("./pages/DeveloperTools"));
+const ShipmentDetails = lazyRetry(() => import("./pages/ShipmentDetails"));
+const Inventory = lazyRetry(() => import("./pages/Inventory"));
 
-const Workflows = lazy(() => import("./pages/Workflows"));
+const Workflows = lazyRetry(() => import("./pages/Workflows"));
 
 function AppInnerRoutes() {
   const location = useLocation();
@@ -484,14 +550,6 @@ function AppInnerRoutes() {
               element={
                 <PageTransition>
                   <Contracts />
-                </PageTransition>
-              }
-            />
-            <Route
-              path="smart-negotiations"
-              element={
-                <PageTransition>
-                  <SmartNegotiations />
                 </PageTransition>
               }
             />
@@ -628,7 +686,9 @@ export default function App() {
             <ThemeRouteHandler />
             <GlobalPayrollMonitor />
             <Toaster position="top-center" expand={true} richColors />
-            <AppRoutes />
+            <ErrorBoundary>
+              <AppRoutes />
+            </ErrorBoundary>
           </Router>
         </ThemeProvider>
       </SettingsProvider>

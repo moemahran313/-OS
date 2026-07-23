@@ -68,6 +68,7 @@ import { handleFirestoreError, OperationType } from "@/src/lib/firestore-issues"
 import PayrollComplianceWidget from "@/src/components/PayrollComplianceWidget";
 import { toast } from "sonner";
 import EmailCalendarSyncWorkspace from "@/src/components/crm/EmailCalendarSyncWorkspace";
+import { WhatsAppBroadcastModule } from "@/src/components/crm/WhatsAppBroadcastModule";
 
 interface Client {
   id: string;
@@ -138,6 +139,7 @@ export default function CRM() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isWhatsAppBroadcastOpen, setIsWhatsAppBroadcastOpen] = useState(false);
   const [isVerifyingSplAddress, setIsVerifyingSplAddress] = useState(false);
   const [splVerificationResult, setSplVerificationResult] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<"details" | "history" | "shipments" | "invoices">(
@@ -742,6 +744,13 @@ export default function CRM() {
               <span>{isImporting ? "جاري الاستيراد..." : "استيراد عملاء (CSV)"}</span>
             </button>
           </div>
+          <button
+            onClick={() => setIsWhatsAppBroadcastOpen(true)}
+            className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-3.5 rounded-2xl font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all text-sm"
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span>بث واتساب (OpenWA)</span>
+          </button>
           <button
             onClick={handleAutoReminders}
             className="flex items-center gap-2 bg-blue-50 text-blue-600 px-6 py-3.5 rounded-2xl font-bold hover:bg-blue-100 transition-all text-sm border border-blue-100"
@@ -2615,6 +2624,12 @@ export default function CRM() {
       ) : (
         <EmailCalendarSyncWorkspace clients={clients} />
       )}
+
+      <WhatsAppBroadcastModule
+        isOpen={isWhatsAppBroadcastOpen}
+        onClose={() => setIsWhatsAppBroadcastOpen(false)}
+        clients={clients}
+      />
     </div>
   );
 }

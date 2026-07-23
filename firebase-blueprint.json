@@ -350,10 +350,54 @@
         "processedAt": { "type": "string" },
         "error": { "type": "string" }
       }
+    },
+    "WhatsAppBroadcast": {
+      "title": "WhatsAppBroadcast",
+      "description": "WhatsApp bulk broadcast history",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "campaignName": { "type": "string" },
+        "templateText": { "type": "string" },
+        "totalRecipients": { "type": "integer" },
+        "deliveredCount": { "type": "integer" },
+        "failedCount": { "type": "integer" },
+        "sentAt": { "type": "string", "format": "date-time" },
+        "channel": { "type": "string" }
+      }
+    },
+    "WhatsAppTemplate": {
+      "title": "WhatsAppTemplate",
+      "description": "WhatsApp message template",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "text": { "type": "string" },
+        "category": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "BroadcastError": {
+      "title": "BroadcastError",
+      "description": "WhatsApp broadcast delivery failure details",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "campaignName": { "type": "string" },
+        "recipientPhone": { "type": "string" },
+        "recipientName": { "type": "string" },
+        "company": { "type": "string" },
+        "errorReason": { "type": "string" },
+        "failedAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "firestore": {
     "whatsapp_queue": { "schema": "WhatsAppQueue", "description": "WhatsApp incoming message queue" },
+    "whatsapp_broadcasts": { "schema": "WhatsAppBroadcast", "description": "WhatsApp campaigns history" },
+    "whatsapp_templates": { "schema": "WhatsAppTemplate", "description": "WhatsApp templates" },
+    "broadcast_errors": { "schema": "BroadcastError", "description": "WhatsApp broadcast failures" },
     "users": { "schema": "User", "description": "User profiles" },
     "employees": { "schema": "Employee", "description": "HR Employees" },
     "invoices": { "schema": "Invoice", "description": "Invoices" },

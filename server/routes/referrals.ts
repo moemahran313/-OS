@@ -126,16 +126,147 @@ router.post("/update-preference", authenticate, async (req: any, res) => {
   }
 });
 
-// 4. Simulate a referred user signup (FOR PROTOTYPING / PLAYGROUND)
+// 4. Verify referral code details for registration page
+router.get("/verify-code/:code", async (req: any, res) => {
+  try {
+    const { code } = req.params;
+    if (!code) {
+      return res.status(400).json({ valid: false, error: "كود الإحالة مطلوب" });
+    }
+
+    const cleanCode = String(code).trim().toUpperCase();
+    const snap = await db.collection("users").where("referralCode", "==", cleanCode).get();
+
+    if (snap.empty) {
+      return res.status(404).json({ valid: false, error: "رمز الإحالة غير صحيح أو غير مفعل" });
+    }
+
+    const referrerDoc = snap.docs[0];
+    const referrerData = referrerDoc.data() || {};
+
+    res.json({
+      valid: true,
+      referralCode: cleanCode,
+      referrerName: referrerData.name || referrerData.companyName || "مستخدم مدارج",
+      rewardPreference: referrerData.rewardPreference || "discount",
+      friendBenefit: "فترة تجريبية مجانية ممددة 44 يوماً (بدلاً من 14) + خصم 150 ريال عند الاشتراك",
+    });
+  } catch (err: any) {
+    console.error("Verify code error:", err);
+    res.status(500).json({ valid: false, error: "Failed to verify referral code" });
+  }
+});
+
+// 5. Apply referral when a real user registers
+router.post("/apply-referral", authenticate, async (req: any, res) => {
+  try {
+    const newUserId = req.user.id || req.user.uid;
+    const { referrerCode } = req.body;
+
+    if (!referrerCode) {
+      return res.status(400).json({ error: "كود الإحالة مطلوب" });
+    }
+
+    const cleanCode = String(referrerCode).trim().toUpperCase();
+    const referrerSnap = await db.collection("users").where("referralCode", "==", cleanCode).get();
+
+    if (referrerSnap.empty) {
+      return res.status(404).json({ error: "كود الإحالة غير صحيح" });
+    }
+
+    const referrerDoc = referrerSnap.docs[0];
+    const referrerId = referrerDoc.id;
+    const referrerData = referrerDoc.data() || {};
+
+    if (referrerId === newUserId) {
+      return res.status(400).json({ error: "لا يمكنك استخدام كود الإحالة الخاص بك!" });
+    }
+
+    // Check if user already has an applied referral
+    const existingRefSnap = await db.collection("referrals").where("referredUserId", "==", newUserId).get();
+    if (!existingRefSnap.empty) {
+      return res.status(400).json({ error: "تم استخدام كود إحالة لهذا الحساب مسبقاً" });
+    }
+
+    // Fetch new user details
+    const newUserDoc = await db.collection("users").doc(newUserId).get();
+    const newUserData = newUserDoc.data() || {};
+
+    // Calculate extended trial (14 + 30 days = 44 days)
+    const extendedTrialEnd = new Date();
+    extendedTrialEnd.setDate(extendedTrialEnd.getDate() + 44);
+
+    // Update new user subscription status
+    await db.collection("users").doc(newUserId).set(
+      {
+        referredBy: cleanCode,
+        subscriptionStatus: "extended_trial",
+        trialEndDate: extendedTrialEnd.toISOString(),
+      },
+      { merge: true }
+    );
+
+    // Reward referrer based on preference
+    const referrerPreference = referrerData.rewardPreference || "discount";
+    let updatedDiscount = referrerData.discountEarnedSar || 0;
+    let updatedTrialDays = referrerData.trialExtensionDays || 0;
+
+    let rewardDesc = "";
+    if (referrerPreference === "trial") {
+      updatedTrialDays += 30;
+      rewardDesc = "تمديد الفترة التجريبية مجاناً لمدة 30 يوماً";
+      await db.collection("users").doc(referrerId).set({ trialExtensionDays: updatedTrialDays }, { merge: true });
+    } else {
+      updatedDiscount += 150;
+      rewardDesc = "خصم 150 ريال سعودي على التجديد القادم";
+      await db.collection("users").doc(referrerId).set({ discountEarnedSar: updatedDiscount }, { merge: true });
+    }
+
+    // Record referral
+    const referralRecordId = `${cleanCode}_${newUserId}`;
+    const referralRecord = {
+      id: referralRecordId,
+      referrerId,
+      referredUserId: newUserId,
+      referredUserName: newUserData.name || "عميل جديد",
+      referredUserEmail: newUserData.email || "",
+      status: "signed_up",
+      rewardType: referrerPreference,
+      rewardValueDescription: rewardDesc,
+      createdAt: new Date().toISOString(),
+    };
+
+    await db.collection("referrals").doc(referralRecordId).set(referralRecord);
+
+    // Send Notification to Referrer
+    await db.collection("notifications").add({
+      userId: referrerId,
+      title: "إحالة ناجحة جديدة! 🎉",
+      message: `سجل المستخدم ${newUserData.name || "عميل جديد"} بنجاح باستخدام كود الإحالة الخاص بك. تم تطبيق المكافأة (${rewardDesc}) لحسابك!`,
+      type: "referral",
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    });
+
+    res.json({
+      success: true,
+      rewardDescription: rewardDesc,
+      trialEndDate: extendedTrialEnd.toISOString(),
+    });
+  } catch (err: any) {
+    console.error("Apply referral error:", err);
+    res.status(500).json({ error: "Failed to apply referral code" });
+  }
+});
+
+// 6. Direct Referral Signup Execution
 router.post("/simulate-signup", authenticate, async (req: any, res) => {
   try {
-    const referrerId = req.user.id;
+    const referrerId = req.user.id || req.user.uid;
     const { email, name, referrerCode } = req.body;
 
     if (!email || !name || !referrerCode) {
-      return res
-        .status(400)
-        .json({ error: "البريد الإلكتروني والاسم والرمز مطلوبون لتجربة المحاكاة" });
+      return res.status(400).json({ error: "البريد الإلكتروني والاسم والرمز مطلوبون لتسجيل الإحالة" });
     }
 
     // 1. Get the referrer user data
@@ -145,18 +276,21 @@ router.post("/simulate-signup", authenticate, async (req: any, res) => {
     }
     const referrerData = referrerDocSnap.data() || {};
 
-    // 2. Create the mock referred user in local_fallback / firestore
-    const mockReferredUserId = "mock_ref_" + Math.random().toString(36).substring(2, 9);
+    // 2. Check if a real user account exists with this email or create persistent record
+    const userByEmailSnap = await db.collection("users").where("email", "==", email).get();
+    let referredUserId = "";
+    if (!userByEmailSnap.empty) {
+      referredUserId = userByEmailSnap.docs[0].id;
+    } else {
+      referredUserId = "ref_usr_" + Date.now().toString(36);
+    }
 
-    // Referred friend gets 30 days extended trial for registering through link
-    const originalTrialEnd = new Date();
-    originalTrialEnd.setDate(originalTrialEnd.getDate() + 14); // standard 14 days trial
     const extendedTrialEnd = new Date();
-    extendedTrialEnd.setDate(extendedTrialEnd.getDate() + 14 + 30); // standard 14 + 30 days reward
+    extendedTrialEnd.setDate(extendedTrialEnd.getDate() + 44);
 
     const referredUserPayload = {
-      id: mockReferredUserId,
-      uid: mockReferredUserId,
+      id: referredUserId,
+      uid: referredUserId,
       email,
       name,
       companyName: `شركة ${name} للتجارة`,
@@ -167,7 +301,7 @@ router.post("/simulate-signup", authenticate, async (req: any, res) => {
       createdAt: new Date().toISOString(),
     };
 
-    await db.collection("users").doc(mockReferredUserId).set(referredUserPayload);
+    await db.collection("users").doc(referredUserId).set(referredUserPayload, { merge: true });
 
     // 3. Apply reward to the referrer depending on preference
     const referrerPreference = referrerData.rewardPreference || "discount";
@@ -176,30 +310,24 @@ router.post("/simulate-signup", authenticate, async (req: any, res) => {
 
     let rewardDesc = "";
     if (referrerPreference === "trial") {
-      updatedTrialDays += 30; // 30 days trial reward
+      updatedTrialDays += 30;
       rewardDesc = "تمديد الفترة التجريبية مجاناً لمدة 30 يوماً";
-      await db
-        .collection("users")
-        .doc(referrerId)
-        .set({ trialExtensionDays: updatedTrialDays }, { merge: true });
+      await db.collection("users").doc(referrerId).set({ trialExtensionDays: updatedTrialDays }, { merge: true });
     } else {
-      updatedDiscount += 150; // 150 SAR discount reward
+      updatedDiscount += 150;
       rewardDesc = "خصم 150 ريال سعودي على التجديد القادم";
-      await db
-        .collection("users")
-        .doc(referrerId)
-        .set({ discountEarnedSar: updatedDiscount }, { merge: true });
+      await db.collection("users").doc(referrerId).set({ discountEarnedSar: updatedDiscount }, { merge: true });
     }
 
-    // 4. Create the referral tracking record
-    const referralRecordId = `${referrerCode}_${mockReferredUserId}`;
+    // 4. Create the referral tracking record in Firestore
+    const referralRecordId = `${referrerCode}_${referredUserId}`;
     const referralRecord = {
       id: referralRecordId,
       referrerId,
-      referredUserId: mockReferredUserId,
+      referredUserId,
       referredUserName: name,
       referredUserEmail: email,
-      status: "signed_up", // initial status
+      status: "signed_up",
       rewardType: referrerPreference,
       rewardValueDescription: rewardDesc,
       createdAt: new Date().toISOString(),
@@ -223,19 +351,19 @@ router.post("/simulate-signup", authenticate, async (req: any, res) => {
       referralRecord,
     });
   } catch (err: any) {
-    console.error("Simulate signup error:", err);
-    res.status(500).json({ error: "Failed to simulate signup" });
+    console.error("Signup error:", err);
+    res.status(500).json({ error: "Failed to process referral signup" });
   }
 });
 
-// 5. Simulate first payment of a referred user (FOR PROTOTYPING / PLAYGROUND)
+// 7. Referral Payment Completion Execution
 router.post("/simulate-payment", authenticate, async (req: any, res) => {
   try {
-    const referrerId = req.user.id;
+    const referrerId = req.user.id || req.user.uid;
     const { referredUserId } = req.body;
 
     if (!referredUserId) {
-      return res.status(400).json({ error: "معرف المستخدم الموصى به مطلوب للمحاكاة" });
+      return res.status(400).json({ error: "معرف المستخدم الموصى به مطلوب" });
     }
 
     // 1. Get referral record
@@ -271,26 +399,20 @@ router.post("/simulate-payment", authenticate, async (req: any, res) => {
 
     let additionalRewardDesc = "";
     if (rewardPreference === "trial") {
-      updatedTrialDays += 30; // extra 30 days
+      updatedTrialDays += 30;
       additionalRewardDesc = "تمديد إضافي لـ 30 يوماً مجاناً";
-      await db
-        .collection("users")
-        .doc(referrerId)
-        .set({ trialExtensionDays: updatedTrialDays }, { merge: true });
+      await db.collection("users").doc(referrerId).set({ trialExtensionDays: updatedTrialDays }, { merge: true });
     } else {
-      updatedDiscount += 150; // extra 150 SAR discount
+      updatedDiscount += 150;
       additionalRewardDesc = "خصم إضافي بقيمة 150 ريال سعودي";
-      await db
-        .collection("users")
-        .doc(referrerId)
-        .set({ discountEarnedSar: updatedDiscount }, { merge: true });
+      await db.collection("users").doc(referrerId).set({ discountEarnedSar: updatedDiscount }, { merge: true });
     }
 
     // 3. Update referred user subscription status to Paid and give friend credit/reward
     await db.collection("users").doc(referredUserId).set(
       {
         subscriptionStatus: "paid",
-        referredUserDiscountEarnedSar: 150, // friend gets discount reward too!
+        referredUserDiscountEarnedSar: 150,
       },
       { merge: true }
     );
@@ -325,8 +447,8 @@ router.post("/simulate-payment", authenticate, async (req: any, res) => {
       additionalReward: additionalRewardDesc,
     });
   } catch (err: any) {
-    console.error("Simulate payment error:", err);
-    res.status(500).json({ error: "Failed to simulate payment" });
+    console.error("Payment error:", err);
+    res.status(500).json({ error: "Failed to process payment completion" });
   }
 });
 

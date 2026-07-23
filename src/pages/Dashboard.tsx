@@ -76,6 +76,7 @@ import OSWorkspaceExplorer from "@/src/components/OSWorkspaceExplorer";
 import QuickActionsWidget from "@/src/components/QuickActionsWidget";
 import LaunchpadOverview from "@/src/components/dashboard/LaunchpadOverview";
 import QuickActionsFAB from "@/src/components/dashboard/QuickActionsFAB";
+import SaudiSmeKpiSummary from "@/src/components/dashboard/SaudiSmeKpiSummary";
 
 interface WidgetConfig {
   id: string;
@@ -3190,6 +3191,7 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="space-y-8">
+          <SaudiSmeKpiSummary />
           <LaunchpadOverview
             stats={{
               leadsCount: leads?.length || 0,

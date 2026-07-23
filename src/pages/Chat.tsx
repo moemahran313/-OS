@@ -228,38 +228,43 @@ export default function Chat() {
         messages: updatedMessages,
       });
 
-      // Automated client response simulation
+      // Live SSE Streaming Gemini AI Responder Integration
       if (isAiResponderActive) {
         setIsDraftingReply(true);
-        setTimeout(async () => {
-          try {
-            const aiClientResponses = [
-              "أشكرك جزيل الشكر على كريم ردك وسرعة التنسيق معنا.",
-              "رائع جداً! تم استلام ردكم وسأقوم بعرضه على الإدارة المالية للتعميد.",
-              "ممتاز للغاية. ننتظر إصدار الفاتورة أو رابط الدفع لحسم التعاقد.",
-              "تسلم يدك، ممتاز. سنرسل لكم الكشوفات المطلوبة غداً صباحاً.",
-            ];
+        try {
+          const response = await fetch("/api/chat/stream", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              leadId: activeLeadId,
+              messageText: rawText.trim(),
+              channel: "omnichannel_chat",
+            }),
+          });
 
-            const responseText =
-              aiClientResponses[Math.floor(Math.random() * aiClientResponses.length)];
+          if (response.ok && response.body) {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let done = false;
 
-            const autoClientMessage: ChatMessage = {
-              id: `msg_auto_${Date.now()}`,
-              sender: "client",
-              text: responseText,
-              timestamp: new Date().toISOString(),
-              status: "delivered",
-            };
-
-            await updateDoc(doc(db, "leads", activeLeadId), {
-              messages: [...updatedMessages, autoClientMessage],
-            });
-          } catch (err) {
-            console.error("Auto responder failed", err);
-          } finally {
-            setIsDraftingReply(false);
+            while (!done) {
+              const { value, done: doneReading } = await reader.read();
+              done = doneReading;
+              if (value) {
+                const chunk = decoder.decode(value, { stream: true });
+                // Firestore automatically syncs via onSnapshot listener as server updates lead doc
+              }
+            }
+          } else {
+            console.warn("Chat streaming endpoint returned error status");
           }
-        }, 1500);
+        } catch (err) {
+          console.error("Gemini SSE Streaming Error:", err);
+        } finally {
+          setIsDraftingReply(false);
+        }
       }
     } catch (err) {
       console.error("Failed to send message", err);

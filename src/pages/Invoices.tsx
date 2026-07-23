@@ -122,6 +122,71 @@ export default function Invoices() {
     afterDays: 1,
   });
 
+  // ZATCA Production CSID States
+  const [showCsidModal, setShowCsidModal] = useState(false);
+  const [csidVatNumber, setCsidVatNumber] = useState("310123456700003");
+  const [csidOtp, setCsidOtp] = useState("");
+  const [csidSolutionName, setCsidSolutionName] = useState("Madarij Enterprise POS & ERP");
+  const [csidCertPem, setCsidCertPem] = useState("");
+  const [csidPrivateKeyPem, setCsidPrivateKeyPem] = useState("");
+  const [csidSecret, setCsidSecret] = useState("");
+  const [isOnboardingCsid, setIsOnboardingCsid] = useState(false);
+  const [csidStatus, setCsidStatus] = useState<any>(null);
+
+  const checkCsidStatus = async () => {
+    try {
+      if (!user) return;
+      const res = await fetch("/api/zatca/csid/status");
+      if (res.ok) {
+        const data = await res.json();
+        setCsidStatus(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    checkCsidStatus();
+  }, [user]);
+
+  const handleOnboardCsid = async () => {
+    if (!csidVatNumber || csidVatNumber.length !== 15) {
+      alert("يرجى إدخال رقم التسجيل الضريبي الصحيح المكون من 15 خانة.");
+      return;
+    }
+    setIsOnboardingCsid(true);
+    try {
+      const res = await fetch("/api/zatca/csid/onboard", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          vatNumber: csidVatNumber,
+          otp: csidOtp,
+          solutionName: csidSolutionName,
+          certificatePem: csidCertPem,
+          privateKeyPem: csidPrivateKeyPem,
+          certificateSecret: csidSecret,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert("تم ربط شهادة Production CSID الرسمية مع هيئة الزكاة والضريبة والجمارك (فاتورة) بنجاح!");
+        setCsidStatus(data.csidDetails);
+        setShowCsidModal(false);
+      } else {
+        const err = await res.json();
+        alert(`فشل اعتماد شهادة ZATCA CSID: ${err.error}`);
+      }
+    } catch (err) {
+      alert("خطأ أثناء الاتصال ببوابة هيئة الزكاة والضريبة والجمارك.");
+    } finally {
+      setIsOnboardingCsid(false);
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
 
@@ -413,6 +478,20 @@ export default function Invoices() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowCsidModal(true)}
+            className={`flex items-center gap-2 px-4 py-3 rounded-2xl font-bold border transition-all ${
+              csidStatus?.hasProductionCsid
+                ? "bg-emerald-50 border-emerald-300 text-emerald-800"
+                : "bg-amber-50 border-amber-300 text-amber-900"
+            }`}
+            title="اعتماد شهادة ZATCA CSID الرسمية"
+          >
+            <ShieldCheck className="w-5 h-5 text-emerald-600" />
+            <span className="hidden sm:inline">
+              {csidStatus?.hasProductionCsid ? "شهادة ZATCA مفعلة" : "ربط شهادة ZATCA CSID"}
+            </span>
+          </button>
           <button
             onClick={async () => {
               const res = await fetch("/api/automation/run-reminders", { method: "POST" });
@@ -1171,6 +1250,104 @@ export default function Invoices() {
                 className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 text-sm"
               >
                 حفظ الدفعة
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
+
+      {/* Production CSID Certificate Onboarding Modal */}
+      {showCsidModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl max-w-xl w-full shadow-2xl border border-zinc-200 dark:border-zinc-800 text-right overflow-hidden">
+            <header className="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-gradient-to-l from-emerald-900 to-zinc-900 text-white">
+              <div>
+                <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 rounded-full text-[10px] font-black uppercase border border-emerald-500/30">
+                  ZATCA Fatoora Portal - Production CSID
+                </span>
+                <h3 className="font-black text-lg mt-1">ربط شهادة التشفير الرسمية (Production CSID)</h3>
+              </div>
+              <button
+                onClick={() => setShowCsidModal(false)}
+                className="text-zinc-400 hover:text-white p-2 rounded-xl"
+              >
+                ✕
+              </button>
+            </header>
+
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                قم بربط شهادة التشفير الرقمية (Production CSID) المعتمدة من بوابة "فاتورة" التابعة لهيئة الزكاة والضريبة والجمارك للتحول الكامل إلى المرحلة الثانية (الربط والتكامل).
+              </p>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-500 uppercase">رقم التسجيل الضريبي (15 خانة - ZATCA VAT ID)</label>
+                <input
+                  type="text"
+                  maxLength={15}
+                  value={csidVatNumber}
+                  onChange={(e) => setCsidVatNumber(e.target.value)}
+                  className="w-full p-3 border rounded-xl font-mono text-xs focus:ring-2 focus:ring-emerald-500 outline-none dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-500 uppercase">رمز التفعيل المباشر OTP (من بوابة فاتورة)</label>
+                <input
+                  type="text"
+                  placeholder="مثال: 123456"
+                  value={csidOtp}
+                  onChange={(e) => setCsidOtp(e.target.value)}
+                  className="w-full p-3 border rounded-xl font-mono text-xs focus:ring-2 focus:ring-emerald-500 outline-none dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-500 uppercase">اسم الحل التقني المعتمد (Solution Name)</label>
+                <input
+                  type="text"
+                  value={csidSolutionName}
+                  onChange={(e) => setCsidSolutionName(e.target.value)}
+                  className="w-full p-3 border rounded-xl font-mono text-xs focus:ring-2 focus:ring-emerald-500 outline-none dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-500 uppercase">محتوى شهادة CSID (X.509 PEM Certificate)</label>
+                <textarea
+                  rows={4}
+                  value={csidCertPem}
+                  onChange={(e) => setCsidCertPem(e.target.value)}
+                  placeholder="-----BEGIN CERTIFICATE-----\nMIID3zCCAsegAwIBAgIU...\n-----END CERTIFICATE-----"
+                  className="w-full p-3 border rounded-xl font-mono text-xs focus:ring-2 focus:ring-emerald-500 outline-none dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-zinc-500 uppercase">المفتاح الخاص المشفر (Private Key PEM)</label>
+                <textarea
+                  rows={3}
+                  value={csidPrivateKeyPem}
+                  onChange={(e) => setCsidPrivateKeyPem(e.target.value)}
+                  placeholder="-----BEGIN EC PRIVATE KEY-----\nMHQCAQEEI..."
+                  className="w-full p-3 border rounded-xl font-mono text-xs focus:ring-2 focus:ring-emerald-500 outline-none dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <footer className="p-6 border-t border-zinc-100 dark:border-zinc-800 flex justify-end gap-3 bg-zinc-50 dark:bg-zinc-850">
+              <button
+                onClick={() => setShowCsidModal(false)}
+                className="px-6 py-2.5 rounded-xl border border-zinc-200 font-bold text-zinc-600 hover:bg-zinc-100 text-xs"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleOnboardCsid}
+                disabled={isOnboardingCsid}
+                className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 text-xs"
+              >
+                {isOnboardingCsid ? "جاري ربط الشهادة..." : "تأكيد واعتماد Production CSID"}
               </button>
             </footer>
           </div>

@@ -62,12 +62,6 @@ const navigationData = [
   { nameKey: "دفتر الأستاذ والقيود", id: "Accounting", href: "/app/accounting", icon: Scale },
   { nameKey: "sidebar.suppliers", id: "Suppliers", href: "/app/suppliers", icon: Truck },
   { nameKey: "sidebar.contracts", id: "Contracts", href: "/app/contracts", icon: FileSignature },
-  {
-    nameKey: "sidebar.negotiations",
-    id: "SmartNegotiations",
-    href: "/app/smart-negotiations",
-    icon: Video,
-  },
   { nameKey: "workflows", id: "Workflows", href: "/app/workflows", icon: Blocks },
   { nameKey: "sidebar.employees", id: "Compliance", href: "/app/fwcos", icon: ShieldCheck },
   { nameKey: "common.dashboard", id: "Calculations", href: "/app/calculations", icon: Calculator },
@@ -96,8 +90,7 @@ const itemLabels: Record<string, { ar: string; en: string }> = {
   Analytics: { ar: "التحليلات ولوحات التقارير", en: "Analytics & Reporting" },
   Calculations: { ar: "الأدوات والمحاسبة الإدارية", en: "Business Tools & Calculations" },
   Integrations: { ar: "سوق التطبيقات والربط", en: "App Integrations" },
-  Support: { ar: "الدعم الفني والبطاقات", en: "Technical Support & Tickets" },
-  SmartNegotiations: { ar: "التفاوض والاجتماعات الذكية", en: "Smart Meetings & Negotiations" }
+  Support: { ar: "الدعم الفني والبطاقات", en: "Technical Support & Tickets" }
 };
 
 const getItemLabel = (item: any, language: string) => {
@@ -235,7 +228,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const filteredNavigation = navigationData.filter(
     (item) =>
-      item.id === "SmartNegotiations" ||
       item.id === "Chat" ||
       item.id === "Projects" ||
       item.id === "MarketingCopilot" ||
@@ -384,27 +376,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                             exit={{ opacity: 0, width: 0 }}
                             className="font-medium text-[13px] tracking-tight relative z-10 whitespace-nowrap overflow-hidden"
                           >
-                            {item.id === "SmartNegotiations"
+                            {item.id === "MarketingCopilot"
                               ? settings.language === "ar"
-                                ? "التفاوض والاجتماعات"
-                                : "Smart Negotiations"
-                              : item.id === "MarketingCopilot"
+                                ? "مساعد التسويق والعملاء"
+                                : "Marketing Copilot"
+                              : item.id === "Chat"
                                 ? settings.language === "ar"
-                                  ? "مساعد التسويق والعملاء"
-                                  : "Marketing Copilot"
-                                : item.id === "Chat"
+                                  ? "مركز الاتصال الموحد"
+                                  : "Unified Communications"
+                                : item.id === "Projects"
                                   ? settings.language === "ar"
-                                    ? "مركز الاتصال الموحد"
-                                    : "Unified Communications"
-                                  : item.id === "Projects"
+                                    ? "إدارة المشاريع"
+                                    : "Project Management"
+                                  : item.id === "LeadGen"
                                     ? settings.language === "ar"
-                                      ? "إدارة المشاريع"
-                                      : "Project Management"
-                                    : item.id === "LeadGen"
-                                      ? settings.language === "ar"
-                                        ? "منصة توليد العملاء"
-                                        : "Lead Generation Platform"
-                                      : t(item.nameKey)}
+                                      ? "منصة توليد العملاء"
+                                      : "Lead Generation Platform"
+                                    : t(item.nameKey)}
                           </motion.span>
                         )}
 
@@ -416,11 +404,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                               settings.language === "ar" ? "right-16" : "left-16"
                             )}
                           >
-                            {item.id === "SmartNegotiations"
-                              ? settings.language === "ar"
-                                ? "التفاوض والاجتماعات"
-                                : "Smart Negotiations"
-                              : item.id === "Chat"
+                            {item.id === "Chat"
                                 ? settings.language === "ar"
                                   ? "مركز الاتصال الموحد"
                                   : "Unified Communications"

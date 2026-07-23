@@ -126,10 +126,10 @@ export default function ProductAI() {
             className="flex flex-col sm:flex-row gap-4 items-center justify-center mb-24"
           >
             <Link
-              to="/app/smart-negotiations"
+              to="/app"
               className="px-8 py-4 bg-primary text-white font-black rounded-2xl text-lg hover:scale-105 transition-all shadow-lg shadow-primary/20"
             >
-              ادخل لوحة التفاوض الذكي
+              ابدأ تجربة النظام
             </Link>
             <Link
               to="/demo"

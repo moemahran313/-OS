@@ -74,7 +74,7 @@ export const ComparisonMatrixSection = () => {
           </div>
           <h2 className="text-4xl md:text-6xl font-black text-zinc-900 tracking-tight leading-tight">
             لماذا يفضل قادة الأعمال في المملكة <br />
-            <span className="text-emerald-600">التحول من قيود وزوهو إلى مدارج BizOS؟</span>
+            <span className="text-emerald-600">التحول من قيود وزوهو إلى نظام مدارج؟</span>
           </h2>
           <p className="text-zinc-500 text-lg font-medium mt-4">
             جدول المقارنة الفنية المباشرة بدون مواربة. انظر بنفسك كيف توفر كل ميزة نقدية وتلغي الحاجة للتطبيقات المنفصلة.
@@ -89,7 +89,7 @@ export const ComparisonMatrixSection = () => {
                 <th className="py-6 px-6 text-sm font-extrabold text-zinc-500 w-2/5">المعيار / الميزة التقنية</th>
                 <th className="py-6 px-4 text-center text-base font-black text-emerald-700 bg-emerald-50/80 rounded-t-2xl border-x border-t border-emerald-200 w-1/5 shadow-sm">
                   <div className="flex flex-col items-center gap-1">
-                    <span className="text-lg font-black text-zinc-900">مدارج BizOS</span>
+                    <span className="text-lg font-black text-zinc-900">نظام مدارج</span>
                     <span className="text-[10px] bg-emerald-600 text-white px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
                       النظام الموحد
                     </span>

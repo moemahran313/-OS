@@ -356,4 +356,168 @@ router.get("/shipment-analysis/:id", authenticate, async (req: any, res) => {
   }
 });
 
+// 6. Public Landing Page SEO Copy Generator for Saudi SMEs
+router.post("/public/seo-generator", async (req: any, res) => {
+  try {
+    const { businessSector = "شركة مقاولات وتوريدات", city = "الرياض", targetServices = "الفوترة الإلكترونية، مسير الرواتب، وإدارة العملاء" } = req.body;
+    
+    let ai: GoogleGenAI | null = null;
+    try {
+      ai = getAiClient();
+    } catch {
+      // Fallback response if GEMINI_API_KEY is not set
+      return res.json({
+        seoTitle: `نظام إدارة ${businessSector} بالرياض | الفوترة والرواتب - مدارج`,
+        h1: `نظام التشغيل الرقمي الموحد لـ ${businessSector} في ${city}`,
+        h2: `أتمتة الفواتير الإلكترونية (ZATCA)، مسير الرواتب (مدد)، وإدارة المبيعات في منصة سيادية واحدة`,
+        metaDescription: `حل سحابي متكامل لـ ${businessSector} في ${city}. امتثال كامل لافتراطات هيئة الزكاة المرحلة الثانية ونظام حماية الأجور بخصم 80% عن البرامج التقليدية.`,
+        cta: `ابدأ تجربة نظام ${businessSector} مجاناً`,
+        conversionBulletPoints: [
+          `اصدار فواتير ZATCA المرحلة الثانية مشفرة بختم رقمي خلال 3 ثوانٍ`,
+          `توليد ملفات SIF المعتمدة بنظام مدد والربط مع العنوان الوطني SPL`,
+          `لوحة تحكم موحدة تمنحك سيادة كاملة وتقضي على فوضى 5 برامج مبعثرة`
+        ]
+      });
+    }
+
+    const prompt = `You are a world-class Ogilvy-grade conversion copywriter and SEO specialist for Saudi Arabian enterprise software (Saudi SME SaaS).
+Generate high-converting, SEO-optimized Arabic marketing copy for a business with the following profile:
+- Business Sector / Activity: ${businessSector}
+- Primary Saudi City: ${city}
+- Target Services / Focus: ${targetServices}
+
+Return ONLY a valid JSON object matching this schema:
+{
+  "seoTitle": "String under 60 chars formatted with high search volume keywords for Saudi Arabia",
+  "h1": "Compelling H1 Headline under 70 chars with strong value proposition in Arabic",
+  "h2": "Persuasive H2 Subheadline highlighting compliance, speed, and cost savings in Arabic",
+  "metaDescription": "Concise meta description 140-155 chars in Arabic with clear call to action",
+  "cta": "Strong 3-5 word Action Button text in Arabic",
+  "conversionBulletPoints": ["3 short bullet points highlighting specific regulatory compliance (ZATCA Phase 2, WPS Mudad, SPL) and ROI"]
+}`;
+
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.4,
+        },
+      });
+    } catch (apiErr) {
+      console.warn("Primary gemini-3.5-flash failed, trying gemini-3.1-flash-lite fallback", apiErr);
+      response = await ai.models.generateContent({
+        model: "gemini-3.1-flash-lite",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.4,
+        },
+      });
+    }
+
+    const parsed = JSON.parse(response.text.replace(/```json|```/g, "").trim());
+    return res.json(parsed);
+  } catch (err: any) {
+    console.error("[SEO Generator Error]:", err);
+    return res.json({
+      seoTitle: `نظام تشغيل ${req.body.businessSector || "الشركات"} | مدارج OS`,
+      h1: `المنصة السحابية الموحدة لـ ${req.body.businessSector || "الأعمال السعودية"}`,
+      h2: `امتثال ZATCA وحماية الأجور WPS بذكاء اصطناعي سيادي`,
+      metaDescription: `أتمتة كاملة لإدارة عملك وفق معايير هيئة الزكاة والضريبة والجمارك ونظام مدد لحماية الأجور.`,
+      cta: `ابدأ التجربة المجانية الآن`,
+      conversionBulletPoints: [
+        `ربط فوري مع السجل التجاري والعنوان الوطني`,
+        `توليد فواتير ZATCA المرحلة الثانية تلقائياً`,
+        `حماية الأجور والرواتب بملفات SIF معتمدة`
+      ]
+    });
+  }
+});
+
+// 7. SEO Copilot - Page Content Analysis & GCC Arabic Search Intent Meta Tag Generator
+router.post("/seo-copilot", async (req: any, res) => {
+  try {
+    const { pageTitle = "الصفحة الرئيسية", pageContent = "", pageUrl = "https://app.mudarij.com", targetGccMarket = "KSA" } = req.body;
+
+    let ai: GoogleGenAI | null = null;
+    try {
+      ai = getAiClient();
+    } catch {
+      return res.json({
+        metaTitle: `${pageTitle} | مدارج OS - حلول إدارة الأعمال السحابية في المملكة`,
+        metaDescription: `اكتشف ${pageTitle} عبر منصة مدارج OS. حلول سحابية متوافقة 100% مع هيئة الزكاة والضريبة (ZATCA Phase 2) ونظام حماية الأجور بخصم 80% للمشروعات والشركات.`,
+        keywords: ["مدارج OS", "الفوترة الإلكترونية ZATCA", "نظام إدارة الشركات بالرياض", "حماية الأجور مدد", "نظام ERP سعودي"],
+        ogTitle: `${pageTitle} - نظام التشغيل الموحد لشركات الخليج`,
+        ogDescription: `حل رقمي سيادي متكامل لإدارة المبيعات والرواتب والفوترة بامتثال كامل مع اشتراطات ZATCA ووزارة الموارد البشرية.`,
+        canonicalUrl: pageUrl,
+        structuredDataJson: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": "Mudarij OS",
+          "operatingSystem": "Cloud / Web",
+          "applicationCategory": "BusinessApplication",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "SAR" }
+        }, null, 2)
+      });
+    }
+
+    const prompt = `You are a Google GCC SEO & Search Intent Strategist specializing in Arabic SEO for Saudi Arabia and Gulf Cooperation Council (Saudi Arabia KSA, UAE, Qatar, Kuwait, Bahrain, Oman).
+Analyze the following web page content and produce high-ranking Meta Tags, Search Intent Keywords, OpenGraph Tags, and JSON-LD Structured Data:
+- Page Title: ${pageTitle}
+- Page URL: ${pageUrl}
+- Target Market: ${targetGccMarket}
+- Raw Page Content / Features:
+${pageContent.substring(0, 2000)}
+
+Return ONLY a valid JSON object matching this schema:
+{
+  "metaTitle": "SEO Title under 60 chars in Arabic with primary keyword",
+  "metaDescription": "Meta description 140-155 chars in Arabic with strong call to action",
+  "keywords": ["5-8 high volume Arabic search intent keywords for Saudi/GCC market"],
+  "ogTitle": "Catchy Social Media Open Graph Title",
+  "ogDescription": "Engaging Open Graph Description for WhatsApp / LinkedIn sharing in Arabic",
+  "canonicalUrl": "${pageUrl}",
+  "structuredDataJson": "Formatted JSON string for Schema.org SoftwareApplication or Service"
+}`;
+
+    let response;
+    try {
+      response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.3,
+        },
+      });
+    } catch (err) {
+      response = await ai.models.generateContent({
+        model: "gemini-3.1-flash-lite",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.3,
+        },
+      });
+    }
+
+    const parsed = JSON.parse(response.text.replace(/```json|```/g, "").trim());
+    return res.json(parsed);
+  } catch (err: any) {
+    console.error("[SEO Copilot Error]:", err);
+    return res.json({
+      metaTitle: `${req.body.pageTitle || "مدارج OS"} | نظام التشغيل السعودي للشركات`,
+      metaDescription: `منصة سحابية موحدة لأتمتة الفواتير الضريبية ZATCA والرواتب والمبيعات بامتثال كلي للأنظمة السعودية.`,
+      keywords: ["مدارج OS", "نظام ZATCA", "الرواتب مدد", "ERP سعودي"],
+      ogTitle: `${req.body.pageTitle || "مدارج OS"}`,
+      ogDescription: `أتمتة الشركات والامتثال بذكاء اصطناعي محلي.`,
+      canonicalUrl: req.body.pageUrl || "https://app.mudarij.com",
+      structuredDataJson: "{}"
+    });
+  }
+});
+
 export default router;

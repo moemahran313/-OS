@@ -66,6 +66,12 @@ export default function BankingTab() {
   const [initialBalance, setInitialBalance] = useState("250000");
   const [isConnecting, setIsConnecting] = useState(false);
 
+  // Statement File Upload States (MT940 / CAMT.053)
+  const [showFileModal, setShowFileModal] = useState(false);
+  const [fileContentInput, setFileContentInput] = useState("");
+  const [fileTypeSelect, setFileTypeSelect] = useState<"mt940" | "camt053" | "csv">("mt940");
+  const [isParsingFile, setIsParsingFile] = useState(false);
+
   const [statementLines, setStatementLines] = useState<StatementLine[]>([]);
   const [ledgerLines, setLedgerLines] = useState<LedgerLine[]>([]);
 
@@ -234,6 +240,51 @@ export default function BankingTab() {
     }
   };
 
+  // MT940 / CAMT.053 File Import Handler
+  const handleParseStatementFile = async () => {
+    if (!fileContentInput.trim()) {
+      alert("يرجى إدخال أو إرفاق نص ملف MT940 أو CAMT.053 أولاً.");
+      return;
+    }
+    setIsParsingFile(true);
+    try {
+      await auth.authStateReady();
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch("/api/accounting/bank-feed/parse-statement", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          fileContent: fileContentInput,
+          fileType: fileTypeSelect,
+          bankName: activeAccount?.bankName || "البنك الأهلي / الراجحي",
+          accountNo: activeAccount?.accountNo || "",
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.lines && data.lines.length > 0) {
+          setStatementLines((prev) => [...data.lines, ...prev]);
+          setReconcileAudit((prev) => [
+            ...prev,
+            `[استيراد كشف حساب] تم تفريغ ${data.lines.length} عملية بنكية بنجاح من ملف ${fileTypeSelect.toUpperCase()}.`
+          ]);
+          alert(`تم تحليل واستيراد ${data.lines.length} حركة بنكية من ملف ${fileTypeSelect.toUpperCase()} بنجاح!`);
+          setShowFileModal(false);
+          setFileContentInput("");
+        }
+      } else {
+        alert("فشل تحليل ملف كشف الحساب المصرفي.");
+      }
+    } catch (err) {
+      alert("خطأ في الاتصال أثناء معالجة كشف الحساب.");
+    } finally {
+      setIsParsingFile(false);
+    }
+  };
+
   // Auto Matching logic
   const handleAutoMatch = () => {
     setIsMatching(true);
@@ -297,7 +348,14 @@ export default function BankingTab() {
             تخلص من كشوف الحساب الورقية والإدخال اليدوي. قم بربط منشأتك مباشرة ببوابة شركاء المالية المفتوحة المعتمدة في المملكة العربية السعودية لمزامنة الحركات فورياً وتأمين كشوفاتك في الأستاذ العام.
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => setShowFileModal(true)}
+            className="px-5 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-black rounded-2xl flex items-center gap-2 border border-white/20 transition-colors cursor-pointer"
+          >
+            <Upload className="w-4 h-4 text-emerald-400" />
+            استيراد ملف MT940 / CAMT.053
+          </button>
           <button
             onClick={() => {
               setConnectStep("provider");
@@ -816,6 +874,112 @@ export default function BankingTab() {
                     </button>
                   </div>
                 )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* MT940 / CAMT.053 File Upload Modal */}
+        {showFileModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-zinc-900 rounded-3xl p-6 max-w-xl w-full shadow-2xl border border-zinc-200 dark:border-zinc-800 space-y-5 text-right"
+            >
+              <div className="flex justify-between items-center border-b pb-4 dark:border-zinc-800">
+                <h3 className="text-sm font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <Upload className="w-4 h-4 text-emerald-500" />
+                  استيراد وتحليل كشف الحساب البنكي (SWIFT MT940 / ISO CAMT.053)
+                </h3>
+                <button
+                  onClick={() => setShowFileModal(false)}
+                  className="text-zinc-400 hover:text-zinc-600 font-bold text-xs"
+                >
+                  إغلاق ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] text-zinc-500 font-black uppercase">نوع الملف المصرفي</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setFileTypeSelect("mt940")}
+                      className={`p-2.5 rounded-xl text-xs font-bold border transition-all ${
+                        fileTypeSelect === "mt940"
+                          ? "bg-emerald-50 border-emerald-500 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                          : "bg-zinc-50 border-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:border-zinc-700"
+                      }`}
+                    >
+                      SWIFT MT940
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFileTypeSelect("camt053")}
+                      className={`p-2.5 rounded-xl text-xs font-bold border transition-all ${
+                        fileTypeSelect === "camt053"
+                          ? "bg-emerald-50 border-emerald-500 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                          : "bg-zinc-50 border-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:border-zinc-700"
+                      }`}
+                    >
+                      CAMT.053 (XML)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFileTypeSelect("csv")}
+                      className={`p-2.5 rounded-xl text-xs font-bold border transition-all ${
+                        fileTypeSelect === "csv"
+                          ? "bg-emerald-50 border-emerald-500 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+                          : "bg-zinc-50 border-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:border-zinc-700"
+                      }`}
+                    >
+                      CSV / Excel
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] text-zinc-500 font-black uppercase">محتوى الكشف البنكي (ألصق النص أو اسحب الملف)</label>
+                  <textarea
+                    rows={7}
+                    value={fileContentInput}
+                    onChange={(e) => setFileContentInput(e.target.value)}
+                    placeholder={
+                      fileTypeSelect === "mt940"
+                        ? ":20:STAT20260722\n:25:SA0380000000608010167519\n:28C:00001/001\n:60F:C240701SAR120000,00\n:61:2407220722C145000,00NTRFNONREF//REF123\n:86:تحصيل مستحقات مبيعات مدى"
+                        : fileTypeSelect === "camt053"
+                        ? "<camt.053.001.02>\n<Stmt>\n<Ntry>\n<Amt Ccy='SAR'>45000.00</Amt>\n<CdtDbtInd>CRDT</CdtDbtInd>\n<Ustrd>تحويل مالي من عميل - البنك الأهلي</Ustrd>\n</Ntry>\n</Stmt>"
+                        : "التاريخ, البيان, المبلغ\n2026-07-22, تحصيل مستحقات, 45000\n2026-07-21, سداد الموردين, -12500"
+                    }
+                    className="w-full p-3 border rounded-xl font-mono text-xs text-right focus:ring-2 focus:ring-emerald-500 focus:outline-none dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => setShowFileModal(false)}
+                    className="flex-1 py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 text-zinc-700 dark:text-zinc-300 font-bold text-xs rounded-xl"
+                  >
+                    إلغاء
+                  </button>
+                  <button
+                    onClick={handleParseStatementFile}
+                    disabled={isParsingFile}
+                    className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-zinc-950 font-black text-xs rounded-xl flex items-center justify-center gap-2"
+                  >
+                    {isParsingFile ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        جاري تحليل وتفريغ الملف...
+                      </>
+                    ) : (
+                      "استيراد وتسوية الحركات"
+                    )}
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>

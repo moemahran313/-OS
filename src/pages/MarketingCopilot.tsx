@@ -38,6 +38,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import SeoCopilotModule from "@/src/components/marketing/SeoCopilotModule";
 
 // Helper for Arabic/English multi-lingual text translation
 const txt = (isAr: boolean, en: string, ar: string) => (isAr ? ar : en);
@@ -77,7 +78,7 @@ export default function MarketingCopilot() {
   const [stats, setStats] = useState<MarketingStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
-  const [activeSubTab, setActiveSubTab] = useState<"email" | "social" | "advertising">("email");
+  const [activeSubTab, setActiveSubTab] = useState<"email" | "social" | "advertising" | "seo">("email");
 
   // Email Marketing States
   const [emailCampaigns, setEmailCampaigns] = useState<any[]>([]);
@@ -607,6 +608,19 @@ export default function MarketingCopilot() {
               <Megaphone className="w-4.5 h-4.5" />
               <span>{txt(isAr, "Paid Advertising", "الإعلانات المدفوعة")}</span>
             </button>
+
+            <button
+              onClick={() => setActiveSubTab("seo")}
+              className={cn(
+                "px-5 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer flex items-center gap-2",
+                activeSubTab === "seo"
+                  ? "bg-white dark:bg-zinc-900 text-purple-500 shadow-xs border border-zinc-200/30 dark:border-zinc-800"
+                  : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+              )}
+            >
+              <Sparkles className="w-4.5 h-4.5 text-purple-500" />
+              <span>{txt(isAr, "SEO Copilot", "مساعد SEO والخليج")}</span>
+            </button>
           </div>
 
           {/* Render Active Dashboard Tab Content */}
@@ -928,6 +942,8 @@ export default function MarketingCopilot() {
                 )}
               </div>
             )}
+
+            {activeSubTab === "seo" && <SeoCopilotModule />}
           </div>
 
           {/* Graphical Growth Trend Visualizer */}

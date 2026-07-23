@@ -156,7 +156,7 @@ export const RoiCalculatorSection = () => {
                   <span className="text-[10px] text-zinc-500 block mt-0.5">بدون إدخال يدوي</span>
                 </div>
                 <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                  <span className="text-[10px] font-bold text-zinc-400 block mb-1">تكلفة مدارج BizOS:</span>
+                  <span className="text-[10px] font-bold text-zinc-400 block mb-1">تكلفة نظام مدارج:</span>
                   <span className="text-2xl font-black text-emerald-400 font-mono">299 ر.س</span>
                   <span className="text-[10px] text-zinc-500 block mt-0.5">أو مجاناً للبدايات</span>
                 </div>

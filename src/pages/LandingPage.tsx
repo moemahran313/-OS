@@ -31,22 +31,32 @@ import {
   LandingTrackEvent,
 } from "@/src/services/landingTracker";
 import { useSettings } from "@/src/contexts/SettingsContext";
+import {
+  ZatcaLogo,
+  ZidLogo,
+  SallaLogo,
+  WhatsappLogo,
+  StcPayLogo,
+  MoyasarLogo,
+} from "@/src/components/common/BrandLogos";
 
-// --- Lazy loaded heavier sections to improve GCC load times ---
-import FlowTransformation from "../components/landing/FlowTransformation";
-const ProblemSection = lazy(() => import("../components/landing/ProblemSection"));
-const FeatureShowcase = lazy(() => import("../components/landing/FeatureShowcase"));
-const SocialProofSection = lazy(() => import("../components/landing/SocialProofSection"));
-const PricingSection = lazy(() => import("../components/landing/PricingSection"));
-const FinalCTA = lazy(() => import("../components/landing/FinalCTA"));
+// --- Direct imports for reliable landing sections rendering ---
+import FlowTransformation from "@/src/components/landing/FlowTransformation";
+import ProblemSection from "@/src/components/landing/ProblemSection";
+import FeatureShowcase from "@/src/components/landing/FeatureShowcase";
+import SocialProofSection from "@/src/components/landing/SocialProofSection";
+import PricingSection from "@/src/components/landing/PricingSection";
+import FinalCTA from "@/src/components/landing/FinalCTA";
 
 // Ogilvy-Grade High Value Landing Sections
-const RoiCalculatorSection = lazy(() => import("../components/landing/RoiCalculatorSection"));
-const ModulePlaygroundSection = lazy(() => import("../components/landing/ModulePlaygroundSection"));
-const ComparisonMatrixSection = lazy(() => import("../components/landing/ComparisonMatrixSection"));
-const SaudiComplianceProofSection = lazy(() => import("../components/landing/SaudiComplianceProofSection"));
-const OgilvyCaseStudiesSection = lazy(() => import("../components/landing/OgilvyCaseStudiesSection"));
-const FaqSection = lazy(() => import("../components/landing/FaqSection"));
+import ValueJourneySection from "@/src/components/landing/ValueJourneySection";
+import SeoCopyGenerator from "@/src/components/landing/SeoCopyGenerator";
+import RoiCalculatorSection from "@/src/components/landing/RoiCalculatorSection";
+import ModulePlaygroundSection from "@/src/components/landing/ModulePlaygroundSection";
+import ComparisonMatrixSection from "@/src/components/landing/ComparisonMatrixSection";
+import SaudiComplianceProofSection from "@/src/components/landing/SaudiComplianceProofSection";
+import OgilvyCaseStudiesSection from "@/src/components/landing/OgilvyCaseStudiesSection";
+import FaqSection from "@/src/components/landing/FaqSection";
 
 // --- Elegant shimmer skeleton for GCC network speeds ---
 const SectionLoaderSkeleton = () => (
@@ -103,187 +113,233 @@ const HeroSection = () => {
       className="relative min-h-screen flex items-center justify-center overflow-hidden bg-zinc-950 text-white selection:bg-primary/30 text-center perspective-[2000px]"
       dir={isAr ? "rtl" : "ltr"}
     >
-      {/* Background Ambience */}
-      <motion.div style={{ y, opacity }} className="absolute inset-0 z-0">
+      {/* Background Ambience & Radial Lighting */}
+      <motion.div style={{ y, opacity }} className="absolute inset-0 z-0 pointer-events-none">
         <div
-          className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full pointer-events-none animate-pulse"
+          className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[500px] rounded-full opacity-30 animate-pulse pointer-events-none"
           style={{
-            animationDuration: "8s",
-            background: "radial-gradient(circle at center, rgba(16, 185, 129, 0.15) 0%, transparent 70%)"
+            animationDuration: "7s",
+            background: "radial-gradient(ellipse at center, rgba(16, 185, 129, 0.25) 0%, rgba(20, 184, 166, 0.1) 45%, transparent 70%)",
+            filter: "blur(60px)",
           }}
         />
         <div
-          className="absolute bottom-1/4 right-1/4 w-[600px] h-[300px] rounded-full pointer-events-none animate-pulse"
+          className="absolute top-1/4 right-1/3 w-[600px] h-[350px] rounded-full opacity-20 pointer-events-none"
           style={{
-            animationDuration: "10s",
-            background: "radial-gradient(circle at center, rgba(52, 211, 153, 0.08) 0%, transparent 70%)"
+            background: "radial-gradient(circle at center, rgba(52, 211, 153, 0.2) 0%, transparent 65%)",
+            filter: "blur(80px)",
           }}
         />
+        {/* Subtle Agency Grid Overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,#000_70%,transparent_100%)]" />
       </motion.div>
 
-      <div className="z-10 container mx-auto px-6 pt-32 pb-16 flex flex-col items-center">
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden: { opacity: 0 },
+          visible: {
+            opacity: 1,
+            transition: {
+              staggerChildren: 0.12,
+              delayChildren: 0.05,
+            },
+          },
+        }}
+        className="z-10 container mx-auto px-6 pt-28 pb-20 flex flex-col items-center relative text-center"
+      >
+        {/* High-Quality Centered Brand Logo Placeholder */}
         <motion.div
-          initial={{ opacity: 0, y: 20, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/[0.03] border border-white/10 backdrop-blur-md mb-8 shadow-2xl relative overflow-hidden"
+          variants={{
+            hidden: { opacity: 0, y: 35, scale: 0.92 },
+            visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
+          }}
+          className="mb-8 flex flex-col items-center"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent animate-pulse" />
-          <Sparkles className="w-4 h-4 text-emerald-400 animate-spin-slow" />
-          <span className="text-sm font-extrabold text-zinc-300 tracking-wide">
-            {isAr
-              ? "أتمتة كاملة لشركتك بالذكاء الاصطناعي السيادي"
-              : "Complete enterprise automation with sovereign AI"}
+          <div className="relative group cursor-pointer">
+            <div className="absolute -inset-3 rounded-3xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600 opacity-30 blur-xl group-hover:opacity-60 transition-opacity duration-500 animate-pulse" />
+            <div className="relative flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-b from-zinc-900 to-black border border-emerald-500/30 text-emerald-400 shadow-2xl backdrop-blur-2xl p-4 group-hover:border-emerald-400/60 transition-all duration-500">
+              <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-[0_0_15px_rgba(16,185,129,0.4)]" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Modern Abstract M for Mudarij */}
+                <path d="M24 75V25L50 51L76 25V75" stroke="url(#logo-grad)" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="50" cy="24" r="8" fill="#10B981" />
+                <defs>
+                  <linearGradient id="logo-grad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#34D399" />
+                    <stop offset="50%" stopColor="#10B981" />
+                    <stop offset="100%" stopColor="#14B8A6" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Badge */}
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 35 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
+          }}
+          className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 backdrop-blur-xl mb-8 shadow-[0_0_25px_rgba(16,185,129,0.15)] hover:border-emerald-500/50 hover:bg-emerald-500/15 transition-all duration-300 group cursor-default"
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <span className="text-sm font-black text-emerald-400 tracking-wide">
+            {isAr ? "🇸🇦 صُمم للأعمال السعودية" : "🇸🇦 Built for Saudi Businesses"}
           </span>
         </motion.div>
 
+        {/* H1 Headline */}
         <motion.h1
-          initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ duration: 1, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="text-5xl md:text-8xl font-black tracking-tight mb-8 mt-4 leading-[1.12] max-w-5xl"
+          variants={{
+            hidden: { opacity: 0, y: 35 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
+          }}
+          className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter mb-6 mt-1 leading-[1.1] max-w-5xl text-center text-white"
         >
           {isAr ? (
             <>
-              نظام التشغيل السعودي الوحيد <br />
-              <span className="text-emerald-400 supports-[background-clip:text]:text-transparent supports-[background-clip:text]:bg-clip-text supports-[background-clip:text]:bg-gradient-to-l supports-[background-clip:text]:from-white supports-[background-clip:text]:via-emerald-400 supports-[background-clip:text]:to-teal-300">
-                الذي يلغي 80% من مصاريف برامجك الإدارية.
+              نظام تشغيل مدارج{" "}
+              <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-500 bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(16,185,129,0.3)]">
+                المتكامل للأعمال
               </span>
             </>
           ) : (
             <>
-              The Only Sovereign Saudi BizOS <br />
-              <span className="text-emerald-400 supports-[background-clip:text]:text-transparent supports-[background-clip:text]:bg-clip-text supports-[background-clip:text]:bg-gradient-to-r supports-[background-clip:text]:from-white supports-[background-clip:text]:via-emerald-400 supports-[background-clip:text]:to-teal-300">
-                That Eliminates 80% of Admin Software Costs.
+              Mudarij OS: The Complete{" "}
+              <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-500 bg-clip-text text-transparent drop-shadow-[0_0_35px_rgba(16,185,129,0.3)]">
+                Saudi Business OS
               </span>
             </>
           )}
         </motion.h1>
 
+        {/* Subtitle */}
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="text-lg md:text-2xl text-zinc-300 font-medium max-w-4xl mb-12 leading-relaxed"
+          variants={{
+            hidden: { opacity: 0, y: 35 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
+          }}
+          className="text-lg sm:text-xl md:text-2xl text-zinc-300 font-semibold max-w-3xl mb-12 leading-relaxed tracking-tight text-center"
         >
-          {isAr ? (
-            <>
-              من الفوترة الإلكترونية المعتمدة من هيئة الزكاة (ZATCA Phase 2) وملفات مسير الرواتب المعتمدة لـ &apos;مدد&apos;، إلى التحقق اللحظي من العنوان الوطني والتذكيرات التلقائية عبر الواتساب —{" "}
-              <span className="text-emerald-400 font-extrabold">كل ما تحتاجه لإدارة شركتك في منصة سيادية واحدة مدمجة ومجانية 100%.</span>
-            </>
-          ) : (
-            <>
-              From ZATCA Phase 2 e-invoicing and WPS Mudad payroll SIF files, to live SPL National Address lookups and WhatsApp reminders —{" "}
-              <span className="text-emerald-400 font-extrabold">all integrated into one sovereign platform, 100% free to start.</span>
-            </>
-          )}
+          {isAr
+            ? "الفواتير الإلكترونية، المحاسبة المالية، إدارة الرواتب، وسلاسل الإمداد في منظومة سحابية متكاملة تضمن الامتثال التام للأنظمة السعودية."
+            : "Invoicing, accounting, payroll, and supply chain integrated in one cloud OS compliant with Saudi regulations."}
         </motion.p>
 
+        {/* CTAs */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col sm:flex-row gap-6 items-center mb-16"
+          variants={{
+            hidden: { opacity: 0, y: 35 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
+          }}
+          className="flex flex-col sm:flex-row gap-5 items-center mb-10"
         >
-          <Link
-            to="/app"
-            onClick={() => trackLandingEvent("ابدأ مجاناً الآن (البطل الرئيسي)", "CTA_START_FREE")}
-            className="group relative inline-flex items-center justify-center gap-3 px-10 py-5 bg-gradient-to-r from-emerald-400 to-teal-500 text-white font-black rounded-full text-lg shadow-[0_10px_35px_rgba(16,185,129,0.3)] hover:shadow-[0_15px_45px_rgba(16,185,129,0.5)] hover:scale-105 active:scale-95 transition-all duration-300 outline-none"
+          <motion.div 
+            whileHover={{ scale: 1.05, y: -2 }} 
+            whileTap={{ scale: 0.97 }} 
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
           >
-            <div className="absolute -top-3 -right-3 bg-rose-500 text-white text-[10px] uppercase font-black tracking-widest py-1 px-3 rounded-full shadow-lg -rotate-12 animate-bounce">
-              {isAr ? "خيار الخبراء" : "Expert Choice"}
-            </div>
-            <span>{isAr ? "ابدأ مجاناً الآن" : "Start Free Now"}</span>
-            {isAr ? (
-              <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            ) : (
-              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            )}
-          </Link>
-          <button
-            onClick={() =>
-              trackLandingEvent("شاهد كيف ينمو عملك (الفيديو التعريفي)", "DEMO_PLAYBACK")
-            }
-            className="inline-flex items-center justify-center gap-3 px-8 py-5 bg-white/5 border border-white/10 text-white font-bold rounded-full text-lg hover:bg-white/10 hover:border-white/20 transition-all duration-300 outline-none focus:ring-4 focus:ring-white/10 group overflow-hidden relative"
+            <Link
+              to="/app"
+              onClick={() => trackLandingEvent("ابدأ مجاناً (البطل الرئيسي)", "CTA_START_FREE")}
+              className="group card-premium-hover relative inline-flex items-center justify-center gap-3 px-9 py-4 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 text-zinc-950 font-black rounded-2xl text-base shadow-[0_0_40px_rgba(16,185,129,0.35)] hover:shadow-[0_0_65px_rgba(16,185,129,0.55)] transition-all duration-300 outline-none overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none" />
+              <span className="relative z-10">{isAr ? "ابدأ مجاناً" : "Start Free"}</span>
+              {isAr ? (
+                <ChevronLeft className="w-5 h-5 relative z-10 group-hover:-translate-x-1.5 transition-transform" />
+              ) : (
+                <ChevronRight className="w-5 h-5 relative z-10 group-hover:translate-x-1.5 transition-transform" />
+              )}
+            </Link>
+          </motion.div>
+
+          <motion.div 
+            whileHover={{ scale: 1.05, y: -2 }} 
+            whileTap={{ scale: 0.97 }} 
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
           >
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-            <Play className="w-5 h-5 z-10" fill="currentColor" />
-            <span className="z-10">
-              {isAr ? "شاهد كيف ينمو عملك" : "Watch how your business grows"}
-            </span>
-          </button>
+            <button
+              onClick={() =>
+                trackLandingEvent("شاهد العرض التوضيحي", "DEMO_PLAYBACK")
+              }
+              className="card-premium-hover inline-flex items-center justify-center gap-3 px-8 py-4 bg-white/5 border border-white/10 hover:border-emerald-500/40 text-white font-bold rounded-2xl text-base hover:bg-white/10 hover:shadow-[0_0_30px_rgba(255,255,255,0.08)] transition-all duration-300 outline-none group cursor-pointer"
+            >
+              <Play className="w-4 h-4 text-emerald-400 fill-current group-hover:scale-110 transition-transform" />
+              <span>{isAr ? "شاهد العرض التوضيحي" : "Watch Demo"}</span>
+            </button>
+          </motion.div>
         </motion.div>
 
-        {/* Free Integrations Badges */}
+        {/* Micro-Trust Indicators under CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-5xl"
+          variants={{
+            hidden: { opacity: 0, y: 35 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
+          }}
+          className="flex flex-wrap justify-center items-center gap-4 text-xs font-extrabold text-zinc-400 mb-12"
         >
-          <p className="text-sm font-black text-zinc-500 mb-8 uppercase tracking-widest text-center">
-            يربط كل هذه المنصات مجاناً للأبد
+          <span className="flex items-center gap-1.5 bg-white/5 px-3.5 py-1.5 rounded-full border border-white/5">
+            <span className="text-emerald-400">✓</span> معتمد ZATCA Phase 2
+          </span>
+          <span className="flex items-center gap-1.5 bg-white/5 px-3.5 py-1.5 rounded-full border border-white/5">
+            <span className="text-emerald-400">✓</span> مطابق لنظام حماية الأجور (مدد)
+          </span>
+          <span className="flex items-center gap-1.5 bg-white/5 px-3.5 py-1.5 rounded-full border border-white/5">
+            <span className="text-emerald-400">✓</span> تجربة مجانية بدون بطاقة
+          </span>
+        </motion.div>
+
+        {/* Official Integrations - Minimal Grayscale Semi-Transparent Row */}
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 35 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
+          }}
+          className="w-full max-w-2xl border-t border-white/5 pt-8 mt-4 flex flex-col items-center"
+        >
+          <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.25em] mb-6 text-center">
+            {isAr ? "شريك ربط رسمي وموثوق" : "Official Integration Partner"}
           </p>
-          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-14">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/ar/b/be/%D8%B4%D8%B9%D8%A7%D8%B1_%D9%87%D9%8A%D8%A6%D8%A9_%D8%A7%D9%84%D8%B2%D9%83%D8%A7%D8%A9_%D9%88%D8%A7%D9%84%D8%B6%D8%B1%D9%8A%D8%A8%D8%A9_%D9%88%D8%A7%D9%84%D8%AC%D9%85%D8%A7%D8%B1%D9%83.svg"
-              alt="ZATCA"
+          <div className="flex items-center justify-center gap-16 md:gap-24">
+            {/* ZATCA Logo */}
+            <div
               onClick={() =>
                 trackLandingEvent(
                   "شعار هيئة الزكاة والضريبة والجمارك (ZATCA)",
                   "PARTNER_INTEGRATION"
                 )
               }
-              className="h-10 md:h-12 object-contain brightness-0 invert opacity-40 hover:opacity-100 hover:brightness-100 hover:invert-0 transition-all duration-500 cursor-pointer"
+              className="filter grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-500 cursor-pointer flex items-center gap-3.5 group"
               title="هيئة الزكاة والضريبة والجمارك"
-              referrerPolicy="no-referrer"
-            />
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
-              alt="WhatsApp"
-              onClick={() =>
-                trackLandingEvent("شعار واتساب للأعمال (WhatsApp API)", "PARTNER_INTEGRATION")
-              }
-              className="h-8 md:h-10 object-contain brightness-0 invert opacity-40 hover:opacity-100 hover:brightness-100 hover:invert-0 transition-all duration-500 cursor-pointer"
-              title="WhatsApp Cloud API"
-            />
-            <img
-              src="https://cdn.salla.network/images/logo/logo.svg"
-              alt="Salla"
-              onClick={() =>
-                trackLandingEvent("شعار منصة سلة (Salla Integration)", "PARTNER_INTEGRATION")
-              }
-              className="h-8 md:h-10 object-contain brightness-0 invert opacity-40 hover:opacity-100 hover:brightness-100 hover:invert-0 transition-all duration-500 cursor-pointer"
-              title="سلة"
-            />
-            <img
-              src="https://zid.sa/wp-content/uploads/2021/04/cropped-Zid-Favicon-192x192.png"
-              alt="Zid"
+            >
+              <ZatcaLogo className="w-10 h-10 shrink-0 text-zinc-400 group-hover:text-emerald-400 transition-colors" />
+              <div className="text-right">
+                <div className="text-xs font-black text-zinc-400 group-hover:text-white transition-colors leading-none mb-1">ZATCA</div>
+                <div className="text-[10px] font-bold text-zinc-500 group-hover:text-zinc-400 transition-colors leading-none">
+                  {isAr ? "معتمد للمرحلة الثانية" : "Phase 2 Certified"}
+                </div>
+              </div>
+            </div>
+
+            {/* Zid Logo */}
+            <div
               onClick={() =>
                 trackLandingEvent("شعار منصة زد (Zid Integration)", "PARTNER_INTEGRATION")
               }
-              className="h-8 md:h-10 object-contain brightness-0 invert opacity-40 hover:opacity-100 hover:brightness-100 hover:invert-0 transition-all duration-500 cursor-pointer"
+              className="filter grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-500 cursor-pointer flex items-center gap-3.5 group"
               title="زد"
-              referrerPolicy="no-referrer"
-            />
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/b/b9/Slack_Technologies_Logo.svg"
-              alt="Slack"
-              onClick={() =>
-                trackLandingEvent("شعار سلاك للاتصال المؤسسي (Slack Link)", "PARTNER_INTEGRATION")
-              }
-              className="h-8 md:h-10 object-contain brightness-0 invert opacity-40 hover:opacity-100 hover:brightness-100 hover:invert-0 transition-all duration-500 cursor-pointer"
-              title="Slack"
-            />
-            <img
-              src="https://cdn.worldvectorlogo.com/logos/zapier-2.svg"
-              alt="Zapier"
-              onClick={() =>
-                trackLandingEvent("شعار منصة زابيير للأتمتة (Zapier Hub)", "PARTNER_INTEGRATION")
-              }
-              className="h-8 md:h-10 object-contain brightness-0 invert opacity-40 hover:opacity-100 hover:brightness-100 hover:invert-0 transition-all duration-500 cursor-pointer"
-              title="Zapier"
-            />
+            >
+              <ZidLogo className="w-10 h-10 shrink-0 text-zinc-400 group-hover:text-purple-400 transition-colors" />
+              <div className="text-right">
+                <div className="text-xs font-black text-zinc-400 group-hover:text-white transition-colors leading-none mb-1">ZID</div>
+                <div className="text-[10px] font-bold text-zinc-500 group-hover:text-zinc-400 transition-colors leading-none">
+                  {isAr ? "ربط فوري للمتاجر" : "Instant Store Sync"}
+                </div>
+              </div>
+            </div>
           </div>
         </motion.div>
 
@@ -472,7 +528,7 @@ const HeroSection = () => {
             </div>
           </motion.div>
         </motion.div>
-      </div>
+      </motion.div>
     </div>
   );
 };
@@ -682,13 +738,16 @@ export default function LandingPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
 
+    // Update document title & meta tags for Search Engine Optimization (SEO)
+    document.title = "أفضل نظام محاسبي سحابي في السعودية | أتمتة الفوترة الإلكترونية المرحلة الثانية | نظام مدارج";
+
     // Inject Google Schema.org SoftwareApplication & Organization JSON-LD for Search Engine Optimization
     const schemaData = {
       "@context": "https://schema.org",
       "@graph": [
         {
           "@type": "SoftwareApplication",
-          "name": "Mudarij BizOS",
+          "name": "نظام مدارج - أفضل نظام محاسبي سحابي في السعودية",
           "operatingSystem": "Web, Cloud, Windows, macOS, iOS, Android",
           "applicationCategory": "BusinessApplication, AccountingApplication",
           "offers": {
@@ -699,13 +758,13 @@ export default function LandingPage() {
           "aggregateRating": {
             "@type": "AggregateRating",
             "ratingValue": "4.9",
-            "ratingCount": "1280"
+            "ratingCount": "1420"
           },
-          "description": "نظام التشغيل الرقمي الموحد للمنشآت السعودية والخليجية. يجمع الفوترة الضريبية ZATCA Phase 2، مسير الرواتب المعتمد لـ مدد (WPS)، إدارة العملاء CRM، والعناوين الوطنية SPL."
+          "description": "أفضل نظام محاسبي سحابي في السعودية يضمن أتمتة الفوترة الإلكترونية المرحلة الثانية مع هيئة الزكاة (ZATCA)، وإدارة الموارد البشرية والرواتب المعتمدة لمنصة مدد (WPS)، وإدارة علاقات العملاء."
         },
         {
           "@type": "Organization",
-          "name": "Mudarij Systems",
+          "name": "نظام مدارج المحاسبي",
           "url": "https://mudarij.sa",
           "logo": "https://mudarij.sa/logo.png",
           "sameAs": [
@@ -748,6 +807,10 @@ export default function LandingPage() {
       </Suspense>
 
       <Suspense fallback={<SectionLoaderSkeleton />}>
+        <ValueJourneySection />
+      </Suspense>
+
+      <Suspense fallback={<SectionLoaderSkeleton />}>
         <RoiCalculatorSection />
       </Suspense>
 
@@ -769,6 +832,10 @@ export default function LandingPage() {
 
       <Suspense fallback={<SectionLoaderSkeleton />}>
         <FeatureShowcase />
+      </Suspense>
+
+      <Suspense fallback={<SectionLoaderSkeleton />}>
+        <SeoCopyGenerator />
       </Suspense>
 
       <FlowTransformation />

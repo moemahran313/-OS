@@ -8,7 +8,7 @@ export const FaqSection = () => {
 
   const faqs = [
     {
-      q: "هل نظام مدارج BizOS معتمد رسمياً من هيئة الزكاة والضريبة والجمارك (ZATCA) للمرحلة الثانية؟",
+      q: "هل نظام مدارج معتمد رسمياً من هيئة الزكاة والضريبة والجمارك (ZATCA) للمرحلة الثانية؟",
       a: "نعم 100%. ينشئ النظام الفواتير الضريبية والتبسيطية بصيغة UBL 2.1 XML ويقوم بتوقيعها إلكترونياً بأسلوب التشفير ECDSA secp256k1 مع توليد الـ QR Code الخاص بالهيئة وإرسالها مباشرة للتطهير (Clearance) أو الإبلاغ (Reporting) لحظياً دون الحاجة لوسيط ثالث.",
     },
     {
@@ -83,7 +83,7 @@ export const FaqSection = () => {
           </div>
           <h2 className="text-4xl md:text-5xl font-black tracking-tight text-zinc-900">
             كل ما تحتاج معرفته عن <br />
-            <span className="text-emerald-600">التحول لـ مدارج BizOS</span>
+            <span className="text-emerald-600">التحول إلى نظام مدارج المحاسبي</span>
           </h2>
           <p className="text-zinc-500 font-medium text-base mt-3">
             إجابات دقيقة ومستفيضة تضع بين يديك الحقائق الفنية والقانونية قبل اتخاذ القرار.

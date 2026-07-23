@@ -347,6 +347,25 @@ service cloud.firestore {
       allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().userId == existing().userId;
     }
 
+    // WhatsApp Campaign and Broadcast Rules
+    match /whatsapp_broadcasts/{campaignId} {
+      allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid && incoming().userId == existing().userId;
+    }
+
+    match /whatsapp_templates/{templateId} {
+      allow list, get: if isSignedIn() && (resource == null || !('userId' in resource.data) || resource.data.userId == request.auth.uid || resource.data.isSystem == true);
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /broadcast_errors/{errorId} {
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
     // Tickets Rules
     match /tickets/{ticketId} {
       allow list, get: if isSignedIn() && (resource == null || !('userId' in resource.data) || resource.data.userId == request.auth.uid);

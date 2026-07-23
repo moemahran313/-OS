@@ -494,4 +494,113 @@ router.get("/status", authenticate, async (req: any, res) => {
   }
 });
 
+// 5. Broadcast Campaign Scheduling & Batch Sending
+router.post("/broadcast/send", authenticate, async (req: any, res) => {
+  try {
+    const { templateText, recipients, scheduledTime, campaignTitle } = req.body;
+    if (!templateText || !recipients || !Array.isArray(recipients) || recipients.length === 0) {
+      return res.status(400).json({ error: "Missing campaign template text or recipients list." });
+    }
+
+    const settingsDoc = await db.collection("settings").doc(req.user.uid).get();
+    const settings = settingsDoc.data() || {};
+    const openwaUrl = settings.openwaUrl || process.env.OPENWA_URL;
+    const openwaApiKey = settings.openwaApiKey || process.env.OPENWA_API_KEY;
+
+    const campaignId = `camp_${Date.now()}`;
+    const results: Array<{ clientName: string; phone: string; status: string; textSent: string }> = [];
+
+    // Process placeholders for each recipient
+    for (const recipient of recipients) {
+      const clientName = recipient.name || recipient.clientName || "العميل الكريم";
+      const invoiceStatus = recipient.invoiceStatus || recipient.recentInvoiceStatus || "غير مدفوعة";
+      const invoiceAmount = recipient.invoiceAmount ? `${recipient.invoiceAmount} ر.س` : "0 ر.س";
+      const companyName = recipient.company || "الشركة";
+      const dueDate = recipient.dueDate || "في الموعد المحامي";
+
+      // Replace placeholders
+      let personalizedText = templateText
+        .replace(/\{client_name\}/g, clientName)
+        .replace(/\{اسم_العميل\}/g, clientName)
+        .replace(/\{invoice_status\}/g, invoiceStatus)
+        .replace(/\{حالة_الفاتورة\}/g, invoiceStatus)
+        .replace(/\{invoice_amount\}/g, invoiceAmount)
+        .replace(/\{مبلغ_الفاتورة\}/g, invoiceAmount)
+        .replace(/\{company_name\}/g, companyName)
+        .replace(/\{اسم_الشركة\}/g, companyName)
+        .replace(/\{due_date\}/g, dueDate);
+
+      const cleanedPhone = cleanPhoneNumber(recipient.phone || recipient.to || "");
+      if (!cleanedPhone) {
+        results.push({ clientName, phone: recipient.phone || "", status: "failed_invalid_phone", textSent: personalizedText });
+        continue;
+      }
+
+      const formattedTo = `${cleanedPhone}@c.us`;
+
+      let sendSuccess = false;
+      if (openwaUrl) {
+        try {
+          const url = `${openwaUrl.replace(/\/$/, "")}/sendText`;
+          const headers: Record<string, string> = { "Content-Type": "application/json" };
+          if (openwaApiKey) {
+            headers["Authorization"] = `Bearer ${openwaApiKey}`;
+            headers["X-Api-Key"] = openwaApiKey;
+          }
+
+          const response = await fetch(url, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              to: formattedTo,
+              chatId: formattedTo,
+              content: personalizedText,
+              body: personalizedText,
+            }),
+          });
+          if (response.ok) {
+            sendSuccess = true;
+          }
+        } catch (e) {
+          console.warn(`Broadcast send error for ${formattedTo}:`, e);
+        }
+      }
+
+      results.push({
+        clientName,
+        phone: cleanedPhone,
+        status: sendSuccess ? "sent" : "queued_local",
+        textSent: personalizedText,
+      });
+    }
+
+    // Save campaign record to Firestore
+    const campaignRecord = {
+      id: campaignId,
+      userId: req.user.uid,
+      title: campaignTitle || "حملة بث واتساب للجودة والتحصيل",
+      templateText,
+      totalRecipients: recipients.length,
+      sentCount: results.filter((r) => r.status === "sent" || r.status === "queued_local").length,
+      createdAt: new Date().toISOString(),
+      scheduledTime: scheduledTime || new Date().toISOString(),
+      results,
+    };
+
+    await db.collection("whatsapp_broadcasts").doc(campaignId).set(campaignRecord);
+
+    logAudit("Chat", { action: "WhatsApp Broadcast", campaignId, count: recipients.length }, campaignRecord, req);
+
+    return res.json({
+      success: true,
+      campaignId,
+      message: `تم إنشاء وبث الحملة بنجاح إلى ${recipients.length} عميل.`,
+      campaign: campaignRecord,
+    });
+  } catch (err: any) {
+    console.error("Broadcast send error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

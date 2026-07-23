@@ -12,13 +12,19 @@ import {
 import { COMPETITOR_COMPARISON_DATA, CompetitorComparisonData } from "./DemoDataGenerator";
 
 interface Props {
-  language?: "ar" | "en";
+  language?: "ar" | "en" | "fr";
 }
 
 export default function CompetitorComparison({ language = "ar" }: Props) {
   const [activeCompetitor, setActiveCompetitor] = useState<
     "all" | "quickbooks" | "odoo" | "zoho" | "qoyod"
   >("all");
+
+  const t = (ar: string, en: string, fr: string) => {
+    if (language === "ar") return ar;
+    if (language === "fr") return fr;
+    return en;
+  };
 
   const filteredData = COMPETITOR_COMPARISON_DATA;
 
@@ -45,12 +51,14 @@ export default function CompetitorComparison({ language = "ar" }: Props) {
         <div>
           <h3 className="text-2xl md:text-3xl font-black text-white flex items-center gap-3">
             <ArrowRightLeft className="w-8 h-8 text-primary" />
-            {language === "ar" ? "جدول المقارنة التفاعلي" : "Interactive Competitor Matrix"}
+            {t("جدول المقارنة التفاعلي", "Interactive Competitor Matrix", "Matrice de Comparaison Interactive")}
           </h3>
           <p className="text-zinc-400 mt-2 font-medium">
-            {language === "ar"
-              ? "اكتشف لماذا تختار كبرى الشركات الخليجية مدارج كبديل للأنظمة العالمية والمحلية"
-              : "See why GCC companies migrate to Madarij OS from legacy ERPs."}
+            {t(
+              "اكتشف لماذا تختار كبرى الشركات الخليجية مدارج كبديل للأنظمة العالمية والمحلية",
+              "See why GCC companies migrate to Madarij OS from legacy ERPs.",
+              "Découvrez pourquoi les entreprises du CCG migrent vers Madarij OS depuis les ERP existants."
+            )}
           </p>
         </div>
 
@@ -66,7 +74,7 @@ export default function CompetitorComparison({ language = "ar" }: Props) {
                   : "text-zinc-400 hover:text-white"
               }`}
             >
-              {comp === "all" ? (language === "ar" ? "الكل" : "All") : getCompetitorHeader(comp)}
+              {comp === "all" ? t("الكل", "All", "Tout") : getCompetitorHeader(comp)}
             </button>
           ))}
         </div>
@@ -80,7 +88,7 @@ export default function CompetitorComparison({ language = "ar" }: Props) {
           <thead>
             <tr className="border-b border-white/10 text-zinc-400 text-sm">
               <th className="pb-4 font-black">
-                {language === "ar" ? "الميزة / المعيار" : "Feature / Standard"}
+                {t("الميزة / المعيار", "Feature / Standard", "Caractéristique / Norme")}
               </th>
               <th className="pb-4 font-black text-primary text-center bg-primary/5 rounded-t-xl px-4">
                 مدارج (Madarij OS)
@@ -96,7 +104,9 @@ export default function CompetitorComparison({ language = "ar" }: Props) {
                 <th className="pb-4 font-bold text-center px-4">Zoho Books</th>
               )}
               {(activeCompetitor === "all" || activeCompetitor === "qoyod") && (
-                <th className="pb-4 font-bold text-center px-4">قيود (Qoyod)</th>
+                <th className="pb-4 font-bold text-center px-4">
+                  {t("قيود (Qoyod)", "Qoyod", "Qoyod")}
+                </th>
               )}
             </tr>
           </thead>
@@ -166,14 +176,18 @@ export default function CompetitorComparison({ language = "ar" }: Props) {
         <Shield className="w-10 h-10 text-primary shrink-0" />
         <div>
           <h4 className="font-bold text-white text-sm md:text-base">
-            {language === "ar"
-              ? "ضمان الملاءمة والامتثال الخليجي الكامل"
-              : "Full Gulf Regulatory Compliance Guarantee"}
+            {t(
+              "ضمان الملاءمة والامتثال الخليجي الكامل",
+              "Full Gulf Regulatory Compliance Guarantee",
+              "Garantie de Conformité Réglementaire Totale du Golfe"
+            )}
           </h4>
           <p className="text-zinc-400 text-xs md:text-sm mt-1">
-            {language === "ar"
-              ? "مدارج مرخصة بالكامل من هيئة الزكاة والضريبة والجمارك (ZATCA) في السعودية، ومطابقة لأنظمة حماية الأجور (WPS) وقواعد التأمينات الاجتماعية في دول مجلس التعاون الخليجي."
-              : "Licensed by ZATCA for electronic invoicing in Saudi Arabia and compliant with HR Wages Protection Systems across the GCC."}
+            {t(
+              "مدارج مرخصة بالكامل من هيئة الزكاة والضريبة والجمارك (ZATCA) في السعودية، ومطابقة لأنظمة حماية الأجور (WPS) وقواعد التأمينات الاجتماعية في دول مجلس التعاون الخليجي.",
+              "Licensed by ZATCA for electronic invoicing in Saudi Arabia and compliant with HR Wages Protection Systems across the GCC.",
+              "Entièrement agréé par la ZATCA pour la facturation électronique en Arabie Saoudite et conforme aux Systèmes de Protection des Salaires (WPS) à travers le CCG."
+            )}
           </p>
         </div>
       </div>

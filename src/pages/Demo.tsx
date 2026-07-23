@@ -31,10 +31,12 @@ import {
   Menu,
   X,
   Smartphone,
+  MapPin,
 } from "lucide-react";
 
 import { Logo } from "@/src/components/Logo";
 import CompetitorComparison from "@/src/components/demo/CompetitorComparison";
+import { useUser } from "@/src/contexts/UserContext";
 import {
   INDUSTRIES_TEMPLATES,
   ROLES_TEMPLATES,
@@ -77,9 +79,186 @@ function CustomSparkline({ data, color = "#10b981" }: { data: number[]; color?: 
 }
 
 export default function Demo() {
-  const [lang, setLang] = useState<"ar" | "en">("ar");
+  const [lang, setLang] = useState<"ar" | "en" | "fr">("ar");
   const [industry, setIndustry] = useState<string>("retail");
   const [role, setRole] = useState<string>("ceo");
+
+  const t = (ar: string, en: string, fr: string): string => {
+    if (lang === "ar") return ar;
+    if (lang === "fr") return fr;
+    return en;
+  };
+
+  const tr = (text: string): string => {
+    if (!text) return text;
+    const dictionary: Record<string, Record<"ar" | "en" | "fr", string>> = {
+      // Roles
+      "رئيس الحسابات": { ar: "رئيس الحسابات", en: "Chief Accountant", fr: "Chef Comptable" },
+      "مهندس واجهات": { ar: "مهندس واجهات", en: "Frontend Engineer", fr: "Ingénieur Frontend" },
+      "أخصائي مبيعات كبار العملاء": { ar: "أخصائي مبيعات كبار العملاء", en: "Key Account Sales Specialist", fr: "Spécialiste Ventes Grands Comptes" },
+      "أخصائي موارد بشرية": { ar: "أخصائي موارد بشرية", en: "HR Specialist", fr: "Spécialiste RH" },
+      "مشرف مستودعات وخدمات لوجستية": { ar: "مشرف مستودعات وخدمات لوجستية", en: "Warehouse & Logistics Supervisor", fr: "Superviseur Entrepôt & Logistique" },
+      "مدير تسويق": { ar: "مدير تسويق", en: "Marketing Manager", fr: "Directeur Marketing" },
+      "أخصائي عمليات": { ar: "أخصائي عمليات", en: "Operations Specialist", fr: "Spécialiste Opérations" },
+      
+      // Departments
+      "المالية": { ar: "المالية", en: "Finance", fr: "Finance" },
+      "التقنية": { ar: "التقنية", en: "Technology", fr: "Technologie" },
+      "المبيعات": { ar: "المبيعات", en: "Sales", fr: "Ventes" },
+      "الموارد البشرية": { ar: "الموارد البشرية", en: "HR", fr: "Ressources Humaines" },
+      "سلاسل الإمداد": { ar: "سلاسل الإمداد", en: "Supply Chain", fr: "Chaîne d'Approvisionnement" },
+
+      // Products
+      "شاحن لاسلكي ذكي 15 واط": { ar: "شاحن لاسلكي ذكي 15 واط", en: "Smart Wireless Charger 15W", fr: "Chargeur Sans Fil Intelligent 15W" },
+      "سماعات رأس عازلة للضوضاء": { ar: "سماعات رأس عازلة للضوضاء", en: "Noise-Cancelling Headphones", fr: "Casque Réducteur de Bruit" },
+      "ساعة ليد رياضية مضادة للماء": { ar: "ساعة ليد رياضية مضادة للماء", en: "Waterproof Sports LED Watch", fr: "Montre LED de Sport Étanche" },
+      "كابل شحن فائق السرعة 1.5م": { ar: "كابل شحن فائق السرعة 1.5م", en: "Ultra Fast Charging Cable 1.5m", fr: "Câble de Charge Ultra Rapide 1.5m" },
+      "بولي بروبيلين عالي الكثافة (طن)": { ar: "بولي بروبيلين عالي الكثافة (طن)", en: "High-Density Polypropylene (ton)", fr: "Polypropylène Haute Densité (tonne)" },
+      "قوالب حقن بلاستيكية قياس 5": { ar: "قوالب حقن بلاستيكية قياس 5", en: "Plastic Injection Molds Size 5", fr: "Moules d'Injection Plastique Taille 5" },
+      "ملونات صناعية أساسية (كجم)": { ar: "ملونات صناعية أساسية (كجم)", en: "Basic Industrial Colorants (kg)", fr: "Colorants Industriels de Base (kg)" },
+      "رخصة نظام مدارج السحابية": { ar: "رخصة نظام مدارج السحابية", en: "Madarij Cloud System License", fr: "Licence de Système Cloud Madarij" },
+      "استشارات أتمتة الأعمال وسلاسل الإمداد": { ar: "استشارات أتمتة الأعمال وسلاسل الإمداد", en: "Business Automation & Supply Chain Consulting", fr: "Conseil en Automatisation & Chaîne d'Approvisionnement" },
+      "دعم فني مخصص ذهبي (سنوي)": { ar: "دعم فني مخصص ذهبي (سنوي)", en: "Dedicated Gold Tech Support (Annual)", fr: "Support Technique Dédié Or (Annuel)" },
+
+      // Warehouses
+      "مستودع السلي الرئيسي": { ar: "مستودع السلي الرئيسي", en: "As-Sulay Main Warehouse", fr: "Entrepôt Principal d'As-Sulay" },
+      "مستودع جدة الفرعي": { ar: "مستودع جدة الفرعي", en: "Jeddah Branch Warehouse", fr: "Entrepôt de la Branche de Djeddah" },
+
+      // Projects
+      "تأسيس نظام الفوترة الإلكترونية والمزامنة الفورية": { ar: "تأسيس نظام الفوترة الإلكترونية والمزامنة الفورية", en: "E-Invoicing Integration & Real-time Sync", fr: "Intégration de la Facturation Électronique & Synchro Temps Réel" },
+      "جرد سنوي ومطابقة المخزون في فروع المنطقة الغربية": { ar: "جرد سنوي ومطابقة المخزون في فروع المنطقة الغربية", en: "Annual Stock Count & Auditing - Western Region Branches", fr: "Inventaire Annuel & Audit du Stock - Branches de la Région Ouest" },
+      "إطلاق حملة الإعلانات الذكية وتوليد قنوات البيع للربع الثالث": { ar: "إطلاق حملة الإعلانات الذكية وتوليد قنوات البيع للربع الثالث", en: "Smart Ad Campaign Launch & Lead Generation Q3", fr: "Lancement de Campagne Publicitaire Intelligente & Génération de Leads T3" },
+
+      // Transactions
+      "سداد فاتورة مبيعات #INV-2026-1002": { ar: "سداد فاتورة مبيعات #INV-2026-1002", en: "Payment received for invoice #INV-2026-1002", fr: "Règlement reçu pour la facture #INV-2026-1002" },
+      "صرف رواتب الموظفين لشهر يونيو": { ar: "صرف رواتب الموظفين لشهر يونيو", en: "Employee salaries disbursement - June", fr: "Versement des salaires des employés - Juin" },
+      "شراء مواد خام ومستلزمات": { ar: "شراء مواد خام ومستلزمات", en: "Purchase of raw materials and supplies", fr: "Achat de matières premières et fournitures" },
+      "تحصيل دفعة مقدمة من عميل": { ar: "تحصيل دفعة مقدمة من عميل", en: "Advance payment collected from client", fr: "Acompte encaissé du client" },
+      "سداد مستحقات المورد": { ar: "سداد مستحقات المورد", en: "Payment to supplier", fr: "Règlement du fournisseur" },
+      "فاتورة كهرباء ومرافق": { ar: "فاتورة كهرباء ومرافق", en: "Electricity and utilities bill", fr: "Facture d'électricité et services publics" },
+      "خدمات استشارية": { ar: "خدمات استشارية", en: "Consulting services", fr: "Services de conseil" },
+
+      // Categories
+      "التشغيل": { ar: "التشغيل", en: "Operations", fr: "Opérations" },
+      "المشتريات": { ar: "المشتريات", en: "Purchases", fr: "Achats" },
+      "المرافق": { ar: "المرافق", en: "Utilities", fr: "Services Publics" },
+      "الخدمات": { ar: "الخدمات", en: "Services", fr: "Services" },
+      
+      // WhatsApp chats
+      "السلام عليكم، هل تتوفر لديكم عروض أسعار تنافسية للموسم القادم؟": {
+        ar: "السلام عليكم، هل تتوفر لديكم عروض أسعار تنافسية للموسم القادم؟",
+        en: "Hello, do you have competitive price quotes available for the next season?",
+        fr: "Bonjour, proposez-vous des tarifs compétitifs pour la saison prochaine?"
+      },
+      "أهلاً بك يا فندم. بالتأكيد، سيقوم مستشار المبيعات بالتواصل معك فوراً وتقديم باقة مخصصة.": {
+        ar: "أهلاً بك يا فندم. بالتأكيد، سيقوم مستشار المبيعات بالتواصل معك فوراً وتقديم باقة مخصصة.",
+        en: "Welcome, sir. Absolutely, a sales consultant will contact you immediately and provide a customized package.",
+        fr: "Bienvenue, Monsieur. Absolument, un conseiller commercial vous contactera immédiatement pour vous proposer une offre personnalisée."
+      },
+      "ممتاز، أريد أيضاً التحقق من تكامل الفاتورة مع نظام الزكاة.": {
+        ar: "ممتاز، أريد أيضاً التحقق من تكامل الفاتورة مع نظام الزكاة.",
+        en: "Excellent, I also want to verify the invoice integration with the ZATCA system.",
+        fr: "Excellent, je souhaite également vérifier l'intégration de la facture avec le système de la ZATCA."
+      },
+      
+      // Cities & Districts
+      "حي الياسمين": { ar: "حي الياسمين", en: "Al Yasmeen District", fr: "Quartier Al Yasmeen" },
+      "طريق الملك عبدالعزيز": { ar: "طريق الملك عبدالعزيز", en: "King Abdulaziz Road", fr: "Route du Roi Abdulaziz" },
+      "الرياض": { ar: "الرياض", en: "Riyadh", fr: "Riyad" },
+      "حي الحمراء": { ar: "حي الحمراء", en: "Al Hamra District", fr: "Quartier Al Hamra" },
+      "طريق الكورنيش": { ar: "طريق الكورنيش", en: "Corniche Road", fr: "Route de la Corniche" },
+      "جدة": { ar: "جدة", en: "Jeddah", fr: "Djeddah" },
+      "حي الشاطئ": { ar: "حي الشاطئ", en: "Al Shatea District", fr: "Quartier Al Shatea" },
+      "طريق الملك فيصل": { ar: "طريق الملك فيصل", en: "King Faisal Road", fr: "Route du Roi Faisal" },
+      "الدمام": { ar: "الدمام", en: "Dammam", fr: "Dammam" },
+      "حي مجتمعات نيوم": { ar: "حي مجتمعات نيوم", en: "NEOM Communities District", fr: "Quartier des Communautés de NEOM" },
+      "طريق المستقبل": { ar: "طريق المستقبل", en: "Future Avenue", fr: "Avenue du Futur" },
+      "نيوم": { ar: "نيوم", en: "NEOM", fr: "NEOM" },
+      "حي العزيزية": { ar: "حي العزيزية", en: "Al Aziziyah District", fr: "Quartier Al Aziziyah" },
+      "طريق المسجد الحرام": { ar: "طريق المسجد الحرام", en: "Masjid Al Haram Road", fr: "Route de la Mosquée Al Haram" },
+      "مكة المكرمة": { ar: "مكة المكرمة", en: "Makkah", fr: "La Mecque" },
+      "حي بئر عثمان": { ar: "حي بئر عثمان", en: "Bir Uthman District", fr: "Quartier Bir Uthman" },
+      "طريق سلطانة": { ar: "طريق سلطانة", en: "Sultana Road", fr: "Route Sultana" },
+      "المدينة المنورة": { ar: "المدينة المنورة", en: "Madinah", fr: "Médine" },
+      "حي الحزام الذهبي": { ar: "حي الحزام الذهبي", en: "Al Hizam Al Thahaby District", fr: "Quartier Al Hizam Al Thahaby" },
+      "طريق الملك فهد": { ar: "طريق الملك فهد", en: "King Fahd Road", fr: "Route du Roi Fahd" },
+      "الخبر": { ar: "الخبر", en: "Khobar", fr: "Khobar" },
+
+      // ZATCA / Cryptographic logs & steps
+      "بدء عملية الفوترة الإلكترونية وتبادل حزم البيانات...": {
+        ar: "بدء عملية الفوترة الإلكترونية وتبادل حزم البيانات...",
+        en: "Starting electronic invoicing and data packet transmission...",
+        fr: "Démarrage de la facturation électronique et de la transmission des données..."
+      },
+      "توليد مستند XML المطابق لمعيار UBL 2.1...": {
+        ar: "توليد مستند XML المطابق لمعيار UBL 2.1...",
+        en: "Generating XML document compliant with UBL 2.1 standard...",
+        fr: "Génération du document XML conforme à la norme UBL 2.1..."
+      },
+      "حساب رمز SHA-256 الفرعي وتشفير الهاش الفوري...": {
+        ar: "حساب رمز SHA-256 الفرعي وتشفير الهاش الفوري...",
+        en: "Computing unique SHA-256 hash and instant hash encryption...",
+        fr: "Calcul du hachage unique SHA-256 et chiffrement instantané..."
+      },
+      "التوقيع الرقمي للمستند باستخدام مفتاح التشفير الخاص RSA...": {
+        ar: "التوقيع الرقمي للمستند باستخدام مفتاح التشفير الخاص RSA...",
+        en: "Digital signing of document using private cryptographic RSA key...",
+        fr: "Signature numérique du document à l'aide de la clé cryptographique privée RSA..."
+      },
+      "توليد رمز الاستجابة السريعة (QR Code) المتوافق مع الفئة ب...": {
+        ar: "توليد رمز الاستجابة السريعة (QR Code) المتوافق مع الفئة ب...",
+        en: "Generating QR Code compliant with category B requirements...",
+        fr: "Génération du QR Code conforme aux exigences de la catégorie B..."
+      },
+      "ربط مباشر واستعلام API مع خوادم هيئة الزكاة والضريبة والجمارك (ZATCA)...": {
+        ar: "ربط مباشر واستعلام API مع خوادم هيئة الزكاة والضريبة والجمارك (ZATCA)...",
+        en: "Direct link and API query with ZATCA servers...",
+        fr: "Lien direct et requête API avec les serveurs de la ZATCA..."
+      },
+      "الاستجابة: تم المصادقة والاعتماد الفوري وجاهز للتكامل!": {
+        ar: "الاستجابة: تم المصادقة والاعتماد الفوري وجاهز للتكامل!",
+        en: "Response: Instant authorization and validation complete, ready for sync!",
+        fr: "Réponse: Autorisation instantanée et validation terminées, prêt pour la synchro!"
+      }
+    };
+
+    if (dictionary[text]) {
+      return dictionary[text][lang];
+    }
+
+    let translated = text;
+    Object.keys(dictionary).forEach((key) => {
+      if (text.includes(key)) {
+        translated = translated.replace(new RegExp(key, "g"), dictionary[key][lang]);
+      }
+    });
+
+    return translated;
+  };
+
+  const { user } = useUser();
+  const [isRealDataSynced, setIsRealDataSynced] = useState(false);
+
+  // ZATCA Cryptographic Simulation States
+  const [zatcaSigningInvoiceId, setZatcaSigningInvoiceId] = useState<string | null>(null);
+  const [zatcaSigningStep, setZatcaSigningStep] = useState<number>(0);
+  const [zatcaSigningLogs, setZatcaSigningLogs] = useState<string[]>([]);
+
+  // SPL National Address Validation simulation states
+  const [nationalAddressInput, setNationalAddressInput] = useState<string>("");
+  const [isSearchingAddress, setIsSearchingAddress] = useState<boolean>(false);
+  const [searchedAddressResult, setSearchedAddressResult] = useState<{
+    buildingNumber: string;
+    postalCode: string;
+    additionalNumber: string;
+    unitNumber: string;
+    streetName: string;
+    district: string;
+    city: string;
+    fullAddressAr: string;
+    fullAddressEn: string;
+    qrDataUrl: string;
+  } | null>(null);
 
   // Local sandbox data state
   const [company, setCompany] = useState<CompanyInfo>({
@@ -126,6 +305,7 @@ export default function Demo() {
   const [newInvoice, setNewInvoice] = useState({ client: "", amount: "" });
   const [showEmployeeModal, setShowEmployeeModal] = useState(false);
   const [newEmployee, setNewEmployee] = useState({ name: "", role: "", salary: "6000" });
+  const [payrollViewTab, setPayrollViewTab] = useState<"roster" | "wps">("roster");
 
   // AI assistant states
   const [aiInput, setAiInput] = useState("");
@@ -208,6 +388,200 @@ export default function Demo() {
     ]);
   };
 
+  // Sync real registered business profile from User Context
+  const syncRealCompanyData = () => {
+    if (!user) return;
+    setIsRealDataSynced(true);
+    setCompany(prev => ({
+      ...prev,
+      name: user.companyName || "شركة " + user.name,
+      industry: user.onboarding?.industry || prev.industry,
+      employeesCount: prev.employeesCount + 3,
+      revenue: prev.revenue + 150000,
+      expenses: prev.expenses + 75000,
+    }));
+    showToast(
+      lang === "ar"
+        ? `تم ربط الساندبوكس بنجاح بشركتك الموثقة: ${user.companyName || user.name}`
+        : `Successfully linked sandbox with your verified profile: ${user.companyName || user.name}`
+    );
+  };
+
+  // Compliant Wages Protection SIF File Downloader
+  const downloadWpsSifFile = () => {
+    const today = new Date();
+    const dateStr = today.toISOString().split("T")[0].replace(/-/g, "");
+    const timeStr = today.toTimeString().split(" ")[0].replace(/:/g, "").slice(0, 4);
+    const yearMonth = today.toISOString().slice(0, 7).replace("-", "");
+    
+    const crNumber = user?.crNumber || "1010948271";
+    const employerIban = "SA804000001010948271001";
+    
+    const count = employees.length;
+    let totalNet = 0;
+    let employeesSifLines = "";
+    
+    const bankCodes = ["ALBI", "ARBJ", "NCBK", "RYBD", "SABB", "BSFR"];
+    
+    employees.forEach((emp, index) => {
+      // Determine if Saudi based on name or index
+      const isSaudi = emp.name.includes("الشمر") || emp.name.includes("الزهر") || emp.name.includes("القحط") || emp.name.includes("الحرب") || emp.name.includes("العتيب") || index % 2 === 0;
+      const nationalId = (isSaudi ? "1" : "2") + (1002394821 + index).toString().slice(1);
+      const bankCode = bankCodes[index % bankCodes.length];
+      const employeeIban = `SA20${bankCode}000002100${123456 + index}`;
+      
+      const basic = Math.round(emp.salary * 0.7);
+      const housing = Math.round(emp.salary * 0.2);
+      const allowances = Math.round(emp.salary * 0.1);
+      
+      // GOSI Deduction: 9% of Basic + Housing for Saudi, 2% Occupational Hazard for Expats
+      const deductions = Math.round((basic + housing) * (isSaudi ? 0.09 : 0.02));
+      const netPay = emp.salary - deductions;
+      totalNet += netPay;
+      const status = "ACTV";
+      
+      employeesSifLines += `15\t${nationalId}\t${employeeIban}\t${emp.name}\t${bankCode}\t${basic}\t${housing}\t${allowances}\t${deductions}\t${netPay}\t${status}\n`;
+    });
+    
+    let sifContent = `14\t${crNumber}\t${employerIban}\t${dateStr}\t${timeStr}\t${yearMonth}\t${totalNet}\t${count}\tSAR\n` + employeesSifLines;
+    
+    const blob = new Blob([sifContent], { type: "text/tab-separated-values;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `WPS_Payroll_${yearMonth}_${crNumber}.sif`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Satisfy Mission 2 wps validation
+    setMission2((prev) => {
+      const next = { ...prev, verifyWPS: true };
+      checkMission2Completion(next);
+      return next;
+    });
+
+    showToast(
+      lang === "ar"
+        ? "تم تحميل ملف مسير الرواتب المعتمد للبنوك .SIF بنجاح"
+        : "Downloaded compliant WPS banking SIF payroll file successfully"
+    );
+  };
+
+  // Saudi National Address SPL Live Lookup Simulation
+  const handleNationalAddressLookup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nationalAddressInput.trim()) return;
+
+    setIsSearchingAddress(true);
+    setSearchedAddressResult(null);
+
+    setTimeout(() => {
+      setIsSearchingAddress(false);
+      const inputVal = nationalAddressInput.trim();
+      const inputLower = inputVal.toLowerCase();
+
+      // Advanced regional address parsing
+      let cityAr = "الرياض";
+      let cityEn = "Riyadh";
+      let districtAr = "حي الياسمين";
+      let districtEn = "Al Yasmeen District";
+      let streetAr = "طريق الملك عبدالعزيز";
+      let streetEn = "King Abdulaziz Road";
+      let defaultPostal = "13315";
+      let defaultBld = "8329";
+
+      if (inputLower.includes("jeddah") || inputLower.includes("جدة")) {
+        cityAr = "جدة";
+        cityEn = "Jeddah";
+        districtAr = "حي الحمراء";
+        districtEn = "Al Hamra District";
+        streetAr = "طريق الكورنيش";
+        streetEn = "Corniche Road";
+        defaultPostal = "23321";
+        defaultBld = "4213";
+      } else if (inputLower.includes("dammam") || inputLower.includes("الدمام")) {
+        cityAr = "الدمام";
+        cityEn = "Dammam";
+        districtAr = "حي الشاطئ";
+        districtEn = "Al Shatea District";
+        streetAr = "طريق الملك فيصل";
+        streetEn = "King Faisal Road";
+        defaultPostal = "32413";
+        defaultBld = "7619";
+      } else if (inputLower.includes("neom") || inputLower.includes("نيوم")) {
+        cityAr = "نيوم";
+        cityEn = "NEOM";
+        districtAr = "حي مجتمعات نيوم";
+        districtEn = "NEOM Communities District";
+        streetAr = "طريق المستقبل";
+        streetEn = "Future Avenue";
+        defaultPostal = "49643";
+        defaultBld = "1001";
+      } else if (inputLower.includes("makkah") || inputLower.includes("mecca") || inputLower.includes("مكة")) {
+        cityAr = "مكة المكرمة";
+        cityEn = "Makkah";
+        districtAr = "حي العزيزية";
+        districtEn = "Al Aziziyah District";
+        streetAr = "طريق المسجد الحرام";
+        streetEn = "Masjid Al Haram Road";
+        defaultPostal = "24243";
+        defaultBld = "3112";
+      } else if (inputLower.includes("madinah") || inputLower.includes("medina") || inputLower.includes("المدينة")) {
+        cityAr = "المدينة المنورة";
+        cityEn = "Madinah";
+        districtAr = "حي بئر عثمان";
+        districtEn = "Bir Uthman District";
+        streetAr = "طريق سلطانة";
+        streetEn = "Sultana Road";
+        defaultPostal = "42331";
+        defaultBld = "6231";
+      } else if (inputLower.includes("khobar") || inputLower.includes("الخبر")) {
+        cityAr = "الخبر";
+        cityEn = "Khobar";
+        districtAr = "حي الحزام الذهبي";
+        districtEn = "Al Hizam Al Thahaby District";
+        streetAr = "طريق الملك فهد";
+        streetEn = "King Fahd Road";
+        defaultPostal = "34433";
+        defaultBld = "2910";
+      }
+
+      // Extract numeric components from user input if present
+      const matches = (inputVal.match(/\b\d+\b/g) || []) as string[];
+      const pst = matches.find(num => num.length === 5) || defaultPostal;
+      
+      const fourDigitNumbers = matches.filter(num => num.length === 4);
+      const bld = fourDigitNumbers[0] || defaultBld;
+      const add = fourDigitNumbers[1] || "4128";
+      
+      const smallerNumbers = matches.filter(num => num.length >= 1 && num.length <= 3);
+      const unit = smallerNumbers[0] || "12";
+
+      const fullAr = `العنوان الوطني الموحد: رقم المبنى ${bld}، ${streetAr}، ${districtAr}، ${cityAr} ${pst} - ${add}، وحدة رقم ${unit}`;
+      const fullEn = `National Address: Building ${bld}, ${streetEn}, ${districtEn}, ${cityEn} ${pst} - ${add}, Unit ${unit}`;
+
+      setSearchedAddressResult({
+        buildingNumber: bld,
+        postalCode: pst,
+        additionalNumber: add,
+        unitNumber: unit,
+        streetName: lang === "ar" ? streetAr : streetEn,
+        district: lang === "ar" ? districtAr : districtEn,
+        city: lang === "ar" ? cityAr : cityEn,
+        fullAddressAr: fullAr,
+        fullAddressEn: fullEn,
+        qrDataUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(fullAr)}`
+      });
+
+      showToast(
+        lang === "ar"
+          ? "تم مطابقة وتوثيق العنوان الوطني بنجاح مع قاعدة بيانات SPL"
+          : "National Address verified & synchronized successfully with SPL registers"
+      );
+    }, 1200);
+  };
+
   // ERP actions: Create Invoice
   const handleCreateInvoice = (client: string, amountNum: number) => {
     if (!client || !amountNum) return;
@@ -246,23 +620,63 @@ export default function Demo() {
     );
   };
 
-  // ZATCA Phase 2 Simulation
+  // ZATCA Phase 2 Cryptographic Multi-Step Simulation
   const handleZatcaSign = (invId: string) => {
-    setInvoices((prev) =>
-      prev.map((inv) => (inv.id === invId ? { ...inv, zatcaStatus: "cleared" } : inv))
-    );
+    setZatcaSigningInvoiceId(invId);
+    setZatcaSigningStep(0);
+    
+    const arSteps = [
+      "جاري توليد بنية XML المطابقة لمعيار الفوترة الإلكترونية UBL 2.1 بنجاح...",
+      "جاري احتساب البصمة الرقمية للهاش الموحد SHA-256 للمستند...",
+      "جاري التوقيع الرقمي المشفر باستخدام الشهادة الرقمية للمنشأة (ECDSA P-256)...",
+      "جاري استدعاء منصة فاتورة التابعة لهيئة الزكاة ومطابقة الرمز التعريفي للفاتورة (Fatoora API)...",
+      "تم الاعتماد والتطهير بنجاح! كود هيئة الزكاة المرتجع: ZATCA-PH2-OK-2026"
+    ];
+    
+    const enSteps = [
+      "Generating compliant UBL 2.1 XML schema and injecting structural tags...",
+      "Calculating standard cryptographic SHA-256 hash digest for XML payload...",
+      "Signing document digitally with organization's private key (ECDSA P-256)...",
+      "Transmitting payload to ZATCA Fatoora Platform web service gateway...",
+      "Cleared and reported successfully! Received official ZATCA Approval UUID."
+    ];
+    
+    const steps = lang === "ar" ? arSteps : enSteps;
+    setZatcaSigningLogs([`⏳ ${steps[0]}`]);
 
-    setMission1((prev) => {
-      const next = { ...prev, zatcaSign: true };
-      checkMission1Completion(next);
-      return next;
-    });
+    let stepCounter = 0;
+    const interval = setInterval(() => {
+      stepCounter++;
+      setZatcaSigningStep(stepCounter);
+      
+      if (stepCounter < 5) {
+        setZatcaSigningLogs(prev => [...prev, `⏳ ${steps[stepCounter]}`]);
+      } else {
+        clearInterval(interval);
+        
+        // Completed signing! Update invoice status
+        setInvoices((prev) =>
+          prev.map((inv) => (inv.id === invId ? { ...inv, zatcaStatus: "cleared" } : inv))
+        );
 
-    showToast(
-      lang === "ar"
-        ? `تم التوقيع الإلكتروني وإرسال الفاتورة لهيئة الزكاة (ZATCA Phase 2)`
-        : `XML Signed and reported to ZATCA Platform (ZATCA Phase 2 API)`
-    );
+        setMission1((prev) => {
+          const next = { ...prev, zatcaSign: true };
+          checkMission1Completion(next);
+          return next;
+        });
+
+        showToast(
+          lang === "ar"
+            ? `تم توقيع واعتماد الفاتورة ${invId} بنجاح لدى هيئة الزكاة (ZATCA)`
+            : `Invoice ${invId} signed & reported successfully to ZATCA Platform!`
+        );
+        
+        // Auto close overlay after 1.5 seconds
+        setTimeout(() => {
+          setZatcaSigningInvoiceId(null);
+        }, 1500);
+      }
+    }, 800);
   };
 
   // Receive Invoice Payment
@@ -504,24 +918,24 @@ export default function Demo() {
 
   const getIndustryLabel = (key: string) => {
     const labels: Record<string, string> = {
-      retail: lang === "ar" ? "قطاع التجزئة" : "Retail Sector",
-      restaurant: lang === "ar" ? "المطاعم والأغذية" : "F&B / Restaurants",
-      manufacturing: lang === "ar" ? "المصانع والتصنيع" : "Manufacturing Group",
-      distribution: lang === "ar" ? "التوزيع والخدمات اللوجستية" : "Logistics & Distribution",
-      healthcare: lang === "ar" ? "الرعاية الطبية والعيادات" : "Clinics & Healthcare",
-      services: lang === "ar" ? "الخدمات المهنية والاستشارات" : "Professional Services",
+      retail: t("قطاع التجزئة", "Retail Sector", "Secteur de la Vente au Détail"),
+      restaurant: t("المطاعم والأغذية", "F&B / Restaurants", "Restauration & Alimentation"),
+      manufacturing: t("المصانع والتصنيع", "Manufacturing Group", "Usines & Fabrication"),
+      distribution: t("التوزيع والخدمات اللوجستية", "Logistics & Distribution", "Logistique & Distribution"),
+      healthcare: t("الرعاية الطبية والعيادات", "Clinics & Healthcare", "Cliniques & Santé"),
+      services: t("الخدمات المهنية والاستشارات", "Professional Services", "Services Professionnels"),
     };
     return labels[key] || key;
   };
 
   const getRoleLabel = (key: string) => {
     const labels: Record<string, string> = {
-      ceo: lang === "ar" ? "الرئيس التنفيذي (CEO)" : "CEO Experience",
-      cfo: lang === "ar" ? "المدير المالي (CFO)" : "CFO Dashboard",
-      accountant: lang === "ar" ? "المحاسب الرئيسي" : "Senior Accountant",
-      sales_manager: lang === "ar" ? "مدير المبيعات" : "Sales Director",
-      warehouse_manager: lang === "ar" ? "مسؤول المستودعات" : "Warehouse Coordinator",
-      hr_manager: lang === "ar" ? "مدير الموارد البشرية" : "HR & Payroll Lead",
+      ceo: t("الرئيس التنفيذي (CEO)", "CEO Experience", "Expérience du PDG"),
+      cfo: t("المدير المالي (CFO)", "CFO Dashboard", "Tableau de Bord du DAF"),
+      accountant: t("المحاسب الرئيسي", "Senior Accountant", "Comptable Principal"),
+      sales_manager: t("مدير المبيعات", "Sales Director", "Directeur des Ventes"),
+      warehouse_manager: t("مسؤول المستودعات", "Warehouse Coordinator", "Coordonnateur d'Entrepôt"),
+      hr_manager: t("مدير الموارد البشرية", "HR & Payroll Lead", "Responsable RH & Paie"),
     };
     return labels[key] || key;
   };
@@ -535,7 +949,7 @@ export default function Demo() {
       <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[180px] pointer-events-none" />
       <div className="absolute bottom-10 left-10 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[150px] pointer-events-none" />
 
-      {/* Celebration overlay */}
+      {/* Celebration & ZATCA signing overlays */}
       <AnimatePresence>
         {celebration && (
           <motion.div
@@ -557,6 +971,65 @@ export default function Demo() {
             </button>
           </motion.div>
         )}
+
+        {zatcaSigningInvoiceId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-zinc-900 border border-white/10 p-6 rounded-[2rem] w-full max-w-xl shadow-2xl space-y-4 text-right"
+              dir="rtl"
+            >
+              <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                <span className="px-2 py-0.5 text-[10px] font-bold bg-primary/20 text-primary rounded-md animate-pulse">
+                  {t("ممتثل بالكامل", "ZATCA COMPLIANT", "CONFORME À LA ZATCA")}
+                </span>
+                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-primary" />
+                  {t("مجمع التوقيع الإلكتروني والربط الضريبي", "ZATCA Cryptographic Signing Terminal", "Terminal de Signature Cryptographique ZATCA")}
+                </h3>
+              </div>
+
+              <div className="bg-black/50 border border-white/5 p-4 rounded-xl font-mono text-xs text-zinc-300 space-y-2.5 min-h-[180px] overflow-y-auto">
+                <div className="text-[10px] text-zinc-500 border-b border-white/5 pb-1.5 mb-2 flex justify-between items-center font-sans">
+                  <span>Invoice Ref: {zatcaSigningInvoiceId}</span>
+                  <span className="text-primary font-bold">SHA-256 Engine v2.0</span>
+                </div>
+                {zatcaSigningLogs.map((log, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className={`leading-relaxed ${i === zatcaSigningStep ? "text-primary font-bold animate-pulse" : "text-zinc-400"}`}
+                  >
+                    {tr(log)}
+                  </motion.div>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between pt-2 font-sans">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                  <span className="text-[10px] text-zinc-400">
+                    {lang === "ar"
+                      ? "جاري معالجة الهاش والتسجيل الفوري..."
+                      : "Computing ECDSA-256 digital signature..."}
+                  </span>
+                </div>
+                
+                <span className="text-[11px] font-bold text-zinc-500">
+                  {lang === "ar" ? `مرحلة ${zatcaSigningStep + 1} من 5` : `Step ${zatcaSigningStep + 1} of 5`}
+                </span>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* Header bar */}
@@ -566,42 +1039,66 @@ export default function Demo() {
             <Logo theme="dark" />
             <div className="hidden lg:flex items-center gap-2 bg-zinc-900 px-3 py-1 rounded-full border border-white/5 text-xs text-zinc-400 font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              {lang === "ar" ? "نظام الديمو التفاعلي النشط" : "Live Simulation Engine"}
+              {t("نظام الديمو التفاعلي النشط", "Live Simulation Engine", "Moteur de Simulation Actif")}
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             {/* Lang toggle */}
-            <button
-              onClick={() => {
-                const newLang = lang === "ar" ? "en" : "ar";
-                setLang(newLang);
-                showToast(
-                  newLang === "ar" ? "تم تغيير اللغة للعربية" : "Language switched to English"
-                );
-              }}
-              className="px-3 py-1.5 bg-zinc-900 border border-white/10 rounded-xl hover:bg-zinc-800 transition-all text-xs font-bold flex items-center gap-2"
-            >
-              <Globe className="w-4 h-4 text-primary" />
-              <span>{lang === "ar" ? "English" : "عربي"}</span>
-            </button>
+            <div className="flex bg-zinc-900/90 border border-white/10 rounded-xl p-0.5 gap-0.5">
+              <button
+                onClick={() => {
+                  setLang("ar");
+                  showToast("تم تغيير اللغة للعربية");
+                }}
+                className={`px-2 py-1 text-[10px] font-black rounded-lg transition-all ${
+                  lang === "ar" ? "bg-primary text-white" : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                عربي
+              </button>
+              <button
+                onClick={() => {
+                  setLang("en");
+                  showToast("Language switched to English");
+                }}
+                className={`px-2 py-1 text-[10px] font-black rounded-lg transition-all ${
+                  lang === "en" ? "bg-primary text-white" : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => {
+                  setLang("fr");
+                  showToast("Langue changée en Français");
+                }}
+                className={`px-2 py-1 text-[10px] font-black rounded-lg transition-all ${
+                  lang === "fr" ? "bg-primary text-white" : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                FR
+              </button>
+            </div>
 
             {/* Reset button */}
             <button
               onClick={() => {
                 resetDemo();
                 showToast(
-                  lang === "ar"
-                    ? "تم إعادة تصفير قاعدة بيانات الساندبوكس"
-                    : "Sandbox Database Reset Successfully"
+                  t(
+                    "تم إعادة تصفير قاعدة بيانات الساندبوكس",
+                    "Sandbox Database Reset Successfully",
+                    "Base de données sandbox réinitialisée avec succès"
+                  )
                 );
               }}
               className="px-3 py-1.5 bg-zinc-900 border border-white/10 text-rose-400 hover:text-white hover:bg-rose-900/30 rounded-xl transition-all text-xs font-bold flex items-center gap-2"
-              title={lang === "ar" ? "إعادة تعيين الديمو" : "Reset Demo"}
+              title={t("إعادة تعيين الديمو", "Reset Demo", "Réinitialiser la Démo")}
             >
               <RotateCcw className="w-4 h-4" />
               <span className="hidden sm:inline">
-                {lang === "ar" ? "إعادة تعيين" : "Reset Demo"}
+                {t("إعادة تعيين", "Reset Demo", "Réinitialiser")}
               </span>
             </button>
 
@@ -681,6 +1178,75 @@ export default function Demo() {
               </div>
             </div>
           </div>
+
+          {/* Real-time Business Account Synchronization Banner */}
+          {user ? (
+            <div className="bg-zinc-900 border border-emerald-500/30 rounded-3xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
+                  <Building2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 text-[9px] font-bold bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
+                      {lang === "ar" ? "جاهز للمزامنة" : "SYNC READY"}
+                    </span>
+                    <h3 className="text-sm font-black text-white">
+                      {lang === "ar" ? "تكامل حسابك التجاري الحقيقي نشط" : "Live Corporate Synchronization"}
+                    </h3>
+                  </div>
+                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                    {lang === "ar"
+                      ? `مرحباً ${user.name}. تم التحقق من هويتك. هل ترغب بربط الساندبوكس ببيانات شركتك الرسمية (${user.companyName || "تأسيس منشأة"}) وسجلك التجاري (${user.crNumber || "سجل معتمد"})؟`
+                      : `Welcome ${user.name}. Verified. Would you like to bind the sandbox with your official registered name (${user.companyName || "Company Profile"}) and CR record (${user.crNumber || "Verified"})?`}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={syncRealCompanyData}
+                disabled={isRealDataSynced}
+                className={`px-5 py-2 text-xs font-black rounded-xl transition-all shadow-lg shrink-0 ${
+                  isRealDataSynced
+                    ? "bg-zinc-800 text-zinc-500 border border-zinc-700/50 cursor-not-allowed"
+                    : "bg-emerald-500 text-black hover:bg-emerald-400 shadow-emerald-500/15"
+                }`}
+              >
+                {isRealDataSynced
+                  ? lang === "ar"
+                    ? "✓ تم دمج مؤشراتك الحقيقية"
+                    : "✓ Live Indicators Merged"
+                  : lang === "ar"
+                    ? "دمج بيانات شركتي الحقيقية"
+                    : "Sync My Live Business"}
+              </button>
+            </div>
+          ) : (
+            <div className="bg-zinc-900 border border-white/5 rounded-3xl p-5 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-white">
+                    {lang === "ar" ? "هل ترغب بتجربة الساندبوكس ببياناتك الفعلية؟" : "Want to test sandbox with your live profile?"}
+                  </h3>
+                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                    {lang === "ar"
+                      ? "قم بتسجيل الدخول أو إنشاء حساب الآن لربط اسم شركتك، سجلك التجاري الفعلي، والموارد البشرية تلقائياً داخل لوحة القيادة التفاعلية."
+                      : "Login or register now to automatically bind your actual business name, active CR, and payroll directly inside the sandbox."}
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/login"
+                className="px-5 py-2.5 bg-zinc-950 border border-white/10 hover:border-white/20 text-xs font-black rounded-xl text-white transition-all text-center shrink-0"
+              >
+                {lang === "ar" ? "سجل دخولك الآن" : "Sign In / Register"}
+              </Link>
+            </div>
+          )}
 
           {/* Interactive Split Layout */}
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
@@ -811,15 +1377,15 @@ export default function Demo() {
                 {/* Sub-tabs menu */}
                 <div className="flex items-center gap-1.5 overflow-x-auto max-w-full">
                   {[
-                    { id: "dashboard", labelAr: "لوحة القيادة", labelEn: "Cockpit" },
-                    { id: "invoices", labelAr: "الفواتير والزكاة", labelEn: "Invoicing" },
-                    { id: "crm", labelAr: "المبيعات والواتساب", labelEn: "CRM & WA" },
-                    { id: "accounting", labelAr: "المحاسبة المتقدمة", labelEn: "Ledger" },
-                    { id: "payroll", labelAr: "الموارد والرواتب", labelEn: "WPS Payroll" },
-                    { id: "shipping", labelAr: "المستودعات والشحن", labelEn: "Logistics" },
-                    { id: "marketing", labelAr: "الحملات الإعلانية", labelEn: "AD Platform" },
-                    { id: "tours_missions", labelAr: "المهام والجولات", labelEn: "Missions" },
-                    { id: "comparison", labelAr: "مقارنة المنافسين", labelEn: "Compare" },
+                    { id: "dashboard", labelAr: "لوحة القيادة", labelEn: "Cockpit", labelFr: "Cockpit / TDB" },
+                    { id: "invoices", labelAr: "الفواتير والزكاة", labelEn: "Invoicing", labelFr: "Facturation & ZATCA" },
+                    { id: "crm", labelAr: "المبيعات والواتساب", labelEn: "CRM & WA", labelFr: "CRM & WhatsApp" },
+                    { id: "accounting", labelAr: "المحاسبة المتقدمة", labelEn: "Ledger", labelFr: "Grand Livre" },
+                    { id: "payroll", labelAr: "الموارد والرواتب", labelEn: "WPS Payroll", labelFr: "Paie WPS" },
+                    { id: "shipping", labelAr: "المستودعات والشحن", labelEn: "Logistics", labelFr: "Logistique & Stock" },
+                    { id: "marketing", labelAr: "الحملات الإعلانية", labelEn: "AD Platform", labelFr: "Publicité" },
+                    { id: "tours_missions", labelAr: "المهام والجولات", labelEn: "Missions", labelFr: "Missions" },
+                    { id: "comparison", labelAr: "مقارنة المنافسين", labelEn: "Compare", labelFr: "Comparatif" },
                   ].map((tab) => (
                     <button
                       key={tab.id}
@@ -839,7 +1405,7 @@ export default function Demo() {
                           : "text-zinc-400 hover:text-white hover:bg-white/5"
                       }`}
                     >
-                      {lang === "ar" ? tab.labelAr : tab.labelEn}
+                      {lang === "ar" ? tab.labelAr : lang === "fr" ? tab.labelFr : tab.labelEn}
                     </button>
                   ))}
                 </div>
@@ -880,52 +1446,52 @@ export default function Demo() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div className="bg-zinc-900 p-5 rounded-2xl border border-white/5">
                           <span className="text-zinc-500 text-xs font-bold">
-                            {lang === "ar" ? "الرصيد الإجمالي" : "Net Revenue"}
+                            {t("الرصيد الإجمالي", "Net Revenue", "Chiffre d'Affaires Net")}
                           </span>
                           <div className="text-xl md:text-2xl font-black mt-1 text-emerald-400">
                             {company.revenue.toLocaleString()}{" "}
-                            <span className="text-xs">{lang === "ar" ? "ريال" : "SAR"}</span>
+                            <span className="text-xs">{t("ريال", "SAR", "SAR")}</span>
                           </div>
                           <span className="text-[10px] text-emerald-500 mt-1 block">
-                            ▲ +12.4% الربع الأخير
+                            {t("▲ +12.4% الربع الأخير", "▲ +12.4% Last Quarter", "▲ +12.4% Dernier Trimestre")}
                           </span>
                         </div>
 
                         <div className="bg-zinc-900 p-5 rounded-2xl border border-white/5">
                           <span className="text-zinc-500 text-xs font-bold">
-                            {lang === "ar" ? "إجمالي المصاريف" : "Operating Expenses"}
+                            {t("إجمالي المصاريف", "Operating Expenses", "Charges d'Exploitation")}
                           </span>
                           <div className="text-xl md:text-2xl font-black mt-1 text-rose-400">
                             {company.expenses.toLocaleString()}{" "}
-                            <span className="text-xs">{lang === "ar" ? "ريال" : "SAR"}</span>
+                            <span className="text-xs">{t("ريال", "SAR", "SAR")}</span>
                           </div>
                           <span className="text-[10px] text-rose-500 mt-1 block">
-                            ▼ -2.1% ضبط التكاليف
+                            {t("▼ -2.1% ضبط التكاليف", "▼ -2.1% Cost Control", "▼ -2.1% Maîtrise des Coûts")}
                           </span>
                         </div>
 
                         <div className="bg-zinc-900 p-5 rounded-2xl border border-white/5">
                           <span className="text-zinc-500 text-xs font-bold">
-                            {lang === "ar" ? "قوة المبيعات والعملاء" : "Total Customers"}
+                            {t("قوة المبيعات والعملاء", "Total Customers", "Nombre de Clients")}
                           </span>
                           <div className="text-xl md:text-2xl font-black mt-1 text-white">
                             {company.customersCount.toLocaleString()}
                           </div>
                           <span className="text-[10px] text-zinc-400 mt-1 block">
-                            نشطين عبر الواتساب والويب
+                            {t("نشطين عبر الواتساب والويب", "Active on WhatsApp & Web", "Actifs sur WhatsApp & Web")}
                           </span>
                         </div>
 
                         <div className="bg-zinc-900 p-5 rounded-2xl border border-white/5">
                           <span className="text-zinc-500 text-xs font-bold">
-                            {lang === "ar" ? "الربح الصافي المستهدف" : "Target Net Profit"}
+                            {t("الربح الصافي المستهدف", "Target Net Profit", "Bénéfice Net Cible")}
                           </span>
                           <div className="text-xl md:text-2xl font-black mt-1 text-primary">
                             {(company.revenue - company.expenses).toLocaleString()}{" "}
-                            <span className="text-xs">{lang === "ar" ? "ريال" : "SAR"}</span>
+                            <span className="text-xs">{t("ريال", "SAR", "SAR")}</span>
                           </div>
                           <span className="text-[10px] text-emerald-500 mt-1 block">
-                            مؤشر أداء إيجابي
+                            {t("مؤشر أداء إيجابي", "Positive KPI", "Indicateur de Performance Positif")}
                           </span>
                         </div>
                       </div>
@@ -935,12 +1501,14 @@ export default function Demo() {
                         <div className="bg-zinc-900 p-5 rounded-2xl border border-white/5">
                           <div className="flex justify-between items-center mb-4">
                             <span className="text-xs font-bold text-zinc-400">
-                              {lang === "ar"
-                                ? "رسم بياني: التدفق النقدي والسيولة"
-                                : "Graph: Cash Flow & Liquidity"}
+                              {t(
+                                "رسم بياني: التدفق النقدي والسيولة",
+                                "Graph: Cash Flow & Liquidity",
+                                "Graphique: Flux de Trésorerie & Liquidités"
+                              )}
                             </span>
                             <span className="text-xs text-emerald-400 font-bold">
-                              {lang === "ar" ? "صعود إيجابي" : "Positive flow"}
+                              {t("صعود إيجابي", "Positive flow", "Flux Positif")}
                             </span>
                           </div>
                           <div className="h-28 flex items-center justify-center bg-zinc-950 rounded-xl border border-white/5 px-4">
@@ -951,10 +1519,10 @@ export default function Demo() {
                         <div className="bg-zinc-900 p-5 rounded-2xl border border-white/5">
                           <div className="flex justify-between items-center mb-4">
                             <span className="text-xs font-bold text-zinc-400">
-                              {lang === "ar" ? "أداء المبيعات والرواد" : "Graph: Sales Performance"}
+                              {t("أداء المبيعات والرواد", "Graph: Sales Performance", "Graphique: Performance des Ventes")}
                             </span>
                             <span className="text-xs text-primary font-bold">
-                              {lang === "ar" ? "محدث لحظياً" : "Live synced"}
+                              {t("محدث لحظياً", "Live synced", "Synchro en Direct")}
                             </span>
                           </div>
                           <div className="h-28 flex items-center justify-center bg-zinc-950 rounded-xl border border-white/5 px-4">
@@ -1232,7 +1800,7 @@ export default function Demo() {
                                       : "bg-emerald-500/10 text-emerald-400 mr-auto border border-emerald-500/20"
                                   }`}
                                 >
-                                  <div>{log.text}</div>
+                                  <div>{tr(log.text)}</div>
                                   <span className="text-[8px] text-zinc-600 block text-left mt-1">
                                     {log.time}
                                   </span>
@@ -1356,9 +1924,7 @@ export default function Demo() {
                         {/* Recent Transactions & Ledgers */}
                         <div className="lg:col-span-2 bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
                           <h4 className="font-bold text-white text-xs uppercase tracking-wider">
-                            {lang === "ar"
-                              ? "سجل القيود اليومية والمطابقة البنكية"
-                              : "Double-Entry Journal Entries"}
+                            {t("سجل القيود اليومية والمطابقة البنكية", "Double-Entry Journal Entries", "Entrées de Journal à Double Entrée")}
                           </h4>
 
                           <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2 scrollbar-thin">
@@ -1372,7 +1938,7 @@ export default function Demo() {
                                     {txn.id} | {txn.date}
                                   </span>
                                   <span className="font-bold text-zinc-300 mt-1 block">
-                                    {txn.description}
+                                    {tr(txn.description)}
                                   </span>
                                 </div>
                                 <div className="text-right">
@@ -1382,7 +1948,7 @@ export default function Demo() {
                                     {txn.type === "credit" ? "+" : "-"}{" "}
                                     {txn.amount.toLocaleString()} SAR
                                   </span>
-                                  <span className="text-[10px] text-zinc-500">{txn.category}</span>
+                                  <span className="text-[10px] text-zinc-500">{tr(txn.category)}</span>
                                 </div>
                               </div>
                             ))}
@@ -1429,46 +1995,130 @@ export default function Demo() {
                           >
                             {lang === "ar" ? "صرف مسير الرواتب" : "Generate Payroll"}
                           </button>
+                          {mission2.runPayroll && (
+                            <button
+                              onClick={downloadWpsSifFile}
+                              className="px-4 py-2 bg-emerald-500 text-black text-xs font-black rounded-xl hover:bg-emerald-400 shadow-md transition-all animate-bounce"
+                            >
+                              📥 {lang === "ar" ? "تحميل كشف الأجور المعتمد .SIF" : "Download Compliant .SIF SIF"}
+                            </button>
+                          )}
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Employees List */}
                         <div className="lg:col-span-2 bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
-                          <h4 className="font-bold text-white text-xs">
-                            {lang === "ar" ? "قاعدة بيانات الموظفين النشطة" : "Employee Database"}
-                          </h4>
-
-                          <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2 scrollbar-thin">
-                            {employees.map((emp) => (
-                              <div
-                                key={emp.id}
-                                className="bg-zinc-950 p-3.5 rounded-xl border border-white/5 flex justify-between items-center text-xs"
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-2">
+                            <h4 className="font-bold text-white text-xs">
+                              {t("قاعدة بيانات الموظفين والرواتب", "Employee & Payroll Registry", "Registre des Employés & Paie")}
+                            </h4>
+                            <div className="flex bg-zinc-950 p-1 rounded-xl border border-white/5 self-start sm:self-auto">
+                              <button
+                                onClick={() => setPayrollViewTab("roster")}
+                                className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                                  payrollViewTab === "roster"
+                                    ? "bg-primary text-white"
+                                    : "text-zinc-400 hover:text-white"
+                                }`}
                               >
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-primary">
-                                    {emp.name[0]}
-                                  </div>
-                                  <div>
-                                    <span className="font-bold text-zinc-300 block">
-                                      {emp.name}
-                                    </span>
-                                    <span className="text-[10px] text-zinc-500">
-                                      {emp.role} | {emp.department}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <span className="font-bold text-white block">
-                                    {emp.salary.toLocaleString()} SAR
-                                  </span>
-                                  <span className="text-[9px] text-emerald-400">
-                                    حضور: {emp.attendanceRate}%
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
+                                {t("قائمة الموظفين", "Staff List", "Liste du Personnel")}
+                              </button>
+                              <button
+                                onClick={() => setPayrollViewTab("wps")}
+                                className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                                  payrollViewTab === "wps"
+                                    ? "bg-primary text-white"
+                                    : "text-zinc-400 hover:text-white"
+                                }`}
+                              >
+                                {t("مسير حماية الأجور (WPS)", "WPS Audit Sheet", "Fiche de Paie WPS")}
+                              </button>
+                            </div>
                           </div>
+
+                          {payrollViewTab === "roster" ? (
+                            <div className="space-y-2 max-h-[280px] overflow-y-auto pr-2 scrollbar-thin">
+                              {employees.map((emp) => (
+                                <div
+                                  key={emp.id}
+                                  className="bg-zinc-950 p-3.5 rounded-xl border border-white/5 flex justify-between items-center text-xs"
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-primary">
+                                      {emp.name[0]}
+                                    </div>
+                                    <div>
+                                      <span className="font-bold text-zinc-300 block">
+                                        {emp.name}
+                                      </span>
+                                      <span className="text-[10px] text-zinc-500">
+                                        {tr(emp.role)} | {tr(emp.department)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <span className="font-bold text-white block">
+                                      {emp.salary.toLocaleString()} SAR
+                                    </span>
+                                    <span className="text-[9px] text-emerald-400">
+                                      {t("حضور", "Attendance", "Présence")}: {emp.attendanceRate}%
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="overflow-x-auto border border-white/5 rounded-xl bg-zinc-950 scrollbar-thin">
+                              <table className="w-full text-[11px] text-zinc-300 min-w-[700px] border-collapse">
+                                <thead className="bg-zinc-900/50 text-zinc-400 font-bold border-b border-white/5">
+                                  <tr>
+                                    <th className="px-3 py-2 text-right">{t("الموظف", "Employee", "Employé")}</th>
+                                    <th className="px-2 py-2 text-center">{t("رقم الهوية / الإقامة", "National ID / Iqama", "ID National / Iqama")}</th>
+                                    <th className="px-2 py-2 text-center">{t("البنك", "Bank Code", "Code Banque")}</th>
+                                    <th className="px-2 py-2 text-center">{t("الأساسي (70%)", "Basic", "Base")}</th>
+                                    <th className="px-2 py-2 text-center">{t("السكن (20%)", "Housing", "Logement")}</th>
+                                    <th className="px-2 py-2 text-center">{t("البدلات (10%)", "Allowances", "Indemnités")}</th>
+                                    <th className="px-2 py-2 text-center">{t("التأمينات (GOSI)", "GOSI Ded.", "Déd. GOSI")}</th>
+                                    <th className="px-3 py-2 text-left">{t("الصافي", "Net Pay", "Salaire Net")}</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {employees.map((emp, index) => {
+                                    const isSaudi = emp.name.includes("الشمر") || emp.name.includes("الزهر") || emp.name.includes("القحط") || emp.name.includes("الحرب") || emp.name.includes("العتيب") || index % 2 === 0;
+                                    const nationalId = (isSaudi ? "1" : "2") + (1002394821 + index).toString().slice(1);
+                                    const bankCodes = ["ALBI", "ARBJ", "NCBK", "RYBD", "SABB", "BSFR"];
+                                    const bankCode = bankCodes[index % bankCodes.length];
+                                    
+                                    const basic = Math.round(emp.salary * 0.7);
+                                    const housing = Math.round(emp.salary * 0.2);
+                                    const allowances = Math.round(emp.salary * 0.1);
+                                    const deductions = Math.round((basic + housing) * (isSaudi ? 0.09 : 0.02));
+                                    const netPay = emp.salary - deductions;
+
+                                    return (
+                                      <tr key={emp.id} className="border-b border-white/5 hover:bg-zinc-900/40 transition-colors">
+                                        <td className="px-3 py-2.5 font-bold text-white text-right">
+                                          <div>{emp.name}</div>
+                                          <div className="text-[9px] text-zinc-500 font-normal">{tr(emp.role)}</div>
+                                        </td>
+                                        <td className="px-2 py-2.5 text-center font-mono text-zinc-400">{nationalId}</td>
+                                        <td className="px-2 py-2.5 text-center font-black text-primary">{bankCode}</td>
+                                        <td className="px-2 py-2.5 text-center">{basic.toLocaleString()}</td>
+                                        <td className="px-2 py-2.5 text-center">{housing.toLocaleString()}</td>
+                                        <td className="px-2 py-2.5 text-center">{allowances.toLocaleString()}</td>
+                                        <td className="px-2 py-2.5 text-center text-rose-400 font-bold">
+                                          -{deductions.toLocaleString()}
+                                          <span className="text-[8px] text-zinc-500 block">({isSaudi ? t("9% التأمينات", "9% GOSI", "9% GOSI") : t("2% الأخطار", "2% Haz", "2% Risques")})</span>
+                                        </td>
+                                        <td className="px-3 py-2.5 text-left font-black text-emerald-400">{netPay.toLocaleString()} SAR</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
                         </div>
 
                         {/* Nitaqat & GOSI KPI */}
@@ -1554,9 +2204,7 @@ export default function Demo() {
                         {/* Products Inventory List */}
                         <div className="lg:col-span-2 bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
                           <h4 className="font-bold text-white text-xs">
-                            {lang === "ar"
-                              ? "مستويات المخزون والوفرة"
-                              : "Live Product Stock Metrics"}
+                            {t("مستويات المخزون والوفرة", "Live Product Stock Metrics", "Métriques de Stock en Direct")}
                           </h4>
 
                           <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2 scrollbar-thin">
@@ -1566,17 +2214,17 @@ export default function Demo() {
                                 className="bg-zinc-950 p-3.5 rounded-xl border border-white/5 flex justify-between items-center text-xs"
                               >
                                 <div>
-                                  <span className="font-bold text-zinc-300 block">{p.name}</span>
+                                  <span className="font-bold text-zinc-300 block">{tr(p.name)}</span>
                                   <span className="text-[10px] text-zinc-500">
-                                    رمز المنتج SKU: {p.sku} | {p.warehouse}
+                                    {t("رمز المنتج SKU:", "SKU:", "SKU:")} {p.sku} | {tr(p.warehouse)}
                                   </span>
                                 </div>
                                 <div className="text-right">
                                   <span className="font-bold text-white block">
-                                    مخزون: {p.stock} وحدة
+                                    {t("المخزون:", "Stock:", "Stock:")} {p.stock} {t("وحدة", "units", "unités")}
                                   </span>
                                   <span className="text-[10px] text-zinc-400">
-                                    سعر البيع: {p.price} SAR
+                                    {t("سعر البيع:", "Selling Price:", "Prix de Vente:")} {p.price} SAR
                                   </span>
                                 </div>
                               </div>
@@ -1584,37 +2232,98 @@ export default function Demo() {
                           </div>
                         </div>
 
-                        {/* Dispatch Actions */}
-                        <div className="lg:col-span-1 bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
-                          <h4 className="font-bold text-white text-xs border-b border-white/5 pb-2">
-                            {lang === "ar" ? "إجراءات لوجستية سريعة" : "Dispatch Controls"}
-                          </h4>
+                        {/* Dispatch Actions & SPL address verification */}
+                        <div className="lg:col-span-1 space-y-6">
+                          <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
+                            <h4 className="font-bold text-white text-xs border-b border-white/5 pb-2">
+                              {lang === "ar" ? "إجراءات لوجستية سريعة" : "Dispatch Controls"}
+                            </h4>
 
-                          <div className="space-y-2 text-xs">
-                            <button
-                              onClick={() =>
-                                showToast(
-                                  lang === "ar"
-                                    ? "تم طباعة باركود لـ 150 وحدة منتج بنجاح"
-                                    : "Generated Barcode labels for inventory"
-                                )
-                              }
-                              className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 rounded-xl border border-white/5 text-zinc-300 font-bold"
-                            >
-                              📦 {lang === "ar" ? "طباعة ملصقات الباركود" : "Print Barcodes"}
-                            </button>
-                            <button
-                              onClick={() =>
-                                showToast(
-                                  lang === "ar"
-                                    ? "تم جدولة جرد يدوي ومطابقة المخازن للفروع"
-                                    : "Scheduled cycle counts for branches"
-                                )
-                              }
-                              className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 rounded-xl border border-white/5 text-zinc-300 font-bold"
-                            >
-                              📋 {lang === "ar" ? "طلب جرد دوري" : "Request Cycle Count"}
-                            </button>
+                            <div className="space-y-2 text-xs">
+                              <button
+                                onClick={() =>
+                                  showToast(
+                                    lang === "ar"
+                                      ? "تم طباعة باركود لـ 150 وحدة منتج بنجاح"
+                                      : "Generated Barcode labels for inventory"
+                                  )
+                                }
+                                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 rounded-xl border border-white/5 text-zinc-300 font-bold"
+                              >
+                                📦 {lang === "ar" ? "طباعة ملصقات الباركود" : "Print Barcodes"}
+                              </button>
+                              <button
+                                onClick={() =>
+                                  showToast(
+                                    lang === "ar"
+                                      ? "تم جدولة جرد يدوي ومطابقة المخازن للفروع"
+                                      : "Scheduled cycle counts for branches"
+                                  )
+                                }
+                                className="w-full py-2.5 bg-zinc-950 hover:bg-zinc-800 rounded-xl border border-white/5 text-zinc-300 font-bold"
+                              >
+                                📋 {lang === "ar" ? "طلب جرد دوري" : "Request Cycle Count"}
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* SPL National Address Validator */}
+                          <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
+                            <h4 className="font-bold text-white text-xs border-b border-white/5 pb-2 flex items-center gap-2">
+                              <MapPin className="w-4 h-4 text-primary" />
+                              {lang === "ar" ? "موثق العنوان الوطني الموحد (SPL)" : "SPL National Address Validator"}
+                            </h4>
+                            
+                            <form onSubmit={handleNationalAddressLookup} className="space-y-2">
+                              <label className="block text-[10px] text-zinc-400 font-bold">
+                                {lang === "ar" ? "أدخل العنوان الوطني (مثال: 8329, 13315):" : "Enter Building No, Postal Code:"}
+                              </label>
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={nationalAddressInput}
+                                  onChange={(e) => setNationalAddressInput(e.target.value)}
+                                  placeholder={lang === "ar" ? "رقم المبنى، الرمز البريدي" : "8329, 13315"}
+                                  className="flex-1 bg-zinc-950 border border-white/10 rounded-xl px-3 py-2 text-xs text-white"
+                                />
+                                <button
+                                  type="submit"
+                                  disabled={isSearchingAddress}
+                                  className="px-3 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/95 transition-colors"
+                                >
+                                  {isSearchingAddress ? "..." : (lang === "ar" ? "تحقق" : "Verify")}
+                                </button>
+                              </div>
+                            </form>
+
+                            {searchedAddressResult && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-zinc-950 p-3.5 rounded-xl border border-emerald-500/20 space-y-3"
+                              >
+                                <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold">
+                                  <ShieldCheck className="w-4 h-4" />
+                                  <span>{lang === "ar" ? "عنوان وطني معتمد وموثق" : "Address Verified"}</span>
+                                </div>
+                                <p className="text-[11px] text-zinc-300 leading-relaxed">
+                                  {lang === "ar" ? searchedAddressResult.fullAddressAr : searchedAddressResult.fullAddressEn}
+                                </p>
+                                <div className="flex items-center gap-3 border-t border-white/5 pt-3">
+                                  <img
+                                    src={searchedAddressResult.qrDataUrl}
+                                    alt="SPL QR"
+                                    className="w-16 h-16 bg-white p-1 rounded-lg shrink-0"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                  <div className="text-[10px] text-zinc-500 space-y-0.5">
+                                    <div>الرمز البريدي: {searchedAddressResult.postalCode}</div>
+                                    <div>رقم المبنى: {searchedAddressResult.buildingNumber}</div>
+                                    <div>وحدة رقم: {searchedAddressResult.unitNumber}</div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
                           </div>
                         </div>
                       </div>

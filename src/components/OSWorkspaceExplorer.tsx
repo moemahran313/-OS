@@ -152,15 +152,6 @@ const WORKSPACE_DATA: WorkspaceGroup[] = [
         badgeAr: "مباشر",
         badgeEn: "Live",
       },
-      {
-        id: "SmartNegotiations",
-        nameAr: "غرفة التفاوض والاجتماعات",
-        nameEn: "Smart Negotiations Suite",
-        descriptionAr: "تنسيق عروض الأسعار والاتصال المرئي ومحاكي العقود التفاعلي",
-        descriptionEn: "Live sales meeting rooms with visual document negotiation",
-        path: "/app/smart-negotiations",
-        icon: Video,
-      },
     ],
   },
   {
