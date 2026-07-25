@@ -227,22 +227,13 @@ export default function Projects() {
           const list = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Project[];
           setProjects(list);
         } else {
-          // No projects in database, seed initial values for rich visual state
-          setProjects(SEED_PROJECTS);
-          // Auto-write seeds so Firestore has data
-          SEED_PROJECTS.forEach(async (p) => {
-            try {
-              await setDoc(doc(db, "projects", p.id), { ...p, userId: user.uid });
-            } catch (e) {
-              console.warn("Failed to seed initial Firestore data:", e);
-            }
-          });
+          setProjects([]);
         }
         setLoading(false);
       },
       (err) => {
-        console.warn("Projects sync offline, loading fallbacks:", err);
-        setProjects(SEED_PROJECTS);
+        console.warn("Projects sync error:", err);
+        setProjects([]);
         setLoading(false);
       }
     );

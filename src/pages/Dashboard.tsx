@@ -77,6 +77,7 @@ import QuickActionsWidget from "@/src/components/QuickActionsWidget";
 import LaunchpadOverview from "@/src/components/dashboard/LaunchpadOverview";
 import QuickActionsFAB from "@/src/components/dashboard/QuickActionsFAB";
 import SaudiSmeKpiSummary from "@/src/components/dashboard/SaudiSmeKpiSummary";
+import ZatcaComplianceLogsTab from "@/src/components/dashboard/ZatcaComplianceLogsTab";
 
 interface WidgetConfig {
   id: string;
@@ -200,7 +201,7 @@ export default function Dashboard() {
   );
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeView, setActiveView] = useState<"ceo" | "hr" | "accountant" | "operations">("ceo");
+  const [activeView, setActiveView] = useState<"ceo" | "hr" | "accountant" | "operations" | "zatca_logs">("ceo");
   const [dismissedLocalAlerts, setDismissedLocalAlerts] = useState<string[]>([]);
   const [waStatus, setWaStatus] = useState<"connected" | "disconnected" | "disabled" | "checking">(
     "checking"
@@ -3078,12 +3079,13 @@ export default function Dashboard() {
           <p className="text-zinc-400 mt-2 text-xs font-semibold">مرحباً بك مجدداً، إليك أحدث نشاطات عملك اليوم.</p>
 
           {!isEditing && (
-            <div className="flex bg-zinc-100/70 dark:bg-zinc-800/60 backdrop-blur-md p-1.5 rounded-2xl flex-wrap gap-1 mt-6 border border-zinc-200/50 dark:border-zinc-700/50 md:w-fit relative">
+            <div className="flex bg-zinc-100/70 dark:bg-zinc-800/60 backdrop-blur-md p-1.5 rounded-2xl overflow-x-auto no-scrollbar max-w-full gap-1 mt-6 border border-zinc-200/50 dark:border-zinc-700/50 md:w-fit relative">
               {[
                 { id: "ceo" as const, labelAr: "نظرة الإدارة (CEO)", labelEn: "Management (CEO)" },
                 { id: "hr" as const, labelAr: "شؤون الموظفين (HR)", labelEn: "Human Resources (HR)" },
                 { id: "accountant" as const, labelAr: "المحاسبة والمالية", labelEn: "Finance & Accounting" },
                 { id: "operations" as const, labelAr: "التشغيل وسلاسل الإمداد", labelEn: "Operations & Supply" },
+                { id: "zatca_logs" as const, labelAr: "سجلات فوترة زكاة (ZATCA Logs)", labelEn: "ZATCA Compliance Logs" },
               ].map((view) => {
                 const isActive = activeView === view.id;
                 return (
@@ -3218,6 +3220,7 @@ export default function Dashboard() {
           {activeView === "hr" && renderHRView()}
           {activeView === "accountant" && renderAccountingView()}
           {activeView === "operations" && renderOperationsView()}
+          {activeView === "zatca_logs" && <ZatcaComplianceLogsTab />}
         </div>
       )}
 

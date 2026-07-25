@@ -333,20 +333,7 @@ router.get(["/email/contacts", "/contacts"], authenticate, async (req: any, res)
     const snap = await db.collection("email_contacts").where("userId", "==", req.user.uid).get();
     let contacts = snap.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
 
-    if (contacts.length === 0) {
-      // Try to load from leads, or defaults
-      const defaults = [
-        { name: "عبدالله الحربي", email: "a.harbi@sme.com.sa", company: "تطوير الأعمال المحدودة", status: "Active", segmentTags: ["SMEs", "Qualified"], userId: req.user.uid, createdAt: new Date().toISOString() },
-        { name: "فاطمة الشمري", email: "f.shamari@tech-solutions.sa", company: "حلول البرمجيات المتقدمة", status: "Active", segmentTags: ["Tech Startup", "High Value"], userId: req.user.uid, createdAt: new Date().toISOString() },
-        { name: "أحمد العتيبي", email: "ahmed@riyadh-retail.com", company: "العتيبي للتجزئة", status: "Active", segmentTags: ["Retail", "Warm"], userId: req.user.uid, createdAt: new Date().toISOString() },
-        { name: "سارة الدوسري", email: "sara@logistic-sa.com", company: "الناقل السريع", status: "Active", segmentTags: ["SMEs", "Warm"], userId: req.user.uid, createdAt: new Date().toISOString() },
-      ];
-
-      for (const item of defaults) {
-        const saved = await db.collection("email_contacts").add(item);
-        contacts.push({ id: saved.id, ...item });
-      }
-    }
+    // Maintain clean empty list when no contacts exist
     res.json(contacts);
   } catch (err: any) {
     res.status(500).json({ error: err.message });

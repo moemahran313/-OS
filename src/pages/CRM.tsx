@@ -759,6 +759,36 @@ export default function CRM() {
             <span>تذكيرات المتابعة</span>
           </button>
           <button
+            onClick={async () => {
+              if (clients.length === 0) {
+                toast.info("لا يوجد أي سجلات عملاء حالياً.");
+                return;
+              }
+              toast.loading("جاري مسح جميع سجلات العملاء...");
+              try {
+                await Promise.all(
+                  clients.map(async (client) => {
+                    try {
+                      await deleteDoc(doc(db, "leads", client.id));
+                    } catch (e) {
+                      await fetch(`/api/leads/${client.id}`, { method: "DELETE" }).catch(() => {});
+                    }
+                  })
+                );
+                toast.dismiss();
+                toast.success("تم مسح كافة سجلات العملاء بنجاح");
+              } catch (err: any) {
+                toast.dismiss();
+                toast.error("حدث خطأ أثناء مسح السجلات: " + err.message);
+              }
+            }}
+            className="flex items-center gap-2 bg-rose-50 text-rose-600 px-5 py-3.5 rounded-2xl font-bold hover:bg-rose-100 transition-all text-sm border border-rose-200 cursor-pointer"
+            title="مسح كافة العملاء والكروت نهائياً"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>مسح جميع الكروت</span>
+          </button>
+          <button
             onClick={() => {
               setEditingClient({ status: "new", value: 0 });
               setIsModalOpen(true);

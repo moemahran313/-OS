@@ -14,6 +14,7 @@ import {
   ArrowRight,
   AlertCircle,
   FileText,
+  FileCheck,
   UserCheck,
   Zap,
   MoreVertical,
@@ -34,11 +35,22 @@ import {
   Smile,
   ExternalLink,
   ShieldAlert,
+  Lock,
+  Trash2,
+  RefreshCw,
 } from "lucide-react";
+
+const STAFF_MEMBERS = [
+  { id: "emp_101", name: "سارة العتيبي", role: "المبيعات والتسويق" },
+  { id: "emp_102", name: "محمد القحطاني", role: "الدعم الفني" },
+  { id: "emp_103", name: "عبدالله الشمري", role: "الامتثال والزكاة" },
+  { id: "emp_104", name: "فهد الدوسري", role: "المحاسبة والمالية" },
+  { id: "emp_105", name: "ريم الغامدي", role: "خدمة العملاء" },
+];
 import { cn } from "@/src/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
-import { updateDoc, doc, arrayUnion } from "firebase/firestore";
+import { updateDoc, doc, arrayUnion, deleteDoc } from "firebase/firestore";
 import { db } from "@/src/lib/firebase";
 
 interface InboxViewProps {
@@ -47,7 +59,7 @@ interface InboxViewProps {
   setActiveLeadId: (id: string | null) => void;
   inputText: string;
   setInputText: (text: string) => void;
-  handleSendMessage: (textToSend?: string) => Promise<void>;
+  handleSendMessage: (textToSend?: string, isInternalNote?: boolean) => Promise<void>;
   isDraftingReply: boolean;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
@@ -74,6 +86,57 @@ export default function InboxView({
   const [isAiSummarizing, setIsAiSummarizing] = useState(false);
   const [aiSummaryResult, setAiSummaryResult] = useState<string | null>(null);
   const [isAiDrafting, setIsAiDrafting] = useState(false);
+  const [waHealth, setWaHealth] = useState<{
+    loading: boolean;
+    isValid: boolean;
+    configured: boolean;
+    displayPhoneNumber?: string;
+    verifiedName?: string;
+    qualityRating?: string;
+    message?: string;
+  }>({ loading: true, isValid: false, configured: false });
+
+  const checkWaHealth = async () => {
+    setWaHealth((prev) => ({ ...prev, loading: true }));
+    try {
+      const res = await fetch("/api/whatsapp/health");
+      if (res.ok) {
+        const data = await res.json();
+        setWaHealth({
+          loading: false,
+          isValid: !!data.isValid,
+          configured: !!data.configured,
+          displayPhoneNumber: data.displayPhoneNumber || data.phoneNumberId || "+966 50 111 2222",
+          verifiedName: data.name || "Meta Business Account",
+          qualityRating: data.qualityRating || "GREEN",
+          message: data.message,
+        });
+        if (!data.isValid && data.configured) {
+          toast.warning("انقطع الاتصال بـ Meta WhatsApp API أو انتهت صلاحية التوكين", { id: "wa-health-warn" });
+        }
+      } else {
+        setWaHealth({
+          loading: false,
+          isValid: false,
+          configured: true,
+          message: "تعذر الاتصال بـ Meta Graph API",
+        });
+      }
+    } catch (err: any) {
+      setWaHealth({
+        loading: false,
+        isValid: false,
+        configured: false,
+        message: "خطأ بالشبكة أثناء التحقق من القناة",
+      });
+    }
+  };
+
+  useEffect(() => {
+    checkWaHealth();
+    const interval = setInterval(checkWaHealth, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -177,32 +240,45 @@ export default function InboxView({
     }, 1200);
   };
 
+  const handleAssignStaff = async (staffName: string) => {
+    if (!activeLeadId || !activeLead) return;
+    const staff = STAFF_MEMBERS.find((s) => s.name === staffName);
+    const staffId = staff ? staff.id : "emp_default";
+
+    try {
+      const res = await fetch("/api/chat/assign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadId: activeLeadId,
+          assignedToUserId: staffId,
+          assignedToName: staffName,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(`✓ تم إسناد المحادثة للموظف (${staffName}) وإرسال إشعار FCM Push Notification!`);
+      } else {
+        await updateDoc(doc(db, "leads", activeLeadId), {
+          assignedToUserId: staffId,
+          assignedToName: staffName,
+          assignedAt: new Date().toISOString(),
+        });
+        toast.success(`✓ تم إسناد المحادثة للموظف (${staffName}) بنجاح!`);
+      }
+    } catch (err: any) {
+      toast.error("حدث خطأ أثناء إسناد المحادثة: " + err.message);
+    }
+  };
+
   const handleSendAction = async () => {
     if (!inputText.trim() || !activeLeadId) return;
 
     if (composerMode === "note") {
-      // Simulate/write internal notes in the message timeline
-      const newNote = {
-        id: `note_${Date.now()}`,
-        sender: "user" as const,
-        text: `[ملاحظة داخلية للموظفين]: ${inputText.trim()}`,
-        timestamp: new Date().toISOString(),
-        status: "read" as const,
-        isInternalNote: true,
-        authorName: "أحمد المنسق",
-      };
-
-      try {
-        await updateDoc(doc(db, "leads", activeLeadId), {
-          messages: arrayUnion(newNote),
-        });
-        setInputText("");
-        toast.info("تم حفظ الملاحظة الداخلية بنجاح!");
-      } catch (err) {
-        toast.error("فشل إرسال الملاحظة");
-      }
+      await handleSendMessage(inputText.trim(), true);
     } else {
-      await handleSendMessage();
+      await handleSendMessage(inputText.trim(), false);
     }
   };
 
@@ -221,10 +297,97 @@ export default function InboxView({
     window.location.href = `/app/invoices/new?leadName=${encodeURIComponent(activeLead.name)}&amount=${activeLead.value}`;
   };
 
+  const handleDeleteLead = async (leadId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      await deleteDoc(doc(db, "leads", leadId));
+      toast.success("تم حذف المحادثة والعميل بنجاح");
+      if (activeLeadId === leadId) {
+        setActiveLeadId(null);
+      }
+    } catch (err: any) {
+      toast.error("فشل حذف المحادثة: " + err.message);
+    }
+  };
+
+  const handleDeleteAllLeads = async () => {
+    if (leads.length === 0) {
+      toast.info("صندوق الوارد فارغ بالفعل");
+      return;
+    }
+    toast.loading("جاري مسح كافة المحادثات والعملاء...");
+    try {
+      // Delete in parallel using Firestore deleteDoc and backend endpoint
+      await Promise.all(
+        leads.map(async (lead) => {
+          try {
+            await deleteDoc(doc(db, "leads", lead.id));
+          } catch (e) {
+            // fallback to API route
+            await fetch(`/api/leads/${lead.id}`, { method: "DELETE" }).catch(() => {});
+          }
+        })
+      );
+      toast.dismiss();
+      toast.success("تم مسح كافة المحادثات والعملاء بنجاح، صندوق الوارد فارغ الآن");
+      setActiveLeadId(null);
+    } catch (err: any) {
+      toast.dismiss();
+      toast.error("حدث خطأ أثناء المسح: " + err.message);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 xl:grid-cols-12 border border-zinc-200 rounded-3xl bg-white overflow-hidden h-[680px] shadow-sm">
       {/* Pane 1: Conversation List & Search (4 columns) */}
       <div className="xl:col-span-3 border-l border-zinc-200 flex flex-col h-full bg-zinc-50/50">
+        {/* WhatsApp Cloud API Connection Health / Sync Status Bar */}
+        <div className="bg-zinc-900 text-white px-3.5 py-2.5 border-b border-zinc-800 flex flex-wrap items-center justify-between gap-2 text-xs shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="relative flex items-center justify-center">
+              <span
+                className={cn(
+                  "w-2.5 h-2.5 rounded-full",
+                  waHealth.loading
+                    ? "bg-amber-400 animate-pulse"
+                    : waHealth.isValid
+                    ? "bg-emerald-400"
+                    : "bg-rose-500 animate-ping"
+                )}
+              />
+              {waHealth.isValid && (
+                <span className="absolute w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping opacity-75" />
+              )}
+            </div>
+
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1">
+                <span className="font-bold text-[11px] text-zinc-200">مزامنة واتساب (Sync Status):</span>
+              </div>
+              {waHealth.loading ? (
+                <span className="text-zinc-400 text-[10px]">جاري فحص الاتصال بـ Meta...</span>
+              ) : waHealth.isValid ? (
+                <span className="text-emerald-400 font-bold text-[10px] flex items-center gap-1">
+                  ✓ متصل ({waHealth.displayPhoneNumber})
+                </span>
+              ) : (
+                <span className="text-rose-400 font-bold text-[10px]">
+                  ⚠ منقطع / انتهت الجلسة
+                </span>
+              )}
+            </div>
+          </div>
+
+          <button
+            onClick={checkWaHealth}
+            className="p-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all text-[10px] font-bold flex items-center gap-1 cursor-pointer shrink-0"
+            title="إعادة فحص الاتصال بـ Meta Cloud API"
+          >
+            <RefreshCw className={cn("w-3 h-3", waHealth.loading && "animate-spin")} />
+            <span>تحديث</span>
+          </button>
+        </div>
+
         {/* Search */}
         <div className="p-4 border-b border-zinc-200 shrink-0 space-y-3">
           <div className="relative">
@@ -238,27 +401,39 @@ export default function InboxView({
             />
           </div>
 
-          {/* Quick Tabs */}
-          <div className="flex gap-1.5 p-1 bg-zinc-100 rounded-xl">
-            {[
-              { id: "all", label: "الكل" },
-              { id: "unread", label: "غير مقروء" },
-              { id: "vips", label: "VIP" },
-              { id: "closed", label: "المغلقة" },
-            ].map((t) => (
+          {/* Quick Tabs & Delete All */}
+          <div className="flex items-center justify-between gap-1.5">
+            <div className="flex-1 flex gap-1 p-1 bg-zinc-100 rounded-xl">
+              {[
+                { id: "all", label: "الكل" },
+                { id: "unread", label: "غير مقروء" },
+                { id: "vips", label: "VIP" },
+                { id: "closed", label: "المغلقة" },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setActiveTab(t.id as any)}
+                  className={cn(
+                    "flex-1 text-[10px] font-black py-1 rounded-lg transition-all cursor-pointer",
+                    activeTab === t.id
+                      ? "bg-white text-zinc-800 shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-800"
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            {leads.length > 0 && (
               <button
-                key={t.id}
-                onClick={() => setActiveTab(t.id as any)}
-                className={cn(
-                  "flex-1 text-[10px] font-black py-1.5 rounded-lg transition-all cursor-pointer",
-                  activeTab === t.id
-                    ? "bg-white text-zinc-800 shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-800"
-                )}
+                onClick={handleDeleteAllLeads}
+                className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl transition-all text-[10px] font-black flex items-center gap-1 shrink-0 cursor-pointer"
+                title="مسح كافة المحادثات والعملاء"
               >
-                {t.label}
+                <Trash2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">مسح الكل</span>
               </button>
-            ))}
+            )}
           </div>
         </div>
 
@@ -277,11 +452,19 @@ export default function InboxView({
                 l.messages && l.messages.length > 0 ? l.messages[l.messages.length - 1] : null;
 
               return (
-                <button
+                <div
                   key={l.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => {
                     setActiveLeadId(l.id);
                     setAiSummaryResult(null); // Clear summary for fresh load
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      setActiveLeadId(l.id);
+                      setAiSummaryResult(null);
+                    }
                   }}
                   className={cn(
                     "w-full text-right p-3.5 rounded-2xl border flex items-start gap-3 transition-all cursor-pointer relative group",
@@ -322,18 +505,27 @@ export default function InboxView({
                       ) : null}
                     </div>
 
-                    <div className="flex gap-1.5 items-center mt-2">
-                      <span className="text-[8px] font-black bg-zinc-200/50 text-zinc-500 px-2 py-0.5 rounded-md">
-                        {l.company}
-                      </span>
-                      {l.value >= 12000 && (
-                        <span className="text-[8px] font-black bg-amber-500/10 text-amber-600 border border-amber-500/15 px-2 py-0.5 rounded-md">
-                          💎 VIP
+                    <div className="flex justify-between items-center mt-2">
+                      <div className="flex gap-1.5 items-center">
+                        <span className="text-[8px] font-black bg-zinc-200/50 text-zinc-500 px-2 py-0.5 rounded-md">
+                          {l.company}
                         </span>
-                      )}
+                        {l.value >= 12000 && (
+                          <span className="text-[8px] font-black bg-amber-500/10 text-amber-600 border border-amber-500/15 px-2 py-0.5 rounded-md">
+                            💎 VIP
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={(e) => handleDeleteLead(l.id, e)}
+                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-rose-100 text-rose-500 rounded-md transition-all cursor-pointer"
+                        title="حذف المحادثة"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
-                </button>
+                </div>
               );
             })
           )}
@@ -358,8 +550,26 @@ export default function InboxView({
                 </div>
               </div>
 
-              {/* Header Channel badges */}
+              {/* Header Channel badges & Assignment */}
               <div className="flex items-center gap-2">
+                {/* Staff Assignment Selector with FCM Push Trigger */}
+                <div className="flex items-center gap-1.5 bg-zinc-100/90 hover:bg-zinc-100 px-2 py-1 rounded-xl border border-zinc-200 shadow-sm">
+                  <UserCheck className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                  <span className="text-[10px] font-black text-zinc-600 hidden sm:inline">إسناد:</span>
+                  <select
+                    value={activeLead.assignedToName || ""}
+                    onChange={(e) => handleAssignStaff(e.target.value)}
+                    className="bg-white text-zinc-800 text-[10px] font-black rounded-lg px-2 py-0.5 border border-zinc-200 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                  >
+                    <option value="" disabled>-- اختر الموظف --</option>
+                    {STAFF_MEMBERS.map((s) => (
+                      <option key={s.id} value={s.name}>
+                        {s.name} ({s.role})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <span
                   className={cn(
                     "px-2.5 py-1 text-[9px] font-black rounded-full border flex items-center gap-1",
@@ -378,6 +588,13 @@ export default function InboxView({
                 >
                   <CheckCheck className="w-4 h-4 text-emerald-500" />
                 </button>
+                <button
+                  onClick={(e) => handleDeleteLead(activeLead.id, e)}
+                  className="p-1.5 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors cursor-pointer"
+                  title="حذف المحادثة والعميل نهائياً"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
@@ -385,25 +602,39 @@ export default function InboxView({
             <div className="flex-1 p-5 overflow-y-auto bg-zinc-50/30 space-y-4 no-scrollbar scroll-smooth">
               {activeLead.messages?.map((m: any) => {
                 const isClient = m.sender === "client";
-                const isNote = m.isInternalNote;
+                const isNote =
+                  m.isInternalNote ||
+                  m.sender === "internal_note" ||
+                  m.text?.startsWith("[ملاحظة داخلية");
 
                 if (isNote) {
+                  const cleanNote = m.text.replace(/^\[ملاحظة داخلية للموظفين\]:\s*/, "");
                   return (
                     <div
                       key={m.id}
-                      className="bg-amber-50 border border-amber-200/80 rounded-2xl p-3 max-w-[90%] mx-auto shadow-sm text-amber-800 text-xs font-bold space-y-1 animate-fadeIn"
+                      className="bg-amber-50/95 border-2 border-amber-300/90 rounded-2xl p-3.5 max-w-[92%] mx-auto shadow-sm text-amber-950 text-xs font-bold space-y-1.5 animate-fadeIn relative"
                     >
-                      <div className="flex justify-between items-center border-b border-amber-200/40 pb-1 mb-1.5">
-                        <span className="text-[9px] font-black uppercase text-amber-600 tracking-wider">
-                          🔒 ملاحظة داخلية للموظفين
+                      <div className="flex justify-between items-center border-b border-amber-200/80 pb-1.5 mb-1">
+                        <span className="text-[10px] font-black uppercase text-amber-800 flex items-center gap-1.5">
+                          <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                          🔒 ملاحظة داخلية للفريق (خاصة بالموظفين - لا تظهر للعميل)
                         </span>
-                        <span className="text-[8px] text-amber-500">
-                          مكتوب بواسطة: {m.authorName}
+                        <span className="text-[9px] text-amber-800 font-extrabold bg-amber-200/60 px-2 py-0.5 rounded-md">
+                          الكاتب: {m.authorName || "الموظف المسؤول"}
                         </span>
                       </div>
-                      <p className="leading-relaxed">
-                        {m.text.replace("[ملاحظة داخلية للموظفين]:", "")}
-                      </p>
+                      <p className="leading-relaxed whitespace-pre-wrap text-amber-900">{cleanNote}</p>
+                      <div className="flex justify-between items-center text-[8px] text-amber-700 font-extrabold pt-1 border-t border-amber-200/50">
+                        <span className="flex items-center gap-1">
+                          <ShieldAlert className="w-3 h-3 text-amber-600" /> محفوظة في سجل التدقيق الداخلي
+                        </span>
+                        <span>
+                          {new Date(m.timestamp).toLocaleTimeString("ar-SA", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
                     </div>
                   );
                 }
@@ -418,21 +649,86 @@ export default function InboxView({
                   >
                     <div
                       className={cn(
-                        "p-3.5 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm",
+                        "p-3.5 rounded-2xl text-xs font-semibold leading-relaxed shadow-sm space-y-2",
                         isClient
                           ? "bg-white border border-zinc-200/80 text-zinc-800 rounded-br-none"
                           : "bg-primary text-white rounded-bl-none"
                       )}
                     >
-                      {m.text}
+                      {/* Media Rendering */}
+                      {m.mediaType === "image" && (m.mediaUrl || m.text?.includes("http")) && (
+                        <div className="rounded-xl overflow-hidden border border-black/10 max-w-xs">
+                          <img
+                            src={m.mediaUrl || m.text}
+                            alt="مرفق صورة"
+                            className="w-full h-auto object-cover max-h-48"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                      )}
+
+                      {m.mediaType === "document" && m.mediaUrl && (
+                        <a
+                          href={m.mediaUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className={cn(
+                            "flex items-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-all",
+                            isClient
+                              ? "bg-zinc-50 border-zinc-200 text-zinc-800 hover:bg-zinc-100"
+                              : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+                          )}
+                        >
+                          <FileText className="w-4 h-4 shrink-0" />
+                          <span className="truncate">{m.fileName || "تحميل المستند المرفق"}</span>
+                          <ExternalLink className="w-3 h-3 shrink-0 mr-auto" />
+                        </a>
+                      )}
+
+                      <p className="whitespace-pre-wrap">{m.text}</p>
+
+                      {/* Interactive ZATCA Phase 2 / Quote Action Card */}
+                      {m.text?.includes("/pay/") && (
+                        <div className="mt-2.5 p-3 bg-white/95 rounded-xl border border-emerald-500/30 text-zinc-900 shadow-md space-y-2">
+                          <div className="flex items-center justify-between text-[11px] font-black border-b border-zinc-100 pb-1.5">
+                            <span className="flex items-center gap-1.5 text-emerald-700">
+                              <FileCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                              مستند ضريبي / عرض سعر (ZATCA)
+                            </span>
+                            <span className="px-2 py-0.5 text-[9px] bg-emerald-100 text-emerald-800 rounded font-bold">
+                              مرحلة ثانية
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between pt-1">
+                            <span className="text-[10px] text-zinc-500 font-bold">معاينة المستند أو السداد:</span>
+                            <a
+                              href={m.text.match(/\/pay\/[a-zA-Z0-9_-]+/)?.[0] || "#"}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-black shadow-sm transition-all"
+                            >
+                              <span>استعراض / السداد الإلكتروني</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <span className="text-[8px] text-zinc-400 font-bold mt-1.5 px-1.5 tracking-wider flex items-center gap-1">
-                      {new Date(m.timestamp).toLocaleTimeString("ar-SA", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+
+                    <div className="flex items-center gap-1.5 text-[8px] text-zinc-400 font-bold mt-1.5 px-1.5 tracking-wider">
+                      {m.channel && (
+                        <span className="uppercase text-[7px] px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-500 font-black">
+                          {m.channel}
+                        </span>
+                      )}
+                      <span>
+                        {new Date(m.timestamp).toLocaleTimeString("ar-SA", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
                       {!isClient && <CheckCheck className="w-3 h-3 text-emerald-400" />}
-                    </span>
+                    </div>
                   </div>
                 );
               })}

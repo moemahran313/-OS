@@ -20,6 +20,7 @@ import {
   Activity,
   RefreshCw,
   AlertTriangle,
+  ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { auth } from "@/src/lib/firebase";
@@ -39,6 +40,20 @@ interface TemplateItem {
   text: string;
   category?: string;
   isSystem?: boolean;
+  metaStatus?: "APPROVED" | "PENDING_APPROVAL" | "REJECTED";
+  metaTemplateId?: string;
+  headerType?: string;
+  submittedAt?: string;
+  approvedAt?: string;
+}
+
+interface CitcOptOutItem {
+  id: string;
+  phone: string;
+  clientName: string;
+  reason: string;
+  optedOutAt: string;
+  source?: string;
 }
 
 interface BroadcastErrorItem {
@@ -97,15 +112,21 @@ export const WhatsAppBroadcastModule: React.FC<WhatsAppBroadcastModuleProps> = (
     failedCount: number;
   } | null>(null);
 
-  // Requirement 3: Reusable Templates stored in Firestore State
-  const [activeTab, setActiveTab] = useState<"composer" | "templates" | "errors">("composer");
+  // Reusable Templates stored in Firestore State
+  const [activeTab, setActiveTab] = useState<"composer" | "templates" | "errors" | "citc">("composer");
   const [savedTemplates, setSavedTemplates] = useState<TemplateItem[]>([]);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
   const [newTemplateTitle, setNewTemplateTitle] = useState("");
   const [newTemplateCategory, setNewTemplateCategory] = useState("عام");
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
 
-  // Requirement 1: Failed Message Details Collection State
+  // CITC Regulatory Guardrails State (هيئة الاتصالات وتقنية المعلومات)
+  const [citcOptOuts, setCitcOptOuts] = useState<CitcOptOutItem[]>([]);
+  const [isLoadingCitc, setIsLoadingCitc] = useState(false);
+  const [newOptOutPhone, setNewOptOutPhone] = useState("");
+  const [newOptOutName, setNewOptOutName] = useState("");
+
+  // Failed Message Details Collection State
   const [broadcastErrors, setBroadcastErrors] = useState<BroadcastErrorItem[]>([]);
   const [isLoadingErrors, setIsLoadingErrors] = useState(false);
 
@@ -181,11 +202,111 @@ export const WhatsAppBroadcastModule: React.FC<WhatsAppBroadcastModuleProps> = (
     }
   };
 
+  // Fetch CITC Opt-Out list
+  const fetchCitcOptOuts = async () => {
+    setIsLoadingCitc(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch("/api/whatsapp/citc/optouts", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCitcOptOuts(data.optOuts || []);
+      }
+    } catch (err) {
+      console.error("Failed to load CITC Opt-Outs", err);
+    } finally {
+      setIsLoadingCitc(false);
+    }
+  };
+
+  // Add phone number to CITC Opt-Out list
+  const handleAddCitcOptOut = async () => {
+    if (!newOptOutPhone.trim()) {
+      toast.error(isAr ? "يرجى إدخال رقم الهاتف للمستعد" : "Phone number required");
+      return;
+    }
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch("/api/whatsapp/citc/optouts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          phone: newOptOutPhone,
+          clientName: newOptOutName || "عميل محلي",
+          reason: "طلب إيقاف الرسائل التجارية (CITC Opt-Out)",
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(isAr ? "تم إدراج الرقم في قائمة عدم الإزعاج وفق ضوابط هيئة الاتصالات CITC" : "Added to CITC Opt-Out list!");
+        setNewOptOutPhone("");
+        setNewOptOutName("");
+        fetchCitcOptOuts();
+      } else {
+        toast.error(data.error || "فشل تسجيل الرقم");
+      }
+    } catch (err) {
+      toast.error("خطأ في الاتصال");
+    }
+  };
+
+  // Remove phone from CITC Opt-Out list
+  const handleDeleteCitcOptOut = async (id: string) => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch(`/api/whatsapp/citc/optouts/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        toast.success(isAr ? "تم إزالة الرقم من قائمة الحظر" : "Opt-out removed");
+        fetchCitcOptOuts();
+      }
+    } catch (err) {
+      toast.error("خطأ في الشبكة");
+    }
+  };
+
+  // Submit Template to Meta Cloud API for review/approval
+  const handleSubmitMetaTemplate = async (tmpl: TemplateItem) => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch("/api/whatsapp/templates/submit-meta", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          templateId: tmpl.id,
+          title: tmpl.title,
+          text: tmpl.text,
+          category: tmpl.category || "UTILITY",
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data.message);
+        fetchTemplates();
+      } else {
+        toast.error(data.error || "فشل إرسال القالب لـ Meta");
+      }
+    } catch (err) {
+      toast.error("خطأ في اتصال Meta API");
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       checkApiHealth();
       fetchTemplates();
       fetchBroadcastErrors();
+      fetchCitcOptOuts();
     }
   }, [isOpen]);
 
@@ -535,6 +656,22 @@ export const WhatsAppBroadcastModule: React.FC<WhatsAppBroadcastModuleProps> = (
           >
             <Bookmark className="w-3.5 h-3.5" />
             <span>{isAr ? `إدارة القوالب المحفوظة (${savedTemplates.length})` : `Saved Templates (${savedTemplates.length})`}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("citc");
+              fetchCitcOptOuts();
+            }}
+            className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ${
+              activeTab === "citc"
+                ? "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30"
+                : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+            }`}
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>{isAr ? `ضوابط هيئة الاتصالات CITC (${citcOptOuts.length})` : `CITC Guardrails (${citcOptOuts.length})`}</span>
           </button>
 
           <button
@@ -934,16 +1071,33 @@ export const WhatsAppBroadcastModule: React.FC<WhatsAppBroadcastModuleProps> = (
                       <div>
                         <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
                           <span className="font-bold text-xs text-emerald-400">{tmpl.title}</span>
-                          <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-800 rounded text-slate-400">
-                            {tmpl.category || "عام"}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            {/* Meta Template Visual Approval Status Badge */}
+                            {tmpl.metaStatus === "APPROVED" ? (
+                              <span className="text-[10px] font-black px-2 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" /> معتمد Meta
+                              </span>
+                            ) : tmpl.metaStatus === "PENDING_APPROVAL" ? (
+                              <span className="text-[10px] font-black px-2 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded flex items-center gap-1">
+                                <Clock className="w-3 h-3 animate-spin" /> قيد مراجعة Meta
+                              </span>
+                            ) : tmpl.metaStatus === "REJECTED" ? (
+                              <span className="text-[10px] font-black px-2 py-0.5 bg-rose-500/20 text-rose-400 border border-rose-500/30 rounded flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" /> مرفوض Meta
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-800 rounded text-slate-400">
+                                {tmpl.category || "عام"}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <p className="text-xs text-slate-300 leading-relaxed line-clamp-3 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/50">
                           {tmpl.text}
                         </p>
                       </div>
 
-                      <div className="flex items-center justify-between pt-1 text-xs">
+                      <div className="flex items-center justify-between pt-1 text-xs gap-2">
                         <button
                           type="button"
                           onClick={() => {
@@ -954,7 +1108,17 @@ export const WhatsAppBroadcastModule: React.FC<WhatsAppBroadcastModuleProps> = (
                           className="text-emerald-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
                         >
                           <Send className="w-3.5 h-3.5" />
-                          <span>{isAr ? "تطبيق القالب للحملة" : "Use for Broadcast"}</span>
+                          <span>{isAr ? "تطبيق للحملة" : "Use"}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleSubmitMetaTemplate(tmpl)}
+                          className="text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-2 py-1 rounded-lg text-[10px] font-bold border border-indigo-500/30 transition-colors cursor-pointer flex items-center gap-1"
+                          title="رفع لرفع وتدقيق القالب عبر Meta WhatsApp Cloud API"
+                        >
+                          <Zap className="w-3 h-3" />
+                          <span>رفع لـ Meta API</span>
                         </button>
 
                         {!tmpl.isSystem && (
@@ -970,6 +1134,116 @@ export const WhatsAppBroadcastModule: React.FC<WhatsAppBroadcastModuleProps> = (
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: CITC REGULATORY GUARDRAILS (هيئة الاتصالات وتقنية المعلومات) */}
+        {activeTab === "citc" && (
+          <div className="p-6 space-y-6">
+            {/* Header Banner */}
+            <div className="bg-gradient-to-r from-indigo-950 via-slate-900 to-slate-950 p-5 rounded-2xl border border-indigo-500/30 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-full border border-indigo-500/30">
+                  ضوابط هيئة الاتصالات وتقنية المعلومات (CITC Commercial Messaging)
+                </span>
+                <span className="text-xs font-mono text-emerald-400 font-extrabold flex items-center gap-1">
+                  <ShieldCheck className="w-4 h-4" /> الفلترة التلقائية نشطة
+                </span>
+              </div>
+              <h4 className="font-extrabold text-base text-white">
+                إدارة قائمة حظر عدم الإزعاج (CITC Opt-Out Registry)
+              </h4>
+              <p className="text-xs text-slate-300 leading-relaxed max-w-2xl">
+                تلتزم المنظومة بالضوابط التنظيمية الصادرة عن هيئة الاتصالات السعودية لحماية المستهلكين. يتم استبعاد الأرقام المدرجة أدناه فوراً ومنع وصول أي رسائل بث تجارية إليها (الرد بكلمة إلغاء / STOP).
+              </p>
+            </div>
+
+            {/* Add Number Form */}
+            <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-3">
+              <h5 className="text-xs font-bold text-white flex items-center gap-2">
+                <Plus className="w-4 h-4 text-indigo-400" />
+                <span>إدراج رقم جديد في قائمة إلغاء الاشتراك (Opt-Out):</span>
+              </h5>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input
+                  type="text"
+                  placeholder="رقم الجوال (مثال: 0501234567 أو 96650...)"
+                  value={newOptOutPhone}
+                  onChange={(e) => setNewOptOutPhone(e.target.value)}
+                  className="bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                />
+                <input
+                  type="text"
+                  placeholder="اسم العميل / المنشأة"
+                  value={newOptOutName}
+                  onChange={(e) => setNewOptOutName(e.target.value)}
+                  className="bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCitcOptOut}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>تسجيل إيقاف الرسائل</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Table of Opt-Outs */}
+            <div className="space-y-3">
+              <h5 className="text-xs font-bold text-slate-400">
+                الأرقام والجهات المستبعدة من الحملات التجارية ({citcOptOuts.length}):
+              </h5>
+
+              {isLoadingCitc ? (
+                <div className="p-8 text-center text-xs text-slate-500">جاري التحقق من سجلات CITC...</div>
+              ) : citcOptOuts.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-500 border border-dashed border-slate-800 rounded-2xl">
+                  لا يوجد أرقام محظورة حالياً في سجل عدم الإزعاج.
+                </div>
+              ) : (
+                <div className="overflow-x-auto border border-slate-800 rounded-2xl bg-slate-950">
+                  <table className="w-full text-right text-xs">
+                    <thead className="bg-slate-900 border-b border-slate-800 text-slate-400 font-bold">
+                      <tr>
+                        <th className="p-3">اسم العميل/الجهة</th>
+                        <th className="p-3">رقم الهاتف المحظور</th>
+                        <th className="p-3">مصدر وسَبب الحظر</th>
+                        <th className="p-3">تاريخ الإدراج</th>
+                        <th className="p-3">إجراءات</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                      {citcOptOuts.map((item) => (
+                        <tr key={item.id} className="hover:bg-slate-900/40">
+                          <td className="p-3 font-bold text-white">{item.clientName}</td>
+                          <td className="p-3 font-mono text-indigo-400 font-extrabold">{item.phone}</td>
+                          <td className="p-3 text-slate-300 font-medium">
+                            <span className="bg-indigo-500/10 text-indigo-300 px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-500/20 ml-2">
+                              CITC Enforced
+                            </span>
+                            {item.reason}
+                          </td>
+                          <td className="p-3 text-[10px] text-slate-500 font-mono">
+                            {new Date(item.optedOutAt).toLocaleString("ar-SA")}
+                          </td>
+                          <td className="p-3">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCitcOptOut(item.id)}
+                              className="text-rose-400 hover:text-rose-300 p-1.5 rounded-lg hover:bg-rose-500/10 transition-colors cursor-pointer text-[10px] font-bold border border-rose-500/20"
+                            >
+                              إلغاء الحظر
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>

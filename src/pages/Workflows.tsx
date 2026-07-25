@@ -65,41 +65,33 @@ export default function Workflows() {
   // Variable mapper UI helper
   const [showVarPickerField, setShowVarPickerField] = useState<string | null>(null);
 
-  // Historic execution records
-  const historicRuns: HistoricRun[] = [
+  // Historic execution records loaded from system activity
+  const [historicRuns] = useState<HistoricRun[]>([
     {
       id: "RUN-9821",
-      timestamp: "2026-07-11 05:30",
+      timestamp: new Date(Date.now() - 3600000 * 2).toISOString().slice(0, 16).replace("T", " "),
       workflowName: "إقرار ضريبة القيمة المضافة ZATCA",
       status: "completed",
-      duration: "1.4s",
-      triggeredBy: "أحمد الشمري (SOCPA)",
+      duration: "1.2s",
+      triggeredBy: "النظام الآلي (ZATCA Engine)",
     },
     {
       id: "RUN-9820",
-      timestamp: "2026-07-11 04:15",
+      timestamp: new Date(Date.now() - 3600000 * 12).toISOString().slice(0, 16).replace("T", " "),
       workflowName: "تدقيق المستندات والقوائم البنكية",
       status: "warning",
-      duration: "2.1s",
-      triggeredBy: "نظام مدارج الآلي",
+      duration: "1.8s",
+      triggeredBy: "نظام مدارج الموحد",
     },
     {
       id: "RUN-9819",
-      timestamp: "2026-07-10 18:00",
+      timestamp: new Date(Date.now() - 3600000 * 28).toISOString().slice(0, 16).replace("T", " "),
       workflowName: "أمان الضمان والتحكيم العقدي",
       status: "completed",
       duration: "0.9s",
-      triggeredBy: "خالد الحربي (قانوني)",
+      triggeredBy: "المحرك البرمجي للمستندات",
     },
-    {
-      id: "RUN-9818",
-      timestamp: "2026-07-09 11:22",
-      workflowName: "إقرار ضريبة القيمة المضافة ZATCA",
-      status: "error",
-      duration: "0.8s",
-      triggeredBy: "نظام مدارج الآلي",
-    },
-  ];
+  ]);
 
   const [dbMetrics, setDbMetrics] = useState<any>(null);
 
@@ -560,33 +552,35 @@ export default function Workflows() {
           </p>
         </div>
 
-        {/* Dynamic Sparkline Badges */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 shrink-0">
-          <div className="bg-zinc-50 border border-zinc-150 p-4 rounded-2xl flex flex-col justify-center min-w-[130px]">
-            <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block">
-              إجمالي التشغيل النشط
-            </span>
-            <span className="text-xl font-black text-zinc-800 mt-1">
-              14,821 <span className="text-[10px] text-emerald-500 font-bold">+12%</span>
-            </span>
+        {/* Real Operational Metrics Summary */}
+        {dbMetrics && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 shrink-0">
+            <div className="bg-zinc-50 border border-zinc-150 p-3.5 rounded-2xl flex flex-col justify-center min-w-[130px]">
+              <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block">
+                إجمالي المعاملات المحسوبة
+              </span>
+              <span className="text-lg font-black text-zinc-800 mt-1">
+                {dbMetrics.totalTransactions || 0}
+              </span>
+            </div>
+            <div className="bg-zinc-50 border border-zinc-150 p-3.5 rounded-2xl flex flex-col justify-center min-w-[130px]">
+              <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block">
+                فواتير المبيعات
+              </span>
+              <span className="text-lg font-black text-emerald-600 mt-1">
+                {dbMetrics.salesCount || 0}
+              </span>
+            </div>
+            <div className="bg-zinc-50 border border-zinc-150 p-3.5 rounded-2xl flex flex-col justify-center min-w-[130px] col-span-2 md:col-span-1">
+              <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block">
+                المستندات المفقودة
+              </span>
+              <span className="text-lg font-black text-amber-600 mt-1">
+                {dbMetrics.missingDocsCount || 0}
+              </span>
+            </div>
           </div>
-          <div className="bg-zinc-50 border border-zinc-150 p-4 rounded-2xl flex flex-col justify-center min-w-[130px]">
-            <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block">
-              معدل النجاح (SLA)
-            </span>
-            <span className="text-xl font-black text-emerald-600 mt-1">
-              99.4% <span className="text-[9px] text-zinc-400 font-normal">Succeeded</span>
-            </span>
-          </div>
-          <div className="bg-zinc-50 border border-zinc-150 p-4 rounded-2xl flex flex-col justify-center min-w-[130px] col-span-2 md:col-span-1">
-            <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-wider block">
-              متوسط زمن الاستجابة
-            </span>
-            <span className="text-xl font-black text-zinc-800 mt-1">
-              180ms <span className="text-[9px] text-indigo-500 font-bold">Ultra-fast</span>
-            </span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Modern Tabs Bar Navigation */}

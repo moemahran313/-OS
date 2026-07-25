@@ -191,34 +191,7 @@ router.post("/hr/assistant", authenticate, async (req: any, res) => {
       );
       dbStatus = "limited_permissions";
       // Clean, professional mock fallback list representing typical structure for simulation/safeguard
-      employees = [
-        {
-          id: "mock-1",
-          name: "أحمد بن عبد الله",
-          position: "مدير الموارد البشرية",
-          department: "HR",
-          status: "Active",
-          isSaudi: true,
-          basicSalary: 12000,
-          housingAllowance: 3000,
-          transportAllowance: 1000,
-          iban: "SA1234567890123456789012",
-          qiwaStatus: "مطابق",
-        },
-        {
-          id: "mock-2",
-          name: "John Doe",
-          position: "مهندس برمجيات",
-          department: "Engineering",
-          status: "Active",
-          isSaudi: false,
-          basicSalary: 15000,
-          housingAllowance: 3500,
-          transportAllowance: 1000,
-          iban: "غير متوفر",
-          qiwaStatus: "غير مطابق",
-        },
-      ];
+      employees = [];
     }
 
     try {
@@ -244,16 +217,7 @@ router.post("/hr/assistant", authenticate, async (req: any, res) => {
         "Firestore payroll_runs fetch security/permission error, falling back: ",
         e.message
       );
-      runs = [
-        {
-          id: "mock-run-1",
-          period: "2026-05",
-          totalNet: 28500,
-          totalGross: 31000,
-          status: "WPS_APPROVED",
-          isLocked: true,
-        },
-      ];
+      runs = [];
     }
 
     const contextPrompt = `

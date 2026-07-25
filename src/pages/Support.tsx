@@ -263,13 +263,7 @@ export default function Support() {
     };
   }, [user]);
 
-  // Seed standard tickets and KB articles if empty to make the platform look fully functional
-  useEffect(() => {
-    if (loading || !user) return;
-    if (tickets.length === 0) {
-      seedInitialData();
-    }
-  }, [loading, tickets]);
+  // Do not auto-seed mock tickets if empty
 
   const seedInitialData = async () => {
     if (!user) return;

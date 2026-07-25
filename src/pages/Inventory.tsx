@@ -769,16 +769,6 @@ export default function InventoryDashboard() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {items.length === 0 && (
-            <button
-              onClick={bootstrapDemoData}
-              disabled={submitting}
-              className="px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/20 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-400 rounded-xl text-xs font-black transition-all border border-emerald-200 dark:border-emerald-900/30 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-            >
-              <Plus className="w-4 h-4" />
-              تهيئة بيانات تجريبية (Auto Seed Data)
-            </button>
-          )}
           <button
             onClick={() => setShowAddWarehouse(true)}
             className="px-4 py-2.5 bg-zinc-900 dark:bg-zinc-800 hover:bg-zinc-800 text-white rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer"

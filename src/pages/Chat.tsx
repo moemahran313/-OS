@@ -65,65 +65,6 @@ export default function Chat() {
   const [isAiResponderActive, setIsAiResponderActive] = useState(true);
   const [isDraftingReply, setIsDraftingReply] = useState(false);
 
-  // Fallback seed messages if lead has none
-  const getSeededMessages = (lead: any): ChatMessage[] => {
-    const baseTime = new Date();
-    const timeOffset = (minsAgo: number) => {
-      const d = new Date(baseTime.getTime() - minsAgo * 60000);
-      return d.toISOString();
-    };
-
-    if (lead.status === "new") {
-      return [
-        {
-          id: "m1",
-          sender: "client",
-          text: "مرحباً، أبحث عن حل لأتمتة الفواتير الإلكترونية المعتمدة لشركتنا في جمرك الرياض وحساب الضرائب والزكاة تلقائياً.",
-          timestamp: timeOffset(120),
-          status: "read",
-        },
-        {
-          id: "m2",
-          sender: "user",
-          text: "أهلاً بك! نظام مدارج OS يدعم الربط المباشر مع هيئة الزكاة والضريبة والجمارك (ZATCA) في المرحلة الثانية للفوترة الإلكترونية.",
-          timestamp: timeOffset(90),
-          status: "read",
-        },
-        {
-          id: "m3",
-          sender: "client",
-          text: "هذا رائع جداً! هل يمكننا تجربة لوحة التحكم لمعرفة سرعة استجابة تقارير المراجعة الضريبية؟",
-          timestamp: timeOffset(10),
-          status: "delivered",
-        },
-      ];
-    } else {
-      return [
-        {
-          id: "o1",
-          sender: "client",
-          text: "أهلاً وسهلاً، شكراً جزيلاً لسرعة الرد وأتمتة مسيرات الرواتب معنا. رائع جداً.",
-          timestamp: timeOffset(180),
-          status: "read",
-        },
-        {
-          id: "o2",
-          sender: "user",
-          text: "سعيدون جداً بتقديم الخدمة لكم في مدارج! تم ربط جميع معاملاتكم بملف التزام الهيئات بنجاح.",
-          timestamp: timeOffset(120),
-          status: "read",
-        },
-        {
-          id: "o3",
-          sender: "client",
-          text: "بالمناسبة، هل يمكنكم توليد رابط دفع إلكتروني للفاتورة الأخيرة؟ نريد دفعها قبل نهاية اليوم المالي.",
-          timestamp: timeOffset(35),
-          status: "read",
-        },
-      ];
-    }
-  };
-
   // Listen to CRM leads in Firestore in real-time
   useEffect(() => {
     if (!user) return;
@@ -133,11 +74,7 @@ export default function Chat() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map((doc) => {
         const leadData = doc.data();
-        let messages = leadData.messages || [];
-
-        if (messages.length === 0) {
-          messages = getSeededMessages(leadData);
-        }
+        const messages = leadData.messages || [];
 
         const unreadCount = messages.filter(
           (m: ChatMessage) => m.sender === "client" && m.status !== "read"
@@ -178,7 +115,7 @@ export default function Chat() {
   const activeLead = leads.find((l) => l.id === activeLeadId);
 
   // Send message handler (updates Firestore database to trigger real-time onSnapshot)
-  const handleSendMessage = async (textToSend?: string) => {
+  const handleSendMessage = async (textToSend?: string, isInternalNote?: boolean) => {
     const rawText = textToSend || inputText;
     if (!rawText.trim() || !user || !activeLeadId || !activeLead) return;
 
@@ -186,50 +123,53 @@ export default function Chat() {
       setInputText("");
     }
 
-    // Direct Integration with OpenWA if enabled
-    if (settings.openwaEnabled && settings.openwaUrl) {
-      try {
-        const response = await fetch("/api/openwa/send", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            to: activeLead.phone,
-            text: rawText.trim(),
-            leadId: activeLeadId,
-          }),
-        });
-        const data = await response.json();
-        if (response.ok && data.success) {
-          toast.success("تم الإرسال بنجاح عبر واتساب (OpenWA)");
-        } else {
-          toast.warning(data.error || "تم حفظ الرسالة محلياً (محرك OpenWA لم يستجب حياً)");
-        }
-      } catch (err) {
-        console.error("OpenWA send failed, fallback to local", err);
-        toast.warning("تم حفظ الرسالة محلياً (خادم OpenWA غير متصل)");
-      }
-    }
-
-    // Save to Firestore
-    const newMessage: ChatMessage = {
-      id: `msg_${Date.now()}`,
-      sender: "user",
-      text: rawText.trim(),
-      timestamp: new Date().toISOString(),
-      status: "sent",
-    };
-
-    const updatedMessages = [...(activeLead.messages || []), newMessage];
+    const leadChannel =
+      (activeLead as any).channel ||
+      (activeLead.phone?.startsWith("@") || (activeLead as any).telegramChatId ? "telegram" : "whatsapp");
 
     try {
-      await updateDoc(doc(db, "leads", activeLeadId), {
-        messages: updatedMessages,
+      // 1. Dispatch real outbound message or internal note via server
+      const sendRes = await fetch("/api/chat/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadId: activeLeadId,
+          text: rawText.trim(),
+          channel: leadChannel,
+          isInternalNote: !!isInternalNote,
+        }),
       });
 
-      // Live SSE Streaming Gemini AI Responder Integration
-      if (isAiResponderActive) {
+      const sendData = await sendRes.json();
+
+      if (sendRes.ok && sendData.success) {
+        if (isInternalNote) {
+          toast.info("🔒 تم حفظ الملاحظة الداخلية للفريق بنجاح (غير مرئية للعميل)");
+        } else if (sendData.sentLive) {
+          toast.success(`✓ تم إرسال الرسالة حياً إلى العميل عبر ${leadChannel.toUpperCase()}`);
+        } else {
+          toast.info(`تم حفظ الرسالة في المحادثة وجاري أتمتة الإرسال عبر ${leadChannel}`);
+        }
+      } else {
+        // Fallback: Save to Firestore directly if send route encounters issue
+        const newMessage: ChatMessage = {
+          id: isInternalNote ? `note_${Date.now()}` : `msg_${Date.now()}`,
+          sender: isInternalNote ? ("internal_note" as any) : "user",
+          text: rawText.trim(),
+          timestamp: new Date().toISOString(),
+          status: "sent",
+        };
+        await updateDoc(doc(db, "leads", activeLeadId), {
+          messages: [...(activeLead.messages || []), newMessage],
+          updatedAt: new Date().toISOString(),
+        });
+        if (isInternalNote) {
+          toast.info("🔒 تم حفظ الملاحظة الداخلية للفريق بنجاح");
+        }
+      }
+
+      // 2. Live SSE Streaming Gemini AI Responder Integration (Only for public client replies)
+      if (!isInternalNote && isAiResponderActive) {
         setIsDraftingReply(true);
         try {
           const response = await fetch("/api/chat/stream", {
@@ -240,7 +180,7 @@ export default function Chat() {
             body: JSON.stringify({
               leadId: activeLeadId,
               messageText: rawText.trim(),
-              channel: "omnichannel_chat",
+              channel: leadChannel,
             }),
           });
 
@@ -257,8 +197,6 @@ export default function Chat() {
                 // Firestore automatically syncs via onSnapshot listener as server updates lead doc
               }
             }
-          } else {
-            console.warn("Chat streaming endpoint returned error status");
           }
         } catch (err) {
           console.error("Gemini SSE Streaming Error:", err);

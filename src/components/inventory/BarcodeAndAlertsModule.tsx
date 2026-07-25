@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import { Html5Qrcode } from "html5-qrcode";
 import {
   Barcode,
   Bell,
@@ -43,6 +44,8 @@ export default function BarcodeAndAlertsModule({
   const [isScanning, setIsScanning] = useState(false);
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [audioBeep, setAudioBeep] = useState(true);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
 
   // Quick Adjustment states
   const [quickQtyChange, setQuickQtyChange] = useState<number>(0);
@@ -148,6 +151,39 @@ export default function BarcodeAndAlertsModule({
       setAlertLogs(initialLogs);
     }
   }, [stockAlerts]);
+
+  // WebRTC Real Camera Barcode Decoding Effect
+  useEffect(() => {
+    let html5QrCode: Html5Qrcode | null = null;
+    if (isCameraActive) {
+      const elementId = "webrtc-barcode-reader";
+      html5QrCode = new Html5Qrcode(elementId);
+      html5QrCodeRef.current = html5QrCode;
+
+      html5QrCode
+        .start(
+          { facingMode: "environment" },
+          { fps: 15, qrbox: { width: 250, height: 150 } },
+          (decodedText) => {
+            setBarcodeInput(decodedText);
+            handleSimulateScan(decodedText);
+            toast.success(`✓ تم التقاط القراءة مباشرة عبر كاميرا الجهاز: ${decodedText}`);
+          },
+          () => {}
+        )
+        .catch((err) => {
+          console.warn("Camera init failed:", err);
+          toast.error("تعذر تشغيل كاميرا الجهاز. يرجى السماح بالوصول للكاميرا في المتصفح.");
+          setIsCameraActive(false);
+        });
+    }
+
+    return () => {
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().catch((e) => console.warn("Camera stop error:", e));
+      }
+    };
+  }, [isCameraActive]);
 
   // Handle direct scan simulation
   const handleSimulateScan = (codeToScan?: string) => {
@@ -348,43 +384,69 @@ export default function BarcodeAndAlertsModule({
             </div>
           </div>
 
-          {/* Realistic Camera Frame Mock with animated scanning line */}
-          <div className="relative aspect-video rounded-2xl bg-zinc-950 overflow-hidden flex flex-col items-center justify-center text-center p-4 border border-zinc-800 shadow-inner group">
-            <div className="absolute inset-4 border border-dashed border-indigo-500/40 rounded-xl pointer-events-none" />
+          {/* Realistic Camera Frame / Live WebRTC Stream Container */}
+          <div className="relative min-h-[220px] rounded-2xl bg-zinc-950 overflow-hidden flex flex-col items-center justify-center text-center p-3 border border-zinc-800 shadow-inner group">
             
-            {/* Holographic Target brackets */}
-            <div className="absolute top-6 right-6 w-4 h-4 border-t-2 border-r-2 border-indigo-500 rounded-tr" />
-            <div className="absolute top-6 left-6 w-4 h-4 border-t-2 border-l-2 border-indigo-500 rounded-tl" />
-            <div className="absolute bottom-6 right-6 w-4 h-4 border-b-2 border-r-2 border-indigo-500 rounded-br" />
-            <div className="absolute bottom-6 left-6 w-4 h-4 border-b-2 border-l-2 border-indigo-500 rounded-bl" />
+            {isCameraActive ? (
+              <div className="w-full h-full flex flex-col items-center justify-center">
+                <div id="webrtc-barcode-reader" className="w-full max-w-[340px] text-white rounded-xl overflow-hidden [&_video]:rounded-xl [&_video]:object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setIsCameraActive(false)}
+                  className="mt-2 text-xs font-black bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                >
+                  إيقاف كاميرا الجهاز
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="absolute inset-4 border border-dashed border-indigo-500/40 rounded-xl pointer-events-none" />
+                
+                {/* Holographic Target brackets */}
+                <div className="absolute top-6 right-6 w-4 h-4 border-t-2 border-r-2 border-indigo-500 rounded-tr" />
+                <div className="absolute top-6 left-6 w-4 h-4 border-t-2 border-l-2 border-indigo-500 rounded-tl" />
+                <div className="absolute bottom-6 right-6 w-4 h-4 border-b-2 border-r-2 border-indigo-500 rounded-br" />
+                <div className="absolute bottom-6 left-6 w-4 h-4 border-b-2 border-l-2 border-indigo-500 rounded-bl" />
 
-            {/* Scanning Laser Animation */}
-            {isScanning && (
-              <motion.div
-                initial={{ top: "10%" }}
-                animate={{ top: "90%" }}
-                transition={{ duration: 1, repeat: Infinity, repeatType: "reverse", ease: "linear" }}
-                className="absolute left-4 right-4 h-0.5 bg-red-500 shadow-[0_0_12px_#ef4444] z-10 pointer-events-none"
-              />
+                {/* Scanning Laser Animation */}
+                {isScanning && (
+                  <motion.div
+                    initial={{ top: "10%" }}
+                    animate={{ top: "90%" }}
+                    transition={{ duration: 1, repeat: Infinity, repeatType: "reverse", ease: "linear" }}
+                    className="absolute left-4 right-4 h-0.5 bg-red-500 shadow-[0_0_12px_#ef4444] z-10 pointer-events-none"
+                  />
+                )}
+
+                <div className="z-10 space-y-2">
+                  {isScanning ? (
+                    <div className="text-white space-y-1">
+                      <Camera className="w-8 h-8 mx-auto text-indigo-400 animate-pulse" />
+                      <p className="text-xs font-bold animate-pulse">جاري فك تشفير الباركود وقراءة الحقول...</p>
+                    </div>
+                  ) : (
+                    <div className="text-zinc-500 space-y-2">
+                      <Barcode className="w-10 h-10 mx-auto text-zinc-600 group-hover:scale-110 transition-transform duration-300" />
+                      <p className="text-xs font-extrabold text-zinc-300">مسح ضوئي حقيقي عبر الكاميرا أو محاكاة سريعة</p>
+                      
+                      <button
+                        type="button"
+                        onClick={() => setIsCameraActive(true)}
+                        className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-xl shadow-md transition-all flex items-center gap-1.5 mx-auto cursor-pointer"
+                      >
+                        <Camera className="w-4 h-4" />
+                        <span>تشغيل الكاميرا الحقيقية (WebRTC Camera)</span>
+                      </button>
+
+                      <p className="text-[10px] text-zinc-500 font-mono">SUPPORTED: EAN-13, EAN-8, UPC, QR Code, Code128</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Ambient matrix glow */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.08)_0%,transparent_100%)] pointer-events-none" />
+              </>
             )}
-
-            <div className="z-10 space-y-2">
-              {isScanning ? (
-                <div className="text-white space-y-1">
-                  <Camera className="w-8 h-8 mx-auto text-indigo-400 animate-pulse" />
-                  <p className="text-xs font-bold animate-pulse">جاري فك تشفير الباركود وقراءة الحقول...</p>
-                </div>
-              ) : (
-                <div className="text-zinc-500 space-y-1">
-                  <Barcode className="w-10 h-10 mx-auto text-zinc-600 group-hover:scale-110 transition-transform duration-300" />
-                  <p className="text-xs font-extrabold text-zinc-400">وجه الكاميرا أو اختر باركود جاهز أدناه</p>
-                  <p className="text-[10px] text-zinc-600 font-mono">SUPPORTED: EAN-13, RFID, UPC, Code128</p>
-                </div>
-              )}
-            </div>
-
-            {/* Ambient matrix glow */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.08)_0%,transparent_100%)] pointer-events-none" />
           </div>
 
           {/* Quick Select Barcodes of Existing Products */}

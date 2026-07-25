@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
+import { cn } from "@/src/lib/utils";
 
 interface ChannelInfo {
   id: string;
@@ -78,7 +79,13 @@ export default function ChannelsView() {
 
   // State for form fields
   const [waPhone, setWaPhone] = useState("+966 50 111 2222");
+  const [waPhoneNumberId, setWaPhoneNumberId] = useState("10928374829102");
   const [waToken, setWaToken] = useState("wa_token_prod_908234723487_secured");
+  const [waVerifiedName, setWaVerifiedName] = useState("Madarij Business Account");
+  const [waTestResult, setWaTestResult] = useState<{ success: boolean; message: string; details?: any } | null>(null);
+  const [isTestingWa, setIsTestingWa] = useState(false);
+  const [isSavingWa, setIsSavingWa] = useState(false);
+
   const [tgBotToken, setTgBotToken] = useState("7234982342:AAHG83478dksfhsdkfjsdhf8");
   const [tgBotUsername, setTgBotUsername] = useState("MadarijOS_Support_Bot");
   const [smtpServer, setSmtpServer] = useState("smtp.madarij-os.com");
@@ -88,6 +95,141 @@ export default function ChannelsView() {
   const [widgetTitle, setWidgetTitle] = useState("الدعم الفوري - مدارج OS");
 
   const [isTesting, setIsTesting] = useState(false);
+  const [webhookStatus, setWebhookStatus] = useState<any>(null);
+  const [waVerifyToken, setWaVerifyToken] = useState("madarij_wa_verify_secret");
+
+  // Fetch real webhook status & saved whatsapp config on mount
+  React.useEffect(() => {
+    fetch("/api/webhooks/status")
+      .then((res) => res.json())
+      .then((data) => {
+        setWebhookStatus(data);
+        if (data?.webhooks?.whatsapp?.verifyToken) {
+          setWaVerifyToken(data.webhooks.whatsapp.verifyToken);
+        }
+      })
+      .catch((err) => console.error("Failed to load webhook status", err));
+
+    fetch("/api/whatsapp/config")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.config) {
+          if (data.config.phoneNumberId) setWaPhoneNumberId(data.config.phoneNumberId);
+          if (data.config.token) setWaToken(data.config.token);
+          if (data.config.displayPhone) setWaPhone(data.config.displayPhone);
+          if (data.config.verifiedName) setWaVerifiedName(data.config.verifiedName);
+        }
+      })
+      .catch((err) => console.error("Failed to load WhatsApp config", err));
+  }, []);
+
+  const handleTestWhatsAppConnection = async () => {
+    if (!waPhoneNumberId || !waToken) {
+      toast.error("يرجى إدخال معرّف رقم الهاتف (Phone Number ID) ورمز الوصول (API Token) أولاً");
+      return;
+    }
+    setIsTestingWa(true);
+    setWaTestResult(null);
+    try {
+      const res = await fetch("/api/whatsapp/test-connection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoneNumberId: waPhoneNumberId.trim(),
+          token: waToken.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setWaTestResult({
+          success: true,
+          message: data.message || "✓ تم الاتصال بـ Meta WhatsApp Business Cloud API بنجاح!",
+          details: data,
+        });
+        if (data.verifiedName) setWaVerifiedName(data.verifiedName);
+        if (data.displayPhoneNumber && data.displayPhoneNumber !== "غير محدد") {
+          setWaPhone(data.displayPhoneNumber);
+        }
+        toast.success("✓ نجح اختبار الاتصالية اللحظي مع Meta Cloud API!");
+      } else {
+        setWaTestResult({
+          success: false,
+          message: data.error || "فشل الاتصال بـ Meta WhatsApp API. تحقق من صحة المفاتيح.",
+        });
+        toast.error(data.error || "فشل الاتصال بـ Meta WhatsApp API");
+      }
+    } catch (err: any) {
+      setWaTestResult({
+        success: false,
+        message: "خطأ بالشبكة: " + err.message,
+      });
+      toast.error("خطأ بالشبكة أثناء الاتصال بالخادم");
+    } finally {
+      setIsTestingWa(false);
+    }
+  };
+
+  const handleSaveWhatsAppConfig = async () => {
+    if (!waPhoneNumberId || !waToken) {
+      toast.error("يرجى إدخال جميع البيانات المطلوبة قبل الحفظ");
+      return;
+    }
+    setIsSavingWa(true);
+    try {
+      const res = await fetch("/api/whatsapp/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoneNumberId: waPhoneNumberId.trim(),
+          token: waToken.trim(),
+          displayPhone: waPhone,
+          verifyToken: waVerifyToken,
+          verifiedName: waVerifiedName,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data.message || "✓ تم حفظ وتفعيل إعدادات WhatsApp Cloud API بنجاح!");
+        setChannels(
+          channels.map((c) => (c.id === "whatsapp" ? { ...c, status: "connected" as const } : c))
+        );
+      } else {
+        toast.error(data.error || "فشل حفظ إعدادات الواتساب");
+      }
+    } catch (err: any) {
+      toast.error("خطأ في الاتصال بالخادم: " + err.message);
+    } finally {
+      setIsSavingWa(false);
+    }
+  };
+
+  const handleRegisterTelegramWebhook = async () => {
+    if (!tgBotToken) {
+      toast.error("يرجى إدخال معرّف البوت (Telegram Bot Token) أولاً");
+      return;
+    }
+    setIsTesting(true);
+    try {
+      const res = await fetch("/api/webhooks/telegram/setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ botToken: tgBotToken }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success("✓ تم تسجيل الـ Webhook الخاص بتيليجرام بنجاح على الخادم!");
+        setChannels(
+          channels.map((c) => (c.id === "telegram" ? { ...c, status: "connected" as const } : c))
+        );
+      } else {
+        toast.error(data.error || data.telegramResponse?.description || "فشل تسجيل Webhook تيليجرام");
+      }
+    } catch (e: any) {
+      toast.error("خطأ في الاتصال بالخادم: " + e.message);
+    } finally {
+      setIsTesting(false);
+    }
+  };
 
   const handleTestConnection = (channelId: string) => {
     setIsTesting(true);
@@ -223,86 +365,223 @@ export default function ChannelsView() {
             >
               <div className="border-b border-zinc-100 pb-4 flex justify-between items-center">
                 <div>
-                  <h3 className="font-extrabold text-sm text-zinc-800">
-                    إعدادات ربط WhatsApp Cloud API
+                  <h3 className="font-extrabold text-sm text-zinc-800 flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-emerald-600" />
+                    إعدادات ربط Meta WhatsApp Business Cloud API
                   </h3>
                   <p className="text-[10px] text-zinc-500 font-bold mt-0.5">
-                    اربط رقم شركتك الرسمي لإرسال واستلام محادثات واتساب بخصوصية تامة
+                    اربط حساب Meta WhatsApp الرسمية عبر إدخال مفتاح الوصول (API Token) ومعرّف رقم الهاتف (Phone Number ID) مباشرة
                   </p>
                 </div>
                 <div className="px-2.5 py-1 text-[9px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                  <span>متصل بالخادم الرسمي</span>
+                  <span>Meta Graph API v18.0</span>
                 </div>
               </div>
 
+              {/* Input Fields Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">
-                    رقم هاتف الواتساب الموثّق
+                  <label className="text-[10px] font-black text-zinc-600 block mb-1.5 flex items-center gap-1">
+                    <span>معرّف رقم الهاتف (Phone Number ID)</span>
+                    <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
-                    value={waPhone}
-                    onChange={(e) => setWaPhone(e.target.value)}
-                    className="w-full text-xs font-bold px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 focus:border-primary/50 focus:bg-white rounded-xl focus:outline-none transition-all"
+                    value={waPhoneNumberId}
+                    onChange={(e) => setWaPhoneNumberId(e.target.value)}
+                    placeholder="مثال: 10928374829102"
+                    className="w-full text-xs font-mono font-bold px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 focus:border-emerald-500 focus:bg-white rounded-xl focus:outline-none transition-all dir-ltr text-left"
                   />
+                  <span className="text-[9px] text-zinc-400 block mt-1">يُستخرج من لوحة مطوري Meta {`->`} WhatsApp {`->`} API Setup</span>
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black text-zinc-500 block mb-1.5">
-                    رمز توثيق الوصول (Access Token)
+                  <label className="text-[10px] font-black text-zinc-600 block mb-1.5 flex items-center gap-1">
+                    <span>مفتاح الوصول المستمر (API Access Token)</span>
+                    <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="password"
                     value={waToken}
                     onChange={(e) => setWaToken(e.target.value)}
-                    className="w-full text-xs font-bold px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 focus:border-primary/50 focus:bg-white rounded-xl focus:outline-none transition-all"
+                    placeholder="EAAG..."
+                    className="w-full text-xs font-mono font-bold px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 focus:border-emerald-500 focus:bg-white rounded-xl focus:outline-none transition-all dir-ltr text-left"
+                  />
+                  <span className="text-[9px] text-zinc-400 block mt-1">Permanent System User Token مع صلاحيات whatsapp_business_messaging</span>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-zinc-600 block mb-1.5">
+                    رقم هاتف الواتساب الموثّق للعرض
+                  </label>
+                  <input
+                    type="text"
+                    value={waPhone}
+                    onChange={(e) => setWaPhone(e.target.value)}
+                    placeholder="+966 50 111 2222"
+                    className="w-full text-xs font-bold px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 focus:border-emerald-500 focus:bg-white rounded-xl focus:outline-none transition-all dir-ltr text-left"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-zinc-600 block mb-1.5">
+                    اسم الحساب المعتمد بـ Meta (Verified Business Name)
+                  </label>
+                  <input
+                    type="text"
+                    value={waVerifiedName}
+                    onChange={(e) => setWaVerifiedName(e.target.value)}
+                    placeholder="اسم الشركة المعتمد"
+                    className="w-full text-xs font-bold px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 focus:border-emerald-500 focus:bg-white rounded-xl focus:outline-none transition-all"
                   />
                 </div>
               </div>
 
-              {/* QR connection simulator */}
-              <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-4 flex flex-col md:flex-row items-center gap-4">
-                <div className="p-3 bg-white rounded-xl border border-zinc-200 shrink-0 shadow-sm">
-                  <QrCode className="w-24 h-24 text-zinc-800" />
+              {/* Test Connection Live Output Banner */}
+              {waTestResult && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className={cn(
+                    "p-4 rounded-2xl border text-xs font-bold space-y-2",
+                    waTestResult.success
+                      ? "bg-emerald-50/90 border-emerald-300 text-emerald-950"
+                      : "bg-rose-50/90 border-rose-300 text-rose-950"
+                  )}
+                >
+                  <div className="flex items-center gap-2 border-b pb-2 border-current/20">
+                    {waTestResult.success ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                    )}
+                    <span className="font-extrabold text-sm">{waTestResult.message}</span>
+                  </div>
+
+                  {waTestResult.success && waTestResult.details && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[10px] font-mono">
+                      <div className="bg-white/80 p-2 rounded-xl border border-emerald-200">
+                        <span className="text-zinc-500 block text-[9px]">اسم الحساب الموثّق:</span>
+                        <span className="font-bold text-emerald-800">{waTestResult.details.verifiedName}</span>
+                      </div>
+                      <div className="bg-white/80 p-2 rounded-xl border border-emerald-200">
+                        <span className="text-zinc-500 block text-[9px]">Phone Number ID:</span>
+                        <span className="font-bold text-emerald-800">{waTestResult.details.phoneNumberId}</span>
+                      </div>
+                      <div className="bg-white/80 p-2 rounded-xl border border-emerald-200">
+                        <span className="text-zinc-500 block text-[9px]">الرقم المسجل:</span>
+                        <span className="font-bold text-emerald-800">{waTestResult.details.displayPhoneNumber}</span>
+                      </div>
+                      <div className="bg-white/80 p-2 rounded-xl border border-emerald-200">
+                        <span className="text-zinc-500 block text-[9px]">تقييم جودة الرقم:</span>
+                        <span className="font-bold text-emerald-600">🟢 {waTestResult.details.qualityRating}</span>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
+              {/* Meta Webhook Live URL & Config Box */}
+              <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4 space-y-3">
+                <div className="flex justify-between items-center border-b border-emerald-200/60 pb-2">
+                  <span className="text-xs font-black text-emerald-900 flex items-center gap-1.5">
+                    <Zap className="w-4 h-4 text-emerald-600" />
+                    رابط الـ Webhook المستمع لـ Meta WhatsApp (Live Webhook)
+                  </span>
+                  <span className="px-2 py-0.5 text-[9px] font-black bg-emerald-100 text-emerald-800 rounded-md">
+                    X-Hub-Signature-256 مفعل
+                  </span>
                 </div>
-                <div className="space-y-1 text-center md:text-right">
-                  <h4 className="text-xs font-black text-zinc-800">
-                    امسح رمز الاستجابة السريعة (QR Code) لربط الجهاز
-                  </h4>
-                  <p className="text-[10px] text-zinc-500 font-bold leading-relaxed">
-                    افتح تطبيق الواتساب بهاتفك {`->`} الأجهزة المرتبطة {`->`} ربط جهاز، ومسح الرمز
-                    الموضّح أعلاه لربط تطبيق الويب مباشرة دون توقف.
-                  </p>
-                  <button
-                    onClick={() => toast.success("تم تحديث رمز QR لربط واتساب")}
-                    className="mt-2 text-[10px] font-black text-primary hover:underline"
-                  >
-                    تحديث رمز QR التوثيقي
-                  </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-[11px] font-bold">
+                  <div>
+                    <label className="text-[10px] text-emerald-700 font-extrabold block mb-1">
+                      Webhook Callback URL (في لوحة مطوري Meta):
+                    </label>
+                    <div className="flex gap-1">
+                      <input
+                        type="text"
+                        readOnly
+                        value={`${window.location.origin}/api/webhooks/whatsapp`}
+                        className="flex-1 bg-white border border-emerald-200 rounded-xl px-3 py-1.5 text-[10px] font-mono text-emerald-900 dir-ltr text-left"
+                      />
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/api/webhooks/whatsapp`);
+                          toast.success("تم نسخ رابط Webhook الخاص بواتساب!");
+                        }}
+                        className="p-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 cursor-pointer"
+                        title="نسخ الرابط"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] text-emerald-700 font-extrabold block mb-1">
+                      رمز التحقق المقترن (Verify Token):
+                    </label>
+                    <div className="flex gap-1">
+                      <input
+                        type="text"
+                        readOnly
+                        value={waVerifyToken}
+                        className="flex-1 bg-white border border-emerald-200 rounded-xl px-3 py-1.5 text-[10px] font-mono text-emerald-900 dir-ltr text-left"
+                      />
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(waVerifyToken);
+                          toast.success("تم نسخ رمز التحقق Verify Token!");
+                        }}
+                        className="p-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 cursor-pointer"
+                        title="نسخ الرمز"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-2 justify-end border-t border-zinc-100 pt-4">
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-2 justify-end border-t border-zinc-100 pt-4">
                 <button
                   onClick={() => handleDisconnect("whatsapp")}
-                  className="px-4 py-2 bg-rose-50 text-rose-600 text-xs font-bold rounded-xl border border-rose-100 hover:bg-rose-100 transition-colors cursor-pointer"
+                  className="px-4 py-2.5 bg-rose-50 text-rose-600 text-xs font-bold rounded-xl border border-rose-100 hover:bg-rose-100 transition-colors cursor-pointer"
                 >
                   قطع الاتصال
                 </button>
                 <button
-                  onClick={() => handleTestConnection("whatsapp")}
-                  disabled={isTesting}
-                  className="px-4 py-2 bg-zinc-100 text-zinc-700 text-xs font-bold rounded-xl border border-zinc-200 hover:bg-zinc-200 cursor-pointer"
+                  onClick={handleTestWhatsAppConnection}
+                  disabled={isTestingWa}
+                  className="px-4 py-2.5 bg-zinc-900 text-white text-xs font-extrabold rounded-xl hover:bg-zinc-800 transition-colors cursor-pointer flex items-center gap-1.5"
                 >
-                  {isTesting ? "جاري الفحص..." : "اختبار الاتصال"}
+                  {isTestingWa ? (
+                    <>
+                      <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>جاري فحص Meta Cloud API...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-3.5 h-3.5 text-amber-400" />
+                      <span>اختبار اتصالية لحظي (Meta Cloud API)</span>
+                    </>
+                  )}
                 </button>
                 <button
-                  onClick={() => handleSaveConfig("whatsapp")}
-                  className="px-5 py-2 bg-primary hover:bg-primary/95 text-white text-xs font-black rounded-xl cursor-pointer"
+                  onClick={handleSaveWhatsAppConfig}
+                  disabled={isSavingWa}
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl transition-colors cursor-pointer shadow-sm flex items-center gap-1.5"
                 >
-                  حفظ الإعدادات والتنشيط
+                  {isSavingWa ? (
+                    <span>جاري حفظ الإعدادات...</span>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>حفظ الإعدادات والتنشيط</span>
+                    </>
+                  )}
                 </button>
               </div>
             </motion.div>
@@ -351,18 +630,34 @@ export default function ChannelsView() {
                 </div>
               </div>
 
-              <div className="bg-sky-50 border border-sky-100 text-sky-800 p-4 rounded-2xl text-xs font-bold space-y-2">
-                <h4 className="flex items-center gap-1.5 font-black text-sky-900">
-                  <Bot className="w-4 h-4" /> تعليمات الحصول على Token:
-                </h4>
+              <div className="bg-sky-50 border border-sky-100 text-sky-800 p-4 rounded-2xl text-xs font-bold space-y-3">
+                <div className="flex justify-between items-center border-b border-sky-200/60 pb-2">
+                  <h4 className="flex items-center gap-1.5 font-black text-sky-900">
+                    <Bot className="w-4 h-4" /> التسجيل الآلي لـ Telegram Webhook
+                  </h4>
+                  <button
+                    onClick={handleRegisterTelegramWebhook}
+                    disabled={isTesting}
+                    className="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-[10px] font-black rounded-xl cursor-pointer transition-all shadow-sm flex items-center gap-1"
+                  >
+                    <Zap className="w-3 h-3" />
+                    <span>{isTesting ? "جاري التسجيل..." : "ربط Webhook تلقائياً مع Telegram"}</span>
+                  </button>
+                </div>
                 <p className="leading-relaxed">
                   1. افتح تطبيق تيليجرام وابحث عن حساب{" "}
                   <span className="font-black">@BotFather</span>.<br />
                   2. أرسل الأمر <span className="font-black">/newbot</span> واتبع الخطوات لتسمية
                   البوت.
                   <br />
-                  3. الصق رمز الـ HTTP API (Token) الموفر في الحقل أعلاه، واحفظ الإعدادات!
+                  3. الصق رمز الـ HTTP API (Token) الموفر في الحقل أعلاه، ثم اضغط زر "ربط Webhook تلقائياً"!
                 </p>
+                <div className="pt-2 border-t border-sky-200/50 flex items-center justify-between text-[10px]">
+                  <span className="text-sky-700 font-extrabold">عنوان Webhook المستهدف:</span>
+                  <code className="bg-white/80 px-2 py-0.5 rounded font-mono text-sky-900">
+                    {window.location.origin}/api/webhooks/telegram
+                  </code>
+                </div>
               </div>
 
               <div className="flex gap-2 justify-end border-t border-zinc-100 pt-4">

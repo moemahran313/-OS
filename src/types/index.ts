@@ -49,6 +49,8 @@ export interface Invoice {
   clientName: string;
   clientEmail: string;
   clientPhone: string;
+  clientVat?: string;
+  sellerName?: string;
   issueDate: string;
   dueDate: string;
   currency: string;

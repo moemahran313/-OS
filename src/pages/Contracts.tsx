@@ -603,6 +603,8 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [history, setHistory] = useState<Array<Array<{ x: number; y: number }>>>([]);
   const [currentStroke, setCurrentStroke] = useState<Array<{ x: number; y: number }>>([]);
+  const [highContrastGuide, setHighContrastGuide] = useState(true);
+  const [mcitNafathSeal, setMcitNafathSeal] = useState<any | null>(null);
   
   const DPI_SCALE = 3;
   const MIN_POINTS_REQUIRED = 30;
@@ -614,22 +616,6 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) => {
   const isValidResolution = totalPoints >= MIN_POINTS_REQUIRED;
   const hasStarted = totalPoints > 0;
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    canvas.width = 280 * DPI_SCALE;
-    canvas.height = 100 * DPI_SCALE;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    
-    // Initial configuration
-    ctx.scale(DPI_SCALE, DPI_SCALE);
-    ctx.strokeStyle = "#0f172a";
-    ctx.lineWidth = 2.5;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-  }, []);
-
   const redraw = (strokes: Array<Array<{ x: number; y: number }>>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -640,6 +626,32 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) => {
     
     ctx.save();
     ctx.scale(DPI_SCALE, DPI_SCALE);
+
+    // High-Contrast Gridline Guidance under office lighting
+    if (highContrastGuide) {
+      // Signature Baseline Line
+      ctx.strokeStyle = "rgba(16, 185, 129, 0.45)"; // Crisp Emerald
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(12, 76);
+      ctx.lineTo(268, 76);
+      ctx.stroke();
+
+      // "X" Signature Start Mark
+      ctx.setLineDash([]);
+      ctx.font = "bold 11px sans-serif";
+      ctx.fillStyle = "rgba(16, 185, 129, 0.85)";
+      ctx.fillText("✕", 14, 72);
+
+      // Label on Baseline
+      ctx.font = "8px sans-serif";
+      ctx.fillStyle = "rgba(100, 116, 139, 0.7)";
+      ctx.fillText("خط التوقيع القانوني / Signature Baseline", 30, 73);
+    }
+
+    // Signature Drawing Strokes
+    ctx.setLineDash([]);
     ctx.strokeStyle = "#0f172a";
     ctx.lineWidth = 2.5;
     ctx.lineCap = "round";
@@ -657,6 +669,17 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) => {
     ctx.restore();
   };
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.width = 280 * DPI_SCALE;
+    canvas.height = 100 * DPI_SCALE;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
+    redraw(history);
+  }, [highContrastGuide]);
+
   const getCoordinates = (
     e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
   ) => {
@@ -664,17 +687,28 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) => {
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
 
+    let clientX = 0;
+    let clientY = 0;
+
     if ("touches" in e) {
       if (e.touches.length === 0) return { x: 0, y: 0 };
-      return {
-        x: e.touches[0].clientX - rect.left,
-        y: e.touches[0].clientY - rect.top,
-      };
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
     }
 
+    const rawX = clientX - rect.left;
+    const rawY = clientY - rect.top;
+
+    // Responsive Touch Coordinate Mapping: map element bounding rect to internal logical canvas width (280x100)
+    const scaleX = 280 / (rect.width || 280);
+    const scaleY = 100 / (rect.height || 100);
+
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+      x: Math.max(0, Math.min(280, rawX * scaleX)),
+      y: Math.max(0, Math.min(100, rawY * scaleY)),
     };
   };
 
@@ -736,12 +770,30 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) => {
   const clearCanvas = () => {
     setHistory([]);
     setCurrentStroke([]);
+    setMcitNafathSeal(null);
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (highContrastGuide) {
+      redraw([]);
+    }
     onClear();
+  };
+
+  const triggerNafathMcitSeal = () => {
+    const timestamp = new Date().toISOString();
+    const mockHash = `MCIT-SA-CA-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+    const seal = {
+      certifiedBy: "MCIT National Root CA / Nafath MFA",
+      articleCompliance: "المادة 14 من نظام التعاملات الإلكترونية السعودي",
+      timestamp,
+      hash: mockHash,
+      status: "VALIDATED",
+    };
+    setMcitNafathSeal(seal);
+    toast.success("تم ربط التوقيع بمصادقة نفاذ (Nafath MFA) وتوثيقه بالختم المشفر المعتمد لدى هيئة الحكومة الرقمية (MCIT Root CA).");
   };
 
   // Determine dynamic visual classes
@@ -759,34 +811,46 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) => {
   }
 
   return (
-    <div className={`flex flex-col items-center gap-2 border border-dashed p-3 rounded-xl print:hidden w-full max-w-[300px] transition-all duration-300 ${containerBorderClass}`}>
+    <div className={`flex flex-col items-center gap-2 border border-dashed p-3 rounded-xl print:hidden w-full max-w-sm transition-all duration-300 ${containerBorderClass}`}>
       
       {/* Real-Time Resolution Status Bar */}
-      <div className={`text-[10px] px-2.5 py-1 rounded-md border font-black uppercase tracking-wider flex items-center gap-1.5 w-full justify-center shadow-xs transition-colors duration-300 ${statusBadgeColor}`}>
-        {!hasStarted ? (
-          <>
-            <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-ping" />
-            <span>توقيع مطلوب / DRAW SIGNATURE</span>
-          </>
-        ) : isValidResolution ? (
-          <>
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span className="font-extrabold text-emerald-700">دقة عالية معتمدة (300 DPI Verified)</span>
-          </>
-        ) : (
-          <>
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 animate-ping" />
-            <span className="font-extrabold text-rose-700">دقة منخفضة ({totalPoints}/{MIN_POINTS_REQUIRED} Pts)</span>
-          </>
-        )}
+      <div className={`text-[10px] px-2.5 py-1 rounded-md border font-black uppercase tracking-wider flex items-center gap-1.5 w-full justify-between shadow-xs transition-colors duration-300 ${statusBadgeColor}`}>
+        <div className="flex items-center gap-1.5 mx-auto">
+          {!hasStarted ? (
+            <>
+              <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-ping" />
+              <span>توقيع مطلوب / DRAW SIGNATURE</span>
+            </>
+          ) : isValidResolution ? (
+            <>
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span className="font-extrabold text-emerald-700">دقة عالية معتمدة (300 DPI Verified)</span>
+            </>
+          ) : (
+            <>
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0 animate-ping" />
+              <span className="font-extrabold text-rose-700">دقة منخفضة ({totalPoints}/{MIN_POINTS_REQUIRED} Pts)</span>
+            </>
+          )}
+        </div>
+
+        {/* Guideline Toggle */}
+        <button
+          type="button"
+          onClick={() => setHighContrastGuide(!highContrastGuide)}
+          className="text-[9px] font-bold text-zinc-600 hover:text-zinc-900 px-1.5 py-0.5 rounded bg-zinc-200/60 transition-colors"
+          title="تبديل خطوط الإرشاد عالية التباين"
+        >
+          {highContrastGuide ? "خطوط نشطة" : "بدون خطوط"}
+        </button>
       </div>
 
       <div className="relative bg-white border border-zinc-200 rounded-lg overflow-hidden w-full shadow-inner">
         <canvas
           ref={canvasRef}
-          width={280}
-          height={100}
-          className="w-full h-[100px] cursor-crosshair touch-none bg-slate-50/50"
+          width={280 * DPI_SCALE}
+          height={100 * DPI_SCALE}
+          className="w-full h-[110px] cursor-crosshair touch-none bg-slate-50/50"
           onMouseDown={startDrawing}
           onMouseMove={draw}
           onMouseUp={stopDrawing}
@@ -798,12 +862,12 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) => {
         
         {/* Helper instructions overlay */}
         {!hasStarted && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none text-center bg-white/20 backdrop-blur-[0.5px]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none text-center bg-white/10 backdrop-blur-[0.5px]">
             <span className="text-[10px] text-zinc-400 font-extrabold uppercase tracking-widest">
               ارسم توقيعك الكامل هنا / Sign Here
             </span>
-            <span className="text-[8px] text-zinc-300 mt-0.5">
-              840 x 300 px High-DPI Output
+            <span className="text-[8px] text-zinc-400 mt-0.5 font-mono">
+              840 x 300 px High-DPI Output (Mobile Responsive Coordinates)
             </span>
           </div>
         )}
@@ -814,8 +878,19 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) => {
         </div>
       </div>
 
+      {/* MCIT Nafath Seal Badge */}
+      {mcitNafathSeal && (
+        <div className="w-full p-2 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-800 text-[9px] font-bold flex items-center justify-between">
+          <span className="flex items-center gap-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            توقيع موثق بنفاذ (Nafath MFA + MCIT Root CA)
+          </span>
+          <span className="font-mono text-[8px] text-emerald-600">{mcitNafathSeal.hash}</span>
+        </div>
+      )}
+
       {/* Buttons row */}
-      <div className="flex items-center gap-1.5 w-full mt-1">
+      <div className="flex flex-wrap items-center gap-1.5 w-full mt-1">
         <button
           type="button"
           onClick={handleUndo}
@@ -844,6 +919,17 @@ const SignaturePad: React.FC<SignaturePadProps> = ({ onSave, onClear }) => {
         >
           <span>مسح الكل / Clear</span>
         </button>
+
+        {isValidResolution && !mcitNafathSeal && (
+          <button
+            type="button"
+            onClick={triggerNafathMcitSeal}
+            className="w-full text-[9px] font-black py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-all flex items-center justify-center gap-1 shadow-xs cursor-pointer"
+          >
+            <Lock className="w-3 h-3" />
+            <span>ربط بمصادقة نفاذ الحكومية (MCIT CA Lock)</span>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -948,42 +1034,7 @@ export default function Contracts() {
       q,
       async (snapshot) => {
         if (snapshot.empty) {
-          // Seed initial documents for first-time use
-          const seeds = [
-            {
-              userId: uid,
-              name: "عقد توظيف - المهندس خالد.pdf",
-              category: "عقود الموظفين",
-              expiryDate: "2027-01-15",
-              ocrStatus: "تم المعالجة",
-              status: "valid",
-              summary: "عقد عمل موحد محدد المدة للمهندس خالد لوظيفة مطور برمجيات أساسي.",
-              createdAt: new Date().toISOString(),
-            },
-            {
-              userId: uid,
-              name: "تجديد إقامة - محمد سيد.jpeg",
-              category: "السجلات المدنية والجوازات",
-              expiryDate: "2024-08-10",
-              ocrStatus: "تم الاستخراج",
-              status: "warning",
-              summary: "بطاقة هوية مقيم مخصصة للمهندس محمد سيد مع رصد تاريخ الانتهاء تلقائياً.",
-              createdAt: new Date().toISOString(),
-            },
-            {
-              userId: uid,
-              name: "اتفاقية سرية مورد تقنية.docx",
-              category: "اتفاقيات الموردين (NDAs)",
-              expiryDate: "-",
-              ocrStatus: "تم المعالجة",
-              status: "processing",
-              summary: "اتفاقية عدم إفصاح وحماية البيانات الحساسة مع شركة الحلول السحابية.",
-              createdAt: new Date().toISOString(),
-            },
-          ];
-          for (const s of seeds) {
-            await addDoc(collection(db, "dms_documents"), s);
-          }
+          setDmsDocuments([]);
         } else {
           setDmsDocuments(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
         }

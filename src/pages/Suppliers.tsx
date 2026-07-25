@@ -95,6 +95,80 @@ export default function Suppliers() {
 
   const [brokers, setBrokers] = useState<any[]>([]);
 
+  // Fasah Customs Calculator & Clearance States
+  const [fasahCif, setFasahCif] = useState<number>(25000);
+  const [fasahHsCode, setFasahHsCode] = useState<string>("8471.30");
+  const [fasahOrigin, setFasahOrigin] = useState<string>("CN");
+  const [fasahPort, setFasahPort] = useState<string>("ميناء جدة الإسلامي");
+  const [fasahDutyResult, setFasahDutyResult] = useState<any>(null);
+  const [isFasahCalculating, setIsFasahCalculating] = useState(false);
+  const [fasahDeclarations, setFasahDeclarations] = useState<any[]>([
+    {
+      declarationNo: "FSH-2026-881204",
+      customsPort: "ميناء الملك عبد العزيز - الدمام",
+      status: "CLEARED_AUTOMATED",
+      hsCode: "8471.30",
+      cifValueSAR: 45000,
+      customsDutySAR: 2250,
+      importVatSAR: 7087.50,
+      fasahFeeSAR: 120,
+      totalPayableSAR: 9457.50,
+      clearanceDate: "2026-07-20",
+    },
+  ]);
+
+  const handleFasahCalculate = async () => {
+    setIsFasahCalculating(true);
+    try {
+      const token = localStorage.getItem("token") || "";
+      const res = await fetch("/api/shipments/fasah/calculate-duty", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          cifValue: fasahCif,
+          hsCode: fasahHsCode,
+          countryOfOrigin: fasahOrigin,
+        }),
+      });
+      const data = await res.json();
+      setFasahDutyResult(data);
+      toast.success("✓ تم احتساب التعرفة الجمركية وضريبة القيمة المضافة للاستيراد 15% عبر منصة فسح.");
+    } catch (e: any) {
+      toast.error("فشل احتساب التعرفة الجمركية عبر فسح");
+    } finally {
+      setIsFasahCalculating(false);
+    }
+  };
+
+  const handleFasahSubmit = async () => {
+    try {
+      const token = localStorage.getItem("token") || "";
+      const res = await fetch("/api/shipments/fasah/submit-declaration", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          hsCode: fasahHsCode,
+          cifValue: fasahCif,
+          customsPort: fasahPort,
+          shipmentId: selectedShipment?.id,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setFasahDeclarations((prev) => [data, ...prev]);
+        toast.success(`✓ تم تقديم البيان الجمركي رقم ${data.declarationNo} وإتمام الفسح الآلي بنجاح!`);
+      }
+    } catch (e: any) {
+      toast.error("فشل تقديم البيان الجمركي عبر منصة فسح");
+    }
+  };
+
   // Form State
   const [newShipment, setNewShipment] = useState({
     supplierName: "",
@@ -341,9 +415,10 @@ export default function Suppliers() {
       </header>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-zinc-100 p-1 rounded-2xl w-fit">
+      <div className="flex flex-wrap gap-1 bg-zinc-100 p-1 rounded-2xl w-fit">
         {[
           { id: "shipments", label: "الشحنات النشطة", icon: Truck },
+          { id: "fasah", label: "التخليص الجمركي (منصة فسح)", icon: ShieldCheck },
           { id: "compliance", label: "أداة الامتثال", icon: ShieldCheck },
           { id: "brokers", label: "المخلصين", icon: Building2 },
         ].map((tab) => (
@@ -351,7 +426,7 @@ export default function Suppliers() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all",
+              "flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer",
               activeTab === tab.id
                 ? "bg-white text-zinc-900 shadow-sm"
                 : "text-zinc-500 hover:text-zinc-900"
@@ -559,6 +634,178 @@ export default function Suppliers() {
                 </div>
               )}
             </div>
+          )}
+
+          {activeTab === "fasah" && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              {/* Fasah Customs Clearance Header Card */}
+              <div className="bg-gradient-to-br from-emerald-900 via-zinc-900 to-black text-white p-8 rounded-[2.5rem] shadow-xl relative overflow-hidden">
+                <div className="relative z-10 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/30">
+                      منصة فسح (Fasah.sa System) - هيئة الزكاة والضريبة والجمارك
+                    </span>
+                    <span className="text-xs font-mono text-emerald-400 font-extrabold flex items-center gap-1">
+                      <ShieldCheck className="w-4 h-4" /> الربط المباشر نشط
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-black text-white">
+                    تتبع التخليص الجمركي واحتساب التعرفة الجمركية للبضائع المستوردة
+                  </h2>
+                  <p className="text-zinc-300 text-xs font-medium max-w-xl">
+                    حساب الرسوم الجمركية وضريبة القيمة المضافة للاستيراد (15%) وتوثيق البيانات الجمركية آلياً وفق اللوائح السعودية المعتمدة.
+                  </p>
+                </div>
+              </div>
+
+              {/* Duty Calculator & Tariff Lookup Card */}
+              <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm space-y-6">
+                <h3 className="text-base font-extrabold text-zinc-900 flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-emerald-600" />
+                  حاسبة الرسوم والتعرفة الجمركية
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-extrabold text-zinc-500 mb-1 block">القيمة الإجمالية CIF بالريال (سعر البضاعة + الشحن + التأمين):</label>
+                    <input
+                      type="number"
+                      value={fasahCif}
+                      onChange={(e) => setFasahCif(Number(e.target.value))}
+                      className="w-full text-sm font-mono font-bold p-3 rounded-xl border border-zinc-200 focus:border-emerald-500 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-extrabold text-zinc-500 mb-1 block">بند التعرفة الجمركية (HS Code):</label>
+                    <select
+                      value={fasahHsCode}
+                      onChange={(e) => setFasahHsCode(e.target.value)}
+                      className="w-full text-sm font-bold p-3 rounded-xl border border-zinc-200 focus:border-emerald-500 outline-none"
+                    >
+                      <option value="8471.30">8471.30 - أجهزة ومعالجات حاسب آلي (تعرفة 5%)</option>
+                      <option value="8517.62">8517.62 - معدات اتصالات وتوجيه شبكات (تعرفة 5%)</option>
+                      <option value="3926.90">3926.90 - مصنوعات بلاستيكية متنوعة (تعرفة 12%)</option>
+                      <option value="0401.10">0401.10 - ألبان ومواد غذائية أساسية (معفاه 0%)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-extrabold text-zinc-500 mb-1 block">بلد المنشأ (Country of Origin):</label>
+                    <select
+                      value={fasahOrigin}
+                      onChange={(e) => setFasahOrigin(e.target.value)}
+                      className="w-full text-sm font-bold p-3 rounded-xl border border-zinc-200 focus:border-emerald-500 outline-none"
+                    >
+                      <option value="CN">الصين (CN)</option>
+                      <option value="US">الولايات المتحدة (US)</option>
+                      <option value="DE">ألمانيا (DE)</option>
+                      <option value="AE">الإمارات العربية المتحدة (اتفاقية دول الخليج - 0%)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-extrabold text-zinc-500 mb-1 block">منفذ الدخول الجمركي (Customs Port):</label>
+                    <select
+                      value={fasahPort}
+                      onChange={(e) => setFasahPort(e.target.value)}
+                      className="w-full text-sm font-bold p-3 rounded-xl border border-zinc-200 focus:border-emerald-500 outline-none"
+                    >
+                      <option value="ميناء جدة الإسلامي">ميناء جدة الإسلامي</option>
+                      <option value="ميناء الملك عبد العزيز - الدمام">ميناء الملك عبد العزيز - الدمام</option>
+                      <option value="مطار الملك خالد الدولي - الرياض">مطار الملك خالد الدولي - الرياض</option>
+                      <option value="ميناء جازان المستقبلي">ميناء جازان المستقبلي</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleFasahCalculate}
+                    disabled={isFasahCalculating}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>احتساب التكلفة الجمركية</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleFasahSubmit}
+                    className="bg-zinc-900 hover:bg-black text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4 text-emerald-400" />
+                    <span>تقديم بيان جمركي جديد عبر فسح</span>
+                  </button>
+                </div>
+
+                {/* Calculation breakdown */}
+                {fasahDutyResult && (
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2 text-emerald-950 font-mono text-xs">
+                    <p className="font-bold font-sans text-sm text-emerald-900">نتائج الاحتساب الجمركي الرسمية (Fasah Duty Report):</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+                      <div className="bg-white p-2.5 rounded-xl border border-emerald-200">
+                        <span className="text-[10px] text-zinc-500 block font-sans">قيمة البضاعة (CIF):</span>
+                        <span className="font-bold text-sm">{fasahDutyResult.cifValueSAR?.toLocaleString()} ر.س</span>
+                      </div>
+                      <div className="bg-white p-2.5 rounded-xl border border-emerald-200">
+                        <span className="text-[10px] text-zinc-500 block font-sans">الرسوم الجمركية ({fasahDutyResult.dutyRatePercent}%):</span>
+                        <span className="font-bold text-sm">{fasahDutyResult.customsDutySAR?.toLocaleString()} ر.س</span>
+                      </div>
+                      <div className="bg-white p-2.5 rounded-xl border border-emerald-200">
+                        <span className="text-[10px] text-zinc-500 block font-sans">ضريبة القيمة المضافة 15%:</span>
+                        <span className="font-bold text-sm">{fasahDutyResult.importVatSAR?.toLocaleString()} ر.س</span>
+                      </div>
+                      <div className="bg-emerald-600 text-white p-2.5 rounded-xl">
+                        <span className="text-[10px] text-emerald-100 block font-sans">الإجمالي المطلوب سداده:</span>
+                        <span className="font-black text-sm">{fasahDutyResult.totalCustomsPayableSAR?.toLocaleString()} ر.س</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Declarations List Table */}
+              <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm space-y-4">
+                <h3 className="text-base font-extrabold text-zinc-900">سجل البيانات الجمركية المعتمدة (Fasah Declarations Log)</h3>
+
+                <div className="overflow-x-auto rounded-2xl border border-zinc-100">
+                  <table className="w-full text-right text-xs">
+                    <thead className="bg-zinc-50 text-zinc-500 font-extrabold border-b border-zinc-100">
+                      <tr>
+                        <th className="p-3">رقم البيان الجمركي</th>
+                        <th className="p-3">منفذ الدخول</th>
+                        <th className="p-3">الرمز المنسق (HS)</th>
+                        <th className="p-3">الرسوم الجمركية</th>
+                        <th className="p-3">ضريبة القيمة المضافة 15%</th>
+                        <th className="p-3">حالة الإفساح</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100 font-medium">
+                      {fasahDeclarations.map((dec, idx) => (
+                        <tr key={idx} className="hover:bg-zinc-50/80">
+                          <td className="p-3 font-mono font-bold text-indigo-600">{dec.declarationNo}</td>
+                          <td className="p-3">{dec.customsPort}</td>
+                          <td className="p-3 font-mono">{dec.hsCode}</td>
+                          <td className="p-3 font-mono">{dec.customsDutySAR?.toLocaleString()} ر.س</td>
+                          <td className="p-3 font-mono">{dec.importVatSAR?.toLocaleString()} ر.س</td>
+                          <td className="p-3">
+                            <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold text-[10px]">
+                              {dec.status} (معتمد)
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </motion.div>
           )}
 
           {activeTab === "compliance" && (

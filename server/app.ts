@@ -17,6 +17,9 @@ import notificationRoutes from "./routes/notifications.ts";
 import settingsRoutes from "./routes/settings.ts";
 import analyticsRoutes from "./routes/analytics.ts";
 import hrRoutes from "./routes/hr.ts";
+import qiwaRoutes from "./routes/qiwa.ts";
+import muqeemRoutes from "./routes/muqeem.ts";
+import bankWebhooksRoutes from "./routes/bankWebhooks.ts";
 import isicRoutes from "./routes/isic.ts";
 import publicRoutes from "./routes/public.ts";
 import auditLogRoutes from "./routes/auditLogs.ts";
@@ -42,6 +45,7 @@ import aiRoutes from "./routes/ai.ts";
 import emailRoutes from "./routes/email.ts";
 import automationRoutes from "./routes/automation.ts";
 import chatRoutes from "./routes/chat.ts";
+import webhookRoutes from "./routes/webhooks.ts";
 
 export async function createApp() {
   const app = express();
@@ -61,6 +65,7 @@ export async function createApp() {
   app.use("/api/auth", authRoutes);
   app.use("/api/ai", aiRoutes);
   app.use("/api/chat", chatRoutes);
+  app.use("/api/webhooks", webhookRoutes);
   app.use("/api/employees", employeeRoutes);
   app.use("/api/shipments", shipmentRoutes);
   app.use("/api/leads", leadRoutes);
@@ -98,6 +103,10 @@ export async function createApp() {
   app.use("/api/demo", demoRoutes);
   app.use("/api/leads-intelligence", leadsIntelligenceRoutes);
   app.use("/api/stripe", stripeRoutes);
+
+  app.use("/api/qiwa", qiwaRoutes);
+  app.use("/api/muqeem", muqeemRoutes);
+  app.use("/api/bank-webhooks", bankWebhooksRoutes);
 
   // HR routes like /api/nitaqat/calculate and /api/workpermit/calculate
   app.use("/api", hrRoutes);
