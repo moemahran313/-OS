@@ -107,11 +107,14 @@ function startPayrollCronJob() {
 
 async function start() {
   try {
-    await initCronAuth();
     const app = await createApp();
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Mudarij OS running on http://localhost:${PORT}`);
-      startPayrollCronJob();
+      initCronAuth().then(() => {
+        startPayrollCronJob();
+      }).catch((e) => {
+        console.warn("[Cron] Async init error:", e);
+      });
       startOutboxWorker();
     });
   } catch (err) {

@@ -80,30 +80,30 @@ export default function EmergencyLockdownIndicator({
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white border border-zinc-200 p-5 rounded-3xl mb-6 shadow-sm flex flex-col gap-4 w-full"
+          className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3 sm:p-5 rounded-2xl sm:rounded-3xl mb-3 sm:mb-6 shadow-sm flex flex-col gap-3 sm:gap-4 w-full"
           dir="rtl"
         >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0">
-                <Clock className="w-5 h-5" />
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 rounded-xl sm:rounded-2xl flex items-center justify-center shrink-0">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <div>
-                <h3 className="text-sm font-black text-zinc-900">
+                <h3 className="text-xs sm:text-sm font-black text-zinc-900 dark:text-zinc-100">
                   عَدّاد إقفال مسير الرواتب (مُدَد)
                 </h3>
-                <p className="text-xs font-bold text-zinc-500 mt-1">
+                <p className="text-[10px] sm:text-xs font-bold text-zinc-500 dark:text-zinc-400 mt-0.5 sm:mt-1">
                   متبقي {daysRemaining} أيام على الإقفال الآلي القادم
                 </p>
               </div>
             </div>
 
             <div className="flex-1 max-w-sm">
-              <div className="flex justify-between text-[10px] font-bold text-zinc-400 mb-2">
+              <div className="flex justify-between text-[9px] sm:text-[10px] font-bold text-zinc-400 mb-1 sm:mb-2">
                 <span>الآن</span>
                 <span>موعد الإقفال</span>
               </div>
-              <div className="h-2.5 bg-zinc-100 rounded-full overflow-hidden flex">
+              <div className="h-2 sm:h-2.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden flex">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${progressPercent}%` }}

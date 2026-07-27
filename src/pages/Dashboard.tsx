@@ -3061,25 +3061,25 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-4">
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 pb-2 sm:pb-4">
         <div>
-          <div className="flex items-center gap-4">
-            <h1 className="text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">نظرة عامة</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-zinc-900 dark:text-zinc-100 tracking-tight">نظرة عامة</h1>
             {isEditing ? (
-              <span className="bg-amber-100 text-amber-800 border border-amber-200 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest leading-none">
+              <span className="bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] font-black uppercase tracking-widest leading-none">
                 وضع التخصيص
               </span>
             ) : (
-              <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none">
+              <div className="flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
                 <span>نشط حياً</span>
               </div>
             )}
           </div>
-          <p className="text-zinc-400 mt-2 text-xs font-semibold">مرحباً بك مجدداً، إليك أحدث نشاطات عملك اليوم.</p>
+          <p className="text-zinc-400 mt-1 sm:mt-2 text-xs font-semibold">مرحباً بك مجدداً، إليك أحدث نشاطات عملك اليوم.</p>
 
           {!isEditing && (
-            <div className="flex bg-zinc-100/70 dark:bg-zinc-800/60 backdrop-blur-md p-1.5 rounded-2xl overflow-x-auto no-scrollbar max-w-full gap-1 mt-6 border border-zinc-200/50 dark:border-zinc-700/50 md:w-fit relative">
+            <div className="flex bg-zinc-100/70 dark:bg-zinc-800/60 backdrop-blur-md p-1 sm:p-1.5 rounded-2xl overflow-x-auto no-scrollbar max-w-full gap-1 mt-4 sm:mt-6 border border-zinc-200/50 dark:border-zinc-700/50 md:w-fit relative">
               {[
                 { id: "ceo" as const, labelAr: "نظرة الإدارة (CEO)", labelEn: "Management (CEO)" },
                 { id: "hr" as const, labelAr: "شؤون الموظفين (HR)", labelEn: "Human Resources (HR)" },
@@ -3093,7 +3093,7 @@ export default function Dashboard() {
                     key={view.id}
                     onClick={() => setActiveView(view.id)}
                     className={cn(
-                      "relative px-5 py-2.5 rounded-xl text-xs font-black transition-all whitespace-nowrap overflow-hidden z-10",
+                      "relative px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-[11px] sm:text-xs font-black transition-all whitespace-nowrap overflow-hidden z-10 cursor-pointer shrink-0",
                       isActive ? "text-zinc-950 dark:text-white" : "text-zinc-500 hover:text-zinc-850 dark:hover:text-zinc-300"
                     )}
                   >
@@ -3111,29 +3111,29 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex items-center gap-2 sm:gap-3 w-full md:w-auto">
           <button
             onClick={() => (isEditing ? saveConfig() : setIsEditing(true))}
             disabled={isSaving}
             className={cn(
-              "flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all shadow-lg",
+              "flex-1 md:flex-none flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all shadow-lg cursor-pointer",
               isEditing
                 ? "bg-emerald-600 text-white shadow-emerald-600/20"
                 : "bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-50 shadow-zinc-100"
             )}
           >
             {isSaving ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : isEditing ? (
-              <Check className="w-5 h-5" />
+              <Check className="w-4 h-4 sm:w-5 sm:h-5" />
             ) : (
-              <Settings2 className="w-5 h-5" />
+              <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />
             )}
             <span>{isEditing ? "حفظ التغييرات" : "تخصيص الواجهة"}</span>
           </button>
           {!isEditing && (
-            <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
-              <Plus className="w-5 h-5" />
+            <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>إجراء جديد</span>
             </button>
           )}

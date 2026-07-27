@@ -46,6 +46,8 @@ import emailRoutes from "./routes/email.ts";
 import automationRoutes from "./routes/automation.ts";
 import chatRoutes from "./routes/chat.ts";
 import webhookRoutes from "./routes/webhooks.ts";
+import oauthRoutes from "./routes/oauth.ts";
+import crmSyncRoutes from "./routes/crmSync.ts";
 
 export async function createApp() {
   const app = express();
@@ -62,6 +64,8 @@ export async function createApp() {
   });
 
   // Attach routes
+  app.use("/api/integrations", oauthRoutes);
+  app.use("/api/crm", crmSyncRoutes);
   app.use("/api/auth", authRoutes);
   app.use("/api/ai", aiRoutes);
   app.use("/api/chat", chatRoutes);

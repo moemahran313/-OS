@@ -285,35 +285,186 @@ export default function BankingTab() {
     }
   };
 
-  // Auto Matching logic
-  const handleAutoMatch = () => {
+  // Auto Matching logic calling backend SAMA reconciliation engine
+  const [serverMatches, setServerMatches] = useState<any[]>([]);
+  const [unmatchedTxs, setUnmatchedTxs] = useState<any[]>([]);
+  const [showSplitModal, setShowSplitModal] = useState(false);
+  const [splitTxItem, setSplitTxItem] = useState<any>(null);
+  const [splitLines, setSplitLines] = useState<any[]>([
+    { accountCode: "1011", accountName: "البنك الأهلي / Cash at Bank", debit: 0, credit: 0, description: "قيد البنك" },
+    { accountCode: "1201", accountName: "ذمم العملاء / Accounts Receivable", debit: 0, credit: 0, description: "تسوية فاتورة العميل" },
+  ]);
+  const [isSubmittingSplit, setIsSubmittingSplit] = useState(false);
+
+  const handleAutoMatch = async () => {
     setIsMatching(true);
-    setTimeout(() => {
-      let matchedCount = 0;
-      const newAudit: string[] = [];
-
-      const updatedStatements = statementLines.map((stmt) => {
-        if (stmt.matched) return stmt;
-
-        // Try to find a ledger line that matches date OR amount closely
-        const match = ledgerLines.find((ledg) => !ledg.matched && ledg.amount === stmt.amount);
-        if (match) {
-          matchedCount++;
-          stmt.matched = true;
-          stmt.matchedWith = match.refNo;
-          match.matched = true;
-          newAudit.push(
-            `[تطابق تلقائي] تم مطابقة الحركة البنكية بقيمة (${stmt.amount.toLocaleString()} ر.س) مع القيد المحاسبي (${match.refNo}) بنجاح.`
-          );
-        }
-        return stmt;
+    try {
+      await auth.authStateReady();
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch("/api/banking/reconcile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ connectionId: activeBankId }),
       });
 
-      setStatementLines(updatedStatements);
-      setReconciledCount((prev) => prev + matchedCount);
-      setReconcileAudit((prev) => [...prev, ...newAudit]);
+      if (res.ok) {
+        const data = await res.json();
+        setServerMatches(data.matches || []);
+        setUnmatchedTxs(data.unmatchedBankTxs || []);
+        setReconciledCount(data.matches?.length || 0);
+        setReconcileAudit((prev) => [
+          `[SAMA Engine] تم تحليل ${data.totalAnalyzed || 0} حركة بنكية. تم العثور على ${data.matches?.length || 0} مطابقة بدرجات ثقة متفاوتة (تام / عالي / جزئي).`,
+          ...prev,
+        ]);
+      } else {
+        alert("فشل تشغيل محرك المطابقة البنكية.");
+      }
+    } catch (err) {
+      console.error("Reconcile error:", err);
+      alert("حدث خطأ أثناء إجراء عملية المطابقة مع السجل المحاسبي.");
+    } finally {
       setIsMatching(false);
-    }, 1000);
+    }
+  };
+
+  useEffect(() => {
+    handleAutoMatch();
+  }, [activeBankId]);
+
+  // Accept Auto Match Endpoint Call
+  const handleAcceptMatch = async (matchItem: any) => {
+    try {
+      await auth.authStateReady();
+      const token = await auth.currentUser?.getIdToken();
+      const { bankTransaction, matchDetails } = matchItem;
+
+      const res = await fetch("/api/banking/reconcile/accept-match", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          bankTxId: bankTransaction.id,
+          targetType: matchDetails.targetType,
+          targetId: matchDetails.targetId,
+          amount: Math.abs(bankTransaction.amount),
+          journalData: matchDetails.suggestedJournal,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setServerMatches((prev) => prev.filter((m) => m.bankTransaction.id !== bankTransaction.id));
+        setReconciledCount((prev) => prev + 1);
+        setReconcileAudit((prev) => [
+          `[قبول مطابقة] تم ترحيل القيد ${data.journalNumber} بنجاح للحركة بقيمة (${Math.abs(bankTransaction.amount).toLocaleString()} ر.س) والمرتبطة بـ ${matchDetails.targetNumber}.`,
+          ...prev,
+        ]);
+        alert(`تم قبول المطابقة وتوليد القيد المحاسبي ${data.journalNumber} وتسويته مع الفاتورة بنجاح!`);
+      } else {
+        alert("فشل قبول المطابقة وتسجيل القيد.");
+      }
+    } catch (err) {
+      alert("خطأ أثناء ترحيل قيد المطابقة.");
+    }
+  };
+
+  // Open Split Modal for a transaction
+  const handleOpenSplitModal = (tx: any) => {
+    setSplitTxItem(tx);
+    const amt = Math.abs(tx.amount || 0);
+    setSplitLines([
+      { accountCode: "1011", accountName: "البنك الأهلي / Cash at Bank", debit: tx.amount > 0 ? amt : 0, credit: tx.amount < 0 ? amt : 0, description: tx.description || "حساب البنك" },
+      { accountCode: "1201", accountName: "ذمم العملاء / Accounts Receivable", debit: tx.amount < 0 ? amt : 0, credit: tx.amount > 0 ? amt : 0, description: "تسوية الحساب" },
+      { accountCode: "5201", accountName: "مصاريف وعمولات بنكية / Bank Charges", debit: 0, credit: 0, description: "عمولة بنكية" },
+    ]);
+    setShowSplitModal(true);
+  };
+
+  // Save Split Transaction
+  const handleSaveSplit = async () => {
+    if (!splitTxItem) return;
+    setIsSubmittingSplit(true);
+
+    try {
+      await auth.authStateReady();
+      const token = await auth.currentUser?.getIdToken();
+
+      const res = await fetch("/api/banking/reconcile/split-transaction", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          bankTxId: splitTxItem.id,
+          description: `تقسيم العملية البنكية - ${splitTxItem.description}`,
+          lines: splitLines,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setUnmatchedTxs((prev) => prev.filter((t) => t.id !== splitTxItem.id));
+        setReconciledCount((prev) => prev + 1);
+        setReconcileAudit((prev) => [
+          `[تقسيم عملية] تم تقسيم الحركة البنكية بقيمة (${Math.abs(splitTxItem.amount).toLocaleString()} ر.س) عبر القيد المحاسبي ${data.journalNumber}.`,
+          ...prev,
+        ]);
+        alert(`تم حفظ القيد المركّب وتقسيم الحركة البنكية بنجاح! رقم القيد: ${data.journalNumber}`);
+        setShowSplitModal(false);
+      } else {
+        const errData = await res.json();
+        alert(errData.error || "فشل تقسيم العملية.");
+      }
+    } catch (err) {
+      alert("خطأ أثناء حفظ القيد المركّب.");
+    } finally {
+      setIsSubmittingSplit(false);
+    }
+  };
+
+  // One-click post missing bank fee
+  const handlePostBankFee = async (tx: any) => {
+    const feeAmt = prompt("أدخل قيمة العمولة والرسوم البنكية المراد تسجيلها مباشرة (SAR):", Math.abs(tx.amount || 0).toString());
+    if (!feeAmt || isNaN(parseFloat(feeAmt))) return;
+
+    try {
+      await auth.authStateReady();
+      const token = await auth.currentUser?.getIdToken();
+
+      const res = await fetch("/api/banking/reconcile/post-bank-fee", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          bankTxId: tx.id,
+          feeAmount: parseFloat(feeAmt),
+          description: tx.description || "رسوم وعمولات تحويل بنكية",
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setUnmatchedTxs((prev) => prev.filter((t) => t.id !== tx.id));
+        setReconciledCount((prev) => prev + 1);
+        setReconcileAudit((prev) => [
+          `[عمولة بنكية] تم تسجيل القيد ${data.journalNumber} لرسوم وعمولات بنكية بقيمة (${parseFloat(feeAmt).toLocaleString()} ر.س) بنجاح.`,
+          ...prev,
+        ]);
+        alert(`تم تسجيل قيد العمولات والمصاريف البنكية بنجاح! القيد: ${data.journalNumber}`);
+      } else {
+        alert("فشل تسجيل العمولة البنكية.");
+      }
+    } catch (err) {
+      alert("خطأ أثناء تسجيل المصاريف البنكية.");
+    }
   };
 
   const handleManualMatch = (stmtId: string, ledgId: string) => {
@@ -470,113 +621,169 @@ export default function BankingTab() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Bank Statement Panel */}
+          {/* Reconciled Auto Matches Workspace */}
+          <div className="space-y-6">
+            {/* Auto Matches Section */}
             <div className="space-y-3">
               <div className="flex justify-between items-center text-[10px] font-black uppercase text-zinc-400">
-                <span>العمليات من كشف الحساب (Statement)</span>
-                <span className="font-mono">
-                  {statementLines.filter((s) => s.matched).length} / {statementLines.length} مطابقة
+                <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-black">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  اقتراحات المطابقة الآلية الذكية (SAMA Open Banking Matching)
+                </span>
+                <span className="font-mono bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2.5 py-0.5 rounded-full font-black">
+                  {serverMatches.length} مطابقة متاحة
                 </span>
               </div>
 
-              <div className="space-y-2.5 max-h-[350px] overflow-y-auto pr-1">
-                {statementLines.map((stmt) => (
-                  <div
-                    key={stmt.id}
-                    className={`p-3.5 rounded-xl border text-xs space-y-2 transition-all ${
-                      stmt.matched
-                        ? "bg-emerald-50/40 dark:bg-emerald-950/10 border-emerald-200 dark:border-emerald-900/30"
-                        : "bg-zinc-50 dark:bg-zinc-100 border-zinc-150 dark:border-zinc-850 hover:border-zinc-200"
-                    }`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <span className="font-mono text-[10px] text-zinc-400">{stmt.date}</span>
-                      <span
-                        className={`font-mono font-black ${stmt.amount < 0 ? "text-rose-600" : "text-emerald-600"}`}
-                      >
-                        {stmt.amount > 0 ? "+" : ""}
-                        {stmt.amount.toLocaleString()} ر.س
-                      </span>
-                    </div>
-                    <p className="font-bold text-zinc-850 dark:text-zinc-150">{stmt.description}</p>
+              {serverMatches.length === 0 ? (
+                <div className="bg-zinc-50 dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 p-8 rounded-2xl text-center space-y-2">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+                  <p className="text-xs font-black text-zinc-700 dark:text-zinc-300">
+                    لا توجد مطابقات مقترحة معلقة حالياً!
+                  </p>
+                  <p className="text-[10px] text-zinc-400 font-bold">
+                    جميع الحركات البنكية المستوردة مسواة بالكامل أو بانتظار استيراد تغذية جديدة.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+                  {serverMatches.map((item, idx) => {
+                    const { bankTransaction: tx, matchDetails: m } = item;
+                    const isExact = m.confidenceLevel === "EXACT";
+                    const isHigh = m.confidenceLevel === "HIGH";
 
-                    {stmt.matched ? (
-                      <div className="flex items-center gap-1.5 text-[9px] text-emerald-600 font-black">
-                        <Check className="w-3 h-3" />
-                        <span>تمت المطابقة مع القيد {stmt.matchedWith}</span>
-                      </div>
-                    ) : (
-                      <div className="flex justify-between items-center pt-2 border-t border-zinc-100 dark:border-zinc-850">
-                        <span className="text-[9px] text-zinc-400 font-bold">
-                          بانتظار ربط الحركة
-                        </span>
-                        <div className="flex gap-1">
-                          {ledgerLines
-                            .filter((l) => !l.matched && l.amount === stmt.amount)
-                            .map((matchLedg) => (
-                              <button
-                                key={matchLedg.id}
-                                onClick={() => handleManualMatch(stmt.id, matchLedg.id)}
-                                className="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-[9px] font-black rounded"
-                              >
-                                مطابقة مع {matchLedg.refNo}
-                              </button>
-                            ))}
+                    return (
+                      <div
+                        key={idx}
+                        className="p-4 rounded-2xl border bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-sm space-y-3 hover:border-emerald-500 transition-all"
+                      >
+                        {/* Header Badge & Confidence */}
+                        <div className="flex justify-between items-center border-b pb-2 dark:border-zinc-800">
+                          <div className="flex items-center gap-2">
+                            {isExact ? (
+                              <span className="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 text-[10px] font-black border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                                <CheckCircle className="w-3 h-3" />
+                                تطابق تام (100% Exact Match)
+                              </span>
+                            ) : isHigh ? (
+                              <span className="px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 text-[10px] font-black border border-blue-200 dark:border-blue-800 flex items-center gap-1">
+                                <Sparkles className="w-3 h-3" />
+                                توافق عالي ({m.confidenceScore}% High)
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 text-[10px] font-black border border-amber-200 dark:border-amber-800 flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3" />
+                                توافق جزئي ({m.confidenceScore}% Partial)
+                              </span>
+                            )}
+                            <span className="text-[10px] font-mono text-zinc-400">{tx.date}</span>
+                          </div>
+
+                          <span className={`font-mono font-black text-sm ${tx.amount < 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                            {tx.amount > 0 ? "+" : ""}{Math.abs(tx.amount).toLocaleString()} SAR
+                          </span>
+                        </div>
+
+                        {/* Statement Line vs Target Invoice / Vendor Bill */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-zinc-50 dark:bg-zinc-800/40 p-3 rounded-xl text-xs">
+                          {/* Statement Details */}
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-black text-zinc-400 uppercase">حركة كشف الحساب البنكي</span>
+                            <p className="font-bold text-zinc-800 dark:text-zinc-200">{tx.description}</p>
+                            <span className="text-[9px] font-mono text-zinc-400 block">البنك: {tx.bankName || "SNB"}</span>
+                          </div>
+
+                          {/* Matched Target Details */}
+                          <div className="space-y-1 border-r pr-3 border-zinc-200 dark:border-zinc-700">
+                            <span className="text-[9px] font-black text-zinc-400 uppercase">
+                              المستند المقابل ({m.targetType === "INVOICE" ? "فاتورة ZATCA" : "فاتورة مورد"})
+                            </span>
+                            <p className="font-bold text-emerald-600 dark:text-emerald-400">
+                              {m.targetNumber} - {m.targetName}
+                            </p>
+                            <span className="text-[9px] font-mono text-zinc-400 block">
+                              القيمة المستحقة: {m.targetAmount?.toLocaleString()} SAR
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Reason / Suggested Journal */}
+                        <div className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium bg-emerald-500/5 p-2.5 rounded-lg border border-emerald-500/10 space-y-1">
+                          <p className="font-bold text-zinc-700 dark:text-zinc-300">💡 سبب التوصية: {m.reason}</p>
+                          {m.suggestedJournal && (
+                            <p className="font-mono text-[9px] text-zinc-500">
+                              القيد المقترح: مدين ({m.suggestedJournal.debitAccountName || m.suggestedJournal.debitAccountCode}) / دائن ({m.suggestedJournal.creditAccountName || m.suggestedJournal.creditAccountCode})
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Interactive Workspace Action Buttons */}
+                        <div className="flex flex-wrap gap-2 pt-1 justify-end">
+                          <button
+                            onClick={() => handleOpenSplitModal(tx)}
+                            className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 text-[10px] font-black rounded-lg transition-colors flex items-center gap-1"
+                          >
+                            <ArrowRightLeft className="w-3 h-3" />
+                            تقسيم العملية (Split)
+                          </button>
+                          <button
+                            onClick={() => handleAcceptMatch(item)}
+                            className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 text-[10px] font-black rounded-lg transition-all shadow-md flex items-center gap-1"
+                          >
+                            <Check className="w-3 h-3" />
+                            قبول المطابقة وتوليد القيد (Accept)
+                          </button>
                         </div>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
-            {/* General Ledger Bank Entries Panel */}
-            <div className="space-y-3">
+            {/* Unmatched Bank Transactions Section */}
+            <div className="space-y-3 pt-4 border-t border-zinc-100 dark:border-zinc-800">
               <div className="flex justify-between items-center text-[10px] font-black uppercase text-zinc-400">
-                <span>حركات دفتر الأستاذ العام (Ledger)</span>
-                <span className="font-mono">
-                  {ledgerLines.filter((l) => l.matched).length} / {ledgerLines.length} مسواة
-                </span>
+                <span>حركات بنكية غير مطابقة (Unmatched Transactions)</span>
+                <span className="font-mono">{unmatchedTxs.length} حركات</span>
               </div>
 
-              <div className="space-y-2.5 max-h-[350px] overflow-y-auto pr-1">
-                {ledgerLines.map((ledg) => (
-                  <div
-                    key={ledg.id}
-                    className={`p-3.5 rounded-xl border text-xs space-y-2 transition-all ${
-                      ledg.matched
-                        ? "bg-emerald-50/40 dark:bg-emerald-950/10 border-emerald-200 dark:border-emerald-900/30"
-                        : "bg-zinc-50 dark:bg-zinc-100 border-zinc-150 dark:border-zinc-850 hover:border-zinc-200"
-                    }`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <span className="font-mono text-[10px] text-zinc-400">{ledg.date}</span>
-                      <span className="font-mono font-black text-zinc-800 dark:text-zinc-200">
-                        {ledg.amount.toLocaleString()} ر.س
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <p className="font-bold text-zinc-850 dark:text-zinc-150">
-                        {ledg.description}
-                      </p>
-                      <span className="font-mono text-[9px] text-indigo-500 font-black">
-                        {ledg.refNo}
-                      </span>
-                    </div>
-
-                    {ledg.matched ? (
-                      <div className="flex items-center gap-1.5 text-[9px] text-emerald-600 font-black pt-1">
-                        <Check className="w-3 h-3" />
-                        <span>الحركة متطابقة ومسواة بنجاح</span>
+              <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
+                {unmatchedTxs.length === 0 ? (
+                  <p className="text-[10px] text-zinc-400 text-center py-4 font-bold">لا توجد حركات معلقة غير مطابقة.</p>
+                ) : (
+                  unmatchedTxs.map((tx) => (
+                    <div
+                      key={tx.id}
+                      className="p-3 rounded-xl border bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-xs"
+                    >
+                      <div className="space-y-0.5 max-w-[60%]">
+                        <span className="font-mono text-[9px] text-zinc-400 block">{tx.date}</span>
+                        <p className="font-bold text-zinc-800 dark:text-zinc-200 truncate">{tx.description}</p>
+                        <span className={`font-mono font-black ${tx.amount < 0 ? "text-rose-600" : "text-emerald-600"}`}>
+                          {tx.amount > 0 ? "+" : ""}{Math.abs(tx.amount).toLocaleString()} SAR
+                        </span>
                       </div>
-                    ) : (
-                      <span className="text-[9px] text-zinc-400 font-bold block pt-1">
-                        حركة غير مستقرة
-                      </span>
-                    )}
-                  </div>
-                ))}
+
+                      <div className="flex gap-1.5">
+                        {tx.amount < 0 && (
+                          <button
+                            onClick={() => handlePostBankFee(tx)}
+                            className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 text-[9px] font-black rounded-lg border border-amber-200/50"
+                          >
+                            عمولة بنكية
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleOpenSplitModal(tx)}
+                          className="px-2.5 py-1 bg-zinc-900 text-white hover:bg-zinc-800 text-[9px] font-black rounded-lg"
+                        >
+                          تقسيم وقيد
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -692,6 +899,172 @@ export default function BankingTab() {
           </div>
         </div>
       </div>
+
+      {/* Interactive Split Transaction Modal */}
+      <AnimatePresence>
+        {showSplitModal && splitTxItem && (
+          <div className="fixed inset-0 bg-zinc-950/70 backdrop-blur-sm z-[160] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-zinc-900 rounded-[2.5rem] w-full max-w-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-2xl p-6 text-right space-y-5"
+            >
+              <header className="flex justify-between items-center border-b pb-4 dark:border-zinc-800">
+                <div>
+                  <h3 className="text-sm font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                    <ArrowRightLeft className="w-4 h-4 text-emerald-500" />
+                    تقسيم الحركة البنكية بين عدة حسابات (Split Ledger Entry)
+                  </h3>
+                  <p className="text-[10px] text-zinc-400 font-bold">
+                    الحركة: {splitTxItem.description} | المبلغ الإجمالي: {Math.abs(splitTxItem.amount).toLocaleString()} SAR
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowSplitModal(false)}
+                  className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 font-bold text-xs"
+                >
+                  إغلاق ✕
+                </button>
+              </header>
+
+              <div className="space-y-4">
+                <div className="bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-2xl space-y-3">
+                  <div className="flex justify-between items-center text-xs font-black">
+                    <span className="text-zinc-500">أسطر القيد المحاسبي المركّب:</span>
+                    <button
+                      onClick={() =>
+                        setSplitLines((prev) => [
+                          ...prev,
+                          { accountCode: "5201", accountName: "حساب آخر", debit: 0, credit: 0, description: "سطر جديد" },
+                        ])
+                      }
+                      className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 rounded-lg text-[10px] font-black"
+                    >
+                      + إضافة سطر آخر
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                    {splitLines.map((line, idx) => (
+                      <div key={idx} className="grid grid-cols-12 gap-2 items-center bg-white dark:bg-zinc-900 p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 text-xs">
+                        <div className="col-span-3">
+                          <label className="text-[9px] text-zinc-400 font-black block">كود الحساب</label>
+                          <input
+                            type="text"
+                            value={line.accountCode}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setSplitLines((prev) => prev.map((l, i) => (i === idx ? { ...l, accountCode: val } : l)));
+                            }}
+                            className="w-full p-1.5 border rounded-lg font-mono text-xs dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
+                          />
+                        </div>
+                        <div className="col-span-4">
+                          <label className="text-[9px] text-zinc-400 font-black block">اسم الحساب / البيان</label>
+                          <input
+                            type="text"
+                            value={line.accountName}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setSplitLines((prev) => prev.map((l, i) => (i === idx ? { ...l, accountName: val } : l)));
+                            }}
+                            className="w-full p-1.5 border rounded-lg text-xs dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="text-[9px] text-emerald-600 font-black block">مدين (Debit)</label>
+                          <input
+                            type="number"
+                            value={line.debit}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value) || 0;
+                              setSplitLines((prev) => prev.map((l, i) => (i === idx ? { ...l, debit: val } : l)));
+                            }}
+                            className="w-full p-1.5 border rounded-lg font-mono text-xs text-emerald-600 font-bold dark:bg-zinc-800 dark:border-zinc-700"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="text-[9px] text-rose-600 font-black block">دائن (Credit)</label>
+                          <input
+                            type="number"
+                            value={line.credit}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value) || 0;
+                              setSplitLines((prev) => prev.map((l, i) => (i === idx ? { ...l, credit: val } : l)));
+                            }}
+                            className="w-full p-1.5 border rounded-lg font-mono text-xs text-rose-600 font-bold dark:bg-zinc-800 dark:border-zinc-700"
+                          />
+                        </div>
+                        <div className="col-span-1 flex justify-center pt-3">
+                          {splitLines.length > 2 && (
+                            <button
+                              onClick={() => setSplitLines((prev) => prev.filter((_, i) => i !== idx))}
+                              className="text-rose-500 font-black text-xs hover:text-rose-700"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Balance Check */}
+                  <div className="flex justify-between items-center text-xs font-mono font-black pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                    <span className="text-zinc-500">
+                      إجمالي المدين: {splitLines.reduce((s, l) => s + (l.debit || 0), 0).toLocaleString()} SAR
+                    </span>
+                    <span className="text-zinc-500">
+                      إجمالي الدائن: {splitLines.reduce((s, l) => s + (l.credit || 0), 0).toLocaleString()} SAR
+                    </span>
+                    <span
+                      className={`px-2.5 py-0.5 rounded text-[10px] font-black ${
+                        Math.abs(
+                          splitLines.reduce((s, l) => s + (l.debit || 0), 0) -
+                            splitLines.reduce((s, l) => s + (l.credit || 0), 0)
+                        ) < 0.01
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                          : "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
+                      }`}
+                    >
+                      {Math.abs(
+                        splitLines.reduce((s, l) => s + (l.debit || 0), 0) -
+                          splitLines.reduce((s, l) => s + (l.credit || 0), 0)
+                      ) < 0.01
+                        ? "القيد متزن 100%"
+                        : "القيد غير متزن!"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    onClick={() => setShowSplitModal(false)}
+                    className="flex-1 py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 text-zinc-700 dark:text-zinc-300 font-bold text-xs rounded-xl"
+                  >
+                    إلغاء
+                  </button>
+                  <button
+                    onClick={handleSaveSplit}
+                    disabled={isSubmittingSplit}
+                    className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-zinc-950 font-black text-xs rounded-xl flex items-center justify-center gap-2"
+                  >
+                    {isSubmittingSplit ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        جاري حفظ وتوزيع القيد...
+                      </>
+                    ) : (
+                      "اعتماد قيد التقسيم"
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Open Banking Direct Link Wizard Modal */}
       <AnimatePresence>

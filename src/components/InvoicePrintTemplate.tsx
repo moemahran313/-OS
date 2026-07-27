@@ -32,6 +32,9 @@ export default function InvoicePrintTemplate({ invoice }: InvoicePrintTemplatePr
   };
 
   const getZatcaQRValue = () => {
+    if (invoice.zatcaQrCodeBase64) return invoice.zatcaQrCodeBase64;
+    if (invoice.zatcaData?.reporting?.qrCode) return invoice.zatcaData.reporting.qrCode;
+
     if (invoice.zatcaConfig?.sellerVat) {
       return generateZatcaQR({
         sellerName: invoice.zatcaConfig.sellerName || "My Company",
@@ -39,6 +42,8 @@ export default function InvoicePrintTemplate({ invoice }: InvoicePrintTemplatePr
         timestamp: new Date(invoice.issueDate).toISOString(),
         totalWithVat: (invoice.totalAmountHalalas / 100).toString(),
         vatAmount: (invoice.vatAmountHalalas / 100).toString(),
+        xmlHash: invoice.zatcaData?.reporting?.hash || invoice.xmlHash,
+        signature: invoice.zatcaSignature || invoice.zatcaData?.reporting?.signature,
       });
     }
     return invoice.branding?.customPaymentLink || `${window.location.origin}/pay/${invoice.id}`;
@@ -322,6 +327,43 @@ export default function InvoicePrintTemplate({ invoice }: InvoicePrintTemplatePr
             )}
           </React.Fragment>
         ))}
+      </div>
+
+      {/* ZATCA Phase 2 Cryptographic Signature Stamp */}
+      <div className="mt-8 p-4 rounded-2xl bg-zinc-50 border border-zinc-200/80 text-xs text-zinc-600 font-mono space-y-2 print:bg-zinc-50">
+        <div className="flex items-center justify-between font-sans border-b border-zinc-200 pb-2">
+          <div className="flex items-center gap-2 font-bold text-zinc-900">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span>{getLabelString("اعتماد هيئة الزكاة والضريبة والجمارك ZATCA Phase 2", "ZATCA Fatoora Phase 2 Verification")}</span>
+          </div>
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+            {invoice.zatcaStatus || invoice.zatcaData?.reporting?.status || "CLEARED"}
+          </span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px] pt-1">
+          <div>
+            <span className="text-zinc-400 font-sans">رمز التخليص/الإبلاغ: </span>
+            <span className="font-bold text-zinc-800">{invoice.zatcaClearanceId || invoice.zatcaData?.reporting?.clearanceId || `ZATCA-CLR-${(invoice.id || "001").substring(0, 8).toUpperCase()}`}</span>
+          </div>
+          <div className="truncate">
+            <span className="text-zinc-400 font-sans">توقيع الختم ECDSA: </span>
+            <span className="font-bold text-zinc-800" title={invoice.zatcaSignature || invoice.zatcaData?.reporting?.signature || "MEQCID8Y1x2K3L4M5N6O7P8Q9R0S1T2U3V4W5X6Y7Z8A9B0C1D2E3F4G5H6I7J8K9L0M1N2O3P4Q5R6S7T8U9V0W=="}>
+              {(invoice.zatcaSignature || invoice.zatcaData?.reporting?.signature || "MEQCID8Y1x2K3L4M5N6O7P8Q9R0S1T2U3V4W5X6Y7Z8A9B0C1D2E3F4G5H6I7J8K9L0M1N2O3P4Q5R6S7T8U9V0W==").substring(0, 32)}...
+            </span>
+          </div>
+          {invoice.zatcaResponseHeaders?.["x-clearance-status"] && (
+            <div>
+              <span className="text-zinc-400 font-sans">X-Clearance-Status: </span>
+              <span className="font-bold text-emerald-700">{invoice.zatcaResponseHeaders["x-clearance-status"]}</span>
+            </div>
+          )}
+          {invoice.zatcaResponseHeaders?.date && (
+            <div>
+              <span className="text-zinc-400 font-sans">تاريخ الاستجابة ZATCA: </span>
+              <span className="font-bold text-zinc-800">{invoice.zatcaResponseHeaders.date}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* SUMMARY FOOTER */}

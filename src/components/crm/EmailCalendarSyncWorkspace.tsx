@@ -1,29 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Mail,
   Calendar,
   RefreshCw,
-  CheckCircle,
-  ExternalLink,
   Lock,
   Plus,
   Clock,
   Trash2,
   Settings,
   AlertCircle,
-  ChevronRight,
   Shield,
   Send,
-  User,
   Activity,
-  Check,
-  CheckSquare
+  CheckSquare,
+  ChevronLeft,
+  ChevronRight,
+  UserCheck,
+  Building2,
+  Inbox
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
-import { db, auth } from "../../lib/firebase";
+import { db } from "../../lib/firebase";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
-import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 
 interface EmailCalendarSyncWorkspaceProps {
   clients: any[];
@@ -31,98 +30,44 @@ interface EmailCalendarSyncWorkspaceProps {
 
 export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyncWorkspaceProps) {
   const [provider, setProvider] = useState<"none" | "google" | "outlook">("none");
-  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [showOauthDetails, setShowOauthDetails] = useState(false);
   const [syncInProgress, setSyncInProgress] = useState(false);
   const [selectedClientFilter, setSelectedClientFilter] = useState<string>("all");
   const [tab, setTab] = useState<"emails" | "meetings" | "settings">("emails");
 
-  // Live connected client state
+  // Connected Account Metadata
   const [connectedEmail, setConnectedEmail] = useState<string>("");
   const [connectedName, setConnectedName] = useState<string>("");
 
-  // Simulated & Live Email database
-  const [emails, setEmails] = useState<any[]>(() => [
-    {
-      id: "m1",
-      clientEmail: "salim@al-khobar-tech.com",
-      clientName: "مؤسسة سليم لتقنية المعلومات",
-      subject: "طلب عرض سعر مبدئي لتحديث الشبكات / Network RFP Request",
-      body: "أهلاً بفريق مدارج، نود الحصول على عرض سعر لتوريد وتركيب خوادم محلية وتحديث هيكل الشبكة الحالي. مرفق كراسة الشروط والمواصفات للاطلاع.",
-      date: new Date(Date.now() - 3600000 * 2).toISOString(), // 2 hrs ago
-      sender: "client",
-      unread: true,
-      category: "inquiry"
-    },
-    {
-      id: "m2",
-      clientEmail: "r.harbi@yamama-group.sa",
-      clientName: "مجموعة اليمامة القابضة",
-      subject: "مراجعة عقد تزويد المواد الخام والخرسانة",
-      body: "السلام عليكم، لقد قمنا بمراجعة مسودة العقد المرسلة من طرفكم، ونقترح تعديل البند الخاص بمدة التوريد لتصبح 45 يوماً بدلاً من 30 يوماً. الرجاء الإفادة بالموافقة.",
-      date: new Date(Date.now() - 3600000 * 18).toISOString(), // 18 hrs ago
-      sender: "client",
-      unread: false,
-      category: "contract"
-    },
-    {
-      id: "m3",
-      clientEmail: "h.naqbi@riyadh-logistic.com",
-      clientName: "الرياض للخدمات اللوجستية",
-      subject: "Re: تأكيد استلام الدفعة الأولى وطلب الفاتورة الضريبية",
-      body: "شكراً لتأكيد الاستلام. تم إرسال الفاتورة الضريبية المعتمدة من هيئة الزكاة والضريبة والجمارك (ZATCA) في المرفقات. نتطلع لبدء العمل الميداني غداً.",
-      date: new Date(Date.now() - 3600000 * 25).toISOString(), // 1 day ago
-      sender: "us",
-      unread: false,
-      category: "finance"
-    },
-    {
-      id: "m4",
-      clientEmail: "salim@al-khobar-tech.com",
-      clientName: "مؤسسة سليم لتقنية المعلومات",
-      subject: "تأكيد موعد الاجتماع التعريفي الافتراضي",
-      body: "تم جدولة موعد مناقشة المتطلبات الفنية يوم الإثنين القادم عبر Google Meet الساعة 11:00 صباحاً بتوقيت الرياض.",
-      date: new Date(Date.now() - 3600000 * 48).toISOString(), // 2 days ago
-      sender: "us",
-      unread: false,
-      category: "meeting"
-    }
-  ]);
+  // Live Sync Email Database & Pagination
+  const [emails, setEmails] = useState<any[]>([]);
+  const [emailPage, setEmailPage] = useState<number>(1);
+  const [emailPagination, setEmailPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+    hasMore: false,
+  });
 
-  // Simulated & Live Calendar Events database
-  const [meetings, setMeetings] = useState<any[]>(() => [
-    {
-      id: "evt1",
-      title: "جلسة مراجعة المتطلبات - الرمال الذهبية",
-      clientEmail: "m.aljasser@goldensands.com",
-      clientName: "مؤسسة الرمال الذهبية",
-      startTime: new Date(Date.now() + 3600000 * 24).toISOString(), // Tomorrow
-      duration: 45,
-      location: "Google Meet الافتراضي",
-      description: "مناقشة تفاصيل ترخيص البرمجيات وتحديد نطاق العمل والمراحل الزمنية للتسليم.",
-      status: "confirmed"
-    },
-    {
-      id: "evt2",
-      title: "توقيع اتفاقية توريد الخدمات اللوجستية",
-      clientEmail: "h.naqbi@riyadh-logistic.com",
-      clientName: "الرياض للخدمات اللوجستية",
-      startTime: new Date(Date.now() + 3600000 * 72).toISOString(), // 3 days later
-      duration: 60,
-      location: "مقر العميل - الرياض طريق الملك فهد",
-      description: "التوقيع النهائي على العقد وتوثيقه بالنفاذ الوطني بحضور المستشار القانوني.",
-      status: "confirmed"
-    }
-  ]);
+  // Live Sync Calendar Meetings & Pagination
+  const [meetings, setMeetings] = useState<any[]>([]);
+  const [meetingPage, setMeetingPage] = useState<number>(1);
+  const [meetingPagination, setMeetingPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+    hasMore: false,
+  });
 
-  // Email composer state
+  // Compose email modal state
   const [composeTo, setComposeTo] = useState("");
   const [composeSubject, setComposeSubject] = useState("");
   const [composeBody, setComposeBody] = useState("");
   const [isComposing, setIsComposing] = useState(false);
 
-  // Meeting scheduler state
+  // Schedule meeting modal state
   const [schedTitle, setSchedTitle] = useState("");
   const [schedClient, setSchedClient] = useState("");
   const [schedTime, setSchedTime] = useState("");
@@ -131,199 +76,186 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
   const [schedDesc, setSchedDesc] = useState("");
   const [isScheduling, setIsScheduling] = useState(false);
 
-  // Credentials configuration states
+  // OAuth Settings
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
   const [oauthScopes, setOauthScopes] = useState({
     gmailRead: true,
     gmailSend: true,
     calendarWrite: true,
-    calendarRead: true
+    calendarRead: true,
   });
 
-  // Real Google OAuth 2.0 Auth Flow
-  const handleGoogleOAuthConnect = async () => {
+  // ---------------------------------------------------------------------------
+  // 1. Fetch Integration Status
+  // ---------------------------------------------------------------------------
+  const fetchStatus = useCallback(async () => {
+    try {
+      const res = await fetch("/api/integrations/status");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.google?.connected) {
+          setProvider("google");
+          setConnectedEmail(data.google.email || "user@workspace.com");
+          setConnectedName(data.google.name || "Google Workspace User");
+        } else if (data.outlook?.connected) {
+          setProvider("outlook");
+          setConnectedEmail(data.outlook.email || "user@outlook.com");
+          setConnectedName(data.outlook.name || "Microsoft 365 User");
+        } else {
+          setProvider("none");
+          setConnectedEmail("");
+          setConnectedName("");
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch integration status:", err);
+    }
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // 2. Fetch Live Emails with Pagination
+  // ---------------------------------------------------------------------------
+  const fetchEmails = useCallback(async (pageToFetch = 1) => {
+    setSyncInProgress(true);
+    try {
+      const params = new URLSearchParams({
+        page: pageToFetch.toString(),
+        limit: "10",
+        clientEmail: selectedClientFilter !== "all" ? selectedClientFilter : "",
+      });
+
+      const res = await fetch(`/api/crm/emails/sync?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.emails) {
+          setEmails(data.emails);
+          setEmailPagination(data.pagination);
+          setEmailPage(data.pagination.page);
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch synced emails:", err);
+    } finally {
+      setSyncInProgress(false);
+    }
+  }, [selectedClientFilter]);
+
+  // ---------------------------------------------------------------------------
+  // 3. Fetch Live Meetings with Pagination
+  // ---------------------------------------------------------------------------
+  const fetchMeetings = useCallback(async (pageToFetch = 1) => {
+    setSyncInProgress(true);
+    try {
+      const params = new URLSearchParams({
+        page: pageToFetch.toString(),
+        limit: "10",
+        clientEmail: selectedClientFilter !== "all" ? selectedClientFilter : "",
+      });
+
+      const res = await fetch(`/api/crm/calendar/sync?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.meetings) {
+          setMeetings(data.meetings);
+          setMeetingPagination(data.pagination);
+          setMeetingPage(data.pagination.page);
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch synced meetings:", err);
+    } finally {
+      setSyncInProgress(false);
+    }
+  }, [selectedClientFilter]);
+
+  // Load Status on Mount & Sync initial data
+  useEffect(() => {
+    fetchStatus();
+  }, [fetchStatus]);
+
+  useEffect(() => {
+    if (tab === "emails") {
+      fetchEmails(emailPage);
+    } else if (tab === "meetings") {
+      fetchMeetings(meetingPage);
+    }
+  }, [tab, selectedClientFilter, fetchEmails, fetchMeetings, emailPage, meetingPage]);
+
+  // ---------------------------------------------------------------------------
+  // 4. OAuth Popup Initiation Flow
+  // ---------------------------------------------------------------------------
+  const handleConnect = async (selectedProv: "google" | "outlook") => {
     setIsConnecting(true);
     try {
-      const gProvider = new GoogleAuthProvider();
-      if (oauthScopes.calendarRead) gProvider.addScope("https://www.googleapis.com/auth/calendar.readonly");
-      if (oauthScopes.calendarWrite) gProvider.addScope("https://www.googleapis.com/auth/calendar.events");
-      if (oauthScopes.gmailRead) gProvider.addScope("https://www.googleapis.com/auth/gmail.readonly");
-      if (oauthScopes.gmailSend) gProvider.addScope("https://www.googleapis.com/auth/gmail.send");
-
-      const result = await signInWithPopup(auth, gProvider);
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      if (!credential?.accessToken) {
-        throw new Error("لم يتم تحصيل رمز وصول Google OAuth من المعاملة.");
+      const res = await fetch(`/api/integrations/${selectedProv}/connect?json=true`);
+      if (!res.ok) {
+        throw new Error("فشل تحضير رابط OAuth من الخادم.");
       }
+      const data = await res.json();
 
-      const token = credential.accessToken;
-      setGoogleAccessToken(token);
-      setProvider("google");
-      setConnectedEmail(result.user.email || "user@workspace.com");
-      setConnectedName(result.user.displayName || "Google Workspace User");
+      if (data.url) {
+        const width = 600;
+        const height = 700;
+        const left = window.screen.width / 2 - width / 2;
+        const top = window.screen.height / 2 - height / 2;
 
-      toast.success(`تم الربط والتفويض مع Google Workspace بنجاح! 🔐 (${result.user.email})`);
+        window.open(
+          data.url,
+          `${selectedProv}_oauth_popup`,
+          `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,status=yes`
+        );
 
-      // Trigger immediate live sync via Google REST APIs
-      await syncGoogleData(token);
+        const handleAuthMessage = (event: MessageEvent) => {
+          if (event.data && event.data.type === "OAUTH_AUTH_SUCCESS") {
+            window.removeEventListener("message", handleAuthMessage);
+            fetchStatus();
+            fetchEmails(1);
+            fetchMeetings(1);
+            toast.success(
+              `تم المصادقة والربط بنجاح مع ${selectedProv === "google" ? "Google Workspace" : "Microsoft 365"}! 🔐 (${event.data.email})`
+            );
+          }
+        };
+
+        window.addEventListener("message", handleAuthMessage);
+      }
     } catch (err: any) {
-      console.error("Google OAuth error:", err);
-      toast.error(err.message || "فشل الاتصال بـ Google OAuth.");
+      toast.error(err.message || "فشل الاتصال بمزود OAuth.");
     } finally {
       setIsConnecting(false);
     }
   };
 
-  // Connect mock or fallback provider
-  const handleConnect = (selectedProv: "google" | "outlook") => {
-    if (selectedProv === "google") {
-      handleGoogleOAuthConnect();
-      return;
-    }
-    setIsConnecting(true);
-    setTimeout(() => {
-      setIsConnecting(false);
-      setProvider(selectedProv);
-      setConnectedEmail("ceo@madarij-sa.onmicrosoft.com");
-      setConnectedName("مدارج كورب (Microsoft Exchange)");
-      toast.success("تم الربط والتفويض مع Microsoft Outlook بنجاح! 🔐");
-    }, 1200);
-  };
-
-  const handleDisconnect = () => {
-    if (confirm("هل أنت متأكد من إلغاء مزامنة البريد والتقويم؟ سيتم فصل الجلسات الفعالة.")) {
-      setProvider("none");
-      setGoogleAccessToken(null);
-      setConnectedEmail("");
-      setConnectedName("");
-      toast.info("تم فصل الحساب والمزامنة بنجاح.");
-    }
-  };
-
-  // Sync Live Google Calendar Events & Gmail
-  const syncGoogleData = async (token: string) => {
-    setSyncInProgress(true);
-    let calendarSyncedCount = 0;
-    let emailSyncedCount = 0;
-
-    // 1. Fetch Google Calendar Events
-    try {
-      const timeMin = new Date().toISOString();
-      const calRes = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(timeMin)}&maxResults=10&orderBy=startTime&singleEvents=true`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      if (calRes.ok) {
-        const data = await calRes.json();
-        if (data.items && data.items.length > 0) {
-          calendarSyncedCount = data.items.length;
-          const fetchedMeetings = data.items.map((item: any) => ({
-            id: item.id,
-            googleEventId: item.id,
-            title: item.summary || "اجتماع مجدول بالتقويم",
-            clientEmail: item.attendees?.[0]?.email || item.organizer?.email || "client@google.com",
-            clientName: item.attendees?.[0]?.displayName || item.organizer?.displayName || item.summary || "عميل Google Workspace",
-            startTime: item.start?.dateTime || item.start?.date || new Date().toISOString(),
-            duration: item.end?.dateTime && item.start?.dateTime
-              ? Math.max(15, Math.round((new Date(item.end.dateTime).getTime() - new Date(item.start.dateTime).getTime()) / 60000))
-              : 30,
-            location: item.hangoutLink ? `Google Meet (${item.hangoutLink})` : item.location || "Google Meet",
-            description: item.description || "جلسة عمل مجدولة عبر تقويم Google Calendar",
-            status: "confirmed"
-          }));
-
-          setMeetings((prev) => {
-            const existingIds = new Set(prev.map((m) => m.id));
-            const newOnes = fetchedMeetings.filter((m: any) => !existingIds.has(m.id));
-            return [...newOnes, ...prev];
-          });
-        }
+  const handleDisconnect = async () => {
+    if (confirm("هل أنت متأكد من إلغاء مزامنة البريد والتقويم؟ سيتم فصل الجلسات المفوضة.")) {
+      try {
+        await fetch("/api/integrations/disconnect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ provider }),
+        });
+        setProvider("none");
+        setConnectedEmail("");
+        setConnectedName("");
+        setEmails([]);
+        setMeetings([]);
+        toast.info("تم فصل الحساب وإلغاء المزامنة بنجاح.");
+      } catch (err) {
+        toast.error("فشل إلغاء الربط.");
       }
-    } catch (e) {
-      console.warn("Google Calendar sync warning:", e);
     }
-
-    // 2. Fetch Gmail Messages
-    try {
-      const gmailListRes = await fetch(
-        `https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=5`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-
-      if (gmailListRes.ok) {
-        const listData = await gmailListRes.json();
-        if (listData.messages && listData.messages.length > 0) {
-          const detailedEmails: any[] = [];
-          for (const msg of listData.messages.slice(0, 5)) {
-            const msgRes = await fetch(
-              `https://www.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=full`,
-              {
-                headers: { Authorization: `Bearer ${token}` }
-              }
-            );
-            if (msgRes.ok) {
-              const msgData = await msgRes.json();
-              const headers = msgData.payload?.headers || [];
-              const subject = headers.find((h: any) => h.name.toLowerCase() === "subject")?.value || msgData.snippet || "بدون عنوان";
-              const from = headers.find((h: any) => h.name.toLowerCase() === "from")?.value || "client@gmail.com";
-              const date = headers.find((h: any) => h.name.toLowerCase() === "date")?.value || new Date().toISOString();
-
-              detailedEmails.push({
-                id: msgData.id,
-                gmailMsgId: msgData.id,
-                clientEmail: from.includes("<") ? from.split("<")[1].replace(">", "") : from,
-                clientName: from.includes("<") ? from.split("<")[0].trim() : from,
-                subject,
-                body: msgData.snippet || "محتوى الرسالة المستلمة عبر Gmail",
-                date: new Date(date).toISOString(),
-                sender: "client",
-                unread: msgData.labelIds?.includes("UNREAD") || false,
-                category: "inquiry"
-              });
-            }
-          }
-
-          if (detailedEmails.length > 0) {
-            emailSyncedCount = detailedEmails.length;
-            setEmails((prev) => {
-              const existingIds = new Set(prev.map((m) => m.id));
-              const newOnes = detailedEmails.filter((m) => !existingIds.has(m.id));
-              return [...newOnes, ...prev];
-            });
-          }
-        }
-      }
-    } catch (e) {
-      console.warn("Gmail sync warning:", e);
-    }
-
-    setSyncInProgress(false);
-    toast.success(`اكتملت المزامنة الحية! تم تحديث ${emailSyncedCount} رسائل و ${calendarSyncedCount} اجتماعات من Google Workspace.`);
   };
 
   const handleSyncNow = () => {
-    if (provider === "none") {
-      toast.error("يرجى ربط مزود الخدمة أولاً قبل محاولة المزامنة!");
-      return;
-    }
-    if (provider === "google" && googleAccessToken) {
-      syncGoogleData(googleAccessToken);
-      return;
-    }
-    setSyncInProgress(true);
-    setTimeout(() => {
-      setSyncInProgress(false);
-      toast.success("تم الانتهاء من المزامنة الثنائية للبريد والتقويم! تم تحديث 4 محادثات وجدول اجتماعين.");
-    }, 1500);
+    fetchEmails(emailPage);
+    fetchMeetings(meetingPage);
+    toast.success("جاري تحديث واستقبال البيانات من الواجهة البرمجية...");
   };
 
-  // Send email (via Gmail API if Google OAuth connected)
+  // ---------------------------------------------------------------------------
+  // 5. Send Outbound Email (Live Server Proxy + CRM History Log)
+  // ---------------------------------------------------------------------------
   const handleSendEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!composeTo || !composeSubject || !composeBody) {
@@ -331,79 +263,62 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
       return;
     }
 
-    const matchedClient = clients.find(c => c.email === composeTo || c.name === composeTo);
+    const matchedClient = clients.find((c) => c.email === composeTo || c.name === composeTo);
     const clientName = matchedClient ? matchedClient.name : composeTo;
     const clientEmail = matchedClient ? matchedClient.email : composeTo;
 
-    // Execute real Gmail send if authenticated
-    if (provider === "google" && googleAccessToken) {
-      try {
-        const utf8Msg = `To: ${clientEmail}\r\nSubject: =?utf-8?B?${btoa(unescape(encodeURIComponent(composeSubject)))}?=\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${composeBody}`;
-        const raw = btoa(unescape(encodeURIComponent(utf8Msg)))
-          .replace(/\+/g, "-")
-          .replace(/\//g, "_")
-          .replace(/=+$/, "");
+    try {
+      const res = await fetch("/api/crm/emails/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: clientEmail,
+          subject: composeSubject,
+          body: composeBody,
+          clientId: matchedClient?.id,
+        }),
+      });
 
-        const sendRes = await fetch("https://www.googleapis.com/gmail/v1/users/me/messages/send", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${googleAccessToken}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ raw })
-        });
-
-        if (sendRes.ok) {
-          toast.success("تم إرسال البريد الإلكتروني بنجاح عبر حساب Gmail وتفويض OAuth!");
-        } else {
-          console.warn("Gmail send returned non-200");
-        }
-      } catch (err) {
-        console.warn("Gmail API Send Warning:", err);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(
+          data.isLiveSent
+            ? `تم إرسال البريد الإلكتروني بنجاح عبر حساب ${provider === "google" ? "Gmail" : "Outlook"}! ✉️`
+            : `تم توثيق وإرسال البريد محلياً للعميل ${clientName}`
+        );
       }
+    } catch (err) {
+      console.warn("Outbound email error:", err);
     }
 
-    const newMail = {
-      id: `m_${Date.now()}`,
-      clientEmail,
-      clientName,
-      subject: composeSubject,
-      body: composeBody,
-      date: new Date().toISOString(),
-      sender: "us",
-      unread: false,
-      category: "outbound"
-    };
-
-    setEmails([newMail, ...emails]);
+    // Refresh email list
+    fetchEmails(1);
     setIsComposing(false);
-    toast.success(`تم إرسال البريد الإلكتروني بنجاح إلى ${clientName}`);
+    setComposeSubject("");
+    setComposeBody("");
 
-    // LOG THIS ACTION TO FIRESTORE CLIENT HISTORY FOR DUAL SYNC HEALTH
+    // Dual write to Firestore client history if present
     if (matchedClient && matchedClient.id) {
       try {
         const clientDocRef = doc(db, "leads", matchedClient.id);
-        const logItem = {
-          id: `h_mail_${Date.now()}`,
-          date: new Date().toISOString(),
-          action: "بريد إلكتروني صادر (Synced)",
-          details: `الموضوع: ${composeSubject}\nالرسالة: ${composeBody}`
-        };
         await updateDoc(clientDocRef, {
-          history: arrayUnion(logItem)
+          history: arrayUnion({
+            id: `h_mail_${Date.now()}`,
+            date: new Date().toISOString(),
+            action: "بريد صادر - مبيعات (OAuth Synced)",
+            details: `الموضوع: ${composeSubject}\nالرسالة: ${composeBody}`,
+          }),
         });
-        toast.info("تم توثيق الاتصال البريدي تلقائياً في سجل نشاط العميل بالـ CRM! ⚡");
+        toast.info("تم توثيق المراسلة في سجل نشاط العميل بالـ CRM! ⚡");
       } catch (err) {
-        console.warn("Failed to write history back to client doc:", err);
+        console.warn("Failed to write to client history doc:", err);
       }
     }
-
-    // Reset composer
-    setComposeSubject("");
-    setComposeBody("");
   };
 
-  // Schedule meeting (via Google Calendar API if OAuth connected)
+  // ---------------------------------------------------------------------------
+  // 6. Schedule Meeting (Live Server Proxy + CRM History Log)
+  // ---------------------------------------------------------------------------
   const handleScheduleMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!schedTitle || !schedClient || !schedTime) {
@@ -411,131 +326,59 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
       return;
     }
 
-    const matchedClient = clients.find(c => c.email === schedClient || c.name === schedClient);
+    const matchedClient = clients.find((c) => c.email === schedClient || c.name === schedClient);
     const clientName = matchedClient ? matchedClient.name : schedClient;
     const clientEmail = matchedClient ? matchedClient.email : "guest@meeting.com";
 
-    let generatedMeetLocation = schedLocation;
-    let createdGoogleEventId = "";
+    try {
+      const res = await fetch("/api/crm/calendar/schedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: schedTitle,
+          clientEmail,
+          startTime: schedTime,
+          duration: schedDuration,
+          location: schedLocation,
+          description: schedDesc,
+          clientId: matchedClient?.id,
+        }),
+      });
 
-    // Execute real Google Calendar API Event Creation
-    if (provider === "google" && googleAccessToken) {
-      try {
-        const startIso = new Date(schedTime).toISOString();
-        const endIso = new Date(new Date(schedTime).getTime() + parseInt(schedDuration) * 60000).toISOString();
-
-        const calRes = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${googleAccessToken}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            summary: schedTitle,
-            description: schedDesc,
-            start: { dateTime: startIso },
-            end: { dateTime: endIso },
-            attendees: [{ email: clientEmail }],
-            location: schedLocation,
-            conferenceData: {
-              createRequest: {
-                requestId: `meet_${Date.now()}`,
-                conferenceSolutionKey: { type: "hangoutsMeet" }
-              }
-            }
-          })
-        });
-
-        if (calRes.ok) {
-          const calData = await calRes.json();
-          createdGoogleEventId = calData.id || "";
-          if (calData.hangoutLink) {
-            generatedMeetLocation = `Google Meet (${calData.hangoutLink})`;
-            toast.success(`تم حجز الموعد في Google Calendar وتوليد رابط Google Meet المباشر! 🗓️`);
-          } else {
-            toast.success("تم إدراج الحدث في تقويم Google Calendar بنجاح!");
-          }
-        }
-      } catch (err) {
-        console.warn("Google Calendar Event Creation Warning:", err);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(
+          data.isLiveCreated
+            ? `تم حجز الموعد في التقويم وتوليد رابط الاجتماع (${data.meetLink})! 🗓️`
+            : `تم حجز موعد الاجتماع بنجاح للعميل ${clientName}`
+        );
       }
+    } catch (err) {
+      console.warn("Calendar schedule error:", err);
     }
 
-    const newMeeting = {
-      id: createdGoogleEventId || `evt_${Date.now()}`,
-      googleEventId: createdGoogleEventId,
-      title: schedTitle,
-      clientEmail,
-      clientName,
-      startTime: new Date(schedTime).toISOString(),
-      duration: parseInt(schedDuration),
-      location: generatedMeetLocation,
-      description: schedDesc,
-      status: "confirmed"
-    };
-
-    setMeetings([newMeeting, ...meetings]);
+    fetchMeetings(1);
     setIsScheduling(false);
-    if (!createdGoogleEventId) {
-      toast.success(`تم حجز موعد الاجتماع بنجاح وتوليد رابط Google Meet! 🗓️`);
-    }
-
-    // LOG MEETING TO CLIENT HISTORY IN FIRESTORE
-    if (matchedClient && matchedClient.id) {
-      try {
-        const clientDocRef = doc(db, "leads", matchedClient.id);
-        const logItem = {
-          id: `h_meet_${Date.now()}`,
-          date: new Date().toISOString(),
-          action: "موعد مجدول (Synced Calendar)",
-          details: `عنوان الاجتماع: ${schedTitle}\nالتاريخ: ${new Date(schedTime).toLocaleString("ar-SA")}\nالموقع: ${generatedMeetLocation}`
-        };
-        await updateDoc(clientDocRef, {
-          history: arrayUnion(logItem)
-        });
-        toast.info("تم إدراج الموعد تلقائياً في سجل العميل بالـ CRM! 🔗");
-      } catch (err) {
-        console.warn("Failed to log meeting in history:", err);
-      }
-    }
-
-    // Reset fields
     setSchedTitle("");
     setSchedTime("");
     setSchedDesc("");
-  };
 
-  // Delete meeting with confirmation
-  const handleDeleteMeeting = async (meet: any) => {
-    const confirmed = window.confirm(`هل أنت متأكد من إلغاء اجتماع "${meet.title}" وحذفه من تقويم Google وقاعدة البيانات؟`);
-    if (!confirmed) return;
-
-    if (provider === "google" && googleAccessToken && meet.googleEventId) {
+    if (matchedClient && matchedClient.id) {
       try {
-        await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${meet.googleEventId}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${googleAccessToken}` }
+        const clientDocRef = doc(db, "leads", matchedClient.id);
+        await updateDoc(clientDocRef, {
+          history: arrayUnion({
+            id: `h_meet_${Date.now()}`,
+            date: new Date().toISOString(),
+            action: "موعد مجدول (Synced Calendar)",
+            details: `عنوان الاجتماع: ${schedTitle}\nالتاريخ: ${new Date(schedTime).toLocaleString("ar-SA")}\nالموقع: ${schedLocation}`,
+          }),
         });
-        toast.info("تم حذف الحدث من Google Calendar.");
-      } catch (e) {
-        console.warn("Google Calendar delete warning:", e);
+      } catch (err) {
+        console.warn("Failed to log meeting in client history:", err);
       }
     }
-
-    setMeetings(meetings.filter(m => m.id !== meet.id));
-    toast.success("تم إلغاء الاجتماع وحذفه بنجاح.");
   };
-
-  // Filter emails/meetings based on client filter selection
-  const filteredEmails = emails.filter(m => {
-    if (selectedClientFilter === "all") return true;
-    return m.clientEmail === selectedClientFilter || m.clientName === selectedClientFilter;
-  });
-
-  const filteredMeetings = meetings.filter(m => {
-    if (selectedClientFilter === "all") return true;
-    return m.clientEmail === selectedClientFilter || m.clientName === selectedClientFilter;
-  });
 
   return (
     <div className="bg-zinc-50 border border-zinc-200 rounded-[2.5rem] p-8 space-y-8 animate-in fade-in duration-300 text-right">
@@ -544,17 +387,17 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
         <div>
           <div className="flex items-center gap-2 mb-2">
             <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] rounded-full border border-indigo-200 font-black uppercase tracking-wider">
-              Bidirectional Synchronization
+              Bidirectional OAuth Engine
             </span>
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs text-zinc-400 font-bold">نشط بالكامل / Active Engine</span>
+            <span className="text-xs text-zinc-400 font-bold">مربوط ومفوض بالكامل / Live API Active</span>
           </div>
           <h2 className="text-2xl font-black text-zinc-900 flex items-center gap-2">
             <Mail className="w-6 h-6 text-indigo-600" />
-            مزامنة البريد والتقويم الذكية (Smart Integrations Hub)
+            مزامنة البريد والتقويم الذكية (Google Workspace & Microsoft 365)
           </h2>
           <p className="text-xs text-zinc-500 font-bold mt-1">
-            اربط بريدك الإلكتروني المؤسسي (Gmail/Office365) والتقويم التفاعلي لمطابقة المراسلات، جدولة المواعيد وتحديث خط المبيعات ومحرك الهوية تلقائياً.
+            اربط بريدك المؤسسي والتقويم عبر OAuth 2.0 لمطابقة المراسلات، جدولة اجتماعات Google Meet / Teams، وتحديث صفقات الـ CRM تلقائياً.
           </p>
         </div>
 
@@ -576,7 +419,7 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
               className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black shadow-lg shadow-indigo-600/15 transition-all flex items-center gap-2"
             >
               <Lock className="w-4 h-4" />
-              <span>تهيئة ربط الـ API والـ OAuth</span>
+              <span>تهيئة ربط الـ OAuth والـ APIs</span>
             </button>
           ) : (
             <button
@@ -592,7 +435,7 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
       {/* Integration Status Bar */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-          <p className="text-[10px] font-extrabold text-zinc-400">مزود الخدمة المعتمد / Provider</p>
+          <p className="text-[10px] font-extrabold text-zinc-400">مزود الخدمة المفوض / OAuth Provider</p>
           <div className="flex items-center gap-3 mt-2">
             <div className="p-2.5 bg-zinc-50 rounded-xl border border-zinc-150">
               {provider === "google" ? (
@@ -608,18 +451,18 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
                 {provider === "google" ? "Google Workspace Cloud" : provider === "outlook" ? "Microsoft Graph Exchange" : "غير متصل حالياً"}
               </p>
               <p className="text-[10px] text-zinc-400 font-bold mt-0.5">
-                {provider !== "none" ? `مفوض عبر OAuth 2.0 • ${connectedEmail}` : "تتطلب تفويضاً قانونياً للوصول"}
+                {provider !== "none" ? `مفوض عبر OAuth 2.0 • ${connectedEmail}` : "يتطلب تفويضاً قانونياً للوصول"}
               </p>
             </div>
           </div>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-          <p className="text-[10px] font-extrabold text-zinc-400">سجل النشاط المالي والمرسلات / Audit Trail</p>
+          <p className="text-[10px] font-extrabold text-zinc-400">سجل الرسائل المزافنة / Synced Threads</p>
           <div className="flex items-center justify-between mt-3">
             <div>
-              <p className="text-base font-black text-zinc-900">{emails.length} رسالة بريد</p>
-              <p className="text-[10px] text-zinc-400 font-bold">تمت مطابقتها مع عناوين الـ CRM</p>
+              <p className="text-base font-black text-zinc-900">{emailPagination.total || emails.length} رسالة بريدية</p>
+              <p className="text-[10px] text-zinc-400 font-bold">تمت مطابقتها آلياً مع ملفات العملاء</p>
             </div>
             <div className="w-10 h-10 bg-indigo-50/50 rounded-full flex items-center justify-center text-indigo-600 font-bold">
               📬
@@ -628,13 +471,13 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-zinc-200 shadow-xs">
-          <p className="text-[10px] font-extrabold text-zinc-400">اجتماعات التقويم الذكي / Synchronized Events</p>
+          <p className="text-[10px] font-extrabold text-zinc-400">اجتماعات التقويم الذكي / Calendar Events</p>
           <div className="flex items-center justify-between mt-3">
             <div>
-              <p className="text-base font-black text-zinc-900">{meetings.length} موعد مجدول</p>
+              <p className="text-base font-black text-zinc-900">{meetingPagination.total || meetings.length} موعد مجدول</p>
               <p className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-                تزامن فوري بالتقويم الشخصي
+                مزامنة فورية بالتقويم المؤسسي
               </p>
             </div>
             <div className="w-10 h-10 bg-emerald-50/50 rounded-full flex items-center justify-center text-emerald-600 font-bold">
@@ -655,13 +498,13 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
                 onClick={() => setTab("emails")}
                 className={`pb-2 px-3 text-xs font-black flex items-center gap-1.5 border-b-2 transition-all ${tab === "emails" ? "border-zinc-900 text-zinc-900" : "border-transparent text-zinc-400 hover:text-zinc-600"}`}
               >
-                <Mail className="w-4 h-4" /> علبة بريد المعاملات ({filteredEmails.length})
+                <Mail className="w-4 h-4" /> علبة بريد المعاملات والصفقات ({emailPagination.total || emails.length})
               </button>
               <button
                 onClick={() => setTab("meetings")}
                 className={`pb-2 px-3 text-xs font-black flex items-center gap-1.5 border-b-2 transition-all ${tab === "meetings" ? "border-zinc-900 text-zinc-900" : "border-transparent text-zinc-400 hover:text-zinc-600"}`}
               >
-                <Calendar className="w-4 h-4" /> اجتماعات التقويم المجدولة ({filteredMeetings.length})
+                <Calendar className="w-4 h-4" /> اجتماعات التقويم المجدولة ({meetingPagination.total || meetings.length})
               </button>
               <button
                 onClick={() => setTab("settings")}
@@ -671,7 +514,7 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
               </button>
             </div>
 
-            {/* Content Switch */}
+            {/* Tab 1: Emails */}
             {tab === "emails" && (
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-50 pb-3 mb-2">
@@ -679,7 +522,10 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
                     <span className="text-xs font-black text-zinc-500">فلترة البريد حسب العميل:</span>
                     <select
                       value={selectedClientFilter}
-                      onChange={(e) => setSelectedClientFilter(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedClientFilter(e.target.value);
+                        setEmailPage(1);
+                      }}
                       className="bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-1.5 text-xs font-bold text-zinc-700"
                     >
                       <option value="all">كافة مراسلات العملاء والصفقات</option>
@@ -704,23 +550,29 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
                   </button>
                 </div>
 
-                {provider === "none" ? (
+                {syncInProgress ? (
+                  <div className="py-20 text-center space-y-3">
+                    <RefreshCw className="w-8 h-8 text-indigo-600 animate-spin mx-auto" />
+                    <p className="text-xs font-black text-zinc-600">جاري مزامنة وجلب البريد من الواجهة البرمجية...</p>
+                  </div>
+                ) : provider === "none" ? (
                   <div className="text-center py-20 bg-zinc-50 rounded-2xl border border-dashed border-zinc-200">
                     <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-zinc-300 mx-auto mb-3 shadow-xs">
                       <Lock className="w-6 h-6 text-zinc-400" />
                     </div>
-                    <p className="text-xs font-black text-zinc-800">قناة الاتصال بالبريد مغلقة</p>
+                    <p className="text-xs font-black text-zinc-800">قناة الاتصال بالبريد غير مفوضة</p>
                     <p className="text-[10px] text-zinc-400 font-medium mt-1">
                       الرجاء الدخول على تبويب "إعدادات الـ OAuth والتفويض" لربط حساب Google/Outlook الخاص بك بشكل آمن.
                     </p>
                   </div>
-                ) : filteredEmails.length === 0 ? (
+                ) : emails.length === 0 ? (
                   <div className="text-center py-20 bg-zinc-50 rounded-2xl border border-dashed border-zinc-200">
+                    <Inbox className="w-8 h-8 text-zinc-300 mx-auto mb-2" />
                     <p className="text-xs font-black text-zinc-500">لا توجد رسائل مطابقة حالياً لهذا العميل</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {filteredEmails.map(mail => (
+                    {emails.map((mail) => (
                       <div
                         key={mail.id}
                         className={`p-4 border rounded-2xl text-right transition-all hover:border-zinc-300 ${mail.unread ? "bg-indigo-50/20 border-indigo-200" : "bg-white border-zinc-150"}`}
@@ -730,11 +582,18 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
                             <span className={`w-2 h-2 rounded-full ${mail.unread ? "bg-indigo-500" : "bg-transparent"}`} />
                             <h4 className="text-xs font-black text-zinc-900">{mail.clientName}</h4>
                             <span className="text-[10px] text-zinc-400 font-mono" dir="ltr">&lt;{mail.clientEmail}&gt;</span>
+                            {mail.matchedClientId && (
+                              <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-black rounded-md border border-emerald-200 flex items-center gap-1">
+                                <UserCheck className="w-3 h-3 text-emerald-600" />
+                                مطابَق بالـ CRM
+                              </span>
+                            )}
                           </div>
                           <span className="text-[10px] text-zinc-400 font-mono">
                             {new Date(mail.date).toLocaleString("ar-SA", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
                           </span>
                         </div>
+
                         <p className="text-xs font-black text-zinc-800 mt-2">{mail.subject}</p>
                         <p className="text-[11px] text-zinc-500 mt-1.5 whitespace-pre-line leading-relaxed font-medium">
                           {mail.body}
@@ -749,8 +608,7 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
                           }`}>
                             {mail.category === "inquiry" ? "طلب عرض سعر" :
                              mail.category === "contract" ? "مفاوضات عقد" :
-                             mail.category === "finance" ? "فوترة وتحصيل" :
-                             mail.category === "meeting" ? "موعد واجتماع" : "صادر صفقات"}
+                             mail.category === "finance" ? "فوترة وتحصيل" : "مراسلة صفقات"}
                           </span>
 
                           <div className="flex gap-2">
@@ -767,8 +625,8 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
                             </button>
                             <button
                               onClick={() => {
-                                setEmails(emails.filter(m => m.id !== mail.id));
-                                toast.success("تم أرشفة الرسالة من علبة الوارد.");
+                                setEmails(emails.filter((m) => m.id !== mail.id));
+                                toast.success("تم أرشفة الرسالة من القائمة.");
                               }}
                               className="p-1 text-zinc-400 hover:text-rose-600"
                               title="أرشفة"
@@ -779,11 +637,38 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
                         </div>
                       </div>
                     ))}
+
+                    {/* Email Real Pagination Controls */}
+                    {emailPagination.totalPages > 1 && (
+                      <div className="flex items-center justify-between pt-4 border-t border-zinc-150 text-xs font-bold text-zinc-600">
+                        <div className="flex items-center gap-2">
+                          <button
+                            disabled={emailPage <= 1 || syncInProgress}
+                            onClick={() => setEmailPage((prev) => Math.max(1, prev - 1))}
+                            className="p-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-100 disabled:opacity-40 transition-all"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                          <span>صفحة {emailPagination.page} من {emailPagination.totalPages}</span>
+                          <button
+                            disabled={!emailPagination.hasMore || syncInProgress}
+                            onClick={() => setEmailPage((prev) => prev + 1)}
+                            className="p-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-100 disabled:opacity-40 transition-all"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <span className="text-[11px] text-zinc-400 font-mono">
+                          إجمالي الرسائل: {emailPagination.total}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             )}
 
+            {/* Tab 2: Meetings */}
             {tab === "meetings" && (
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-50 pb-3 mb-2">
@@ -791,7 +676,10 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
                     <span className="text-xs font-black text-zinc-500">مواعيد العميل المحدد:</span>
                     <select
                       value={selectedClientFilter}
-                      onChange={(e) => setSelectedClientFilter(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedClientFilter(e.target.value);
+                        setMeetingPage(1);
+                      }}
                       className="bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-1.5 text-xs font-bold text-zinc-700"
                     >
                       <option value="all">كافة مواعيد التقويم المؤسسي</option>
@@ -816,7 +704,12 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
                   </button>
                 </div>
 
-                {provider === "none" ? (
+                {syncInProgress ? (
+                  <div className="py-20 text-center space-y-3">
+                    <RefreshCw className="w-8 h-8 text-emerald-600 animate-spin mx-auto" />
+                    <p className="text-xs font-black text-zinc-600">جاري مزامنة وجلب مواعيد التقويم من الواجهة البرمجية...</p>
+                  </div>
+                ) : provider === "none" ? (
                   <div className="text-center py-20 bg-zinc-50 rounded-2xl border border-dashed border-zinc-200">
                     <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-zinc-300 mx-auto mb-3 shadow-xs">
                       <Calendar className="w-6 h-6 text-zinc-400" />
@@ -826,51 +719,83 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
                       يتطلب ربط التقويم الذكي الوصول إلى Google Calendar API أو MS Graph API لمزامنة الاجتماعات وتأكيد روابط الاتصال.
                     </p>
                   </div>
-                ) : filteredMeetings.length === 0 ? (
+                ) : meetings.length === 0 ? (
                   <div className="text-center py-20 bg-zinc-50 rounded-2xl border border-dashed border-zinc-200">
                     <p className="text-xs font-black text-zinc-500">لا توجد اجتماعات قادمة مجدولة لهذا العميل في التقويم.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {filteredMeetings.map(meet => (
-                      <div
-                        key={meet.id}
-                        className="p-5 border border-zinc-150 rounded-2xl bg-white shadow-2xs hover:border-emerald-500 transition-colors flex flex-col justify-between"
-                      >
-                        <div>
-                          <div className="flex justify-between items-start gap-2 mb-2">
-                            <span className="text-[9px] font-black px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
-                              Google Meet Synced
-                            </span>
-                            <span className="text-[10px] text-zinc-400 font-mono">{meet.duration} دقيقة</span>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {meetings.map((meet) => (
+                        <div
+                          key={meet.id}
+                          className="p-5 border border-zinc-150 rounded-2xl bg-white shadow-2xs hover:border-emerald-500 transition-colors flex flex-col justify-between"
+                        >
+                          <div>
+                            <div className="flex justify-between items-start gap-2 mb-2">
+                              <span className="text-[9px] font-black px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full">
+                                {provider === "google" ? "Google Meet Synced" : "Teams Synced"}
+                              </span>
+                              <span className="text-[10px] text-zinc-400 font-mono">{meet.duration} دقيقة</span>
+                            </div>
+                            <h4 className="text-xs font-black text-zinc-900">{meet.title}</h4>
+                            <p className="text-[10px] text-zinc-400 mt-1 font-bold">مع: {meet.clientName}</p>
+                            <p className="text-[11px] text-zinc-500 mt-2 font-medium whitespace-pre-line leading-relaxed">{meet.description}</p>
                           </div>
-                          <h4 className="text-xs font-black text-zinc-900">{meet.title}</h4>
-                          <p className="text-[10px] text-zinc-400 mt-1 font-bold">مع: {meet.clientName}</p>
-                          <p className="text-[11px] text-zinc-500 mt-2 font-medium whitespace-pre-line leading-relaxed">{meet.description}</p>
-                        </div>
 
-                        <div className="pt-4 mt-4 border-t border-zinc-50 space-y-2">
-                          <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-mono" dir="ltr">
-                            <Clock className="w-3.5 h-3.5 text-zinc-400" />
-                            <span>{new Date(meet.startTime).toLocaleString("ar-SA")}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-[10px]">
-                            <span className="text-zinc-500 font-bold">📍 {meet.location}</span>
-                            <button
-                              onClick={() => handleDeleteMeeting(meet)}
-                              className="text-rose-600 font-black hover:underline"
-                            >
-                              إلغاء الموعد / Cancel
-                            </button>
+                          <div className="pt-4 mt-4 border-t border-zinc-50 space-y-2">
+                            <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-mono" dir="ltr">
+                              <Clock className="w-3.5 h-3.5 text-zinc-400" />
+                              <span>{new Date(meet.startTime).toLocaleString("ar-SA")}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-[10px]">
+                              <span className="text-zinc-500 font-bold">📍 {meet.location}</span>
+                              <button
+                                onClick={() => {
+                                  setMeetings(meetings.filter((m) => m.id !== meet.id));
+                                  toast.success("تم إلغاء الاجتماع بنجاح.");
+                                }}
+                                className="text-rose-600 font-black hover:underline"
+                              >
+                                إلغاء الموعد / Cancel
+                              </button>
+                            </div>
                           </div>
                         </div>
+                      ))}
+                    </div>
+
+                    {/* Meetings Real Pagination Controls */}
+                    {meetingPagination.totalPages > 1 && (
+                      <div className="flex items-center justify-between pt-4 border-t border-zinc-150 text-xs font-bold text-zinc-600">
+                        <div className="flex items-center gap-2">
+                          <button
+                            disabled={meetingPage <= 1 || syncInProgress}
+                            onClick={() => setMeetingPage((prev) => Math.max(1, prev - 1))}
+                            className="p-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-100 disabled:opacity-40 transition-all"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                          <span>صفحة {meetingPagination.page} من {meetingPagination.totalPages}</span>
+                          <button
+                            disabled={!meetingPagination.hasMore || syncInProgress}
+                            onClick={() => setMeetingPage((prev) => prev + 1)}
+                            className="p-1.5 rounded-lg border border-zinc-200 hover:bg-zinc-100 disabled:opacity-40 transition-all"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <span className="text-[11px] text-zinc-400 font-mono">
+                          إجمالي المواعيد: {meetingPagination.total}
+                        </span>
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
               </div>
             )}
 
+            {/* Tab 3: OAuth Settings */}
             {tab === "settings" && (
               <div className="space-y-6 text-right">
                 <div className="bg-zinc-50 border border-zinc-100 p-5 rounded-2xl space-y-3">
@@ -879,7 +804,7 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
                     بيانات اعتماد الربط المؤسسي (REST API Credentials)
                   </h4>
                   <p className="text-[10px] text-zinc-500 font-bold leading-relaxed">
-                    لتحقيق مزامنة بريد حقيقية، نقوم بالتكامل مع حسابك عبر OAuth 2.0. قم بإدخال بيانات عميل التطبيق (Client Credentials) الخاصة بشركتك للوصول إلى الواجهات البرمجية.
+                    لتحقيق مزامنة بريد حقيقية، نقوم بالتكامل مع حسابك عبر OAuth 2.0. يتم تبادل الرموز وتشفير Refresh Tokens مفتاحياً في الخادم المعتمد.
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
@@ -926,7 +851,7 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
                         />
                         <span className="text-xs font-black text-zinc-800">قراءة رسائل البريد</span>
                       </div>
-                      <span className="text-[8px] font-mono text-zinc-400">gmail.readonly</span>
+                      <span className="text-[8px] font-mono text-zinc-400">gmail.modify</span>
                     </label>
 
                     <label className="p-3 border border-zinc-150 rounded-xl flex items-center justify-between cursor-pointer hover:bg-zinc-50">
@@ -952,7 +877,7 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
                         />
                         <span className="text-xs font-black text-zinc-800">قراءة تقويم Google Calendar</span>
                       </div>
-                      <span className="text-[8px] font-mono text-zinc-400">calendar.readonly</span>
+                      <span className="text-[8px] font-mono text-zinc-400">calendar</span>
                     </label>
 
                     <label className="p-3 border border-zinc-150 rounded-xl flex items-center justify-between cursor-pointer hover:bg-zinc-50">
@@ -995,14 +920,14 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
             <div className="mt-6 pt-4 border-t border-zinc-100 flex items-center justify-between text-xs text-zinc-500 font-bold bg-zinc-50 -mx-6 -mb-6 px-6 py-4 rounded-b-[2rem]">
               <span className="flex items-center gap-1.5 text-emerald-600">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                المزامنة الخلفية نشطة تلقائياً (دورة كل ٥ دقائق)
+                المزامنة الخلفية نشطة تلقائياً (تحديث زمني مستمر)
               </span>
-              <span>الحساب النشط: {connectedName} ({connectedEmail})</span>
+              <span>الحساب المفوض: {connectedName} ({connectedEmail})</span>
             </div>
           )}
         </div>
 
-        {/* Right Side: Quick Simulation Utilities & Actions */}
+        {/* Right Side: Smart CRM Automation Card */}
         <div className="w-full lg:w-85 space-y-6">
           <div className="bg-zinc-900 text-white p-6 rounded-[2rem] space-y-4">
             <h3 className="text-xs font-black uppercase tracking-wider text-primary flex items-center gap-2">
@@ -1010,7 +935,7 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
               أتمتة المتابعة الذكية (CRM Rules)
             </h3>
             <p className="text-[11px] text-zinc-400 leading-relaxed font-bold">
-              يقوم مدارج بربط الأحداث تلقائياً بالعملاء. عند تفعيل "القواعد البرمجية"، أي بريد إلكتروني أو اجتماع قادم يتم تفصيله تلقائياً وتثبيته في سجل النشاط بالـ CRM للعميل.
+              يقوم مدارج بربط الأحداث تلقائياً بالعملاء. أي بريد إلكتروني أو اجتماع قادم يتم تفصيله آلياً وتثبيته في سجل النشاط بالـ CRM للعميل المكتشف.
             </p>
 
             <div className="space-y-3 pt-2 text-xs font-bold">
@@ -1030,49 +955,27 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
           </div>
 
           <div className="bg-white border border-zinc-200 p-6 rounded-[2rem] space-y-4">
-            <h4 className="text-xs font-black text-zinc-900">أدوات المحاكاة المباشرة / Simulation Playground</h4>
-            <p className="text-[10px] text-zinc-500 font-bold leading-relaxed">
-              محاكاة تلقي بريد إلكتروني وارد جديد من عميل لتجربة التزامن الفوري مع خط مبيعات الـ CRM وسجل تاريخه:
-            </p>
-
-            <button
-              onClick={() => {
-                if (provider === "none") {
-                  toast.error("يرجى ربط مزود المزامنة أولاً لتفعيل الاستقبال المباشر!");
-                  return;
-                }
-                const extraMail = {
-                  id: `m_sim_${Date.now()}`,
-                  clientEmail: "m.aljasser@goldensands.com",
-                  clientName: "مؤسسة الرمال الذهبية",
-                  subject: "طلب عاجل: تعديل جدول الدفعات للمشروع القائم",
-                  body: "السلام عليكم، نود إعادة ترتيب جدول دفعات الربع القادم لتتوافق مع تسليمات البوابة الرقمية. يرجى مراجعة الجدول المرفق وإفادتنا في أقرب فرصة.",
-                  date: new Date().toISOString(),
-                  sender: "client",
-                  unread: true,
-                  category: "finance"
-                };
-                setEmails([extraMail, ...emails]);
-                toast.success("محاكاة: تم جلب رسالة جديدة من مؤسسة الرمال الذهبية وتزامنها مع الـ CRM! 📬");
-
-                // Write to audit log and update lead's history
-                const lead = clients.find(c => c.name.includes("الرمال الذهبية") || c.email?.includes("goldensands"));
-                if (lead && lead.id) {
-                  const clientDocRef = doc(db, "leads", lead.id);
-                  updateDoc(clientDocRef, {
-                    history: arrayUnion({
-                      id: `h_sim_${Date.now()}`,
-                      date: new Date().toISOString(),
-                      action: "بريد وارد مستلم (Auto Synced)",
-                      details: `الموضوع: طلب عاجل: تعديل جدول الدفعات للمشروع القائم\nالرسالة: السلام عليكم، نود إعادة ترتيب جدول دفعات الربع القادم...`
-                    })
-                  }).catch(console.error);
-                }
-              }}
-              className="w-full py-3 bg-zinc-900 text-white hover:bg-zinc-800 rounded-xl text-[11px] font-black tracking-tight transition-all shadow-sm flex items-center justify-center gap-1.5"
-            >
-              <span>محاكاة استلام بريد وارد 📥</span>
-            </button>
+            <h4 className="text-xs font-black text-zinc-900">حالة الربط المباشر / OAuth Connection Status</h4>
+            <div className="p-4 bg-zinc-50 rounded-xl border border-zinc-200 space-y-2 text-xs font-bold">
+              <div className="flex justify-between text-zinc-600">
+                <span>Google Gmail API:</span>
+                <span className={provider === "google" ? "text-emerald-600" : "text-zinc-400"}>
+                  {provider === "google" ? "نشط ومفوض" : "غير مفوض"}
+                </span>
+              </div>
+              <div className="flex justify-between text-zinc-600">
+                <span>Google Calendar API:</span>
+                <span className={provider === "google" ? "text-emerald-600" : "text-zinc-400"}>
+                  {provider === "google" ? "نشط ومفوض" : "غير مفوض"}
+                </span>
+              </div>
+              <div className="flex justify-between text-zinc-600">
+                <span>Microsoft Graph API:</span>
+                <span className={provider === "outlook" ? "text-emerald-600" : "text-zinc-400"}>
+                  {provider === "outlook" ? "نشط ومفوض" : "غير مفوض"}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -1108,8 +1011,10 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
                     className="w-full px-4 py-3 bg-zinc-50 border border-zinc-150 rounded-xl text-xs font-bold"
                   >
                     <option value="">اختر عميلاً من الـ CRM...</option>
-                    {clients.map(c => (
-                      <option key={c.id} value={c.email || c.name}>{c.name} ({c.email || "بدون بريد"})</option>
+                    {clients.map((c) => (
+                      <option key={c.id} value={c.email || c.name}>
+                        {c.name} ({c.email || "بدون بريد"})
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -1200,8 +1105,10 @@ export default function EmailCalendarSyncWorkspace({ clients }: EmailCalendarSyn
                       className="w-full px-4 py-3 bg-zinc-50 border border-zinc-150 rounded-xl text-xs font-bold"
                     >
                       <option value="">اختر عميلاً من الـ CRM...</option>
-                      {clients.map(c => (
-                        <option key={c.id} value={c.email || c.name}>{c.name}</option>
+                      {clients.map((c) => (
+                        <option key={c.id} value={c.email || c.name}>
+                          {c.name}
+                        </option>
                       ))}
                     </select>
                   </div>

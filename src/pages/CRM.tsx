@@ -719,19 +719,19 @@ export default function CRM() {
     );
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto h-[calc(100vh-10rem)] flex flex-col pb-10">
+    <div className="space-y-6 max-w-7xl mx-auto min-h-screen flex flex-col pb-24 md:pb-10">
       <PayrollComplianceWidget runs={payrollRuns} />
-      <header className="flex justify-between items-end">
+      <header className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-black text-zinc-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-zinc-900 dark:text-white tracking-tight leading-snug">
             {t("crm.title", "العملاء والموظفين والهويات")}
           </h1>
-          <p className="text-zinc-500 mt-1 font-medium italic">
+          <p className="text-zinc-500 dark:text-zinc-400 mt-1 text-xs sm:text-sm font-medium">
             {t("crm.subtitle", "مدارج CRM: تتبع وتحكم في رحلة العميل والهويات الاستراتيجية.")}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-1 no-scrollbar w-full md:w-auto shrink-0">
+          <div className="relative shrink-0">
             <input
               type="file"
               accept=".csv"
@@ -739,23 +739,23 @@ export default function CRM() {
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               disabled={isImporting}
             />
-            <button className="flex items-center gap-2 bg-emerald-50 text-emerald-600 px-6 py-3.5 rounded-2xl font-bold hover:bg-emerald-100 transition-all text-sm border border-emerald-100 disabled:opacity-50">
-              <Upload className="w-4 h-4" />
+            <button className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 px-3.5 py-2.5 rounded-xl font-bold hover:bg-emerald-100 transition-all text-xs border border-emerald-200 dark:border-emerald-800 disabled:opacity-50 whitespace-nowrap cursor-pointer">
+              <Upload className="w-3.5 h-3.5" />
               <span>{isImporting ? "جاري الاستيراد..." : "استيراد عملاء (CSV)"}</span>
             </button>
           </div>
           <button
             onClick={() => setIsWhatsAppBroadcastOpen(true)}
-            className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-3.5 rounded-2xl font-bold shadow-lg shadow-emerald-600/20 hover:bg-emerald-700 transition-all text-sm"
+            className="flex items-center gap-1.5 bg-emerald-600 text-white px-3.5 py-2.5 rounded-xl font-bold shadow-md shadow-emerald-600/20 hover:bg-emerald-700 transition-all text-xs whitespace-nowrap shrink-0 cursor-pointer"
           >
-            <MessageSquare className="w-4 h-4" />
+            <MessageSquare className="w-3.5 h-3.5" />
             <span>بث واتساب (OpenWA)</span>
           </button>
           <button
             onClick={handleAutoReminders}
-            className="flex items-center gap-2 bg-blue-50 text-blue-600 px-6 py-3.5 rounded-2xl font-bold hover:bg-blue-100 transition-all text-sm border border-blue-100"
+            className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 px-3.5 py-2.5 rounded-xl font-bold hover:bg-blue-100 transition-all text-xs border border-blue-200 dark:border-blue-800 whitespace-nowrap shrink-0 cursor-pointer"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-3.5 h-3.5" />
             <span>تذكيرات المتابعة</span>
           </button>
           <button
@@ -782,10 +782,10 @@ export default function CRM() {
                 toast.error("حدث خطأ أثناء مسح السجلات: " + err.message);
               }
             }}
-            className="flex items-center gap-2 bg-rose-50 text-rose-600 px-5 py-3.5 rounded-2xl font-bold hover:bg-rose-100 transition-all text-sm border border-rose-200 cursor-pointer"
+            className="flex items-center gap-1.5 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 px-3.5 py-2.5 rounded-xl font-bold hover:bg-rose-100 transition-all text-xs border border-rose-200 dark:border-rose-800 whitespace-nowrap shrink-0 cursor-pointer"
             title="مسح كافة العملاء والكروت نهائياً"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-3.5 h-3.5" />
             <span>مسح جميع الكروت</span>
           </button>
           <button
@@ -793,32 +793,32 @@ export default function CRM() {
               setEditingClient({ status: "new", value: 0 });
               setIsModalOpen(true);
             }}
-            className="flex items-center gap-2 bg-zinc-900 text-white px-8 py-3.5 rounded-2xl font-bold shadow-xl shadow-zinc-900/10 hover:scale-[1.02] active:scale-[0.98] transition-all text-sm"
+            className="flex items-center gap-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 px-4 py-2.5 rounded-xl font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all text-xs whitespace-nowrap shrink-0 cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5" />
             <span>إضافة سجل جديد</span>
           </button>
         </div>
       </header>
 
-      <div className="flex gap-4 border-b border-zinc-200 mb-2">
+      <div className="flex gap-2 sm:gap-4 border-b border-zinc-200 dark:border-zinc-800 mb-2 overflow-x-auto no-scrollbar pb-1">
         <button
           onClick={() => setMainTab("crm")}
-          className={`pb-4 px-2 font-black text-sm flex items-center gap-2 border-b-2 transition-colors ${mainTab === "crm" ? "border-zinc-900 text-zinc-900" : "border-transparent text-zinc-500 hover:text-zinc-900"}`}
+          className={`pb-3 px-3 font-bold text-xs sm:text-sm flex items-center gap-2 border-b-2 transition-colors whitespace-nowrap cursor-pointer shrink-0 ${mainTab === "crm" ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 font-black" : "border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"}`}
         >
-          <Briefcase className="w-5 h-5" /> إدارة علاقات العملاء (CRM)
+          <Briefcase className="w-4 h-4" /> إدارة علاقات العملاء (CRM)
         </button>
         <button
           onClick={() => setMainTab("identity")}
-          className={`pb-4 px-2 font-black text-sm flex items-center gap-2 border-b-2 transition-colors ${mainTab === "identity" ? "border-purple-600 text-purple-600" : "border-transparent text-zinc-500 hover:text-zinc-900"}`}
+          className={`pb-3 px-3 font-bold text-xs sm:text-sm flex items-center gap-2 border-b-2 transition-colors whitespace-nowrap cursor-pointer shrink-0 ${mainTab === "identity" ? "border-purple-600 text-purple-600 dark:text-purple-400 font-black" : "border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"}`}
         >
-          <IdCard className="w-5 h-5" /> محرك الهوية والبيانات (Identity Engine)
+          <IdCard className="w-4 h-4" /> محرك الهوية والبيانات (Identity Engine)
         </button>
         <button
           onClick={() => setMainTab("sync")}
-          className={`pb-4 px-2 font-black text-sm flex items-center gap-2 border-b-2 transition-colors ${mainTab === "sync" ? "border-indigo-600 text-indigo-600" : "border-transparent text-zinc-500 hover:text-zinc-900"}`}
+          className={`pb-3 px-3 font-bold text-xs sm:text-sm flex items-center gap-2 border-b-2 transition-colors whitespace-nowrap cursor-pointer shrink-0 ${mainTab === "sync" ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 font-black" : "border-transparent text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"}`}
         >
-          <Mail className="w-5 h-5" /> مزامنة البريد والتقويم (Email & Calendar Sync)
+          <Mail className="w-4 h-4" /> مزامنة البريد والتقويم (Email & Calendar Sync)
         </button>
       </div>
 

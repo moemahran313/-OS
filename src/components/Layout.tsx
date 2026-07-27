@@ -26,6 +26,7 @@ import {
   Magnet,
   Mail,
   Share2,
+  Grid,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Logo } from "@/src/components/Logo";
@@ -119,6 +120,37 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [showDialects, setShowDialects] = useState(false);
   const [selectedDialect, setSelectedDialect] = useState("ar-SA");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [isMobileMoreSheetOpen, setIsMobileMoreSheetOpen] = useState(false);
+  const [mobileAppSearch, setMobileAppSearch] = useState("");
+  const [mobileCategoryFilter, setMobileCategoryFilter] = useState("all");
+
+  const mobileCategories = [
+    { id: "all", labelAr: "الكل", labelEn: "All" },
+    { id: "finance", labelAr: "المالية", labelEn: "Finance" },
+    { id: "crm", labelAr: "العملاء", labelEn: "Clients" },
+    { id: "ops", labelAr: "العمليات", labelEn: "Operations" },
+    { id: "compliance", labelAr: "الامتثال", labelEn: "Compliance" },
+  ];
+
+  const allMobileApps = [
+    { id: "Dashboard", nameAr: "لوحة التحكم", nameEn: "Dashboard", category: "all", href: "/app", icon: LayoutDashboard, color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+    { id: "CRM", nameAr: "إدارة العملاء والبيع", nameEn: "CRM & Sales", category: "crm", href: "/app/crm", icon: Users, color: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
+    { id: "MarketingCopilot", nameAr: "مساعد التسويق والعملاء", nameEn: "Marketing Copilot", category: "crm", href: "/app/marketing-copilot", icon: Sparkles, color: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+    { id: "Chat", nameAr: "مركز الاتصال الموحد", nameEn: "Unified Chat", category: "crm", href: "/app/chat", icon: MessageSquare, color: "bg-teal-500/10 text-teal-500 border-teal-500/20" },
+    { id: "Payroll", nameAr: "مسيرات الرواتب", nameEn: "Payroll & WPS", category: "finance", href: "/app/payroll", icon: CreditCard, color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+    { id: "Invoices", nameAr: "الفواتير والمطالبات", nameEn: "Invoices & Claims", category: "finance", href: "/app/invoices", icon: FileText, color: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20" },
+    { id: "Accounting", nameAr: "دفتر الأستاذ والقيود", nameEn: "General Ledger", category: "finance", href: "/app/accounting", icon: Scale, color: "bg-purple-500/10 text-purple-500 border-purple-500/20" },
+    { id: "Calculations", nameAr: "الأدوات والمحاسبة", nameEn: "Business Tools", category: "finance", href: "/app/calculations", icon: Calculator, color: "bg-sky-500/10 text-sky-500 border-sky-500/20" },
+    { id: "Projects", nameAr: "إدارة المشاريع", nameEn: "Projects", category: "ops", href: "/app/projects", icon: FolderKanban, color: "bg-orange-500/10 text-orange-500 border-orange-500/20" },
+    { id: "Suppliers", nameAr: "الموردون وسلاسل الإمداد", nameEn: "Suppliers", category: "ops", href: "/app/suppliers", icon: Truck, color: "bg-rose-500/10 text-rose-500 border-rose-500/20" },
+    { id: "Contracts", nameAr: "عقود العمل والتوقيع", nameEn: "Contracts", category: "crm", href: "/app/contracts", icon: FileSignature, color: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20" },
+    { id: "Workflows", nameAr: "مسارات العمل والأتمتة", nameEn: "Workflows", category: "ops", href: "/app/workflows", icon: Blocks, color: "bg-violet-500/10 text-violet-500 border-violet-500/20" },
+    { id: "Inventory", nameAr: "إدارة المخزون", nameEn: "Inventory", category: "ops", href: "/app/inventory", icon: Warehouse, color: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+    { id: "Compliance", nameAr: "الالتزام وحماية الأجور", nameEn: "WPS Compliance", category: "compliance", href: "/app/fwcos", icon: ShieldCheck, color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+    { id: "Analytics", nameAr: "التحليلات والتقارير", nameEn: "Analytics", category: "compliance", href: "/app/analytics", icon: BarChart3, color: "bg-fuchsia-500/10 text-fuchsia-500 border-fuchsia-500/20" },
+    { id: "Integrations", nameAr: "سوق التطبيقات والربط", nameEn: "Integrations", category: "compliance", href: "/app/integrations", icon: Blocks, color: "bg-blue-500/10 text-blue-500 border-blue-500/20" },
+    { id: "Support", nameAr: "الدعم الفني والبطاقات", nameEn: "Support & Tickets", category: "compliance", href: "/app/support", icon: LifeBuoy, color: "bg-rose-500/10 text-rose-500 border-rose-500/20" },
+  ];
 
   React.useEffect(() => {
     if (user) {
@@ -574,18 +606,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden bg-zinc-50 relative transition-colors duration-300">
         {/* Top Header */}
-        <header className="h-20 border-b border-zinc-200 dark:border-zinc-900/60 bg-white/80 dark:bg-zinc-100/50 backdrop-blur-md flex items-center px-4 md:px-8 justify-between gap-4 md:gap-8 z-10 shrink-0 transition-colors duration-300">
-          {/* Mobile hamburger menu button */}
-          <button
-            onClick={() => setMobileSidebarOpen(true)}
-            className="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-850 bg-white dark:bg-zinc-100 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 lg:hidden cursor-pointer shadow-sm"
-            aria-label="Toggle Menu"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+        <header className="h-16 md:h-20 border-b border-zinc-200 dark:border-zinc-900/60 bg-white/80 dark:bg-zinc-100/50 backdrop-blur-md flex items-center px-3 sm:px-6 md:px-8 justify-between gap-2 sm:gap-4 md:gap-8 z-10 shrink-0 transition-colors duration-300">
+          {/* Mobile hamburger menu button & Logo */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              className="p-2 sm:p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-850 bg-white dark:bg-zinc-100 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer shadow-sm"
+              aria-label="Toggle Menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="sm:hidden flex items-center gap-1.5">
+              <Logo className="h-6 w-auto" />
+            </div>
+          </div>
 
-          {/* Elegant Command Center */}
-          <div className="flex-1 max-w-2xl relative flex items-center gap-3">
+          {/* Elegant Command Center (Desktop / Tablet) */}
+          <div className="hidden md:flex flex-1 max-w-2xl relative items-center gap-3">
             <div className="relative w-full">
               <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none z-10">
                 <Sparkles
@@ -730,7 +767,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 relative">
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4 relative shrink-0">
+            {/* Mobile Voice AI Quick Action Button */}
+            <button
+              onClick={handleMicClick}
+              className={cn(
+                "md:hidden p-2.5 rounded-xl border transition-all cursor-pointer",
+                isListening
+                  ? "bg-rose-500 text-white border-rose-500 animate-pulse"
+                  : "border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800 text-emerald-500"
+              )}
+              title={settings.language === "ar" ? "المساعد الصوتي الذكي" : "Voice AI"}
+            >
+              <Sparkles className="w-4 h-4" />
+            </button>
+
             {/* Seamless Language Toggle Button */}
             <button
               onClick={() => {
@@ -740,19 +791,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   newLang === "ar" ? t("layout.switch_to_arabic") : t("layout.switch_to_english")
                 );
               }}
-              className="px-4 py-2 rounded-2xl border border-zinc-200 dark:border-zinc-850 bg-zinc-100 dark:bg-zinc-100 text-xs font-black text-zinc-650 dark:text-zinc-300 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-200 dark:hover:bg-zinc-850 hover:border-emerald-500/20 transition-all cursor-pointer flex items-center gap-2 outline-none shadow-sm"
+              className="px-2.5 sm:px-4 py-2 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-850 bg-zinc-100 dark:bg-zinc-100 text-xs font-black text-zinc-650 dark:text-zinc-300 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-200 dark:hover:bg-zinc-850 hover:border-emerald-500/20 transition-all cursor-pointer flex items-center gap-1.5 outline-none shadow-sm"
               title={settings.language === "ar" ? "Switch to English" : "تغيير إلى العربية"}
             >
-              <Globe className="w-4 h-4 text-zinc-550 dark:text-zinc-400 group-hover:animate-spin" />
-              <span className="font-bold">
-                {settings.language === "ar" ? "English" : "العربية"}
+              <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-550 dark:text-zinc-400" />
+              <span className="font-bold text-[11px] sm:text-xs">
+                {settings.language === "ar" ? "EN" : "عربي"}
               </span>
             </button>
 
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-3 rounded-2xl border border-zinc-200 dark:border-zinc-850 bg-zinc-100 dark:bg-zinc-100 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-200 dark:hover:bg-zinc-850 transition-all cursor-pointer flex items-center justify-center outline-none shadow-sm active:scale-95 group"
+              className="p-2 sm:p-3 rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-850 bg-zinc-100 dark:bg-zinc-100 text-zinc-500 dark:text-zinc-400 hover:text-emerald-500 dark:hover:text-emerald-400 hover:bg-zinc-200 dark:hover:bg-zinc-850 transition-all cursor-pointer flex items-center justify-center outline-none shadow-sm active:scale-95 group"
               title={settings.language === "ar" ? "تغيير المظهر" : "Toggle Theme"}
             >
               {isDark ? (
@@ -927,11 +978,230 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Viewport Content with custom animations */}
         <div className={cn(
-          "flex-1 relative z-0",
-          location.pathname === "/app/contracts" ? "overflow-hidden h-full w-full" : "overflow-y-auto p-4 md:p-8"
+          "flex-1 relative z-0 pb-24 lg:pb-0",
+          location.pathname === "/app/contracts" ? "overflow-hidden h-full w-full" : "overflow-y-auto p-2.5 sm:p-6 md:p-8"
         )}>
           {children}
         </div>
+
+        {/* Native Mobile App Bottom Navigation Bar (YouTube / Facebook Style) */}
+        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/98 dark:bg-zinc-950/98 border-t border-zinc-200/80 dark:border-zinc-800/80 grid grid-cols-5 items-end justify-items-center h-16 pt-1 pb-safe px-1 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-black/80 lg:hidden select-none">
+          <Link
+            to="/app"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className={cn(
+              "flex flex-col items-center justify-center w-full py-1 transition-all cursor-pointer active:scale-95",
+              location.pathname === "/app"
+                ? "text-emerald-600 dark:text-emerald-400 font-bold"
+                : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+            )}
+          >
+            <LayoutDashboard className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-extrabold tracking-tight">
+              {settings.language === "ar" ? "الرئيسية" : "Home"}
+            </span>
+          </Link>
+
+          <Link
+            to="/app/crm"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className={cn(
+              "flex flex-col items-center justify-center w-full py-1 transition-all cursor-pointer active:scale-95",
+              location.pathname === "/app/crm"
+                ? "text-emerald-600 dark:text-emerald-400 font-bold"
+                : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+            )}
+          >
+            <Users className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-extrabold tracking-tight">
+              {settings.language === "ar" ? "العملاء" : "Clients"}
+            </span>
+          </Link>
+
+          {/* Central AI Voice Mic Button */}
+          <div className="flex items-center justify-center w-full">
+            <button
+              onClick={handleMicClick}
+              className={cn(
+                "flex flex-col items-center justify-center -mt-5 w-11 h-11 rounded-full text-white shadow-lg shadow-emerald-500/30 transition-all cursor-pointer border-2 border-white dark:border-zinc-950 active:scale-90",
+                isListening
+                  ? "bg-rose-500 ring-4 ring-rose-500/30 animate-pulse"
+                  : "bg-emerald-500"
+              )}
+              title={settings.language === "ar" ? "المساعد الصوتي" : "Voice AI"}
+            >
+              <Sparkles className="w-5 h-5" />
+            </button>
+          </div>
+
+          <Link
+            to="/app/chat"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className={cn(
+              "flex flex-col items-center justify-center w-full py-1 transition-all cursor-pointer active:scale-95 relative",
+              location.pathname === "/app/chat"
+                ? "text-emerald-600 dark:text-emerald-400 font-bold"
+                : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+            )}
+          >
+            <MessageSquare className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-extrabold tracking-tight">
+              {settings.language === "ar" ? "الدردشة" : "Chat"}
+            </span>
+          </Link>
+
+          <button
+            onClick={() => setIsMobileMoreSheetOpen(true)}
+            className={cn(
+              "flex flex-col items-center justify-center w-full py-1 transition-all cursor-pointer active:scale-95",
+              isMobileMoreSheetOpen
+                ? "text-emerald-600 dark:text-emerald-400 font-bold"
+                : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+            )}
+          >
+            <Grid className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-extrabold tracking-tight">
+              {settings.language === "ar" ? "المزيد" : "More"}
+            </span>
+          </button>
+        </nav>
+
+        {/* Mobile Launcher Drawer Sheet ("المزيد") */}
+        <AnimatePresence>
+          {isMobileMoreSheetOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.6 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsMobileMoreSheetOpen(false)}
+                className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 lg:hidden"
+              />
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 220 }}
+                className="fixed bottom-0 left-0 right-0 max-h-[88vh] bg-white dark:bg-zinc-900 rounded-t-3xl border-t border-zinc-200 dark:border-zinc-800 z-50 overflow-hidden flex flex-col shadow-2xl lg:hidden"
+              >
+                {/* Drag handle */}
+                <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-700 rounded-full mx-auto my-3 shrink-0" />
+
+                {/* Header */}
+                <div className="px-5 pb-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-base font-black text-zinc-900 dark:text-white">
+                      {settings.language === "ar" ? "تطبيقات وأقسام المنظومة" : "BizOS Applications"}
+                    </h3>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      {settings.language === "ar" ? "وصول سريع لكافة الأنظمة والأدوات" : "Quick access to all modules"}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setIsMobileMoreSheetOpen(false)}
+                    className="p-2 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-200"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Search & Categories */}
+                <div className="p-4 space-y-3 bg-zinc-50 dark:bg-zinc-950/40 border-b border-zinc-200 dark:border-zinc-800">
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-zinc-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={mobileAppSearch}
+                      onChange={(e) => setMobileAppSearch(e.target.value)}
+                      placeholder={settings.language === "ar" ? "ابحث عن تطبيق أو قسم..." : "Search apps..."}
+                      className="w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl py-2.5 pr-10 pl-4 text-xs font-bold outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    />
+                  </div>
+
+                  <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                    {mobileCategories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setMobileCategoryFilter(cat.id)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors cursor-pointer",
+                          mobileCategoryFilter === cat.id
+                            ? "bg-emerald-500 text-white shadow-sm"
+                            : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700"
+                        )}
+                      >
+                        {settings.language === "ar" ? cat.labelAr : cat.labelEn}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Grid list of apps */}
+                <div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 no-scrollbar">
+                  {allMobileApps
+                    .filter((app) => {
+                      const matchesCategory =
+                        mobileCategoryFilter === "all" || app.category === mobileCategoryFilter;
+                      const matchesSearch =
+                        !mobileAppSearch ||
+                        app.nameAr.includes(mobileAppSearch) ||
+                        app.nameEn.toLowerCase().includes(mobileAppSearch.toLowerCase());
+                      return matchesCategory && matchesSearch;
+                    })
+                    .map((app) => (
+                      <Link
+                        key={app.id}
+                        to={app.href}
+                        onClick={() => {
+                          setIsMobileMoreSheetOpen(false);
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/80 hover:border-emerald-500 transition-all text-center group cursor-pointer active:scale-95"
+                      >
+                        <div className={cn("p-2.5 rounded-xl border mb-2 group-hover:scale-110 transition-transform", app.color)}>
+                          <app.icon className="w-5 h-5" />
+                        </div>
+                        <span className="text-xs font-black text-zinc-800 dark:text-zinc-100 line-clamp-1">
+                          {settings.language === "ar" ? app.nameAr : app.nameEn}
+                        </span>
+                      </Link>
+                    ))}
+                </div>
+
+                {/* Footer Quick Settings */}
+                <div className="p-3 bg-zinc-100 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-around shrink-0 text-xs font-bold">
+                  <button
+                    onClick={() => {
+                      const newLang = settings.language === "ar" ? "en" : "ar";
+                      updateSettings({ language: newLang });
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200"
+                  >
+                    <Globe className="w-4 h-4 text-emerald-500" />
+                    <span>{settings.language === "ar" ? "English" : "العربية"}</span>
+                  </button>
+
+                  <button
+                    onClick={toggleTheme}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200"
+                  >
+                    {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-500" />}
+                    <span>{isDark ? "مظهر فاتح" : "مظهر داكن"}</span>
+                  </button>
+
+                  <Link
+                    to="/app/settings"
+                    onClick={() => setIsMobileMoreSheetOpen(false)}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200"
+                  >
+                    <Settings className="w-4 h-4 text-emerald-500" />
+                    <span>{t("common.settings")}</span>
+                  </Link>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );

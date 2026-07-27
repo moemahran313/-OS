@@ -39,7 +39,6 @@ import { useUser } from "../contexts/UserContext";
 import { toast } from "sonner";
 import { cn } from "../lib/utils";
 
-// Subcomponents
 import DashboardOverview from "../components/inventory/DashboardOverview";
 import ProductsModule from "../components/inventory/ProductsModule";
 import StocksAndLots from "../components/inventory/StocksAndLots";
@@ -47,6 +46,7 @@ import OperationsAndTransfers from "../components/inventory/OperationsAndTransfe
 import ReceivingFulfillment from "../components/inventory/ReceivingFulfillment";
 import AdvancedReports from "../components/inventory/AdvancedReports";
 import BarcodeAndAlertsModule from "../components/inventory/BarcodeAndAlertsModule";
+import MobileBarcodeScannerModal from "../components/inventory/MobileBarcodeScannerModal";
 
 // Standard Accounts for Warehouses
 const WAREHOUSE_CODES = ["110301", "110302", "110303", "110304", "110305"];
@@ -110,6 +110,7 @@ export default function InventoryDashboard() {
 
   // Modals States
   const [showAddWarehouse, setShowAddWarehouse] = useState(false);
+  const [showMobileScanner, setShowMobileScanner] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // New Warehouse Form State
@@ -768,7 +769,15 @@ export default function InventoryDashboard() {
             معايير الهيئة السعودية للمحاسبين القانونيين (SOCPA).
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setShowMobileScanner(true)}
+            className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer shadow-md"
+          >
+            <Camera className="w-4 h-4" />
+            <span>ماسح الباركود والجرد (WebRTC Scanner)</span>
+          </button>
+
           <button
             onClick={() => setShowAddWarehouse(true)}
             className="px-4 py-2.5 bg-zinc-900 dark:bg-zinc-800 hover:bg-zinc-800 text-white rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer"
@@ -1090,6 +1099,15 @@ export default function InventoryDashboard() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Mobile Barcode & QR Camera Scanner Modal */}
+      <MobileBarcodeScannerModal
+        isOpen={showMobileScanner}
+        onClose={() => setShowMobileScanner(false)}
+        items={items}
+        warehouses={warehouses}
+        onUpdateProduct={handleUpdateProductWrapper}
+      />
     </div>
   );
 }

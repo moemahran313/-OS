@@ -163,6 +163,15 @@ const APPS = [
     status: "available",
   },
   {
+    id: "sama_open_banking",
+    name: "SAMA Open Banking (Lean & Tarabut)",
+    category: "finance",
+    description: "الربط المباشر مع البنوك السعودية عبر المصرفية المفتوحة SAMA لتغذية كشوف الحساب والمطابقة الآلية اللحظية.",
+    icon: "https://upload.wikimedia.org/wikipedia/commons/e/eb/Saudi_Central_Bank_Logo.svg",
+    status: "connected",
+    premium: true,
+  },
+  {
     id: "fasah",
     name: "منصة فسح",
     category: "logistics",
@@ -180,6 +189,7 @@ export default function Integrations() {
   const tabs = [
     { id: "all", label: "الكل" },
     { id: "e-commerce", label: "التجارة الإلكترونية" },
+    { id: "finance", label: "الخدمات البنكية والمالية" },
     { id: "payments", label: "المدفوعات" },
     { id: "hr", label: "الموارد البشرية" },
     { id: "compliance", label: "الامتثال والجهات الحكومية" },

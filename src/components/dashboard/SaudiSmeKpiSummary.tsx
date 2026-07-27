@@ -60,30 +60,30 @@ export const SaudiSmeKpiSummary: React.FC = () => {
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden" dir="rtl">
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 md:p-8 shadow-xl relative overflow-hidden" dir="rtl">
       {/* Background Decorative Glow */}
       <div className="absolute top-0 left-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 pb-4 sm:pb-6 border-b border-slate-800">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold mb-2">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] sm:text-xs font-bold mb-1.5">
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>مؤشرات الامتثال والسيادة التشغيلية للمنشآت السعودية</span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+          <h2 className="text-base sm:text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-2">
             لوحة مؤشرات الأداء الحيوية (Saudi SME Localized KPIs)
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400 font-medium">
+          <p className="text-[11px] sm:text-sm text-slate-400 font-medium mt-0.5">
             متابعة فورية لامتثال هيئة الزكاة (ZATCA)، حماية الأجور (WPS/مدد)، ونسب السعودة (نطاقات)
           </p>
         </div>
 
         {/* Filter Chips */}
-        <div className="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 self-start sm:self-auto">
+        <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl sm:rounded-2xl border border-slate-800 overflow-x-auto no-scrollbar shrink-0">
           <button
             onClick={() => setActiveTab("all")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
               activeTab === "all" ? "bg-emerald-500 text-white shadow-md" : "text-slate-400 hover:text-white"
             }`}
           >
@@ -91,7 +91,7 @@ export const SaudiSmeKpiSummary: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab("zatca")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
               activeTab === "zatca" ? "bg-emerald-500 text-white shadow-md" : "text-slate-400 hover:text-white"
             }`}
           >
@@ -99,7 +99,7 @@ export const SaudiSmeKpiSummary: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab("nitaqat")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
               activeTab === "nitaqat" ? "bg-emerald-500 text-white shadow-md" : "text-slate-400 hover:text-white"
             }`}
           >
@@ -107,7 +107,7 @@ export const SaudiSmeKpiSummary: React.FC = () => {
           </button>
           <button
             onClick={() => setActiveTab("wps")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
               activeTab === "wps" ? "bg-emerald-500 text-white shadow-md" : "text-slate-400 hover:text-white"
             }`}
           >
