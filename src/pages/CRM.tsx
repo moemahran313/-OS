@@ -42,6 +42,7 @@ import {
   Users2,
   Zap,
   XCircle,
+  Flame,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
@@ -69,6 +70,7 @@ import PayrollComplianceWidget from "@/src/components/PayrollComplianceWidget";
 import { toast } from "sonner";
 import EmailCalendarSyncWorkspace from "@/src/components/crm/EmailCalendarSyncWorkspace";
 import { WhatsAppBroadcastModule } from "@/src/components/crm/WhatsAppBroadcastModule";
+import { AiLeadQualificationHub } from "@/src/components/crm/AiLeadQualificationHub";
 
 interface Client {
   id: string;
@@ -85,7 +87,7 @@ interface Client {
   splVerificationRef?: string;
   splCoordinates?: string;
   splVerified?: boolean;
-  status: "new" | "contacted" | "won" | "lost" | "contracted";
+  status: string;
   value: number;
   expectedCloseDate?: string;
   contractEndDate?: string;
@@ -114,6 +116,16 @@ interface Client {
     unitPrice: number;
     taxRate: number;
   }>;
+  qualificationScore?: number;
+  buyingSignals?: string[];
+  riskFactors?: string[];
+  nextBestAction?: string;
+  messages?: Array<{
+    id?: string;
+    sender: "client" | "agent" | "system";
+    text: string;
+    timestamp: string;
+  }>;
   leadScore?: "Hot" | "Warm" | "Cold";
   leadScoreReason?: string;
   leadScoreDate?: string;
@@ -123,6 +135,7 @@ interface Client {
 const columns = [
   { id: "new", name: "فرص جديدة", color: "bg-blue-500" },
   { id: "contacted", name: "قيد التواصل", color: "bg-amber-500" },
+  { id: "hot", name: "فرص ساخنة (Hot Lead) 🔥", color: "bg-orange-500" },
   { id: "contracted", name: "تم التعاقد", color: "bg-purple-600" },
   { id: "won", name: "تم الإغلاق (ربح)", color: "bg-emerald-500" },
   { id: "lost", name: "مفقودة", color: "bg-rose-500" },
@@ -140,6 +153,7 @@ export default function CRM() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isWhatsAppBroadcastOpen, setIsWhatsAppBroadcastOpen] = useState(false);
+  const [isQualificationHubOpen, setIsQualificationHubOpen] = useState(false);
   const [isVerifyingSplAddress, setIsVerifyingSplAddress] = useState(false);
   const [splVerificationResult, setSplVerificationResult] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<"details" | "history" | "shipments" | "invoices">(
@@ -744,6 +758,13 @@ export default function CRM() {
               <span>{isImporting ? "جاري الاستيراد..." : "استيراد عملاء (CSV)"}</span>
             </button>
           </div>
+          <button
+            onClick={() => setIsQualificationHubOpen(true)}
+            className="flex items-center gap-1.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-3.5 py-2.5 rounded-xl font-bold shadow-md shadow-orange-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all text-xs whitespace-nowrap shrink-0 cursor-pointer"
+          >
+            <Flame className="w-3.5 h-3.5 animate-pulse" />
+            <span>تأهيل العملاء (AI Qualification)</span>
+          </button>
           <button
             onClick={() => setIsWhatsAppBroadcastOpen(true)}
             className="flex items-center gap-1.5 bg-emerald-600 text-white px-3.5 py-2.5 rounded-xl font-bold shadow-md shadow-emerald-600/20 hover:bg-emerald-700 transition-all text-xs whitespace-nowrap shrink-0 cursor-pointer"
@@ -2660,6 +2681,12 @@ export default function CRM() {
         onClose={() => setIsWhatsAppBroadcastOpen(false)}
         clients={clients}
       />
+
+      <AiLeadQualificationHub
+        isOpen={isQualificationHubOpen}
+        onClose={() => setIsQualificationHubOpen(false)}
+        leads={clients}
+      />
     </div>
   );
 }
@@ -2712,28 +2739,27 @@ function PipelineCard({ client, provided, snapshot, onClick, onStatusChange }: a
 
       <div className="flex justify-between items-center gap-2 mb-1">
         <h4 className="font-black text-zinc-900 text-sm">{client.name}</h4>
-        {client.leadScore && (
+        {(client.leadScore || client.qualificationScore !== undefined) && (
           <span
             className={cn(
               "text-[9px] font-black px-2 py-0.5 rounded-full border flex items-center gap-1 shrink-0 shadow-sm",
-              client.leadScore === "Hot"
-                ? "bg-orange-50 text-orange-600 border-orange-100"
-                : client.leadScore === "Warm"
-                  ? "bg-yellow-50 text-yellow-600 border-yellow-100"
-                  : "bg-blue-50 text-blue-600 border-blue-100"
+              client.leadScore === "Hot" || (client.qualificationScore && client.qualificationScore >= 75)
+                ? "bg-orange-50 text-orange-600 border-orange-200"
+                : client.leadScore === "Warm" || (client.qualificationScore && client.qualificationScore >= 45)
+                  ? "bg-amber-50 text-amber-600 border-amber-200"
+                  : "bg-blue-50 text-blue-600 border-blue-200"
             )}
           >
-            <Zap
+            <Flame
               className={cn(
                 "w-2.5 h-2.5",
-                client.leadScore === "Hot"
+                client.leadScore === "Hot" || (client.qualificationScore && client.qualificationScore >= 75)
                   ? "text-orange-500 animate-pulse"
-                  : client.leadScore === "Warm"
-                    ? "text-amber-500"
-                    : "text-blue-500"
+                  : "text-amber-500"
               )}
             />
-            {client.leadScore === "Hot" ? "ساخن" : client.leadScore === "Warm" ? "دافئ" : "بارد"}
+            {client.qualificationScore !== undefined ? `${client.qualificationScore}% ` : ''}
+            {client.leadScore === "Hot" || (client.qualificationScore && client.qualificationScore >= 75) ? "ساخن (Hot)" : client.leadScore === "Warm" ? "دافئ" : "بارد"}
           </span>
         )}
       </div>
@@ -2743,6 +2769,12 @@ function PipelineCard({ client, provided, snapshot, onClick, onStatusChange }: a
             <IdCard className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">{client.contactJobTitle}</span>
           </p>
+        )}
+        {client.buyingSignals && client.buyingSignals.length > 0 && (
+          <div className="bg-emerald-50 border border-emerald-100 rounded-lg px-2 py-1 flex items-center gap-1 text-[9px] text-emerald-800 font-bold truncate">
+            <Zap className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
+            <span className="truncate">إشارة: {client.buyingSignals[0]}</span>
+          </div>
         )}
         <div className="flex items-center gap-2 flex-wrap mt-1">
           <p className="text-[11px] text-zinc-400 font-bold flex items-center gap-1.5 capitalize tracking-tight shrink-0">

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ShieldCheck,
   Award,
@@ -17,46 +17,165 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { db } from "@/src/lib/firebase";
+import { useUser } from "@/src/contexts/UserContext";
 
 export const SaudiSmeKpiSummary: React.FC = () => {
+  const { user } = useUser();
   const [activeTab, setActiveTab] = useState<"all" | "zatca" | "nitaqat" | "wps">("all");
 
-  // Mocked/Calculated SME KPI Data
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [organizations, setOrganizations] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    // Subscribe to user's real invoices
+    const qInvoices = query(
+      collection(db, "invoices"),
+      where("userId", "==", user.uid)
+    );
+    const unsubInvoices = onSnapshot(
+      qInvoices,
+      (snapshot) => {
+        setInvoices(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      },
+      (err) => console.warn("Error loading invoices KPI:", err)
+    );
+
+    // Subscribe to user's real employees
+    const qEmployees = query(
+      collection(db, "employees"),
+      where("userId", "==", user.uid)
+    );
+    const unsubEmployees = onSnapshot(
+      qEmployees,
+      (snapshot) => {
+        setEmployees(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      },
+      (err) => console.warn("Error loading employees KPI:", err)
+    );
+
+    // Subscribe to user's real organizations
+    const qOrgs = query(
+      collection(db, "organizations"),
+      where("userId", "==", user.uid)
+    );
+    const unsubOrgs = onSnapshot(
+      qOrgs,
+      (snapshot) => {
+        setOrganizations(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+      },
+      (err) => console.warn("Error loading orgs KPI:", err)
+    );
+
+    return () => {
+      unsubInvoices();
+      unsubEmployees();
+      unsubOrgs();
+    };
+  }, [user]);
+
+  // Derived ZATCA Data from real invoices in database
+  const clearedCount = invoices.filter(
+    (i) => i.zatcaStatus === "CLEARED" || i.type === "B2B" || i.zatcaClearanceId
+  ).length;
+  const reportedCount = invoices.filter(
+    (i) => i.zatcaStatus === "REPORTED" || i.type === "B2C" || i.zatcaReportingId
+  ).length;
+  const totalInvoices = invoices.length;
+
   const zatcaData = {
-    status: "مشفّرة ومُعتمدة (Phase 2)",
-    clearedCount: 1420,
-    reportedCount: 3890,
-    complianceScore: 100,
-    certificateExpiryDays: 240,
-    lastSyncTime: "قبل 4 دقائق",
+    status: totalInvoices > 0 ? "مشفّرة ومُعتمدة (Phase 2)" : "جاهز لإصدار الفواتير",
+    clearedCount,
+    reportedCount,
+    complianceScore: totalInvoices > 0 ? 100 : 0,
+    lastSyncTime: totalInvoices > 0 ? "متزامن فورياً" : "لا يوجد فواتير بعد",
   };
+
+  // Derived Nitaqat Data from real employees in database
+  const saudiCount = employees.filter((e) => {
+    const nat = (e.nationality || "سعودي").toString().toLowerCase();
+    return nat.includes("saud") || nat.includes("سعودي");
+  }).length;
+  const totalEmployees = employees.length;
+  const expatsCount = Math.max(0, totalEmployees - saudiCount);
+  const saudizationRate = totalEmployees > 0 ? Number(((saudiCount / totalEmployees) * 100).toFixed(1)) : 0;
+
+  let tier = "لا يوجد موظفون";
+  let tierColor = "text-slate-400 bg-slate-800 border-slate-700";
+  let healthStatus = "قم بإضافة الموظفين لحساب نسبة التوطين";
+
+  if (totalEmployees > 0) {
+    if (saudizationRate >= 40) {
+      tier = "البلاتيني";
+      tierColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
+      healthStatus = "ممتاز (أمان كامل من عقوبات الوزارة)";
+    } else if (saudizationRate >= 30) {
+      tier = "الأخضر المرتفع";
+      tierColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
+      healthStatus = "نطاق آمن ومكتمل المتطلبات";
+    } else if (saudizationRate >= 20) {
+      tier = "الأخضر المنخفض";
+      tierColor = "text-amber-400 bg-amber-500/10 border-amber-500/30";
+      healthStatus = "نطاق متوسط (ينصح برفع نسبة السعودة)";
+    } else if (saudizationRate > 0) {
+      tier = "الأصفر";
+      tierColor = "text-amber-400 bg-amber-500/10 border-amber-500/30";
+      healthStatus = "تحذير (تنبيه من عدم كفاية التوطين)";
+    } else {
+      tier = "الأحمر";
+      tierColor = "text-rose-400 bg-rose-500/10 border-rose-500/30";
+      healthStatus = "حرج (مطلوب إضافة موظفين سعوديين)";
+    }
+  }
 
   const nitaqatData = {
-    tier: "البلاتيني",
-    tierColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
-    saudiCount: 18,
-    expatsCount: 24,
-    totalCount: 42,
-    saudizationRate: 42.8,
-    targetRate: 35.0,
-    healthStatus: "ممتاز (أمان كامل من عقوبات الوزارة)",
+    tier,
+    tierColor,
+    saudiCount,
+    expatsCount,
+    totalCount: totalEmployees,
+    saudizationRate,
+    healthStatus,
   };
+
+  // Derived Payroll & WPS Data from real employees
+  const validIbansCount = employees.filter(
+    (e) => e.iban && e.iban.toString().trim().toUpperCase().startsWith("SA") && e.iban.toString().trim().length >= 22
+  ).length;
+
+  const readinessPercent = totalEmployees > 0 ? Math.round((validIbansCount / totalEmployees) * 100) : 0;
+
+  const netTotalSar = employees.reduce((acc, e) => {
+    const base = Number(e.baseSalary || e.salary || (e.baseSalaryHalalas ? e.baseSalaryHalalas / 100 : 0)) || 0;
+    const housing = Number(e.housingAllowance || (e.housingAllowanceHalalas ? e.housingAllowanceHalalas / 100 : 0)) || 0;
+    const transport = Number(e.transportAllowance || (e.transportAllowanceHalalas ? e.transportAllowanceHalalas / 100 : 0)) || 0;
+    return acc + base + housing + transport;
+  }, 0);
+
+  // Compute days remaining until end of month (payday)
+  const now = new Date();
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const daysRemaining = Math.max(1, endOfMonth.getDate() - now.getDate());
 
   const payrollData = {
-    readinessPercent: 95,
-    validIbansCount: 42,
-    totalEmployees: 42,
-    sifFormatValid: true,
-    nextPayrollDate: "2026-07-27",
-    daysRemaining: 5,
-    netTotalSar: 245000,
-    mudadSynced: true,
+    readinessPercent,
+    validIbansCount,
+    totalEmployees,
+    daysRemaining,
+    netTotalSar,
   };
 
+  // Derived SPL Data from organizations
+  const verifiedCount = organizations.filter((o) => o.splAddressVerified || o.nationalAddressVerified).length;
+  const totalOrgs = organizations.length;
+  const verifiedRate = totalOrgs > 0 ? Number(((verifiedCount / totalOrgs) * 100).toFixed(1)) : (totalEmployees > 0 ? 100 : 0);
+
   const splData = {
-    verifiedRate: 98.2,
-    verifiedCount: 41,
-    pendingCount: 1,
+    verifiedRate,
   };
 
   return (

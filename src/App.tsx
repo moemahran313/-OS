@@ -188,6 +188,7 @@ const Accounting = lazyRetry(() => import("./pages/Accounting"));
 const Projects = lazyRetry(() => import("./pages/Projects"));
 const Support = lazyRetry(() => import("./pages/Support"));
 const MarketingCopilot = lazyRetry(() => import("./pages/MarketingCopilot"));
+const LeadGenEngine = lazyRetry(() => import("./pages/LeadGenEngine"));
 
 function LoadingSpinner() {
   return (
@@ -472,7 +473,14 @@ function AppInnerRoutes() {
                 </PageTransition>
               }
             />
-            <Route path="lead-gen" element={<Navigate to="/app/marketing-copilot" replace />} />
+            <Route
+              path="lead-gen"
+              element={
+                <PageTransition>
+                  <LeadGenEngine />
+                </PageTransition>
+              }
+            />
             <Route
               path="marketing-copilot"
               element={

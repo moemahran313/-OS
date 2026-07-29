@@ -79,6 +79,179 @@ router.put("/:id", authenticate, async (req: any, res) => {
   }
 });
 
+router.post("/auto-qualify-all", authenticate, async (req: any, res) => {
+  try {
+    const snap = await db.collection("leads").where("userId", "==", req.user.uid).get();
+    if (snap.empty) {
+      return res.json({ success: true, message: "لا توجد فرص بيعية للتأهيل", totalProcessed: 0, movedToHotCount: 0, leads: [] });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(400).json({ error: "مفتاح Gemini API غير متاح في إعدادات النظام." });
+    }
+
+    const ai = new GoogleGenAI({
+      apiKey: apiKey,
+      httpOptions: { headers: { "User-Agent": "aistudio-build" } },
+    });
+
+    const leadsDocs = snap.docs;
+    let movedToHotCount = 0;
+    let hotCount = 0;
+    let warmCount = 0;
+    let coldCount = 0;
+    const updatedLeads: any[] = [];
+
+    for (const docSnap of leadsDocs) {
+      const leadData = docSnap.data();
+      const leadId = docSnap.id;
+
+      // Format WhatsApp chat context
+      const whatsappMessages = Array.isArray(leadData.messages) ? leadData.messages : [];
+      const whatsappTextSnippet = whatsappMessages
+        .map((m: any) => `[${m.timestamp || m.date || 'now'}] ${m.sender || 'client'}: ${m.text || m.content || ''}`)
+        .join("\n");
+
+      // Format CRM notes context
+      const crmNotesText = [
+        leadData.notes || "",
+        ...(Array.isArray(leadData.notesList) ? leadData.notesList.map((n: any) => n.text || n) : []),
+      ].filter(Boolean).join("\n---\n");
+
+      const prompt = `أنت محرك الذكاء الاصطناعي لتأهيل الفرص البيعية (AI Lead Qualification Engine) لـ Mudarij OS.
+قم بتحليل بيانات العميل المحتمل، بما في ذلك محادثات واتساب (WhatsApp Chats) وملاحظات إدارة العلاقات (CRM Notes)، لحساب درجة التأهيل الدقيقة ومستوى الأولوية.
+
+بيانات العميل:
+- اسم العميل: ${leadData.name || "غير محدد"}
+- المنشأة/الشركة: ${leadData.company || "غير مححدد"}
+- القطاع: ${leadData.industry || "عام"}
+- حجم الشركة: ${leadData.companySize || "غير محدد"}
+- قيمة الصفقة المتوقعة: ${leadData.value || 0} SAR
+- الحالة الحالية: ${leadData.status || "new"}
+- ملاحظات CRM والمدونات:
+${crmNotesText || "لا توجد ملاحظات مدونة."}
+
+محادثات رسائل الواتساب الواردة والصادرة (WhatsApp Chats):
+${whatsappTextSnippet || "لا توجد محادثات واتساب مسجلة حتى الآن."}
+
+المطلوب:
+1. qualificationScore: عدد صحيح بين 0 و 100 يعبر عن مدى جاهزية ونسبة تحويل العميل (Conversion Score).
+2. leadScore: تصنيف الأولوية strictly one of "Hot" or "Warm" or "Cold".
+3. buyingSignals: قائمة بأبرز مؤشرات الشراء والاهتمام المستخرجة من محادثات واتساب والملاحظات (Arabic array of strings).
+4. riskFactors: قائمة بأي مخاطر أو تحفظات تم رصدها (Arabic array of strings).
+5. nextBestAction: خطوة المبيعات القادمة الموصى بها (Arabic string).
+6. leadScoreReason: شرح مختصر واحترافي باللغة العربية (max 3 sentences) يبرر النتيجة ويوصي بخطة التحرك.
+7. autoMovedToHot: boolean (يكون true إذا كانت qualificationScore >= 75 أو leadScore === "Hot").`;
+
+      try {
+        const response = await generateContentWithRetry(ai, {
+          model: "gemini-3.5-flash",
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                qualificationScore: { type: Type.INTEGER, description: "Score from 0 to 100" },
+                leadScore: { type: Type.STRING, description: "Hot, Warm, or Cold" },
+                buyingSignals: { type: Type.ARRAY, items: { type: Type.STRING } },
+                riskFactors: { type: Type.ARRAY, items: { type: Type.STRING } },
+                nextBestAction: { type: Type.STRING },
+                leadScoreReason: { type: Type.STRING },
+                autoMovedToHot: { type: Type.BOOLEAN },
+              },
+              required: ["qualificationScore", "leadScore", "buyingSignals", "leadScoreReason"],
+            },
+          },
+        });
+
+        const parsed = JSON.parse(response.text || "{}");
+        const qualScore = typeof parsed.qualificationScore === "number" ? parsed.qualificationScore : (parsed.leadScore === "Hot" ? 85 : parsed.leadScore === "Warm" ? 60 : 30);
+        const scoreTag = parsed.leadScore === "Hot" || qualScore >= 75 ? "Hot" : parsed.leadScore === "Cold" || qualScore < 45 ? "Cold" : "Warm";
+        const reason = parsed.leadScoreReason || "تم تحليل بيانات العميل ومحادثات الواتساب والملاحظات بنجاح.";
+        const signals = Array.isArray(parsed.buyingSignals) && parsed.buyingSignals.length > 0 ? parsed.buyingSignals : ["تفاعل إيجابي في الاستفسارات"];
+        const risks = Array.isArray(parsed.riskFactors) ? parsed.riskFactors : [];
+        const nextAction = parsed.nextBestAction || "متابعة العميل عبر الاتصال لتقديم العرض المالي النهائي.";
+
+        if (scoreTag === "Hot") hotCount++;
+        else if (scoreTag === "Warm") warmCount++;
+        else coldCount++;
+
+        const currentStatus = leadData.status || "new";
+        let newStatus = currentStatus;
+        let statusChanged = false;
+
+        // Auto move highly qualified leads to 'hot' stage if qualified
+        if ((scoreTag === "Hot" || qualScore >= 75) && currentStatus !== "hot" && currentStatus !== "won" && currentStatus !== "contracted") {
+          newStatus = "hot";
+          statusChanged = true;
+          movedToHotCount++;
+        }
+
+        const newHistoryItem = {
+          id: `h_ai_qual_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+          date: new Date().toISOString(),
+          action: "تأهيل الذكاء الاصطناعي (AI Lead Qualification)",
+          details: statusChanged
+            ? `🔥 تم نقل العميل تلقائياً إلى مرحلة 'فرص ساخنة (Hot Lead)' بنسبة تأهيل ${qualScore}% بناءً على تحليل محادثات واتساب وملاحظات CRM.`
+            : `تم تقييم الجاهزية بنسبة (${qualScore}%) والتصنيف كـ (${scoreTag}). السبب: ${reason}`,
+        };
+
+        const updatedHistory = [newHistoryItem, ...(leadData.history || [])];
+
+        const updatePayload: any = {
+          qualificationScore: qualScore,
+          leadScore: scoreTag,
+          leadScoreReason: reason,
+          buyingSignals: signals,
+          riskFactors: risks,
+          nextBestAction: nextAction,
+          leadScoreDate: new Date().toISOString(),
+          history: updatedHistory,
+        };
+
+        if (statusChanged) {
+          updatePayload.status = "hot";
+        }
+
+        await db.collection("leads").doc(leadId).update(updatePayload);
+
+        updatedLeads.push({
+          id: leadId,
+          name: leadData.name,
+          company: leadData.company,
+          qualificationScore: qualScore,
+          leadScore: scoreTag,
+          leadScoreReason: reason,
+          buyingSignals: signals,
+          status: newStatus,
+          statusChanged,
+        });
+
+      } catch (err: any) {
+        console.warn(`Failed to auto-qualify lead ${leadId}:`, err);
+      }
+    }
+
+    logAudit("CRM", { action: "Batch AI Lead Qualification", totalProcessed: leadsDocs.length, movedToHotCount }, { hotCount, warmCount, coldCount }, req);
+
+    res.json({
+      success: true,
+      message: `تمت معالجة وتأهيل ${updatedLeads.length} فرصة بنجاح. تم نقل ${movedToHotCount} فرصة ساخنة إلى مرحلة (Hot Lead)!`,
+      totalProcessed: updatedLeads.length,
+      movedToHotCount,
+      hotCount,
+      warmCount,
+      coldCount,
+      leads: updatedLeads,
+    });
+  } catch (err: any) {
+    console.error("Batch AI Lead qualification failed:", err);
+    res.status(500).json({ error: err.message || "Failed to auto qualify leads" });
+  }
+});
+
 router.post("/:id/score", authenticate, async (req: any, res) => {
   try {
     const leadId = req.params.id;
@@ -107,20 +280,42 @@ router.post("/:id/score", authenticate, async (req: any, res) => {
       },
     });
 
-    const prompt = `Analyze this sales lead and assign a lead priority score:
-Lead Name: ${leadData.name || "N/A"}
-Company: ${leadData.company || "N/A"}
-Industry: ${leadData.industry || "N/A"}
-Company Size: ${leadData.companySize || "N/A"}
-Expected Deal Value: ${leadData.value || 0} SAR
-Conversion Probability: ${leadData.conversionProbability || 0}%
-Compliance Risk Level: ${leadData.complianceRisk || "low"}
-Strategic Notes: ${leadData.notes || "N/A"}
-Interaction/History Logs: ${JSON.stringify(leadData.history || [])}
+    // Extract WhatsApp chats context
+    const whatsappMessages = Array.isArray(leadData.messages) ? leadData.messages : [];
+    const whatsappTextSnippet = whatsappMessages
+      .map((m: any) => `[${m.timestamp || m.date || 'now'}] ${m.sender || 'client'}: ${m.text || m.content || ''}`)
+      .join("\n");
 
-Provide:
-1. leadScore: Must be strictly one of "Hot" or "Warm" or "Cold"
-2. leadScoreReason: A short, professional explanation (max 3 sentences) in Arabic (عربي) detailing why this score was assigned and offering actionable next steps.`;
+    // Extract CRM notes context
+    const crmNotesText = [
+      leadData.notes || "",
+      ...(Array.isArray(leadData.notesList) ? leadData.notesList.map((n: any) => n.text || n) : []),
+    ].filter(Boolean).join("\n---\n");
+
+    const prompt = `أنت محرك الذكاء الاصطناعي لتأهيل الفرص البيعية (AI Lead Qualification Engine) لـ Mudarij OS.
+قم بتحليل بيانات العميل المحتمل، ومحادثات واتساب الواردة، وملاحظات إدارة العلاقات (CRM Notes)، لحساب درجة التأهيل الدقيقة والفرز الآلي.
+
+بيانات الفرصة:
+- اسم العميل: ${leadData.name || "N/A"}
+- المنشأة/الشركة: ${leadData.company || "N/A"}
+- القطاع: ${leadData.industry || "N/A"}
+- حجم الشركة: ${leadData.companySize || "N/A"}
+- القيمة المتوقعة للصفقة: ${leadData.value || 0} SAR
+- الحالة الحالية في خط الإنتاج: ${leadData.status || "new"}
+- ملاحظات CRM المكتوبة:
+${crmNotesText || "لا توجد ملاحظات مدونة."}
+
+محادثات واتساب المسجلة (WhatsApp Chat Messages):
+${whatsappTextSnippet || "لا توجد محادثات واتساب مسجلة."}
+
+المطلوب إخراجه بدقة باللغة العربية:
+1. qualificationScore: عدد صحيح بين 0 و 100 يعكس احتمالية التحويل ورغبة الشراء الرقمية المؤكدة.
+2. leadScore: strictly one of "Hot" or "Warm" or "Cold".
+3. buyingSignals: قائمة بالمؤشرات الإيجابية المستخرجة من الواتساب والملاحظات (array of strings in Arabic).
+4. riskFactors: أي تحفظات أو عقبات تم رصدها (array of strings in Arabic).
+5. nextBestAction: خطوة المبيعات القادمة الموصى بها (string in Arabic).
+6. leadScoreReason: شرح مختصر يبرر التقييم ويوضح قوة إشارة الشراء في الواتساب والملاحظات (max 3 sentences in Arabic).
+7. autoMovedToHot: boolean (true إذا كانت qualificationScore >= 75 أو leadScore === "Hot").`;
 
     const response = await generateContentWithRetry(ai, {
       model: "gemini-3.5-flash",
@@ -130,16 +325,38 @@ Provide:
         responseSchema: {
           type: Type.OBJECT,
           properties: {
+            qualificationScore: {
+              type: Type.INTEGER,
+              description: "Qualification score from 0 to 100",
+            },
             leadScore: {
               type: Type.STRING,
               description: "Strictly one of 'Hot', 'Warm', or 'Cold'",
             },
+            buyingSignals: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "Positive buying signals from WhatsApp chats and notes",
+            },
+            riskFactors: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "Risk factors or objections detected",
+            },
+            nextBestAction: {
+              type: Type.STRING,
+              description: "Recommended next step for sales agent",
+            },
             leadScoreReason: {
               type: Type.STRING,
-              description: "Short reason and strategic sales advice in Arabic.",
+              description: "Short reason and strategic advice in Arabic.",
+            },
+            autoMovedToHot: {
+              type: Type.BOOLEAN,
+              description: "True if automatically qualified to Hot stage",
             },
           },
-          required: ["leadScore", "leadScoreReason"],
+          required: ["qualificationScore", "leadScore", "buyingSignals", "leadScoreReason"],
         },
       },
     });
@@ -150,31 +367,66 @@ Provide:
     }
 
     const parsed = JSON.parse(resultText);
-    const score = parsed.leadScore || "Warm";
-    const reason = parsed.leadScoreReason || "لا يوجد مبرر كافي.";
+    const qualScore = typeof parsed.qualificationScore === "number" ? parsed.qualificationScore : (parsed.leadScore === "Hot" ? 85 : parsed.leadScore === "Warm" ? 60 : 30);
+    const score = parsed.leadScore === "Hot" || qualScore >= 75 ? "Hot" : parsed.leadScore === "Cold" || qualScore < 45 ? "Cold" : "Warm";
+    const reason = parsed.leadScoreReason || "تم تحليل بيانات العميل ومحادثات الواتساب بنجاح.";
+    const signals = Array.isArray(parsed.buyingSignals) && parsed.buyingSignals.length > 0 ? parsed.buyingSignals : ["تفاعل إيجابي مع الرسائل"];
+    const risks = Array.isArray(parsed.riskFactors) ? parsed.riskFactors : [];
+    const nextAction = parsed.nextBestAction || "متابعة التواصل عبر الواتساب لتقديم العرض المالي.";
+
+    const currentStatus = leadData.status || "new";
+    let newStatus = currentStatus;
+    let autoMoved = false;
+
+    // Automatically move to 'hot' stage if score is Hot or qualificationScore >= 75
+    if ((score === "Hot" || qualScore >= 75) && currentStatus !== "hot" && currentStatus !== "won" && currentStatus !== "contracted") {
+      newStatus = "hot";
+      autoMoved = true;
+    }
 
     // Append to lead history
     const newHistoryItem = {
       id: `h_ai_${Date.now()}`,
       date: new Date().toISOString(),
-      action: "تقييم الذكاء الاصطناعي",
-      details: `تم تقييم الفرصة البيعية كـ (${score}) بناءً على تحليل البيانات. السبب: ${reason}`,
+      action: "تأهيل الذكاء الاصطناعي (Lead Qualification)",
+      details: autoMoved
+        ? `🔥 تم نقل العميل تلقائياً إلى مرحلة 'فرص ساخنة (Hot Lead)' بنسبة تأهيل ${qualScore}% بناءً على تحليل محادثات واتساب والملاحظات. السبب: ${reason}`
+        : `تم تقييم الفرصة البيعية كـ (${score}) بنسبة تأهيل (${qualScore}%). السبب: ${reason}`,
     };
 
     const updatedHistory = [newHistoryItem, ...(leadData.history || [])];
 
-    const updatePayload = {
+    const updatePayload: any = {
+      qualificationScore: qualScore,
       leadScore: score,
       leadScoreReason: reason,
+      buyingSignals: signals,
+      riskFactors: risks,
+      nextBestAction: nextAction,
       leadScoreDate: new Date().toISOString(),
       history: updatedHistory,
     };
 
+    if (autoMoved) {
+      updatePayload.status = "hot";
+    }
+
     await db.collection("leads").doc(leadId).update(updatePayload);
 
-    logAudit("CRM", { action: "AI Lead Scoring", id: leadId }, { score, reason }, req);
+    logAudit("CRM", { action: "AI Lead Scoring & Qualification", id: leadId, qualScore, score, autoMoved }, { score, reason }, req);
 
-    res.json({ id: leadId, score, reason, date: updatePayload.leadScoreDate });
+    res.json({
+      id: leadId,
+      qualificationScore: qualScore,
+      score,
+      reason,
+      buyingSignals: signals,
+      riskFactors: risks,
+      nextBestAction: nextAction,
+      autoMoved,
+      status: newStatus,
+      date: updatePayload.leadScoreDate,
+    });
   } catch (err: any) {
     console.error("AI Lead scoring failed:", err);
     res.status(500).json({ error: err.message || "Failed to score lead with AI" });

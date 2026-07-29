@@ -54,7 +54,7 @@ function setup() {
     fs.writeFileSync(schemaPath, schemaContent, "utf8");
 
     console.log("[DB Setup] Generating Prisma Client...");
-    execSync("npx prisma generate", { stdio: "inherit" });
+    execSync("./node_modules/.bin/prisma generate || npx prisma generate", { stdio: "inherit" });
   } else {
     console.log("[DB Setup] schema.prisma is already up to date.");
   }
@@ -67,14 +67,19 @@ function setup() {
       if (fs.existsSync(devDbPath)) {
         // Double check SQLite file is valid or recreate if corrupted
         try {
-          execSync(`DATABASE_URL=file:${devDbPath} npx prisma db push --skip-generate`, { stdio: "inherit" });
+          execSync(`DATABASE_URL=file:${devDbPath} ./node_modules/.bin/prisma db push --accept-data-loss --skip-generate || DATABASE_URL=file:${devDbPath} npx prisma db push --skip-generate`, { stdio: "inherit" });
         } catch (pushErr) {
           console.warn("[DB Setup] Warning: Existing dev.db push failed, recreating dev.db:", pushErr);
-          fs.unlinkSync(devDbPath);
-          execSync(`DATABASE_URL=file:${devDbPath} npx prisma db push --skip-generate`, { stdio: "inherit" });
+          const relatedFiles = [devDbPath, `${devDbPath}-journal`, `${devDbPath}-wal`, `${devDbPath}-shm`];
+          for (const f of relatedFiles) {
+            if (fs.existsSync(f)) {
+              try { fs.unlinkSync(f); } catch (_) {}
+            }
+          }
+          execSync(`DATABASE_URL=file:${devDbPath} ./node_modules/.bin/prisma db push --accept-data-loss --skip-generate || DATABASE_URL=file:${devDbPath} npx prisma db push --skip-generate`, { stdio: "inherit" });
         }
       } else {
-        execSync(`DATABASE_URL=file:${devDbPath} npx prisma db push --skip-generate`, { stdio: "inherit" });
+        execSync(`DATABASE_URL=file:${devDbPath} ./node_modules/.bin/prisma db push --accept-data-loss --skip-generate || DATABASE_URL=file:${devDbPath} npx prisma db push --skip-generate`, { stdio: "inherit" });
       }
     } catch (err) {
       console.warn("[DB Setup] Critical: Prisma db push failed, continuing:", err);

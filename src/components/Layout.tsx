@@ -27,6 +27,7 @@ import {
   Mail,
   Share2,
   Grid,
+  Target,
 } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import { Logo } from "@/src/components/Logo";
@@ -57,6 +58,12 @@ const navigationData = [
     href: "/app/marketing-copilot",
     icon: Sparkles,
   },
+  {
+    nameKey: "sidebar.lead_gen",
+    id: "LeadGen",
+    href: "/app/lead-gen",
+    icon: Target,
+  },
   { nameKey: "sidebar.employees", id: "CRM", href: "/app/crm", icon: Users },
   { nameKey: "sidebar.chat", id: "Chat", href: "/app/chat", icon: MessageSquare },
   { nameKey: "projects", id: "Projects", href: "/app/projects", icon: FolderKanban },
@@ -79,6 +86,7 @@ const itemLabels: Record<string, { ar: string; en: string }> = {
   Chat: { ar: "مركز الاتصال الموحد", en: "Unified Communications" },
   Projects: { ar: "إدارة المشاريع", en: "Project Management" },
   MarketingCopilot: { ar: "مساعد التسويق والعملاء", en: "Marketing Copilot" },
+  LeadGen: { ar: "مستكشف ومولد العملاء", en: "Lead Generation OS" },
   CRM: { ar: "إدارة العملاء والبيع", en: "Customer Relations & Sales" },
   Invoices: { ar: "الفواتير والمطالبات", en: "Invoices & Claims" },
   Payroll: { ar: "مسيرات الرواتب والأجور", en: "Payroll & Wages" },
